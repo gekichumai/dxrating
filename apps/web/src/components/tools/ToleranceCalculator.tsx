@@ -34,7 +34,7 @@ type Judgement = RegularJudgement | BreakBudgetJudgement
 
 /** Grid columns from wide containers up: BREAK-only judgements first, so GREAT / GOOD / MISS line up for every row */
 const COLUMNS: readonly Judgement[] = ['perfect50', 'perfect100', 'great', 'good', 'miss']
-// At or above a 34rem container the rows share one column grid with a header (`@[34rem]:`); below it each row stacks.
+// At or above a 36.5rem container (wide enough for a four-digit count in every column) the rows share one column grid with a header (`@[36.5rem]:`); below it each row stacks.
 // The variant is written out in every class name: UnoCSS only generates classes it finds literally in the source.
 
 const pickCount = (picks: BudgetPicks, type: ToleranceNoteType, judgement: Judgement) => picks[type]?.[judgement] ?? 0
@@ -191,11 +191,11 @@ export const ToleranceCalculator: FC<{
                 <div
                   className={clsx(
                     'flex flex-col gap-3',
-                    `@[34rem]:grid @[34rem]:grid-cols-[minmax(4.5rem,auto)_repeat(5,minmax(0,1fr))] @[34rem]:gap-x-1.5 @[34rem]:gap-y-1.5`,
+                    `@[36.5rem]:grid @[36.5rem]:grid-cols-[minmax(4.5rem,auto)_repeat(5,minmax(0,1fr))] @[36.5rem]:gap-x-1.5 @[36.5rem]:gap-y-1.5`,
                   )}
                 >
                   {/* Column header, wide only; narrow cells carry their own judgement label */}
-                  <div aria-hidden className={`hidden @[34rem]:contents`}>
+                  <div aria-hidden className={`hidden @[36.5rem]:contents`}>
                     <span className="self-end pb-0.5 text-xs text-secondary">{t('tools:tolerance.note-type')}</span>
                     {COLUMNS.map((judgement) => (
                       <span
@@ -210,17 +210,17 @@ export const ToleranceCalculator: FC<{
                   {budget.rows.map((row) => {
                     const left = row.count - rowTotal(picks, row.type)
                     return (
-                      <div key={row.type} className="flex flex-col gap-1.5 @[34rem]:contents">
+                      <div key={row.type} className="flex flex-col gap-1.5 @[36.5rem]:contents">
                         <div
-                          className={`flex items-baseline gap-1.5 @[34rem]:self-center @[34rem]:flex-col @[34rem]:gap-0`}
+                          className={`flex items-baseline gap-1.5 @[36.5rem]:self-center @[36.5rem]:flex-col @[36.5rem]:gap-0`}
                         >
                           <span className="text-sm font-semibold">{t(`tools:tolerance.type.${row.type}`)}</span>
                           <span className="text-xs text-secondary num">×{row.count.toLocaleString(locale)}</span>
                         </div>
-                        <div className={`grid grid-cols-3 gap-1.5 @[34rem]:contents`}>
+                        <div className={`grid grid-cols-3 gap-1.5 @[36.5rem]:contents`}>
                           {COLUMNS.map((judgement) => {
                             const cell = row.judgements.find((j) => j.judgement === judgement)
-                            if (!cell) return <span key={judgement} aria-hidden className={`hidden @[34rem]:block`} />
+                            if (!cell) return <span key={judgement} aria-hidden className={`hidden @[36.5rem]:block`} />
                             const value = pickCount(picks, row.type, judgement)
                             return (
                               <JudgementCell
@@ -335,7 +335,7 @@ const BudgetPanel: FC<{
 }
 
 const stepButton =
-  'inline-flex h-7 flex-1 @[20rem]:w-7 @[20rem]:flex-none shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-0 text-fg-1 hover:bg-[color-mix(in_oklab,var(--fg-1)_8%,transparent)] disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent'
+  'inline-flex h-7 flex-1 @[20rem]:w-7 @[20rem]:flex-none @[36.5rem]:w-6 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border-0 bg-transparent p-0 text-fg-1 hover:bg-[color-mix(in_oklab,var(--fg-1)_8%,transparent)] disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent'
 
 const JudgementCell: FC<{
   typeLabel: string
@@ -361,10 +361,10 @@ const JudgementCell: FC<{
         value > 0 && 'shadow-[inset_0_0_0_1.5px_var(--accent)]',
       )}
     >
-      <span className={`px-1 text-[0.6875rem] font-semibold text-secondary @[34rem]:sr-only`}>{judgementLabel}</span>
+      <span className={`px-1 text-[0.6875rem] font-semibold text-secondary @[36.5rem]:sr-only`}>{judgementLabel}</span>
       {/* Under 20rem of card (a 320px phone) the count takes its own line and − / + share the one below, so the digits
           never get squeezed out; wider, they sit on one line */}
-      <div className="flex flex-wrap items-center gap-0.5 @[20rem]:flex-nowrap">
+      <div className="flex flex-wrap items-center gap-0.5 @[20rem]:flex-nowrap @[36.5rem]:gap-0">
         <button
           type="button"
           className={stepButton}
