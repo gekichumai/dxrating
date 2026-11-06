@@ -279,21 +279,22 @@ const ToplistItem: FC<{ row: ToplistRow; sheet: FlattenedSheet; position: number
     <li className="list-none">
       <SheetListItem
         sheet={sheet}
-        className="rounded-lg !py-1.5 lg:!py-1"
+        className="rounded-lg !py-1.5 lg:!py-1 max-2xs:!px-3"
         analytics={{ source: 'toplist', position }}
         SheetDialogContentProps={{ currentAchievementRate: row.entry.achievementRate }}
       >
         {/* Phones and tablets: the iOS score row. Title, chart and lamps on the left; achievement, rank and rating on
-            the right */}
+            the right. Below 375px the position goes and the jacket shrinks, so a Re:MASTER pill still clears the
+            achievement at 320px */}
         <div className="flex items-center gap-2.5 w-full min-w-0 py-1 lg:hidden">
-          <span className="w-5 shrink-0 text-right text-xs text-fg-2 num">{position}</span>
+          <span className="hidden 2xs:block w-5 shrink-0 text-right text-xs text-fg-2 num">{position}</span>
           <img
             src={cover}
             alt=""
             loading="lazy"
             width={44}
             height={44}
-            className="size-11 shrink-0 rounded-[var(--radius-md)] outline outline-1 outline-black/10 -outline-offset-1"
+            className="size-10 2xs:size-11 shrink-0 rounded-[var(--radius-md)] outline outline-1 outline-black/10 -outline-offset-1"
           />
           <span className="flex flex-col gap-1 min-w-0 flex-1">
             <span lang="ja" className="truncate font-semibold text-sm leading-tight text-fg-1">
