@@ -6,9 +6,9 @@ import * as Sentry from '@sentry/node'
 import { afterEach, describe, expect, it } from 'vitest'
 import { sentryOptions } from './sentry'
 
-const body = JSON.stringify({ code: 'synthetic-code', state: 'synthetic-state' })
+const lxnsBody = JSON.stringify({ code: 'synthetic-code', state: 'synthetic-state' })
 
-async function envelopesFor(scrub: boolean) {
+async function envelopesFor(scrub: boolean, path = '/api/v1/io/import/lxns/complete', body = lxnsBody) {
   const sent: string[] = []
   const options = sentryOptions({
     dsn: 'https://public@o0.ingest.sentry.io/0',
@@ -39,7 +39,7 @@ async function envelopesFor(scrub: boolean) {
   })
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
   const { port } = server.address() as AddressInfo
-  const response = await fetch(`http://127.0.0.1:${port}/api/v1/io/import/lxns/complete`, {
+  const response = await fetch(`http://127.0.0.1:${port}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body,
@@ -70,5 +70,25 @@ describe('backend Sentry and the LXNS completion body', () => {
     expect(sent).toContain('/api/v1/io/import/lxns/complete')
     expect(sent).not.toContain('synthetic-code')
     expect(sent).not.toContain('synthetic-state')
+  })
+
+  it.each([
+    ['/functions/fetch-net-records/v1/jp', { id: 'synthetic-sega-id', password: 'synthetic-password' }],
+    ['/api/auth/sign-in/email', { email: 'synthetic@example.invalid', password: 'synthetic-password' }],
+  ])('sends no credential body for %s', async (path, payload) => {
+    const body = JSON.stringify(payload)
+    const leaked = await envelopesFor(false, path, body)
+    expect(leaked).toContain('synthetic-password')
+
+    const sent = await envelopesFor(true, path, body)
+    expect(sent).toContain('"type":"event"')
+    expect(sent).toContain(path)
+    expect(sent).not.toContain('synthetic-password')
+    expect(sent).not.toContain('synthetic-sega-id')
+  })
+
+  it('keeps bodies of other routes', async () => {
+    const sent = await envelopesFor(true, '/api/v1/comments', JSON.stringify({ content: 'synthetic-comment' }))
+    expect(sent).toContain('synthetic-comment')
   })
 })

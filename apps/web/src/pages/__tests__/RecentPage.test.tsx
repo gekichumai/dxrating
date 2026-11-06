@@ -4,7 +4,7 @@ import { render, screen, within } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
-import { RecentPage } from '../RecentPage'
+import { RecentPage, groupRecentCharts } from '../RecentPage'
 
 const charts = [
   {
@@ -98,6 +98,53 @@ describe('RecentPage', () => {
     const dateHeadings = screen.getAllByRole('heading', { level: 2 })
     expect(dateHeadings.map((heading) => heading.textContent)).toEqual(['May 1, 2025', 'Apr 1, 2025'])
     expect(screen.getAllByRole('list').map((list) => within(list).getAllByRole('listitem').length)).toEqual([1, 2])
+    expect(
+      [...document.querySelectorAll('li[itemprop="itemListElement"] > meta[itemprop="position"]')].map((meta) =>
+        meta.getAttribute('content'),
+      ),
+    ).toEqual(['1', '2', '3'])
+  })
+
+  it('keeps one section per date when an undated chart sorts between two charts of that date', () => {
+    const datedA = { ...charts[0], songId: 'song-a', title: 'A', href: '/songs/song-a/dx/master' }
+    const undatedB = {
+      ...charts[0],
+      songId: 'song-b',
+      title: 'B',
+      releaseDate: undefined,
+      version: VersionEnum.PRiSM,
+      href: '/songs/song-b/dx/master',
+    }
+    const datedC = { ...charts[0], songId: 'song-c', title: 'C', href: '/songs/song-c/dx/master' }
+    const input = [datedA, undatedB, datedC]
+
+    expect(
+      groupRecentCharts(input).map((group) => [
+        group.key,
+        group.charts.map(({ chart, position }) => [chart.title, position]),
+      ]),
+    ).toEqual([
+      [
+        'date-2025-05-01',
+        [
+          ['A', 1],
+          ['C', 2],
+        ],
+      ],
+      [`version-${VersionEnum.PRiSM}`, [['B', 3]]],
+    ])
+
+    render(<RecentPage charts={input} />)
+
+    expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
+      'May 1, 2025',
+      `ver. ${VersionEnum.PRiSM}`,
+    ])
+    const ids = [...document.querySelectorAll('h2[id]')].map((heading) => heading.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    for (const section of document.querySelectorAll('section[aria-labelledby]')) {
+      expect(document.getElementById(section.getAttribute('aria-labelledby') ?? '')?.tagName).toBe('H2')
+    }
     expect(
       [...document.querySelectorAll('li[itemprop="itemListElement"] > meta[itemprop="position"]')].map((meta) =>
         meta.getAttribute('content'),

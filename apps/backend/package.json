@@ -24,6 +24,7 @@
     "@effect/opentelemetry": "4.0.0-rc.118",
     "@effect/platform-node": "4.0.0-rc.118",
     "@effect/sql-pg": "4.0.0-rc.118",
+    "@gdp-ts/core": "0.1.0",
     "@gekichumai/api-contract": "workspace:*",
     "@gekichumai/dxdata": "workspace:*",
     "@gekichumai/maimai-domain": "workspace:*",

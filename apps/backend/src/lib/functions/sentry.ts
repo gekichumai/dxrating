@@ -50,10 +50,19 @@ export function shouldCaptureSentryError(error: unknown) {
 }
 
 /**
- * Routes whose request body carries one-time credentials. `sendDefaultPii` lets the HTTP integration attach request
- * bodies to events and transactions; for these routes the body never leaves the process.
+ * Routes whose request body carries credentials. `sendDefaultPii` lets the HTTP integration attach request bodies to
+ * events and transactions; for these routes the body never leaves the process, whatever Sentry's server-side
+ * scrubbing would catch. Entries ending in `/` match every path below them.
  */
-const CREDENTIAL_BODY_ROUTES = ['/api/v1/io/import/lxns/complete']
+export const CREDENTIAL_BODY_ROUTES = [
+  // LXNS OAuth code and state
+  '/api/v1/io/import/lxns/complete',
+  // SEGA ID and password (maimai.fetchRecords, and the NET record functions)
+  '/api/v1/io/import/maimai-net',
+  '/functions/fetch-net-records/',
+  // Better Auth: sign-in and sign-up passwords, password changes and resets, OAuth and passkey payloads
+  '/api/auth/',
+]
 
 const routePath = (value: string | undefined) => {
   if (!value) return undefined
@@ -68,7 +77,10 @@ const routePath = (value: string | undefined) => {
 
 const isCredentialRoute = (value: string | undefined) => {
   const path = routePath(value)
-  return path !== undefined && CREDENTIAL_BODY_ROUTES.includes(path)
+  return (
+    path !== undefined &&
+    CREDENTIAL_BODY_ROUTES.some((route) => (route.endsWith('/') ? `${path}/`.startsWith(route) : path === route))
+  )
 }
 
 function withoutBody<T extends Record<string, unknown>>(data: T | undefined): T | undefined {

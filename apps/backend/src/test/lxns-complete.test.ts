@@ -114,6 +114,16 @@ describe('LXNS OAuth completion', () => {
     expect(await states()).toEqual([])
   })
 
+  it('answers 400 invalid_state for an unknown or reused state', async () => {
+    const initiator = await signedIn('lxns-invalid@example.com')
+    for (const cookie of [initiator.cookie, undefined]) {
+      const res = await complete({ code: 'synthetic-code', state: 'state-never-issued' }, cookie)
+      expect(res.status).toBe(400)
+      expect(await res.json()).toMatchObject({ code: 'BAD_REQUEST', data: { reason: 'invalid_state' } })
+    }
+    expect(tokenEndpoint).not.toHaveBeenCalled()
+  })
+
   it('forwards code and state to the web callback page, keeping provider errors as they were', async () => {
     const initiator = await signedIn('lxns-forward@example.com')
     const state = await issueState(initiator.id)

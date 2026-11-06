@@ -217,7 +217,7 @@ export const ToplistsPage: FC = () => {
 /**
  * Desktop columns: position, jacket, title, chart, achievement, rank, lamps, (DX score), rating. The header and every
  * row share one template so the columns line up; the DX score column only appears when some row has one. The title
- * and artist stop at 28rem, so on the 1536px score-page width long artist names do not run across the extra space.
+ * and artist stop at 28rem, so on the 1280px score-page width long artist names do not run across the extra space.
  */
 const DESKTOP_GRID =
   'lg:grid lg:items-center lg:gap-x-4 lg:grid-cols-[2rem_2.5rem_minmax(0,1fr)_10.5rem_6.5rem_3.5rem_6.5rem_3.5rem]'

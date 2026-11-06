@@ -101,7 +101,7 @@ describe('LXNS Effect service', () => {
 
     expect(results.filter((result) => result.status === 'fulfilled')).toEqual([{ status: 'fulfilled', value: userId }])
     const rejected = results.find((result) => result.status === 'rejected')
-    expect(rejected).toMatchObject({ reason: { _tag: 'LxnsError', message: 'Invalid or expired OAuth state' } })
+    expect(rejected).toMatchObject({ reason: { _tag: 'LxnsStateInvalid', message: 'Invalid or expired OAuth state' } })
     expect(upstream).toHaveBeenCalledTimes(1)
     const request = upstream.mock.calls[0]
     expect(String(request[0])).toBe('https://maimai.lxns.net/api/v0/oauth/token')
@@ -131,6 +131,7 @@ describe('LXNS Effect service', () => {
     ])
 
     await expect(run(completeAuthorization(userId, 'code', 'expired-state'))).rejects.toMatchObject({
+      _tag: 'LxnsStateInvalid',
       message: 'OAuth state expired',
     })
     expect((await pool.query('SELECT state FROM lxns_oauth_states')).rows).toEqual([])
