@@ -177,7 +177,10 @@ const getValidAccessToken = Effect.fn('Lxns.getValidAccessToken')(function* (use
 })
 
 export const fetchPlayerScores = Effect.fn('Lxns.fetchPlayerScores')(function* (userId: string) {
-  const accessToken = yield* getValidAccessToken(userId)
+  return yield* requestPlayerScores(yield* getValidAccessToken(userId))
+})
+
+const requestPlayerScores = Effect.fn('Lxns.requestPlayerScores')(function* (accessToken: string) {
   const http = yield* HttpClient
   return yield* Effect.gen(function* () {
     const response = yield* http.get(`${LXNS_BASE}/api/v0/user/maimai/player/scores`, {
@@ -201,7 +204,21 @@ export const fetchPlayerScores = Effect.fn('Lxns.fetchPlayerScores')(function* (
  * is the source account of server imports (design §6.2).
  */
 export const fetchPlayer = Effect.fn('Lxns.fetchPlayer')(function* (userId: string) {
+  return yield* requestPlayer(yield* getValidAccessToken(userId))
+})
+
+/**
+ * The player and every score of one LXNS connection: both requests use one access token, so a reconnect to another
+ * account in between cannot pair one account's friend code with another account's scores.
+ */
+export const fetchPlayerWithScores = Effect.fn('Lxns.fetchPlayerWithScores')(function* (userId: string) {
   const accessToken = yield* getValidAccessToken(userId)
+  const player = yield* requestPlayer(accessToken)
+  const scores = yield* requestPlayerScores(accessToken)
+  return { player, scores }
+})
+
+const requestPlayer = Effect.fn('Lxns.requestPlayer')(function* (accessToken: string) {
   const http = yield* HttpClient
   return yield* Effect.gen(function* () {
     const response = yield* http.get(`${LXNS_BASE}/api/v0/user/maimai/player`, {
