@@ -1,5 +1,5 @@
 import { FormControl, IconButton, InputLabel, MenuItem, Select } from '@mui/material'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence } from 'motion/react'
 import { type FC, useContext, useMemo } from 'react'
 import { type Control, Controller, useFieldArray } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
