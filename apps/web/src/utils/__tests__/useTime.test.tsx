@@ -2,6 +2,7 @@ import i18n from 'i18next'
 import { render, screen } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { initI18n } from '@/setup/init-i18n'
 import { RenderEnvironmentProvider } from '../renderEnvironment'
 import { useTime } from '../useTime'
@@ -27,9 +28,11 @@ describe('useTime', () => {
 
     render(
       <I18nextProvider i18n={i18n}>
-        <RenderEnvironmentProvider renderedAt={Date.parse('2026-07-18T03:40:00.000Z')}>
-          <TimeProbe />
-        </RenderEnvironmentProvider>
+        <LocaleProvider initialLocale="zh-Hans">
+          <RenderEnvironmentProvider renderedAt={Date.parse('2026-07-18T03:40:00.000Z')}>
+            <TimeProbe />
+          </RenderEnvironmentProvider>
+        </LocaleProvider>
       </I18nextProvider>,
     )
 
@@ -43,9 +46,11 @@ describe('useTime', () => {
 
     render(
       <I18nextProvider i18n={i18n}>
-        <RenderEnvironmentProvider renderedAt={Date.parse('2026-07-18T03:40:00.000Z')}>
-          <TimeProbe />
-        </RenderEnvironmentProvider>
+        <LocaleProvider initialLocale="en">
+          <RenderEnvironmentProvider renderedAt={Date.parse('2026-07-18T03:40:00.000Z')}>
+            <TimeProbe />
+          </RenderEnvironmentProvider>
+        </LocaleProvider>
       </I18nextProvider>,
     )
 

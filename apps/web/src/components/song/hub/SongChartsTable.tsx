@@ -1,14 +1,16 @@
-import type { DifficultyEnum } from '@gekichumai/dxdata'
+import { type DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import type { VersionedSheet } from '@gekichumai/maimai-domain'
 import { Link, useSearch } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { FixedWidthText } from '@/components/global/FixedWidthText'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { SheetDifficulty } from '@/components/sheet/SheetListItem'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
 import { captureAnalyticsEvent } from '@/lib/analytics'
+import { m } from '@/paraglide/messages'
 import { keepLocaleSearch } from '@/setup/locale'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { useUserRecords } from '@/models/useUserRecords'
@@ -20,13 +22,28 @@ const formatAchievement = (value: number) => `${value.toFixed(4)}%`
 // Per-type note counts get their own columns on wide screens (xl+), where the table has room for them
 const NOTE_TYPES = ['tap', 'hold', 'slide', 'touch', 'break'] as const
 
+const NOTE_TYPE_LABELS = {
+  tap: m.sheet_details_notesStatistics_tap,
+  hold: m.sheet_details_notesStatistics_hold,
+  slide: m.sheet_details_notesStatistics_slide,
+  touch: m.sheet_details_notesStatistics_touch,
+  break: m.sheet_details_notesStatistics_break,
+} satisfies Record<(typeof NOTE_TYPES)[number], PlainMessage>
+
+const TYPE_LABELS = {
+  [TypeEnum.DX]: m.song_type_dx,
+  [TypeEnum.STD]: m.song_type_std,
+  [TypeEnum.UTAGE]: m.song_type_utage,
+  [TypeEnum.UTAGE2P]: m.song_type_utage2p,
+} satisfies Record<TypeEnum, PlainMessage>
+
 /** Every chart of a song in one table, with the user's own score and the next rating step (client only) */
 export const SongChartsTable: FC<{
   songId: string
   sheets: readonly FlattenedSheet[]
   activeSheetId?: string
 }> = ({ songId, sheets, activeSheetId }) => {
-  const { t } = useTranslation(['song', 'sheet'])
+  const locale = useLocale()
   // Chart links stay on the hub URL's language variant (each `?locale=` variant is its own canonical page)
   const localeSearch = keepLocaleSearch(useSearch({ strict: false }))
   // Rating hints need every scored chart: the route slice holds only this song, so wait for the complete catalog
@@ -48,7 +65,7 @@ export const SongChartsTable: FC<{
   }, [mounted, entries, sheets, completeCatalog, version, region])
 
   const hasRecords = mounted && sheets.some((sheet) => bySheetId.has(sheet.id))
-  const typeLabels = [...new Set(sheets.map((sheet) => t(`song:type.${sheet.type}`)))]
+  const typeLabels = [...new Set(sheets.map((sheet) => TYPE_LABELS[sheet.type]({}, { locale })))]
 
   const reportedSongId = useRef<string | null>(null)
   useEffect(() => {
@@ -62,27 +79,33 @@ export const SongChartsTable: FC<{
   return (
     <MaterialSurface as="section" className="p-3 flex flex-col gap-2" aria-labelledby="song-hub-charts-heading">
       <h2 id="song-hub-charts-heading" className="section-title m-0">
-        {t('song:hub.title')}
+        {m.song_hub_title({}, { locale })}
       </h2>
       <div className="scroll-fade-x relative overflow-x-auto -mx-1">
         <table className="w-full border-collapse text-sm num text-fg-1">
           <thead>
             <tr className="text-left text-xs text-fg-2">
-              <th className="px-1 py-1 font-normal whitespace-nowrap">{t('song:hub.column.chart')}</th>
-              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">{t('song:hub.column.level')}</th>
-              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">{t('song:hub.column.constant')}</th>
+              <th className="px-1 py-1 font-normal whitespace-nowrap">{m.song_hub_column_chart({}, { locale })}</th>
+              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">
+                {m.song_hub_column_level({}, { locale })}
+              </th>
+              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">
+                {m.song_hub_column_constant({}, { locale })}
+              </th>
               <th className="hidden sm:table-cell px-1 py-1 font-normal whitespace-nowrap text-right">
-                {t('song:hub.column.notes')}
+                {m.song_hub_column_notes({}, { locale })}
               </th>
               {NOTE_TYPES.map((noteType) => (
                 <th key={noteType} className="hidden xl:table-cell px-1 py-1 font-normal whitespace-nowrap text-right">
-                  {t(`sheet:details.notes-statistics.${noteType}`)}
+                  {NOTE_TYPE_LABELS[noteType]({}, { locale })}
                 </th>
               ))}
               <th className="hidden sm:table-cell pl-3 pr-1 py-1 font-normal whitespace-nowrap">
-                {t('song:hub.column.designer')}
+                {m.song_hub_column_designer({}, { locale })}
               </th>
-              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">{t('song:hub.column.my-score')}</th>
+              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">
+                {m.song_hub_column_myScore({}, { locale })}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -110,12 +133,14 @@ export const SongChartsTable: FC<{
                     >
                       {/* As wide as the longest type name in this table, so every difficulty pill starts at the same x */}
                       <FixedWidthText
-                        text={t(`song:type.${sheet.type}`)}
+                        text={TYPE_LABELS[sheet.type]({}, { locale })}
                         sizers={typeLabels}
                         className="shrink-0 text-xs text-fg-2"
                       />
                       <SheetDifficulty difficulty={sheet.difficulty as DifficultyEnum} serverIds={sheet.serverIds} />
-                      {unavailableEverywhere && <span className="sr-only">{t('song:hub.unavailable-everywhere')}</span>}
+                      {unavailableEverywhere && (
+                        <span className="sr-only">{m.song_hub_unavailableEverywhere({}, { locale })}</span>
+                      )}
                     </Link>
                   </td>
                   <td className="px-1 py-1.5 text-right">{sheet.level}</td>
@@ -147,7 +172,7 @@ export const SongChartsTable: FC<{
                     )}
                     {raise && (
                       <div className="text-xs text-status-positive whitespace-normal">
-                        {t('song:hub.raise-hint', { target: raise.targetAchievement, gain: raise.gain })}
+                        {m.song_hub_raiseHint({ target: raise.targetAchievement, gain: raise.gain }, { locale })}
                       </div>
                     )}
                   </td>

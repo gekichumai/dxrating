@@ -2,8 +2,7 @@ import { Button, Chip, CircularProgress, IconButton, TextField } from '@mui/mate
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FC, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
-import type { TFunction } from 'i18next'
+import type { SupportedLocale } from '@/setup/locale'
 import { useAsyncFn } from 'react-use'
 import IconMdiDelete from '~icons/mdi/delete-outline'
 import IconMdiPlus from '~icons/mdi/plus'
@@ -15,13 +14,15 @@ import { authClient } from '../../../lib/auth-client'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
 import { PasswordVisibilityAdornment } from '../../auth/PasswordVisibilityAdornment'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 // -- Password Subsection --
 
 type HeadingTag = 'h2' | 'h4'
 
 const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ idPrefix, headingAs: Heading }) => {
-  const { t } = useTranslation(['auth'])
+  const locale = useLocale()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -46,15 +47,15 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
       revokeOtherSessions: true,
     })
     if (error) {
-      toast.error(t('auth:user-profile.password.error', { error: error.message }))
+      toast.error(m.auth_userProfile_password_error({ error: error.message ?? '' }, { locale }))
       return
     }
-    toast.success(t('auth:user-profile.password.success'))
+    toast.success(m.auth_userProfile_password_success({}, { locale }))
     setCurrentPassword('')
     setNewPassword('')
     setConfirmPassword('')
     setAttempted(false)
-  }, [currentPassword, newPassword])
+  }, [currentPassword, newPassword, locale])
 
   const togglePasswordVisibility = (field: keyof typeof visiblePasswords) => {
     setVisiblePasswords((visible) => ({ ...visible, [field]: !visible[field] }))
@@ -70,7 +71,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
       <div className="flex items-center gap-2">
         <IconMdiLock className="text-lg text-fg-2" aria-hidden="true" />
         <Heading id={titleId} className="text-base font-semibold text-fg-1 m-0">
-          {t('auth:user-profile.password.title')}
+          {m.auth_userProfile_password_title({}, { locale })}
         </Heading>
       </div>
       <form
@@ -94,13 +95,13 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
         <TextField
           id={currentPasswordId}
           name="current-password"
-          label={t('auth:user-profile.password.current')}
+          label={m.auth_userProfile_password_current({}, { locale })}
           type={visiblePasswords.current ? 'text' : 'password'}
           inputRef={currentRef}
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
           error={currentMissing}
-          helperText={currentMissing ? t('auth:user-profile.password.current-required') : undefined}
+          helperText={currentMissing ? m.auth_userProfile_password_currentRequired({}, { locale }) : undefined}
           size="small"
           fullWidth
           autoComplete="current-password"
@@ -109,7 +110,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
             endAdornment: (
               <PasswordVisibilityAdornment
                 visible={visiblePasswords.current}
-                fieldLabel={t('auth:user-profile.password.current')}
+                fieldLabel={m.auth_userProfile_password_current({}, { locale })}
                 inputId={currentPasswordId}
                 onToggle={() => togglePasswordVisibility('current')}
               />
@@ -119,13 +120,13 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
         <TextField
           id={newPasswordId}
           name="new-password"
-          label={t('auth:user-profile.password.new')}
+          label={m.auth_userProfile_password_new({}, { locale })}
           type={visiblePasswords.new ? 'text' : 'password'}
           inputRef={newRef}
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           error={newMissing}
-          helperText={newMissing ? t('auth:user-profile.password.new-required') : undefined}
+          helperText={newMissing ? m.auth_userProfile_password_newRequired({}, { locale }) : undefined}
           size="small"
           fullWidth
           autoComplete="new-password"
@@ -134,7 +135,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
             endAdornment: (
               <PasswordVisibilityAdornment
                 visible={visiblePasswords.new}
-                fieldLabel={t('auth:user-profile.password.new')}
+                fieldLabel={m.auth_userProfile_password_new({}, { locale })}
                 inputId={newPasswordId}
                 onToggle={() => togglePasswordVisibility('new')}
               />
@@ -144,7 +145,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
         <TextField
           id={confirmPasswordId}
           name="confirm-password"
-          label={t('auth:user-profile.password.confirm')}
+          label={m.auth_userProfile_password_confirm({}, { locale })}
           type={visiblePasswords.confirm ? 'text' : 'password'}
           inputRef={confirmRef}
           value={confirmPassword}
@@ -154,9 +155,9 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
           error={mismatch || confirmMissing}
           helperText={
             mismatch
-              ? t('auth:user-profile.password.mismatch')
+              ? m.auth_userProfile_password_mismatch({}, { locale })
               : confirmMissing
-                ? t('auth:user-profile.password.confirm-required')
+                ? m.auth_userProfile_password_confirmRequired({}, { locale })
                 : undefined
           }
           autoComplete="new-password"
@@ -165,7 +166,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
             endAdornment: (
               <PasswordVisibilityAdornment
                 visible={visiblePasswords.confirm}
-                fieldLabel={t('auth:user-profile.password.confirm')}
+                fieldLabel={m.auth_userProfile_password_confirm({}, { locale })}
                 inputId={confirmPasswordId}
                 onToggle={() => togglePasswordVisibility('confirm')}
               />
@@ -180,9 +181,9 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
           className="!self-start"
         >
           {changeState.loading ? (
-            <CircularProgress size="1.25rem" color="inherit" aria-label={t('auth:user-profile.saving')} />
+            <CircularProgress size="1.25rem" color="inherit" aria-label={m.auth_userProfile_saving({}, { locale })} />
           ) : (
-            t('auth:user-profile.password.save')
+            m.auth_userProfile_password_save({}, { locale })
           )}
         </Button>
       </form>
@@ -195,14 +196,14 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
 // AAGUID database from https://github.com/passkeydeveloper/passkey-authenticator-aaguids
 const aaguids = aaguidData as Record<string, { name: string; icon?: string }>
 
-function getPasskeyInfo(passkey: PasskeyItem, t: TFunction<['auth']>): { name: string; icon?: string } {
+function getPasskeyInfo(passkey: PasskeyItem, locale: SupportedLocale): { name: string; icon?: string } {
   const entry = passkey.aaguid ? aaguids[passkey.aaguid] : undefined
   const name =
     passkey.name ||
     entry?.name ||
     (passkey.deviceType === 'singleDevice'
-      ? t('auth:user-profile.passkeys.fallback-security-key')
-      : t('auth:user-profile.passkeys.fallback-passkey'))
+      ? m.auth_userProfile_passkeys_fallbackSecurityKey({}, { locale })
+      : m.auth_userProfile_passkeys_fallbackPasskey({}, { locale }))
   return { name, icon: entry?.icon }
 }
 
@@ -216,17 +217,21 @@ interface PasskeyItem {
 
 // Client-only: the passkey list is fetched after mount, so formatting in the viewer's locale and time zone is safe here
 const PasskeyCreatedDate: FC<{ createdAt: Date }> = ({ createdAt }) => {
-  const { t, i18n } = useTranslation(['auth'])
+  const locale = useLocale()
   const formattedDate = useMemo(
-    () => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(new Date(createdAt)),
-    [createdAt, i18n.language],
+    () => new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(createdAt)),
+    [createdAt, locale],
   )
 
-  return <span className="text-xs text-fg-2">{t('auth:user-profile.passkeys.created', { date: formattedDate })}</span>
+  return (
+    <span className="text-xs text-fg-2">
+      {m.auth_userProfile_passkeys_created({ date: formattedDate }, { locale })}
+    </span>
+  )
 }
 
 const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading }) => {
-  const { t } = useTranslation(['auth'])
+  const locale = useLocale()
   const queryClient = useQueryClient()
   const confirmDelete = useConfirmDialog()
 
@@ -241,22 +246,22 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading 
   const [addState, handleAdd] = useAsyncFn(async () => {
     const res = await authClient.passkey.addPasskey()
     if (res.error) {
-      toast.error(t('auth:user-profile.passkeys.error', { error: formatErrorMessage(res.error) }))
+      toast.error(m.auth_userProfile_passkeys_error({ error: formatErrorMessage(res.error) }, { locale }))
       return
     }
-    toast.success(t('auth:user-profile.passkeys.added'))
+    toast.success(m.auth_userProfile_passkeys_added({}, { locale }))
     queryClient.invalidateQueries({ queryKey: ['passkeys'] })
-  }, [queryClient])
+  }, [queryClient, locale])
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirmDelete.confirm()
     if (!confirmed) return
     try {
       await authClient.passkey.deletePasskey({ id })
-      toast.success(t('auth:user-profile.passkeys.deleted'))
+      toast.success(m.auth_userProfile_passkeys_deleted({}, { locale }))
       queryClient.invalidateQueries({ queryKey: ['passkeys'] })
     } catch (e: unknown) {
-      toast.error(t('auth:user-profile.passkeys.error', { error: formatErrorMessage(e) }))
+      toast.error(m.auth_userProfile_passkeys_error({ error: formatErrorMessage(e) }, { locale }))
     }
   }
 
@@ -264,18 +269,20 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading 
     <div className="flex flex-col gap-4">
       <ConfirmDialog
         open={confirmDelete.open}
-        title={t('auth:user-profile.passkeys.confirm-delete-title')}
-        description={t('auth:user-profile.passkeys.confirm-delete-description')}
-        confirmLabel={t('auth:user-profile.passkeys.confirm-delete-button')}
+        title={m.auth_userProfile_passkeys_confirmDeleteTitle({}, { locale })}
+        description={m.auth_userProfile_passkeys_confirmDeleteDescription({}, { locale })}
+        confirmLabel={m.auth_userProfile_passkeys_confirmDeleteButton({}, { locale })}
         confirmColor="error"
-        cancelLabel={t('auth:user-profile.confirm-cancel')}
+        cancelLabel={m.auth_userProfile_confirmCancel({}, { locale })}
         onConfirm={confirmDelete.onConfirm}
         onCancel={confirmDelete.onCancel}
       />
 
       <div className="flex items-center gap-2">
         <IconPasskey className="text-lg text-fg-2" aria-hidden="true" />
-        <Heading className="text-base font-semibold text-fg-1 m-0">{t('auth:user-profile.passkeys.title')}</Heading>
+        <Heading className="text-base font-semibold text-fg-1 m-0">
+          {m.auth_userProfile_passkeys_title({}, { locale })}
+        </Heading>
       </div>
 
       {loading ? (
@@ -283,11 +290,11 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading 
           <CircularProgress size="1.5rem" />
         </div>
       ) : passkeys.length === 0 ? (
-        <p className="text-sm text-fg-2 m-0">{t('auth:user-profile.passkeys.empty')}</p>
+        <p className="text-sm text-fg-2 m-0">{m.auth_userProfile_passkeys_empty({}, { locale })}</p>
       ) : (
         <div className="flex flex-col gap-2">
           {passkeys.map((pk) => {
-            const info = getPasskeyInfo(pk, t)
+            const info = getPasskeyInfo(pk, locale)
             return (
               <div key={pk.id} className="glass-inset flex items-center gap-3 py-2 px-3">
                 {info.icon ? (
@@ -302,8 +309,8 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading 
                 <IconButton
                   size="small"
                   onClick={() => handleDelete(pk.id)}
-                  aria-label={t('auth:user-profile.passkeys.delete-named', { name: info.name })}
-                  title={t('auth:user-profile.passkeys.delete-named', { name: info.name })}
+                  aria-label={m.auth_userProfile_passkeys_deleteNamed({ name: info.name }, { locale })}
+                  title={m.auth_userProfile_passkeys_deleteNamed({ name: info.name }, { locale })}
                   className="!text-danger"
                 >
                   <IconMdiDelete className="text-lg" aria-hidden="true" />
@@ -321,7 +328,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading 
         startIcon={addState.loading ? <CircularProgress size="1rem" /> : <IconMdiPlus />}
         className="!self-start"
       >
-        {t('auth:user-profile.passkeys.add')}
+        {m.auth_userProfile_passkeys_add({}, { locale })}
       </Button>
     </div>
   )
@@ -337,10 +344,10 @@ interface SessionItem {
   createdAt: Date
 }
 
-function parseUserAgent(ua: string | null | undefined, t: TFunction<['auth']>): string {
-  if (!ua) return t('auth:user-profile.devices.unknown-device')
+function parseUserAgent(ua: string | null | undefined, locale: SupportedLocale): string {
+  if (!ua) return m.auth_userProfile_devices_unknownDevice({}, { locale })
 
-  let browser = t('auth:user-profile.devices.unknown-browser')
+  let browser: string = m.auth_userProfile_devices_unknownBrowser({}, { locale })
   if (ua.includes('Firefox/')) browser = 'Firefox'
   else if (ua.includes('Edg/')) browser = 'Edge'
   else if (ua.includes('Chrome/')) browser = 'Chrome'
@@ -353,14 +360,14 @@ function parseUserAgent(ua: string | null | undefined, t: TFunction<['auth']>): 
   else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS'
   else if (ua.includes('Linux')) os = 'Linux'
 
-  return os ? t('auth:user-profile.devices.browser-on-os', { browser, os }) : browser
+  return os ? m.auth_userProfile_devices_browserOnOs({ browser, os }, { locale }) : browser
 }
 
 const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTag }> = ({
   currentSessionToken,
   headingAs: Heading,
 }) => {
-  const { t } = useTranslation(['auth'])
+  const locale = useLocale()
   const queryClient = useQueryClient()
   const confirmRevoke = useConfirmDialog()
 
@@ -377,10 +384,10 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
     if (!confirmed) return
     try {
       await authClient.revokeSession({ token })
-      toast.success(t('auth:user-profile.devices.revoked'))
+      toast.success(m.auth_userProfile_devices_revoked({}, { locale }))
       queryClient.invalidateQueries({ queryKey: ['sessions'] })
     } catch (e: unknown) {
-      toast.error(t('auth:user-profile.devices.error', { error: formatErrorMessage(e) }))
+      toast.error(m.auth_userProfile_devices_error({ error: formatErrorMessage(e) }, { locale }))
     }
   }
 
@@ -388,17 +395,19 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
     <div className="flex flex-col gap-4">
       <ConfirmDialog
         open={confirmRevoke.open}
-        title={t('auth:user-profile.devices.confirm-revoke-title')}
-        description={t('auth:user-profile.devices.confirm-revoke-description')}
-        confirmLabel={t('auth:user-profile.devices.confirm-revoke-button')}
-        cancelLabel={t('auth:user-profile.confirm-cancel')}
+        title={m.auth_userProfile_devices_confirmRevokeTitle({}, { locale })}
+        description={m.auth_userProfile_devices_confirmRevokeDescription({}, { locale })}
+        confirmLabel={m.auth_userProfile_devices_confirmRevokeButton({}, { locale })}
+        cancelLabel={m.auth_userProfile_confirmCancel({}, { locale })}
         onConfirm={confirmRevoke.onConfirm}
         onCancel={confirmRevoke.onCancel}
       />
 
       <div className="flex items-center gap-2">
         <IconMdiDevices className="text-lg text-fg-2" aria-hidden="true" />
-        <Heading className="text-base font-semibold text-fg-1 m-0">{t('auth:user-profile.devices.title')}</Heading>
+        <Heading className="text-base font-semibold text-fg-1 m-0">
+          {m.auth_userProfile_devices_title({}, { locale })}
+        </Heading>
       </div>
 
       {loading ? (
@@ -415,11 +424,11 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
                 <div className="flex flex-col flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-fg-1 truncate">
-                      {parseUserAgent(session.userAgent, t)}
+                      {parseUserAgent(session.userAgent, locale)}
                     </span>
                     {isCurrent && (
                       <Chip
-                        label={t('auth:user-profile.devices.current')}
+                        label={m.auth_userProfile_devices_current({}, { locale })}
                         size="small"
                         color="success"
                         variant="outlined"
@@ -428,7 +437,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
                     )}
                   </div>
                   <span className="text-xs text-fg-2 num">
-                    {session.ipAddress || t('auth:user-profile.devices.unknown-ip')}
+                    {session.ipAddress || m.auth_userProfile_devices_unknownIp({}, { locale })}
                   </span>
                 </div>
                 {!isCurrent && (
@@ -438,7 +447,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
                     variant="text"
                     className="!text-xs !shrink-0"
                   >
-                    {t('auth:user-profile.devices.revoke')}
+                    {m.auth_userProfile_devices_revoke({}, { locale })}
                   </Button>
                 )}
               </div>
@@ -458,13 +467,15 @@ export const SecuritySection: FC<{
   /** `h1` as a page (/account/security); `h3` inside the account dialog, under its `h2` title */
   titleAs?: 'h1' | 'h3'
 }> = ({ currentSessionToken, idPrefix = 'security', titleAs: Title = 'h1' }) => {
-  const { t } = useTranslation(['auth'])
+  const locale = useLocale()
   const subheading: HeadingTag = Title === 'h1' ? 'h2' : 'h4'
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-1">
-        <Title className="text-lg font-semibold leading-snug text-fg-1 m-0">{t('auth:user-profile.security')}</Title>
+        <Title className="text-lg font-semibold leading-snug text-fg-1 m-0">
+          {m.auth_userProfile_security({}, { locale })}
+        </Title>
       </div>
 
       <PasswordSubsection idPrefix={idPrefix} headingAs={subheading} />

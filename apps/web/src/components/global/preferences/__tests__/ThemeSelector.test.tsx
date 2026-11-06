@@ -22,14 +22,14 @@ describe('appearance menus with the keyboard', () => {
 
   it('focuses the current choice on open, moves with the arrow keys and selects with Enter', () => {
     render(<ThemeSelector />, { wrapper: Providers })
-    fireEvent.click(screen.getByRole('button', { name: 'settings:theme.select' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Appearance' }))
 
     // Nothing remembered: "system" is current and receives focus
     expect(focused().getAttribute('role')).toBe('menuitemradio')
-    expect(focused().textContent).toContain('settings:theme.system')
+    expect(focused().textContent).toContain('System')
 
     fireEvent.keyDown(focused(), { key: 'ArrowUp' })
-    expect(focused().textContent).toContain('settings:theme.dark')
+    expect(focused().textContent).toContain('Dark')
 
     act(() => {
       fireEvent.keyDown(focused(), { key: 'Enter' })
@@ -40,7 +40,7 @@ describe('appearance menus with the keyboard', () => {
 
   it('lets the combined phone menu reach both language and appearance choices', () => {
     render(<DisplayPreferencesMenu />, { wrapper: Providers })
-    fireEvent.click(screen.getByRole('button', { name: 'settings:display-preferences.select' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Language and appearance' }))
 
     // Focus lands on an item, not on the popover paper
     expect(focused().getAttribute('role')).toMatch(/^menuitem/)
@@ -51,8 +51,8 @@ describe('appearance menus with the keyboard', () => {
       fireEvent.keyDown(focused(), { key: 'ArrowDown' })
     }
     expect([...reached].some((text) => text.includes('English'))).toBe(true)
-    expect([...reached].some((text) => text.includes('settings:theme.light'))).toBe(true)
+    expect([...reached].some((text) => text.includes('Light'))).toBe(true)
     // Subheaders are skipped
-    expect([...reached].some((text) => text === 'settings:language.select')).toBe(false)
+    expect([...reached].some((text) => text === 'Select language')).toBe(false)
   })
 })

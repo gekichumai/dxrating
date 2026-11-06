@@ -10,7 +10,6 @@ import {
   type ReactNode,
   useState,
 } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useWebHaptics } from 'web-haptics/react'
 import toast from 'react-hot-toast'
 import { match } from 'ts-pattern'
@@ -29,7 +28,9 @@ import { SheetAltNames } from './SheetAltNames'
 import { SheetDialogContent, type SheetDialogContentProps } from './SheetDialogContent'
 import { buildSheetPath } from './sheetLinks'
 import { SHEET_TABLE_ROW_COLUMNS, SheetRowLayoutContext, useSheetRowLayout } from './sheetRowLayout'
-import { getSheetTypeAltTextKey, SHEET_TYPE_IMAGES, SHEET_TYPE_UTAGE_2P_END_ADORNMENT_IMAGE } from './sheetTypeAssets'
+import { getSheetTypeAltText, SHEET_TYPE_IMAGES, SHEET_TYPE_UTAGE_2P_END_ADORNMENT_IMAGE } from './sheetTypeAssets'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export interface SheetListItemAnalyticsProps {
   source: SheetViewSource
@@ -221,7 +222,7 @@ SheetListItemContentView.displayName = 'SheetListItemContentView'
 
 export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
   ({ sheet, size = 'medium', className, enableSheetImage = true, SheetTitleProps, ListItemTextProps, ...rest }) => {
-    const { t } = useTranslation(['sheet'])
+    const locale = useLocale()
     const isTable = useSheetRowLayout() === 'table'
 
     return (
@@ -233,7 +234,7 @@ export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
         className={className}
         enableSheetImage={enableSheetImage}
         imageName={sheet.imageName}
-        imageAlt={t('sheet:cover-art-alt', { title: sheet.title })}
+        imageAlt={m.sheet_coverArtAlt({ title: sheet.title }, { locale })}
         ListItemTextProps={ListItemTextProps}
         {...rest}
       >
@@ -286,7 +287,7 @@ export const SheetDifficulty: FC<{
   serverIds?: readonly ServerEnum[]
   isLocked?: boolean
 }> = ({ difficulty, serverIds, isLocked }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const difficultyConfig = difficulty ? DIFFICULTIES[difficulty] : undefined
   const allUnavailable = (serverIds ?? []).length === 0
   if (!difficultyConfig) return null
@@ -320,17 +321,17 @@ export const SheetDifficulty: FC<{
       )}
       <span className="sr-only">
         {difficultyConfig.title}
-        {allUnavailable && ` ${t('sheet:badge.unavailable')}`}
-        {isLocked && ` ${t('sheet:badge.locked')}`}
+        {allUnavailable && ` ${m.sheet_badge_unavailable({}, { locale })}`}
+        {isLocked && ` ${m.sheet_badge_locked({}, { locale })}`}
       </span>
     </span>
   )
 }
 
 const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({ type, difficulty }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const isUtage = type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P
-  const altText = t(getSheetTypeAltTextKey(type))
+  const altText = getSheetTypeAltText(type, locale)
 
   if (isUtage) {
     const isUtage2P = type === TypeEnum.UTAGE2P
@@ -546,7 +547,7 @@ export const SheetTitle: FC<SheetTitleProps> = ({
   headingComponent: Heading = 'h3',
   className,
 }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const { title, searchAcronyms, difficulty, type, version } = sheet
   return (
     <div className="flex flex-col">
@@ -564,11 +565,11 @@ export const SheetTitle: FC<SheetTitleProps> = ({
           <IconButton
             size="small"
             className="shrink-0 !-mt-1"
-            aria-label={t('sheet:copy-title.tooltip')}
-            title={t('sheet:copy-title.tooltip')}
+            aria-label={m.sheet_copyTitle_tooltip({}, { locale })}
+            title={m.sheet_copyTitle_tooltip({}, { locale })}
             onClick={() => {
               navigator.clipboard.writeText(title)
-              toast.success(t('sheet:copy-title.toast-success'), {
+              toast.success(m.sheet_copyTitle_toastSuccess({}, { locale }), {
                 id: `copy-sheet-title-${title}`,
               })
             }}
