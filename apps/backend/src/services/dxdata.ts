@@ -6,7 +6,11 @@ export class DxdataDecodeError extends Data.TaggedError('DxdataDecodeError')<{
 }> {}
 
 import type { Context, Env } from 'hono'
+import { promisify } from 'node:util'
+import { brotliCompress, constants as zlibConstants } from 'node:zlib'
 import { API_CLIENT_HEADER } from './api-usage'
+
+const brotliCompressAsync = promisify(brotliCompress)
 
 const PRODUCTION_CHANNEL = 'production-v1'
 const API_SCHEMA_VERSION = 1
@@ -144,6 +148,30 @@ const successHeaders = (metadata: PublishedDxdataMetadata) =>
     'Content-Length': metadata.byteLength,
     'Content-Type': metadata.contentType,
     ETag: `"${metadata.bodySha256}"`,
+    Vary: 'Accept-Encoding',
+  })
+
+/** Whether the request accepts Brotli: `br` is listed with a non-zero quality, or `*` is */
+export const acceptsBrotli = (acceptEncoding: string | undefined) =>
+  acceptEncoding?.split(',').some((entry) => {
+    const [coding, ...params] = entry.trim().toLowerCase().split(';')
+    if (coding?.trim() !== 'br' && coding?.trim() !== '*') return false
+    const quality = params.map((param) => /^\s*q\s*=\s*([\d.]+)\s*$/.exec(param)?.[1]).find((q) => q !== undefined)
+    return quality === undefined || Number(quality) > 0
+  }) === true
+
+/**
+ * Compresses a catalog body with Brotli at the highest quality on the libuv thread pool, so the event loop keeps
+ * serving. It takes about 10 s for the 4 MB catalog and comes out about 40% smaller than what the edge serves when it
+ * compresses on the fly (about 400 KB instead of 640 KB), so it is done once per published body and kept.
+ */
+export const compressCatalogBody = (body: string) =>
+  brotliCompressAsync(Buffer.from(body), {
+    params: {
+      [zlibConstants.BROTLI_PARAM_QUALITY]: zlibConstants.BROTLI_MAX_QUALITY,
+      [zlibConstants.BROTLI_PARAM_MODE]: zlibConstants.BROTLI_MODE_TEXT,
+      [zlibConstants.BROTLI_PARAM_SIZE_HINT]: Buffer.byteLength(body),
+    },
   })
 
 const uncachedError = (c: Context, message: string, status: 500 | 503) => {
@@ -153,15 +181,36 @@ const uncachedError = (c: Context, message: string, status: 500 | 503) => {
   return c.json({ error: message }, status)
 }
 
-export const createDxdataEffect =
-  <E, R, H extends Env = Env>(
-    store: {
-      getPublishedMetadata: () => Effect.Effect<PublishedDxdataMetadata | undefined, E, R>
-      getSnapshotBody: (catalogRunId: string, bodySha256: string) => Effect.Effect<string | undefined, E, R>
-    },
-    reportError: (error: unknown, context: Context<H>) => void = () => {},
-  ) =>
-  (c: Context<H>) =>
+export const createDxdataEffect = <E, R, H extends Env = Env>(
+  store: {
+    getPublishedMetadata: () => Effect.Effect<PublishedDxdataMetadata | undefined, E, R>
+    getSnapshotBody: (catalogRunId: string, bodySha256: string) => Effect.Effect<string | undefined, E, R>
+  },
+  reportError: (error: unknown, context: Context<H>) => void = () => {},
+) => {
+  // The Brotli body of the published catalog, one at a time: a new publication replaces it
+  let compressed: { bodySha256: string; body: Promise<Buffer> } | undefined
+  const compressedBody = (metadata: PublishedDxdataMetadata) =>
+    Effect.gen(function* () {
+      if (compressed?.bodySha256 !== metadata.bodySha256) {
+        const body = yield* store.getSnapshotBody(metadata.catalogRunId, metadata.bodySha256)
+        if (body === undefined) return undefined
+        // Another request may have started it while this one read the body
+        if (compressed?.bodySha256 !== metadata.bodySha256) {
+          compressed = { bodySha256: metadata.bodySha256, body: compressCatalogBody(body) }
+        }
+      }
+      const entry = compressed
+      return yield* Effect.tryPromise({
+        try: () => entry.body,
+        catch: (cause) => {
+          // Try again on the next request rather than keep a failed compression
+          if (compressed === entry) compressed = undefined
+          return new DxdataDecodeError({ operation: 'compress published catalog body', cause })
+        },
+      })
+    })
+  return (c: Context<H>) =>
     Effect.gen(function* () {
       const metadata = yield* store.getPublishedMetadata()
       if (!metadata) return uncachedError(c, 'DX data catalog is unavailable', 503)
@@ -174,6 +223,16 @@ export const createDxdataEffect =
         return new Response(null, { status: 304, statusText: 'Not Modified', headers })
       }
       if (c.req.method === 'HEAD') return new Response(null, { status: 200, headers })
+      // The edge asks the origin for `gzip, br` and keeps the first encoding it gets for the ETag's lifetime, so the
+      // response waits for the Brotli body rather than hand the edge an uncompressed copy it would keep until the next
+      // publication. Only the first request after a publication waits, and the edge serves its stale copy meanwhile.
+      if (acceptsBrotli(c.req.header('Accept-Encoding'))) {
+        const brotli = yield* compressedBody(metadata)
+        if (brotli === undefined) return uncachedError(c, 'DX data catalog is unavailable', 503)
+        headers.set('Content-Encoding', 'br')
+        headers.set('Content-Length', brotli.byteLength.toString())
+        return new Response(new Uint8Array(brotli), { status: 200, headers })
+      }
       const body = yield* store.getSnapshotBody(metadata.catalogRunId, metadata.bodySha256)
       if (body === undefined) return uncachedError(c, 'DX data catalog is unavailable', 503)
       return new Response(body, { status: 200, headers })
@@ -189,3 +248,4 @@ export const createDxdataEffect =
         }),
       ),
     )
+}

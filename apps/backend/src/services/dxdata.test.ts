@@ -1,8 +1,10 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { Data, Effect } from 'effect'
+import { brotliDecompressSync } from 'node:zlib'
 import { describe, expect, it, vi } from 'vitest'
 import {
+  acceptsBrotli,
   createDxdataEffect,
   createPostgresDxdataEffects,
   DXDATA_BROWSER_CACHE_CONTROL,
@@ -49,7 +51,9 @@ const createStore = (options?: { metadata?: typeof metadata; body?: string }) =>
 const createApp = (store: FixtureStore, reportError: (error: unknown) => void = () => {}) => {
   const app = new Hono()
   app.use('*', cors(DXDATA_CORS_OPTIONS))
-  app.on(['GET', 'HEAD'], DXDATA_PATH, (context) => Effect.runPromise(createDxdataEffect(store, reportError)(context)))
+  // One handler for the app's lifetime, as in app.ts: it keeps the compressed body between requests
+  const handler = createDxdataEffect(store, reportError)
+  app.on(['GET', 'HEAD'], DXDATA_PATH, (context) => Effect.runPromise(handler(context)))
   return app
 }
 
@@ -100,6 +104,55 @@ describe('DX data catalog endpoint', () => {
     expect(response.headers.get('cdn-cache-control')).toBe(DXDATA_CDN_CACHE_CONTROL)
     expect(response.headers.get('cache-tag')).toBe('dxdata')
     expect(calls).toEqual(['metadata'])
+  })
+
+  it('serves a Brotli body to a caller that accepts it, compressed once per published body', async () => {
+    const { calls, store } = createStore()
+    const app = createApp(store)
+    const first = await app.request(DXDATA_PATH, { headers: { 'Accept-Encoding': 'gzip, br' } })
+
+    expect(first.status).toBe(200)
+    expect(first.headers.get('content-encoding')).toBe('br')
+    expect(first.headers.get('etag')).toBe(ETAG)
+    expect(first.headers.get('vary')).toBe('Accept-Encoding')
+    const encoded = Buffer.from(await first.arrayBuffer())
+    expect(first.headers.get('content-length')).toBe(encoded.byteLength.toString())
+    expect(brotliDecompressSync(encoded).toString()).toBe(BODY)
+
+    const second = await app.request(DXDATA_PATH, { headers: { 'Accept-Encoding': 'br' } })
+    expect(Buffer.from(await second.arrayBuffer()).equals(encoded)).toBe(true)
+    // The body is read once, for the first compression
+    expect(calls).toEqual(['metadata', 'body', 'metadata'])
+  })
+
+  it('compresses again once a new body is published', async () => {
+    const calls: string[] = []
+    let current = { metadata, body: BODY }
+    const store: FixtureStore = {
+      getPublishedMetadata: () => Effect.sync(() => (calls.push('metadata'), current.metadata)),
+      getSnapshotBody: () => Effect.sync(() => (calls.push('body'), current.body)),
+    }
+    const app = createApp(store)
+    await (await app.request(DXDATA_PATH, { headers: { 'Accept-Encoding': 'br' } })).arrayBuffer()
+
+    const next = '{"songs":[1]}'
+    current = { metadata: { ...metadata, bodySha256: 'c'.repeat(64), byteLength: next.length.toString() }, body: next }
+    const response = await app.request(DXDATA_PATH, { headers: { 'Accept-Encoding': 'br' } })
+    expect(response.headers.get('etag')).toBe(`"${'c'.repeat(64)}"`)
+    expect(brotliDecompressSync(Buffer.from(await response.arrayBuffer())).toString()).toBe(next)
+    expect(calls.filter((call) => call === 'body')).toHaveLength(2)
+  })
+
+  it.each([
+    ['gzip, br', true],
+    ['br;q=0.5', true],
+    ['*', true],
+    ['gzip', false],
+    ['br;q=0', false],
+    ['identity', false],
+    [undefined, false],
+  ])('reads Accept-Encoding %j as accepting Brotli: %s', (header, expected) => {
+    expect(acceptsBrotli(header)).toBe(expected)
   })
 
   it('lets the edge revalidate within a minute, since nothing purges it on publish', () => {
