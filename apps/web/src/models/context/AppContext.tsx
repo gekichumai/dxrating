@@ -55,6 +55,8 @@ export interface AppContextStates {
 }
 
 interface AppContextFns {
+  /** False on the server and until the stored choice has been applied after mount: the region is the default until then */
+  hydrated: boolean
   availableVersionUpdate: DXVersion | null
   dismissVersionUpdate: () => void
   setVersionAndRegion: (version: DXVersion, region: Region) => void
@@ -63,6 +65,7 @@ interface AppContextFns {
 export const AppContext = createContext<AppContext>({
   version: 'magical',
   region: 'jp',
+  hydrated: false,
   availableVersionUpdate: null,
   dismissVersionUpdate: () => {},
   setVersionAndRegion: () => {
@@ -133,11 +136,13 @@ export const AppContextProvider: FC<PropsWithChildren<object>> = ({ children }) 
   const [state, setState] = useState<AppContextStates>(() => getDefaultAppContext())
 
   const [availableVersionUpdate, setAvailableVersionUpdate] = useState<DXVersion | null>(null)
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     const stored = readStoredAppContext()
     setState(stored)
     setAvailableVersionUpdate(getAvailableVersionUpdate(stored))
+    setHydrated(true)
   }, [])
 
   const dismissVersionUpdate = useCallback(() => {
@@ -166,11 +171,12 @@ export const AppContextProvider: FC<PropsWithChildren<object>> = ({ children }) 
       version: state.version,
 
       region: state.region ?? 'jp',
+      hydrated,
       setVersionAndRegion,
       availableVersionUpdate,
       dismissVersionUpdate,
     }),
-    [state, setVersionAndRegion, availableVersionUpdate, dismissVersionUpdate],
+    [state, hydrated, setVersionAndRegion, availableVersionUpdate, dismissVersionUpdate],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

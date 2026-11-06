@@ -30,7 +30,6 @@ import { buildPlateShareImage } from '@/components/plates/plateShareImage'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { captureAnalyticsEvent } from '@/lib/analytics'
-import { readStoredAppContext } from '@/models/context/AppContext'
 import { useAppContext } from '@/models/context/useAppContext'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
@@ -51,7 +50,7 @@ const regionHref = (path: string, region: PlateRegion) => `${path}?region=${regi
  * that does not follows the region the visitor picked in the header, and a later header switch moves the page too.
  * Client-only, after mount: the server and edge-cached HTML always show the URL's region (Japan without one).
  */
-const useFollowSiteRegion = ({
+export const useFollowSiteRegion = ({
   region,
   explicit,
   available = () => true,
@@ -60,20 +59,13 @@ const useFollowSiteRegion = ({
   explicit: boolean
   available?: (candidate: PlateRegion) => boolean
 }) => {
-  const { region: siteRegion } = useAppContext()
+  const { region: siteRegion, hydrated } = useAppContext()
   const router = useRouter()
-  // The context starts on the server default and applies the stored choice in an effect; until it has, its region
-  // is not the visitor's
-  const stored = useRef<string | null>(null)
-  const synced = useRef(false)
+  // Until the context has applied the stored choice, its region is the server default, not the visitor's
   const previous = useRef<string | null>(null)
 
   useEffect(() => {
-    stored.current ??= readStoredAppContext().region
-    if (!synced.current) {
-      if (siteRegion !== stored.current) return
-      synced.current = true
-    }
+    if (!hydrated) return
     const first = previous.current === null
     if (!first && previous.current === siteRegion) return
     previous.current = siteRegion
@@ -84,7 +76,7 @@ const useFollowSiteRegion = ({
     const url = new URL(window.location.href)
     url.searchParams.set('region', target)
     void router.navigate({ href: `${url.pathname}${url.search}${url.hash}`, replace: first })
-  }, [siteRegion, region, explicit, available, router])
+  }, [siteRegion, hydrated, region, explicit, available, router])
 }
 
 const COMBO_RANK: Record<NonNullable<PlateRecord['comboFlag']>, number> = { fc: 1, fcp: 2, ap: 3, app: 4 }
