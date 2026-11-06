@@ -28,7 +28,7 @@ describe('SongSheetTabs', () => {
     await i18n.changeLanguage('en')
   })
 
-  it('uses descriptive type image alt text for DX and Standard tabs with text fallback for other types', () => {
+  it('shows chart types as a segmented control with short codes and full accessible names', () => {
     render(
       <SongSheetTabs
         sheets={[
@@ -46,18 +46,17 @@ describe('SongSheetTabs', () => {
       />,
     )
 
-    expect(screen.getByRole('img', { name: 'DX chart' }).getAttribute('src')).toBe(
-      'https://shama.dxrating.net/images/type_dx.png',
-    )
-    expect(screen.getByRole('img', { name: 'Standard chart' }).getAttribute('src')).toBe(
-      'https://shama.dxrating.net/images/type_sd.png',
-    )
+    const typeTabs = screen.getByRole('tablist', { name: 'Chart type' })
+    expect(typeTabs).toBeTruthy()
+    const dx = screen.getByRole('tab', { name: 'DX' })
+    expect(dx.textContent).toContain('DX')
+    expect(dx.getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByRole('tab', { name: 'Standard' }).textContent).toContain('STD')
     expect(screen.getByRole('tab', { name: 'Utage' })).toBeTruthy()
     expect(screen.getByRole('tab', { name: 'Buddy' })).toBeTruthy()
-    expect(screen.queryByRole('img', { name: 'Utage' })).toBeNull()
   })
 
-  it('localizes type image alt text', async () => {
+  it('shows a lone chart type as a localized badge instead of a control', async () => {
     await i18n.changeLanguage('ja')
 
     render(
@@ -72,6 +71,7 @@ describe('SongSheetTabs', () => {
       />,
     )
 
-    expect(screen.getByRole('img', { name: 'でらっくす譜面' })).toBeTruthy()
+    expect(screen.queryByRole('tablist', { name: '譜面タイプ' })).toBeNull()
+    expect(screen.getByText('でらっくす')).toBeTruthy()
   })
 })

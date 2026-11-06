@@ -36,7 +36,7 @@ export const SheetSortSelect: FC<{
     () => ({
       initial: { opacity: 0 },
       animate: { scale: 1, opacity: 1 },
-      exit: { scale: 0, opacity: 0 },
+      exit: { scale: 0.96, opacity: 0 },
     }),
     [],
   )
@@ -49,9 +49,11 @@ export const SheetSortSelect: FC<{
           key={field.id}
           render={({ field }) => (
             <FormControl>
-              <InputLabel id={`sorts.${index}.label`}>{t('sheet:sort.predicate', { index: index + 1 })}</InputLabel>
+              <InputLabel id={`sorts.${index}.label`}>
+                {t(index === 0 ? 'sheet:sort.by' : 'sheet:sort.then-by')}
+              </InputLabel>
               <Select
-                label={t('sheet:sort.predicate', { index: index + 1 })}
+                label={t(index === 0 ? 'sheet:sort.by' : 'sheet:sort.then-by')}
                 labelId={`sorts.${index}.label`}
                 id={`sorts.${index}`}
                 value={SortPredicateTransformer.from(field.value)}
@@ -87,7 +89,7 @@ export const SheetSortSelect: FC<{
           <MotionButton
             layout
             onClick={() => append({ descriptor: 'internalLevelValue', direction: 'desc' })}
-            startIcon={<MdiAdd />}
+            startIcon={<MdiAdd aria-hidden="true" />}
             variant="contained"
             variants={addSortButtonVariants}
             initial="initial"

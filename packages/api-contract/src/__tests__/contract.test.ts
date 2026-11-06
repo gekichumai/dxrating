@@ -9,7 +9,15 @@ import {
 
 describe('publicAppContract', () => {
   it('exposes browser-callable routes without backend-only routes', () => {
-    expect(Object.keys(publicAppContract)).toEqual(['tags', 'comments', 'aliases', 'analytics', 'arcades', 'lxns'])
+    expect(Object.keys(publicAppContract)).toEqual([
+      'tags',
+      'comments',
+      'aliases',
+      'analytics',
+      'arcades',
+      'maimaiNet',
+      'lxns',
+    ])
     expect('maimai' in publicAppContract).toBe(false)
     expect('chartOgImage' in publicAppContract).toBe(false)
     expect('monitoring' in publicAppContract).toBe(false)

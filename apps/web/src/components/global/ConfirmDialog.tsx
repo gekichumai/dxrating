@@ -1,5 +1,5 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
-import { type FC, type ReactNode, useCallback, useState } from 'react'
+import { type FC, type ReactNode, useCallback, useId, useState } from 'react'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -7,6 +7,7 @@ interface ConfirmDialogProps {
   description?: ReactNode
   confirmLabel: string
   cancelLabel: string
+  /** `error` only for actions that lose data or access; reversible ones such as signing out stay `primary` */
   confirmColor?: 'error' | 'primary' | 'warning'
   onConfirm: () => void
   onCancel: () => void
@@ -18,25 +19,44 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   description,
   confirmLabel,
   cancelLabel,
-  confirmColor = 'error',
+  confirmColor = 'primary',
   onConfirm,
   onCancel,
-}) => (
-  <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
-    <DialogTitle>{title}</DialogTitle>
-    {description && (
-      <DialogContent>
-        <DialogContentText>{description}</DialogContentText>
-      </DialogContent>
-    )}
-    <DialogActions>
-      <Button onClick={onCancel}>{cancelLabel}</Button>
-      <Button onClick={onConfirm} color={confirmColor} variant="contained">
-        {confirmLabel}
-      </Button>
-    </DialogActions>
-  </Dialog>
-)
+}) => {
+  const id = useId()
+  const titleId = `${id}-title`
+  const descriptionId = `${id}-description`
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onCancel}
+      maxWidth="xs"
+      fullWidth
+      aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
+    >
+      <DialogTitle id={titleId} className="!text-lg !font-semibold !leading-snug !text-fg-1 !pb-2">
+        {title}
+      </DialogTitle>
+      {description && (
+        <DialogContent>
+          <DialogContentText id={descriptionId} className="!text-sm !text-fg-2 text-pretty">
+            {description}
+          </DialogContentText>
+        </DialogContent>
+      )}
+      <DialogActions className="!px-4 !pb-4 !gap-1">
+        <Button onClick={onCancel} color="inherit">
+          {cancelLabel}
+        </Button>
+        <Button onClick={onConfirm} color={confirmColor} variant="contained">
+          {confirmLabel}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
 
 export function useConfirmDialog() {
   const [state, setState] = useState<{

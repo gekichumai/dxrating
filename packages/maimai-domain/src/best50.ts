@@ -181,8 +181,24 @@ function getEntryBucket(
   region: Region,
 ): Best50Bucket | null {
   if (entry.authoritativeBest50Hint) return entry.authoritativeBest50Hint.bucket
-  if (isB15Sheet(entry.sheet.version, appVersion, region)) return 'b15'
-  if (isB35Sheet(entry.sheet.version, appVersion, region)) return 'b35'
+  return resolveBest50Bucket(entry.sheet.version, appVersion, region)
+}
+
+/**
+ * The B50 bucket a chart competes in: an authoritative provider hint (CN Diving Fish imports) wins, otherwise the
+ * chart version decides. The single rule shared by `calculateBest50` and features that project gains onto it.
+ */
+export function resolveBest50Bucket(
+  sheetVersion: Version,
+  appVersion: Version,
+  region: Region,
+  source?: RatingEntry['source'],
+): Best50Bucket | null {
+  if (region === 'cn' && source?.provider === 'diving-fish' && source.best50Bucket !== undefined) {
+    return source.best50Bucket
+  }
+  if (isB15Sheet(sheetVersion, appVersion, region)) return 'b15'
+  if (isB35Sheet(sheetVersion, appVersion, region)) return 'b35'
   return null
 }
 
@@ -268,11 +284,31 @@ export function chooseAuthoritativeBest50Hint(
 ): AuthoritativeBest50Hint | null {
   if (!a) return b
   if (!b) return a
-  const ratingDelta = b.rating.ratingAwardValue - a.rating.ratingAwardValue
-  if (ratingDelta !== 0) return ratingDelta > 0 ? b : a
+  return preferBest50Hint(
+    { bucket: a.bucket, ratingAwardValue: a.rating.ratingAwardValue, achievementRate: a.achievementRate },
+    { bucket: b.bucket, ratingAwardValue: b.rating.ratingAwardValue, achievementRate: b.achievementRate },
+  ) === 'a'
+    ? a
+    : b
+}
+
+export interface Best50HintCandidate {
+  bucket: Best50Bucket
+  /** Rating award of the entry carrying the hint, AP bonus included */
+  ratingAwardValue: number
+  achievementRate: number
+}
+
+/**
+ * Which of two conflicting provider bucket hints of one chart wins: the hint of the higher-rated entry, then the
+ * higher achievement, then B15. The single rule of `calculateBest50`; record grouping must use it too.
+ */
+export function preferBest50Hint(a: Best50HintCandidate, b: Best50HintCandidate): 'a' | 'b' {
+  const ratingDelta = b.ratingAwardValue - a.ratingAwardValue
+  if (ratingDelta !== 0) return ratingDelta > 0 ? 'b' : 'a'
   const achievementDelta = b.achievementRate - a.achievementRate
-  if (achievementDelta !== 0) return achievementDelta > 0 ? b : a
-  return b.bucket === 'b15' ? b : a
+  if (achievementDelta !== 0) return achievementDelta > 0 ? 'b' : 'a'
+  return b.bucket === 'b15' ? 'b' : 'a'
 }
 
 function calculateStatistics(b15: CalculatedRatingEntry[], b35: CalculatedRatingEntry[]): Best50Result['statistics'] {

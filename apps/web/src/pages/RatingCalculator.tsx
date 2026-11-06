@@ -1,13 +1,11 @@
 import {
   Alert,
-  AlertTitle,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControlLabel,
-  Grow,
   IconButton,
   Paper,
   Switch,
@@ -53,8 +51,10 @@ import { ClearButton } from '../components/rating/io/ClearButton'
 import { ExportMenu } from '../components/rating/io/ExportMenu'
 import { NetImportSettingsButton } from '../components/rating/io/import/NetImportSettingsButton'
 import { ImportMenu } from '../components/rating/io/ImportMenu'
+import { ImportUndoBanner } from '../components/rating/io/import/ImportUndoBanner'
 import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
-import { useRatingEntries } from '../components/rating/useRatingEntries'
+import { useRatingEntries, useRatingView } from '../components/rating/useRatingEntries'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { SheetListItem, SheetListItemContent } from '../components/sheet/SheetListItem'
 import { useScoreEntries, useScoreRepository } from '../models/scores/useScoreRepository'
 import { achievementRateBand, captureAnalyticsEvent } from '../lib/analytics'
@@ -62,6 +62,8 @@ import { type FlattenedSheet, useSheets } from '../songs'
 import type { Rating } from '../utils/rating'
 import { DIFFICULTIES } from '../models/difficulties'
 import './rating-table.css'
+import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
+import { switchFocusRing } from '../components/rating/focusRing'
 
 export interface Entry {
   sheet: FlattenedSheet
@@ -92,7 +94,7 @@ const RatingCalculatorRowActions: FC<{
 
   return (
     <>
-      <Dialog TransitionComponent={Grow} open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="xs">
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="xs">
         <DialogTitle>{t('rating-calculator:table.remove-dialog.title')}</DialogTitle>
         <DialogContent>{sheet && <SheetListItemContent sheet={sheet} />}</DialogContent>
         <DialogActions>
@@ -137,6 +139,8 @@ export const RatingCalculator = () => {
   const repository = useScoreRepository()
   const { data: sheets } = useSheets()
   const [showOnlyB50, setShowOnlyB50] = useState(false)
+  const ratingView = useRatingView()
+  const navigate = useNavigate()
   const [compactMode, setCompactMode] = useState(false)
   const { t } = useTranslation(['rating-calculator'])
 
@@ -168,50 +172,39 @@ export const RatingCalculator = () => {
   return (
     <div className="rating-calculator flex-container w-full pb-global">
       <div className="rating-overview">
-        <Alert icon={false} severity="info" className="rating-summary px-4 py-2" classes={{ message: 'w-full' }}>
-          <AlertTitle className="font-bold">{t('rating-calculator:breakdown.title')}</AlertTitle>
-          <RatingCalculatorStatistics />
-        </Alert>
+        <section className="glass rating-summary px-4 py-3" aria-labelledby="rating-breakdown-title">
+          <RatingCalculatorStatistics titleId="rating-breakdown-title" />
+        </section>
 
         <div className="rating-tools">
-          <Alert
-            icon={false}
-            severity="info"
-            className="w-full px-4 py-2"
-            classes={{
-              message: 'w-full',
-            }}
-          >
-            <AlertTitle className="font-bold">
+          <section className="glass w-full px-4 py-3" aria-labelledby="rating-records-title">
+            <h2 id="rating-records-title" className="section-title m-0">
               {allEntries?.length
                 ? t('rating-calculator:auto-save.saved-records', { count: allEntries.length })
                 : t('rating-calculator:auto-save.title')}
-            </AlertTitle>
+            </h2>
 
-            <div className="mt-2">
+            <div className="rating-oneshot mt-2">
               <RenderToOneShotImageButton />
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              <div className="flex items-center gap-2">
-                <ImportMenu />
-                <NetImportSettingsButton />
-              </div>
-              <div className="flex flex-1 items-center gap-2">
-                <ExportMenu />
-                <div className="flex-1" />
-                <ClearButton />
-              </div>
+            <div className="rating-io-actions mt-2">
+              <ImportMenu />
+              <NetImportSettingsButton />
+              <ExportMenu />
+              <ClearButton />
             </div>
-          </Alert>
+          </section>
+          <ImportUndoBanner />
         </div>
       </div>
 
-      <div className={clsx('rating-records w-full', compactMode && 'rating-records--compact')}>
+      <div className={clsx('glass rating-records w-full', compactMode && 'rating-records--compact')}>
         <div className="rating-table-controls" role="group" aria-label={t('rating-calculator:quick-actions.title')}>
           <FormControlLabel
             control={
               <Switch
+                sx={switchFocusRing}
                 checked={showOnlyB50}
                 onChange={() => {
                   const enabled = !showOnlyB50
@@ -229,6 +222,7 @@ export const RatingCalculator = () => {
           <FormControlLabel
             control={
               <Switch
+                sx={switchFocusRing}
                 checked={compactMode}
                 onChange={() => {
                   const enabled = !compactMode
@@ -246,7 +240,31 @@ export const RatingCalculator = () => {
               </div>
             }
           />
+
+          <FormControlLabel
+            control={
+              <Switch
+                sx={switchFocusRing}
+                checked={ratingView === 'ap50'}
+                onChange={() => {
+                  const enabled = ratingView !== 'ap50'
+                  void navigate({ to: '/rating', search: enabled ? { view: 'ap50' } : {}, replace: true })
+                  captureAnalyticsEvent('rating_calculator_view_changed', { setting: 'ap50', enabled })
+                }}
+              />
+            }
+            label={t('rating-calculator:quick-actions.ap50')}
+          />
+
+          <Button component={Link} to="/me/records" size="small" variant="text">
+            {t('toplists:entry-link')}
+          </Button>
         </div>
+        {ratingView === 'ap50' && (
+          <Alert severity="info" className="mb-2">
+            {t('rating-calculator:quick-actions.ap50-hint')}
+          </Alert>
+        )}
         <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
         <RatingCalculatorTableContent compactMode={compactMode} showOnlyB50={showOnlyB50} />
 
@@ -267,9 +285,10 @@ const RatingCalculatorIncludedInCell: FC<{
   return (
     <span
       className={clsx(
-        'inline-block tabular-nums font-mono tracking-tighter w-12 leading-none py-1.5 rounded-full text-white text-center shadow select-none',
-        includedIn === 'b15' && 'bg-amber-500',
-        includedIn === 'b35' && 'bg-cyan-500',
+        'inline-block num w-12 leading-none py-1.5 rounded-full text-center text-xs font-semibold select-none',
+        // A pale fill with a deep label of the same hue (>=4.5:1); both ends mirror on the dark theme
+        includedIn === 'b15' && 'bg-amber-100 text-amber-900',
+        includedIn === 'b35' && 'bg-cyan-100 text-cyan-900',
       )}
     >
       {includedIn.toUpperCase()}
@@ -278,26 +297,24 @@ const RatingCalculatorIncludedInCell: FC<{
 })
 RatingCalculatorIncludedInCell.displayName = 'memo(RatingCalculatorIncludedInCell)'
 
-const COMBO_FLAG_CONFIG: Record<NonNullable<ComboFlag>, { label: string; color: string; rank: number }> = {
-  fc: { label: 'FC', color: '#22bb5b', rank: 1 },
-  fcp: { label: 'FC+', color: '#169b48', rank: 2 },
-  ap: { label: 'AP', color: '#f5c31a', rank: 3 },
-  app: { label: 'AP+', color: '#e5a800', rank: 4 },
+// Pale fills with deep labels of the same hue (>=4.5:1 at 12px); the adaptive palette mirrors both on the dark theme
+const COMBO_FLAG_CONFIG: Record<NonNullable<ComboFlag>, { label: string; className: string; rank: number }> = {
+  fc: { label: 'FC', className: 'bg-green-100 text-green-800', rank: 1 },
+  fcp: { label: 'FC+', className: 'bg-green-200 text-green-900', rank: 2 },
+  ap: { label: 'AP', className: 'bg-amber-100 text-amber-800', rank: 3 },
+  app: { label: 'AP+', className: 'bg-amber-200 text-amber-900', rank: 4 },
 }
 
-const SYNC_FLAG_CONFIG: Record<NonNullable<SyncFlag>, { label: string; color: string; rank: number }> = {
-  sync: { label: 'SYNC', color: '#64b5f6', rank: 1 },
-  fs: { label: 'FS', color: '#42a5f5', rank: 2 },
-  fsp: { label: 'FS+', color: '#1e88e5', rank: 3 },
-  fsd: { label: 'FSD', color: '#e040fb', rank: 4 },
-  fsdp: { label: 'FSD+', color: '#c51dd4', rank: 5 },
+const SYNC_FLAG_CONFIG: Record<NonNullable<SyncFlag>, { label: string; className: string; rank: number }> = {
+  sync: { label: 'SYNC', className: 'bg-sky-100 text-sky-800', rank: 1 },
+  fs: { label: 'FS', className: 'bg-blue-100 text-blue-800', rank: 2 },
+  fsp: { label: 'FS+', className: 'bg-blue-200 text-blue-900', rank: 3 },
+  fsd: { label: 'FSD', className: 'bg-fuchsia-100 text-fuchsia-800', rank: 4 },
+  fsdp: { label: 'FSD+', className: 'bg-fuchsia-200 text-fuchsia-900', rank: 5 },
 }
 
-const FlagPill: FC<{ label: string; color: string }> = ({ label, color }) => (
-  <span
-    className="rounded-full px-2 text-xs leading-relaxed text-white shadow-[0.0625rem_0.125rem_0_0_#0b38714D] select-none"
-    style={{ backgroundColor: color }}
-  >
+const FlagPill: FC<{ label: string; className: string }> = ({ label, className }) => (
+  <span className={clsx('rounded-full px-2 text-xs font-semibold leading-relaxed select-none', className)}>
     {label}
   </span>
 )
@@ -307,7 +324,7 @@ const RatingCalculatorComboFlagCell: FC<{
 }> = memo(({ row }) => {
   const { comboFlag } = row.original
   if (!comboFlag) return null
-  return <FlagPill label={COMBO_FLAG_CONFIG[comboFlag].label} color={COMBO_FLAG_CONFIG[comboFlag].color} />
+  return <FlagPill label={COMBO_FLAG_CONFIG[comboFlag].label} className={COMBO_FLAG_CONFIG[comboFlag].className} />
 })
 RatingCalculatorComboFlagCell.displayName = 'memo(RatingCalculatorComboFlagCell)'
 
@@ -316,7 +333,7 @@ const RatingCalculatorSyncFlagCell: FC<{
 }> = memo(({ row }) => {
   const { syncFlag } = row.original
   if (!syncFlag) return null
-  return <FlagPill label={SYNC_FLAG_CONFIG[syncFlag].label} color={SYNC_FLAG_CONFIG[syncFlag].color} />
+  return <FlagPill label={SYNC_FLAG_CONFIG[syncFlag].label} className={SYNC_FLAG_CONFIG[syncFlag].className} />
 })
 RatingCalculatorSyncFlagCell.displayName = 'memo(RatingCalculatorSyncFlagCell)'
 
@@ -341,11 +358,13 @@ const RatingChartCell: FC<{ row: Row<Entry>; compactMode: boolean }> = ({ row, c
         />
       )}
       <span className="rating-chart-copy">
-        <span className="rating-chart-title" title={sheet.title}>
+        <span className="rating-chart-title" title={sheet.title} lang="ja" translate="no">
           {sheet.title}
         </span>
         <span className="rating-chart-meta">
-          <span style={{ color: difficulty?.color }}>{difficulty?.title ?? sheet.difficulty}</span>
+          <span className={difficultyInkClassName} style={difficultyInkStyle(sheet.difficulty)}>
+            {difficulty?.title ?? sheet.difficulty}
+          </span>
           <span>
             {sheet.type.toUpperCase()} ·{' '}
             {sheet.isTypeUtage ? sheet.level : (sheet.internalLevelValue?.toFixed(1) ?? sheet.level)}
@@ -362,9 +381,7 @@ const RatingChartCell: FC<{ row: Row<Entry>; compactMode: boolean }> = ({ row, c
 
 const RatingCalculatorAchievementRateCell: FC<{
   row: Row<Entry>
-}> = ({ row }) => (
-  <span className="font-sans tracking-wide tabular-nums">{row.original.achievementRate.toFixed(4)}%</span>
-)
+}> = ({ row }) => <span className="num">{row.original.achievementRate.toFixed(4)}%</span>
 
 const RATING_COLUMN_IDS = ['chart', 'includedIn', 'comboFlag', 'syncFlag', 'achievementRate', 'rating', 'actions']
 
@@ -398,9 +415,7 @@ function RatingCalculatorScroller({ ref, ...props }: ScrollerProps & { ref?: Rea
 
 const RatingCalculatorRatingCell: FC<{
   row: Row<Entry>
-}> = ({ row }) => (
-  <span className="font-sans tabular-nums">{row.original.rating ? row.original.rating.ratingAwardValue : '-'}</span>
-)
+}> = ({ row }) => <span className="num">{row.original.rating ? row.original.rating.ratingAwardValue : '-'}</span>
 
 const RatingCalculatorTableRowContent: FC<{
   row: Row<Entry>
@@ -568,12 +583,13 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
                       <div
                         className={clsx(
                           'inline-flex items-center overflow-hidden relative',
-                          header.column.getIsSorted() && 'bg-gray-900/50 text-zinc-100 rounded-full',
+                          header.column.getIsSorted() && 'bg-accent-strong text-on-accent rounded-full',
                         )}
                       >
                         <IconMdiArrowDown
+                          aria-hidden="true"
                           className={clsx(
-                            'ml-1 transition mr-0.5',
+                            'ml-1 mr-0.5 transition-[rotate,transform,opacity] duration-150 motion-reduce:transition-none',
                             {
                               asc: 'inline-flex rotate-180',
                               desc: 'inline-flex rotate-0',
@@ -584,9 +600,17 @@ function RatingCalculatorTableContent({ compactMode, showOnlyB50 }: { compactMod
                           )}
                         />
                         {header.column.getIsSorted() && sorting.length > 1 && (
-                          <div className="inline-flex items-center justify-center text-sm px-2 font-bold bg-gray-9/50">
-                            {header.column.getSortIndex() + 1}
-                          </div>
+                          <>
+                            <span
+                              aria-hidden="true"
+                              className="inline-flex items-center justify-center text-sm px-2 font-bold"
+                            >
+                              {header.column.getSortIndex() + 1}
+                            </span>
+                            <span className="sr-only">
+                              {t('rating-calculator:table.sort-priority', { n: header.column.getSortIndex() + 1 })}
+                            </span>
+                          </>
                         )}
                       </div>
                     </button>
