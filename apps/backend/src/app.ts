@@ -6,6 +6,7 @@ import { cors } from 'hono/cors'
 import { etag, RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { Authentication } from './auth'
+import { viewerFromSession } from './proofs/viewer-is'
 import { Data, Effect, Option } from 'effect'
 import { HttpBody } from 'effect/http'
 import { appRuntime, runApp, superviseApp } from './runtime'
@@ -750,6 +751,7 @@ app.all('/api/v1/*', (c) =>
               'effect/context': effectContext,
               'effect/wrap': superviseApi,
               user: session?.user,
+              viewer: session?.user ? viewerFromSession(session.user) : undefined,
               signal: c.req.raw.signal,
             },
           }),

@@ -13,6 +13,19 @@ export const CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v1/dxdata`
 export const CATALOG_CACHE_NAME = 'dxrating-catalog-v1'
 const ETAG_HEADER = 'x-dxrating-catalog-etag'
 
+const BUILD_CATALOG_UPDATED_AT = import.meta.env.VITE_CATALOG_SNAPSHOT_UPDATED_AT ?? ''
+
+/**
+ * The URL the browser requests the catalog from. The API's edge cache keeps a copy for hours (CDN-Cache-Control),
+ * while each release bundles the origin's current catalog as its snapshot, so the plain URL usually answers with a
+ * catalog older than the build, which is then refused for the snapshot. Naming the build's snapshot in the query
+ * gives every build its own edge cache entry: its first request in a data center reaches the origin, which is never
+ * older than the snapshot it was taken from, and the rest are edge hits. Cache Storage keeps the plain CATALOG_URL.
+ */
+export const CATALOG_REQUEST_URL = BUILD_CATALOG_UPDATED_AT
+  ? `${CATALOG_URL}?build=${encodeURIComponent(BUILD_CATALOG_UPDATED_AT)}`
+  : CATALOG_URL
+
 type CatalogResponse = { document: SongCatalogDocument; text: string; etag: string | null }
 
 // A cold load waits this long for the API to respond, then this long for the body, before it falls back to the
@@ -21,7 +34,7 @@ const API_RESPONSE_DEADLINE_MS = 10_000
 const API_BODY_DEADLINE_MS = 60_000
 
 const catalogTime = (updatedAt: string) => Date.parse(updatedAt.replace(/(\.\d{3})\d+/, '$1'))
-const BUILD_CATALOG_TIME = catalogTime(import.meta.env.VITE_CATALOG_SNAPSHOT_UPDATED_AT ?? '')
+const BUILD_CATALOG_TIME = catalogTime(BUILD_CATALOG_UPDATED_AT)
 
 /**
  * Whether a catalog is older than the snapshot this build renders with: it may lack songs the server-rendered page
@@ -127,7 +140,7 @@ const withDeadline = <T>(promise: Promise<T>, ms: number, message: string) =>
 async function fetchApiCatalog(): Promise<CatalogResponse> {
   // The deadlines settle the load; the request itself is left to finish or fail
   const response = await withDeadline(
-    fetch(CATALOG_URL),
+    fetch(CATALOG_REQUEST_URL),
     API_RESPONSE_DEADLINE_MS,
     'The catalog API did not respond in time',
   )
@@ -155,7 +168,7 @@ async function fetchCatalog(): Promise<CatalogResponse> {
 
 async function revalidateCatalog(cache: Cache, etag: string | null) {
   try {
-    const response = await fetch(CATALOG_URL, {
+    const response = await fetch(CATALOG_REQUEST_URL, {
       cache: 'no-store',
       headers: etag ? { 'If-None-Match': etag } : {},
     })

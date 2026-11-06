@@ -67,7 +67,8 @@ vi.mock('@marsidev/react-turnstile', () => {
 })
 
 describe('LoginForm Turnstile across a widget replacement', () => {
-  // Loading LoginForm the first time compiles its message modules; keep that out of the per-test timeout
+  // The first import of LoginForm transforms its whole module graph, which takes seconds when the full suite runs in
+  // parallel; do it once here instead of inside the 5s per-test timeout
   beforeAll(async () => {
     initI18n()
     await import('../LoginForm')
