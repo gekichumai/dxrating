@@ -1,4 +1,5 @@
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
+import { useResolvedTheme } from '@/utils/useResolvedTheme'
 import { Alert, Button, Chip, CircularProgress, Divider, TextField } from '@mui/material'
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -48,6 +49,7 @@ export const LoginForm = ({
   const [error, setError] = useState<string | null>(null)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
+  const resolvedTheme = useResolvedTheme()
   const lastUsedMethod = authClient.getLastUsedLoginMethod() as AuthProvider | null
   const isLastUsed = (provider: AuthProvider) => lastUsedMethod === provider
 
@@ -298,7 +300,8 @@ export const LoginForm = ({
             siteKey={TURNSTILE_SITE_KEY}
             onSuccess={setTurnstileToken}
             onExpire={() => setTurnstileToken(null)}
-            options={{ size: 'flexible', theme: 'light', appearance: 'interaction-only' }}
+            // The widget's iframe takes a theme option rather than CSS: follow the page theme, OS preference until known
+            options={{ size: 'flexible', theme: resolvedTheme ?? 'auto', appearance: 'interaction-only' }}
             style={{ borderRadius: 12, overflow: 'hidden' }}
           />
         )}

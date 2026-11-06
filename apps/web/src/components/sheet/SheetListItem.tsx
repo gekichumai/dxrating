@@ -12,7 +12,6 @@ import MdiTrashCan from '~icons/mdi/trash-can'
 import { DIFFICULTIES } from '../../models/difficulties'
 import { captureAnalyticsEvent, type SheetViewSource } from '../../lib/analytics'
 import type { FlattenedSheet } from '../../songs'
-import { useIsLargeDevice } from '../../utils/breakpoints'
 import { FadedImage } from '../global/FadedImage'
 import { ResponsiveDialog } from '../global/ResponsiveDialog'
 import { AddSheetAltNameButton } from './AddSheetAltNameButton'
@@ -53,7 +52,6 @@ export const SheetListItem: FC<{
   }) => {
     const haptic = useWebHaptics()
     const [internalOpen, setInternalOpen] = useState(false)
-    const isLargeDevice = useIsLargeDevice()
 
     const isControlled = dialogOpen !== undefined
     const open = isControlled ? dialogOpen : internalOpen
@@ -88,7 +86,8 @@ export const SheetListItem: FC<{
               is_rating_eligible: sheet.isRatingEligible,
             })
           }}
-          disableGutters={!isLargeDevice}
+          // Horizontal padding is fixed by !px-4 at every width. Gutters must not depend on the viewport (a window-width
+          // hook renders "mobile" on the server and changed the class during hydration on wide screens).
           className={clsx(
             'w-full cursor-pointer transition-colors duration-150 hover:duration-25 !px-4 no-underline text-inherit',
             open && '!bg-zinc-300/80',
