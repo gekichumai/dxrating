@@ -122,7 +122,7 @@ export const InternalLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<H
     return (
       <>
         <a ref={anchorRef} href={href} onClick={handleClick} aria-busy={navigating || undefined} {...rest} />
-        {navigating && <LinkPendingSpinner anchorRef={anchorRef} />}
+        {navigating && <PendingSpinner anchorRef={anchorRef} />}
       </>
     )
   },
@@ -152,8 +152,11 @@ export const placeLinkSpinner = (anchor: HTMLElement, viewportWidth: number): Sp
   return { left: box.right - SPINNER_SIZE - inset, top: box.top + inset + SPINNER_SIZE / 2, inset: true }
 }
 
-/** Mounted after a click; shows after the feedback delay and follows the link if the page scrolls */
-const LinkPendingSpinner: FC<{ anchorRef: RefObject<HTMLAnchorElement | null> }> = ({ anchorRef }) => {
+/**
+ * A small spinner beside an element whose action is loading (a clicked link, the version switcher). Mount it while
+ * the work runs; it shows after the feedback delay and follows the element if the page scrolls.
+ */
+export const PendingSpinner: FC<{ anchorRef: RefObject<HTMLElement | null> }> = ({ anchorRef }) => {
   const [placement, setPlacement] = useState<SpinnerPlacement>()
   const [visible, setVisible] = useState(false)
 

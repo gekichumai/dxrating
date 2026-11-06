@@ -17,6 +17,8 @@ import { WebpSupportedImage } from '../WebpSupportedImage'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
 import { useLocale } from '@/i18n/LocaleProvider'
+import { PendingSpinner } from '@/components/global/InternalLink'
+import { beginAppBusy } from '@/components/layout/appBusy'
 
 const fromMergedVersionRegionId = (id: string) => {
   const [version, region] = id.split('__') as [DXVersion, Region]
@@ -119,6 +121,15 @@ export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = fal
   // switcher was a menu. Starting the wipe while the sheet is still on screen would freeze the sheet and its backdrop
   // in the old snapshot and hide the wipe behind them. startViewTransition skips the wipe under reduced motion.
   const pendingRef = useRef<{ version: DXVersion; region: Region } | null>(null)
+  // From the pick until the new version has rendered (the picker closing, then every page re-rendering for it), the
+  // switcher shows a spinner and the top progress bar runs, so the change never lands unannounced
+  const [switching, setSwitching] = useState(false)
+  const endBusyRef = useRef<() => void>(undefined)
+  const endSwitching = () => {
+    endBusyRef.current?.()
+    endBusyRef.current = undefined
+    setSwitching(false)
+  }
   const fallbackRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const applyPending = () => {
     clearTimeout(fallbackRef.current)
@@ -127,14 +138,22 @@ export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = fal
     if (!next) return
     void startViewTransition(() => {
       setVersionAndRegion(next.version, next.region)
-    }, wipeOriginFromElement(triggerRef.current))
+    }, wipeOriginFromElement(triggerRef.current)).finally(endSwitching)
   }
-  useEffect(() => () => clearTimeout(fallbackRef.current), [])
+  useEffect(
+    () => () => {
+      clearTimeout(fallbackRef.current)
+      endBusyRef.current?.()
+    },
+    [],
+  )
 
   const pick = (option: VersionPickerOption) => {
     setOpen(false)
     if (option.key === currentId) return
     pendingRef.current = fromMergedVersionRegionId(option.key)
+    endBusyRef.current ??= beginAppBusy()
+    setSwitching(true)
     // In case the close transition never reports back (e.g. the dialog unmounts first)
     clearTimeout(fallbackRef.current)
     fallbackRef.current = setTimeout(applyPending, 1000)
@@ -145,6 +164,7 @@ export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = fal
       <VersionPickerTrigger
         ref={triggerRef}
         expanded={open}
+        aria-busy={switching || undefined}
         aria-label={`${selectLabel}: ${currentVersion} · ${REGION_LABELS[region]({}, { locale })}`}
         onClick={() => setOpen(true)}
         className={clsx(
@@ -167,6 +187,8 @@ export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = fal
           </span>
         </span>
       </VersionPickerTrigger>
+
+      {switching && <PendingSpinner anchorRef={triggerRef} />}
 
       <VersionPicker
         open={open}
