@@ -10,7 +10,10 @@ import { ImportFromLxnsButtonListItem } from './import/ImportFromLxnsButtonListI
 import { ImportFromMuNetButtonListItem } from './import/ImportFromMuNetButtonListItem'
 import { ImportFromNETRecordsListItem } from './import/ImportFromNETRecordsListItem'
 
-export const ImportMenu: FC = () => {
+export const ImportMenu: FC<{
+  /** The button's label; the saved-records card uses the plain "Import…" */
+  label?: string
+}> = ({ label }) => {
   const { isOpen: settingsOpen, openSettings } = useNetImportSettings()
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
@@ -36,7 +39,7 @@ export const ImportMenu: FC = () => {
         onClick={handleClick}
         variant="outlined"
       >
-        {t('rating-calculator:io.import.button')}
+        {label ?? t('rating-calculator:io.import.button')}
       </Button>
 
       <Menu
