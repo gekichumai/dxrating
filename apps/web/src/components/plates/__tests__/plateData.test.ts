@@ -43,6 +43,21 @@ describe('plate page data', () => {
     expect(new Set(groups.map((group) => group.level)).size).toBe(groups.length)
   })
 
+  it('flags the Re:MASTERs that differ between servers on 舞 and 覇者 only (meta#18)', () => {
+    for (const region of ['jp', 'intl', 'cn'] as const) {
+      for (const plateId of ['mai-maimai', 'ha-hasha']) {
+        const data = buildPlatePageData(catalogSnapshot, region, plateId)!
+        const flagged = data.charts.filter((chart) => chart.remasterDiffersByServer)
+        expect(flagged.map((chart) => chart.title).sort(), `${region} ${plateId}`).toEqual(
+          ['39', 'ヒバナ', '妄想感傷代償連盟'].sort(),
+        )
+        for (const chart of flagged) expect(chart.sheets.at(-1)!.difficulty).toBe('remaster')
+      }
+    }
+    const kagayaki = buildPlatePageData(catalogSnapshot, 'jp', 'kagayaki-shin')!
+    expect(kagayaki.charts.some((chart) => chart.remasterDiffersByServer)).toBe(false)
+  })
+
   it('returns null for unknown plates', () => {
     expect(buildPlatePageData(catalogSnapshot, 'jp', 'nope-sho')).toBeNull()
     expect(buildPlatePageData(catalogSnapshot, 'cn', 'maru-shin')).toBeNull()

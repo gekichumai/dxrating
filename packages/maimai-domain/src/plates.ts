@@ -205,6 +205,19 @@ function isOnServer(sheet: Sheet, region: PlateRegion): boolean {
   return sheet.serverIds.includes(region)
 }
 
+/**
+ * Re:MASTER charts whose 舞ReMASTER membership differs between servers: some plate tools (Diving-Fish's CN
+ * qualifier) leave them out while others count them. dxdata carries nothing that tells them apart (same version,
+ * SD-era release date and servers as any other SD Re:MASTER), so they are listed by their stable public sheet IDs.
+ * Owner decision (gekichumai/meta#18, 2026-11-06): they count toward 舞 and 覇者 on every server, and the plate page
+ * labels them "Re:MASTER 差异".
+ */
+export const SERVER_VARIANT_REMASTER_SHEET_IDS: ReadonlySet<string> = new Set([
+  'dsht_kayh2ec6qw', // 39 (STD Re:MASTER, internal ID 146)
+  'dsht_jyrkmardma', // 妄想感傷代償連盟 (STD Re:MASTER, internal ID 731)
+  'dsht_r4sb39ndbc', // ヒバナ (STD Re:MASTER, internal ID 792)
+])
+
 /** maimai DX launch (JP): a Re:MASTER released on or after it was added in the DX era */
 const DX_LAUNCH_DATE = '2019-07-11'
 
@@ -214,6 +227,7 @@ const DX_LAUNCH_DATE = '2019-07-11'
  * sheet's release date, when known, must also predate DX. Checked against YuzuChaN's `舞ReMASTER` list.
  */
 function isSdEraRemaster(sheet: Sheet, region: PlateRegion): boolean {
+  if (SERVER_VARIANT_REMASTER_SHEET_IDS.has(sheet.id)) return true
   if (!SD_VERSION_SET.has(sheetVersionOn(sheet, region))) return false
   return !sheet.releaseDate || sheet.releaseDate < DX_LAUNCH_DATE
 }
@@ -225,12 +239,15 @@ export interface PlateChart {
   /** Version of the chart set: the earliest version among its Basic to Master sheets */
   version: VersionEnum
   requiredSheets: Sheet[]
+  /** A required Re:MASTER is one whose plate membership differs between servers (`SERVER_VARIANT_REMASTER_SHEET_IDS`) */
+  hasServerVariantRemaster: boolean
 }
 
 /**
  * The chart sets a plate group needs on a server. A song with SD and DX charts is two chart sets, each placed by
  * its own version. Re:MASTER is only required by 舞 / 覇, and only when the Re:MASTER itself is from the SD era
- * (the in-game `舞ReMASTER` list; a Re:MASTER added in the DX era is not part of it).
+ * (the in-game `舞ReMASTER` list; a Re:MASTER added in the DX era is not part of it). The Re:MASTERs whose
+ * membership differs between servers always count (`SERVER_VARIANT_REMASTER_SHEET_IDS`).
  */
 export function buildPlateCharts(songs: readonly Song[], group: PlateVersionGroup, region: PlateRegion): PlateChart[] {
   const versions = new Set(group.versions)
@@ -245,7 +262,13 @@ export function buildPlateCharts(songs: readonly Song[], group: PlateVersionGrou
       const remaster = group.includesRemaster
         ? sheets.filter((sheet) => sheet.difficulty === DifficultyEnum.ReMaster && isSdEraRemaster(sheet, region))
         : []
-      charts.push({ song, type, version, requiredSheets: [...sortByDifficulty(base), ...remaster] })
+      charts.push({
+        song,
+        type,
+        version,
+        requiredSheets: [...sortByDifficulty(base), ...remaster],
+        hasServerVariantRemaster: remaster.some((sheet) => SERVER_VARIANT_REMASTER_SHEET_IDS.has(sheet.id)),
+      })
     }
   }
   return charts

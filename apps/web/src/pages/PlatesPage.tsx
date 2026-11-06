@@ -215,6 +215,20 @@ const DIFFICULTY_FILTERS = [
   DifficultyEnum.ReMaster,
 ] as const
 
+/** Marks a chart set whose Re:MASTER differs between servers: it still counts toward the plate (meta#18) */
+const RemasterVariantLabel: FC = () => {
+  const { t } = useTranslation(['plates'])
+  return (
+    <span
+      title={t('plates:remaster-variant.description')}
+      className="min-w-0 max-w-full px-1.5 py-0.5 rounded-[var(--radius-sm)] text-xs font-medium [overflow-wrap:anywhere] text-accent-strong bg-accent-subtle border border-solid border-[color-mix(in_oklab,var(--accent-strong)_35%,transparent)]"
+    >
+      {t('plates:remaster-variant.label')}
+      <span className="sr-only">: {t('plates:remaster-variant.description')}</span>
+    </span>
+  )
+}
+
 export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
   const { t } = useTranslation(['plates'])
   const locale = useLocale()
@@ -280,6 +294,9 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
           <p className="text-sm font-semibold text-fg-1 m-0">{t(`plates:condition.${data.kind}`)}</p>
           <p className="text-xs text-fg-2 m-0">{t('plates:condition.scope')}</p>
           {data.includesRemaster && <p className="text-xs text-fg-2 m-0">{t('plates:condition.remaster')}</p>}
+          {data.charts.some((chart) => chart.remasterDiffersByServer) && (
+            <p className="text-xs text-fg-2 m-0">{t('plates:condition.remaster-variant')}</p>
+          )}
           {data.region === 'cn' && data.versions.length === 2 && !data.includesRemaster && (
             <p className="text-xs text-fg-2 m-0">{t('plates:condition.cn-merged')}</p>
           )}
@@ -423,8 +440,11 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                         >
                           {chart.title}
                         </a>
-                        <div className="text-xs text-fg-2 truncate" title={chart.version}>
-                          {getSheetTypeDisplayName(chart.type, locale)} · {chart.version}
+                        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 min-w-0 text-xs text-fg-2">
+                          <span className="truncate shrink-0 max-w-full" title={chart.version}>
+                            {getSheetTypeDisplayName(chart.type, locale)} · {chart.version}
+                          </span>
+                          {chart.remasterDiffersByServer && <RemasterVariantLabel />}
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1 shrink-0 basis-full xs:basis-auto ps-[52px] xs:ps-0">
