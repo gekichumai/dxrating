@@ -95,8 +95,6 @@
     "details.unlock-status.not-required": "不要",
     "details.region-available": "{{region}}：配信中",
     "details.region-unavailable": "{{region}}：未配信",
-    "details.achievement-to-rating.step": "下の行より{{value}}高い",
-    "details.achievement-to-rating.step-label": "差分",
     "details.unlock.label": "解禁",
     "details.unlock.required": "必要",
     "details.unlock.not-required": "不要",
