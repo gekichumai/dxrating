@@ -106,6 +106,7 @@ const DIGRAPHS: Record<string, string> = {
   ゔぃ: 'bi',
   ゔぇ: 'be',
   ゔぉ: 'bo',
+  ゔゅ: 'byu',
   つぁ: 'tua',
 }
 
@@ -231,6 +232,8 @@ function romanise(value: string): string {
 
 // Order matters: digraph spellings first, then single letters, then vowel length
 const ROMAJI_FOLDS: [RegExp, string][] = [
+  // Doubled ch is typed both ways (ccha, tcha) for っちゃ
+  [/cch/gu, 'tch'],
   [/tsu/gu, 'tu'],
   [/shi/gu, 'si'],
   [/chi/gu, 'ti'],
@@ -245,7 +248,7 @@ const ROMAJI_FOLDS: [RegExp, string][] = [
   // を is typed as both "o" and "wo"
   [/wo/gu, 'o'],
   [/f(?=[aeio])/gu, 'h'],
-  [/v(?=[aeiou])/gu, 'b'],
+  [/v(?=[aeiouy])/gu, 'b'],
   [/l/gu, 'r'],
   [/m(?=[bpm])/gu, 'n'],
   [/nn/gu, 'n'],

@@ -24,6 +24,11 @@ describe('sheet search ranking on the catalog snapshot', () => {
     expect(topTitles('mariawohagemase')[0]).toBe('マリアをはげませ')
   })
 
+  it('finds kana titles from less common romaji spellings', () => {
+    expect(topTitles('chiccha')[0]).toBe('ちっちゃな私')
+    expect(topTitles('puranetariumurevyuu')[0]).toBe('プラネタリウム・レヴュー')
+  })
+
   it('keeps fuzzy matches even when many songs match by name', () => {
     expect(search('night').map((sheet) => sheet.title)).toContain('AMAZING MIGHTYYYY!!!!')
   })

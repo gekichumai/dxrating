@@ -43,6 +43,17 @@ describe('skeletonKey', () => {
     expect(skeletonKey('mariaohagemase')).toBe(skeletonKey('マリアをはげませ'))
   })
 
+  it('folds both doubled-ch spellings into small tsu', () => {
+    expect(skeletonKey('chiccha')).toBe(skeletonKey('ちっちゃ'))
+    expect(skeletonKey('chitcha')).toBe(skeletonKey('ちっちゃ'))
+    expect(skeletonKey('macchi')).toBe(skeletonKey('マッチ'))
+  })
+
+  it('reads ゔゅ as one syllable and accepts v or b for it', () => {
+    expect(skeletonKey('revyuu')).toBe(skeletonKey('レヴュー'))
+    expect(skeletonKey('rebyuu')).toBe(skeletonKey('レヴュー'))
+  })
+
   it('keeps small tsu as a doubled consonant', () => {
     expect(skeletonKey('かった')).toBe(skeletonKey('katta'))
     expect(skeletonKey('マッチ')).toBe(skeletonKey('matchi'))
