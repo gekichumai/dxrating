@@ -9,7 +9,7 @@
     "alias/exact": 1500,
     "real/cjk": 234,
     "real/kana": 81,
-    "real/latin": 554,
+    "real/latin": 555,
     "real/mixed": 9,
     "real/numeric": 17,
     "synthetic/abbreviation": 24,
@@ -16257,14 +16257,13 @@
     {
       "query": "オモ",
       "expected": [
-        "dsng_4k9agsx47b",
-        "dsng_7nd77zgyb3"
+        "dsng_4k9agsx47b"
       ],
       "bucket": "real/kana",
       "script": "kana",
       "source": "posthog",
       "hits": 1,
-      "note": "オモイヨシノ | 玩具狂奏曲 -終焉-"
+      "note": "オモイヨシノ"
     },
     {
       "query": "きゅう",
@@ -16347,14 +16346,13 @@
     {
       "query": "さくら",
       "expected": [
-        "dsng_24mdg74vre",
         "dsng_fg62mwngnw"
       ],
       "bucket": "real/kana",
       "script": "kana",
       "source": "posthog",
       "hits": 1,
-      "note": "千本桜 | 蒼空に舞え、墨染の桜"
+      "note": "千本桜"
     },
     {
       "query": "ザム",
@@ -16473,14 +16471,13 @@
       "query": "スナ",
       "expected": [
         "dsng_kx4hhvrr38",
-        "dsng_n76hhkewq4",
-        "dsng_z9kmjaw8a3"
+        "dsng_n76hhkewq4"
       ],
       "bucket": "real/kana",
       "script": "kana",
       "source": "posthog",
       "hits": 1,
-      "note": "砂の惑星 feat. HATSUNE MIKU | スナネコのうた | 砂の函"
+      "note": "スナネコのうた | 砂の函"
     },
     {
       "query": "スリップフリップ",
@@ -16529,14 +16526,13 @@
     {
       "query": "ダイダイ",
       "expected": [
-        "dsng_dgks3t53sh",
         "dsng_mjry3v9ctp"
       ],
       "bucket": "real/kana",
       "script": "kana",
       "source": "posthog",
       "hits": 1,
-      "note": "橙の幻想郷音頭 | ダイダイダイダイダイキライ"
+      "note": "ダイダイダイダイダイキライ"
     },
     {
       "query": "ダンス",
@@ -19189,6 +19185,19 @@
       "note": "Hainuwele"
     },
     {
+      "query": "haji",
+      "expected": [
+        "dsng_jsj7j2d6ma",
+        "dsng_v6m965b3hz",
+        "dsng_zgn432mhmg"
+      ],
+      "bucket": "real/latin",
+      "script": "latin",
+      "source": "posthog",
+      "hits": 2,
+      "note": "H-A-J-I-M-A-R-I-U-T-A-!! | ハジマリノピアノ | はじまりの未来"
+    },
+    {
       "query": "hajima",
       "expected": [
         "dsng_jsj7j2d6ma",
@@ -19415,17 +19424,6 @@
       "source": "posthog",
       "hits": 2,
       "note": "How To Make 音ゲ～曲！"
-    },
-    {
-      "query": "huo",
-      "expected": [
-        "dsng_qrv55y28mm"
-      ],
-      "bucket": "real/latin",
-      "script": "latin",
-      "source": "posthog",
-      "hits": 1,
-      "note": "かくしん的☆めたまるふぉ～ぜっ！"
     },
     {
       "query": "hyper",
@@ -19756,6 +19754,19 @@
       "note": "ここからはじまるプロローグ。 (Kanon Remix)"
     },
     {
+      "query": "katta",
+      "expected": [
+        "dsng_hqw9ae57nx",
+        "dsng_k9aeerbbax",
+        "dsng_zddz3ebgmm"
+      ],
+      "bucket": "real/latin",
+      "script": "latin",
+      "source": "posthog",
+      "hits": 1,
+      "note": "その群青が愛しかったようだった | すーぱーぬこになれんかった | 電光石火"
+    },
+    {
       "query": "kattobi",
       "expected": [
         "dsng_t38brdzc96"
@@ -19780,7 +19791,6 @@
     {
       "query": "kirai",
       "expected": [
-        "dsng_4c945yrv8s",
         "dsng_mjry3v9ctp",
         "dsng_t75v4rnemn"
       ],
@@ -19788,7 +19798,7 @@
       "script": "latin",
       "source": "posthog",
       "hits": 1,
-      "note": "天火明命 | 絶対敵対メチャキライヤー | ダイダイダイダイダイキライ"
+      "note": "絶対敵対メチャキライヤー | ダイダイダイダイダイキライ"
     },
     {
       "query": "kisa",
@@ -20377,17 +20387,6 @@
       "note": "METATRON"
     },
     {
-      "query": "mirai",
-      "expected": [
-        "dsng_z4sa2cvs6w"
-      ],
-      "bucket": "real/latin",
-      "script": "latin",
-      "source": "posthog",
-      "hits": 1,
-      "note": "未来(ソラ)の歌"
-    },
-    {
       "query": "mirror of",
       "expected": [
         "dsng_vwqgs9exy4"
@@ -20589,14 +20588,13 @@
     {
       "query": "natsu",
       "expected": [
-        "dsng_b6m9pfmtrf",
-        "dsng_w6r6g4cq8m"
+        "dsng_b6m9pfmtrf"
       ],
       "bucket": "real/latin",
       "script": "latin",
       "source": "posthog",
       "hits": 1,
-      "note": "夏にキスしていいですか？ | 夏祭り"
+      "note": "夏祭り"
     },
     {
       "query": "neko",
@@ -21542,6 +21540,19 @@
       "note": "ℝ∈Χ LUNATiCA"
     },
     {
+      "query": "rion",
+      "expected": [
+        "dsng_9hh3gygxs8",
+        "dsng_gtbq3vpf24",
+        "dsng_nvngzxebpv"
+      ],
+      "bucket": "real/latin",
+      "script": "latin",
+      "source": "posthog",
+      "hits": 1,
+      "note": "閃鋼のブリューナク | キレキャリオン | Destined Marionette"
+    },
+    {
       "query": "rising",
       "expected": [
         "dsng_aw2ndpch8y"
@@ -21832,14 +21843,13 @@
     {
       "query": "sirius",
       "expected": [
-        "dsng_6wpk8qg7jp",
-        "dsng_qprmepdhv8"
+        "dsng_6wpk8qg7jp"
       ],
       "bucket": "real/latin",
       "script": "latin",
       "source": "posthog",
       "hits": 2,
-      "note": "シリウス | シリウスの輝きのように"
+      "note": "シリウスの輝きのように"
     },
     {
       "query": "six",
@@ -21889,14 +21899,13 @@
     {
       "query": "soter",
       "expected": [
-        "dsng_78fzgwbefz",
         "dsng_fggyzamkss"
       ],
       "bucket": "real/latin",
       "script": "latin",
       "source": "posthog",
       "hits": 1,
-      "note": "[奏]テレキャスタービーボーイ | ソテリア"
+      "note": "ソテリア"
     },
     {
       "query": "soteria",
@@ -21924,14 +21933,13 @@
       "query": "sou n",
       "expected": [
         "dsng_25z5bey58h",
-        "dsng_73kfd6j23h",
-        "dsng_mmnydfs4qr"
+        "dsng_73kfd6j23h"
       ],
       "bucket": "real/latin",
       "script": "latin",
       "source": "posthog",
       "hits": 1,
-      "note": "Sound Chimera | サウンドプレイヤー | [奏]のじゃロリック"
+      "note": "Sound Chimera | サウンドプレイヤー"
     },
     {
       "query": "sound chimera",
@@ -23203,14 +23211,13 @@
       "query": "yume",
       "expected": [
         "dsng_ft9kgnq9pk",
-        "dsng_yda622kmre",
         "dsng_zcvy2mspnz"
       ],
       "bucket": "real/latin",
       "script": "latin",
       "source": "posthog",
       "hits": 1,
-      "note": "夢花火 | ユメヒバナ | 夢現妄想世界"
+      "note": "夢花火 | ユメヒバナ"
     },
     {
       "query": "yumeh",

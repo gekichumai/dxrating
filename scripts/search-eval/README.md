@@ -44,7 +44,7 @@ aliases as the server aliases, which matches what the site does.
     songs, analyser misses) get no reading or romaji cases.
 - **`real/*`**: aggregated `?q=` strings from PostHog `$pageview` URLs (project 65078, 2026-08-09 to 2026-09-01, the only
   window where the query text was captured). No user identifiers are kept. Queries are labelled by an oracle that never
-  runs the search: the first tier with a match wins (whole title/alias/reading/romaji key, then key prefix, then
+  runs the search: the first tier with a match wins (whole title/alias/verified-reading/romaji key, then key prefix, then
   substring), and only when at most three titles match. `MANUAL_LABELS` in `generate.ts` covers typos and variants the
   oracle cannot resolve. Unlabelled queries are dropped. The raw export is not committed; pass it with
   `POSTHOG_QUERIES=<file.tsv>` (`query<TAB>hits`) to relabel, or omit it to keep the committed real cases.

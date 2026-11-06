@@ -407,7 +407,7 @@ async function main() {
 
 /**
  * Labels aggregated PostHog queries with an oracle that never runs the search being measured: a query is labelled
- * with a song when the song's title, alias, artist-free reading or romaji contains it and at most three songs do.
+ * with a song when the song's title, alias, verified reading or romaji contains it and at most three songs do.
  * MANUAL_LABELS covers queries the oracle cannot resolve.
  */
 function labelRealQueries(tsv: string, snapshot: Snapshot, readings: Map<string, Reading | undefined>): EvalCase[] {
@@ -418,7 +418,8 @@ function labelRealQueries(tsv: string, snapshot: Snapshot, readings: Map<string,
   const keysBySong = snapshot.songs.map((song) => {
     const reading = readings.get(song.id)
     const keys = [song.title, ...song.searchAcronyms, ...(aliasesBySong.get(song.id) ?? [])]
-    if (reading) {
+    // Only readings that match SEGA's sort key, so an analyser misreading never becomes ground truth
+    if (reading?.verified) {
       keys.push(
         reading.katakana,
         romajiOf(reading, 'hepburn', 'keep', ''),
