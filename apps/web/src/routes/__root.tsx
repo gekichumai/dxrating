@@ -34,8 +34,13 @@ import { useThemeColorSync } from '@/utils/useThemeColorSync'
 import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
 import { THEME_INLINE_SCRIPT } from '@/setup/theme-script'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
+// All app CSS is global and ships as one stylesheet: the base styles first, then utilities, then page styles whose
+// classes are scoped to their page (rating-table, legal-*)
+import '@/index.css'
 import 'virtual:uno.css'
 import '@/components/layout/app-chrome.css'
+import '@/pages/rating-table.css'
+import '@/pages/legal.css'
 
 const queryClient = new QueryClient()
 

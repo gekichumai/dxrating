@@ -62,7 +62,6 @@ import { achievementRateBand, captureAnalyticsEvent } from '../lib/analytics'
 import { type FlattenedSheet, useSheets } from '../songs'
 import type { Rating } from '../utils/rating'
 import { DIFFICULTIES } from '../models/difficulties'
-import './rating-table.css'
 import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
 import { switchFocusRing } from '../components/rating/focusRing'
 
