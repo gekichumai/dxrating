@@ -21,7 +21,6 @@ import { evlog, type EvlogVariables } from 'evlog/hono'
 import type { MiddlewareHandler } from 'hono'
 import { drain } from './logger'
 import { appRouter, type ApiContext } from './router'
-import { exchangeCodeForTokens } from './services/lxns/index'
 import { AppConfig } from './config'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
@@ -535,15 +534,9 @@ app.get('/api/v1/io/import/lxns/oauth_callback', (c) =>
       if (error || !code || !state) {
         return c.redirect(`${frontendCallback}?status=error&error=${encodeURIComponent(error || 'missing_params')}`)
       }
-      return yield* exchangeCodeForTokens(code, state).pipe(
-        Effect.map(() => c.redirect(`${frontendCallback}?status=success`)),
-        Effect.catch((error) =>
-          Effect.sync(() => {
-            c.get('log')?.error(error)
-            return c.redirect(`${frontendCallback}?status=error&error=exchange_failed`)
-          }),
-        ),
-      )
+      // Completing needs the session of the user who started the authorization, which this redirect from LXNS may
+      // not carry (the iOS app signs in with its own cookie store). The web page or the app calls lxns.complete.
+      return c.redirect(`${frontendCallback}?${new URLSearchParams({ code, state }).toString()}`)
     }),
     { signal: c.req.raw.signal },
   ),
