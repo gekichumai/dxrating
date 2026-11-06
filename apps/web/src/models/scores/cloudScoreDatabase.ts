@@ -59,6 +59,13 @@ export interface CloudScoreSnapshot {
  * cannot tell two revisions of one record with the same achievement apart. With the guard the cache only ever moves
  * forward per record, so a record is stale only until the pull that covers its newer revision.
  */
+export interface CloudScoreWriteResult {
+  /** The `addOutbox` entries with their `seq` assigned */
+  added: OutboxEntry[]
+  /** The `acknowledgeIssues` written, those whose outbox entry this write removed */
+  acknowledgedIssues: SyncIssue[]
+}
+
 export interface CloudScoreWrite {
   /**
    * A full refetch: drops the save's cached records up to `throughRevision` (the cursor of the full pull) that
@@ -72,6 +79,12 @@ export interface CloudScoreWrite {
   addOutbox?: readonly OutboxEntry[]
   deleteOutbox?: readonly string[]
   putIssues?: readonly SyncIssue[]
+  /**
+   * The issues of acknowledged outbox entries (`issue.id` is the entry's `mutationId`, which `deleteOutbox` lists):
+   * each is written only if this transaction removes its entry. A duplicate acknowledgement (two tabs sent the same
+   * entry) finds the entry gone and never brings back an issue the user dismissed or applied again meanwhile.
+   */
+  acknowledgeIssues?: readonly SyncIssue[]
   deleteIssues?: readonly string[]
   meta?: CloudScoreMeta
 }
@@ -159,7 +172,7 @@ export class CloudScoreDatabase {
     return outbox.sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0))
   }
 
-  async write(write: CloudScoreWrite): Promise<OutboxEntry[]> {
+  async write(write: CloudScoreWrite): Promise<CloudScoreWriteResult> {
     const transaction = this.db.transaction([...STORES], 'readwrite')
     const done = transactionDone(transaction)
     const records = transaction.objectStore('records')
@@ -200,22 +213,30 @@ export class CloudScoreDatabase {
       const { seq: _seq, ...withoutSeq } = entry
       added.push(requestToPromise(outbox.add(withoutSeq)).then((seq) => ({ ...withoutSeq, seq: Number(seq) })))
     }
+    for (const issue of write.putIssues ?? []) issues.put(issue)
+    for (const id of write.deleteIssues ?? []) issues.delete(id)
+
+    const acknowledgedIssues: SyncIssue[] = []
     if (write.deleteOutbox?.length) {
+      const issueByMutationId = new Map((write.acknowledgeIssues ?? []).map((issue) => [issue.id, issue]))
       const index = outbox.index('mutationId')
       for (const mutationId of write.deleteOutbox) {
         const request = index.getKey(mutationId)
         request.onsuccess = () => {
-          if (request.result !== undefined) outbox.delete(request.result)
+          if (request.result === undefined) return
+          outbox.delete(request.result)
+          const issue = issueByMutationId.get(mutationId)
+          if (issue) {
+            issues.put(issue)
+            acknowledgedIssues.push(issue)
+          }
         }
       }
     }
-
-    for (const issue of write.putIssues ?? []) issues.put(issue)
-    for (const id of write.deleteIssues ?? []) issues.delete(id)
     if (write.meta) transaction.objectStore('meta').put({ ...write.meta, saveId: this.saveId }, this.saveId)
 
     const [addedEntries] = await Promise.all([Promise.all(added), done])
-    return addedEntries
+    return { added: addedEntries, acknowledgedIssues }
   }
 
   close() {

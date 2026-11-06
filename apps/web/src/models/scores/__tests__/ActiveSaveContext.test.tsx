@@ -1,7 +1,7 @@
 import type { SaveDTO, UserFeatures } from '@gekichumai/api-contract'
 import { renderHook, waitFor } from '@testing-library/react'
 import { IDBFactory } from 'fake-indexeddb'
-import type { FC, PropsWithChildren } from 'react'
+import { type FC, type PropsWithChildren, useLayoutEffect } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RatingCalculatorContextProvider } from '../../context/RatingCalculatorContext'
 import {
@@ -204,6 +204,45 @@ describe('ActiveSaveContext', () => {
     expect(result.current.repository.kind).toBe('local')
     expect(deps.openCloudRepository).not.toHaveBeenCalled()
     expect(readActiveSaveId(window.localStorage, 'user-1')).toBeNull()
+  })
+
+  it("never commits a render that exposes the previous user's save, after a sign-out or an account switch", async () => {
+    writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
+    let userId: string | null = 'user-1'
+    const deps = dependencies('user-1', {
+      useSessionUserId: () => userId,
+      fetchFeatures: vi.fn(async () => FEATURES_ON),
+      listSaves: vi.fn(async () => [save('dsav_main')]),
+    })
+    // What every committed render exposes, seen before any passive effect of that render runs
+    const committed: { session: string | null; repositoryUser: string | null }[] = []
+    const wrapper: FC<PropsWithChildren> = ({ children }) => (
+      <ActiveSaveDependenciesContext.Provider value={deps}>
+        <RatingCalculatorContextProvider>{children}</RatingCalculatorContextProvider>
+      </ActiveSaveDependenciesContext.Provider>
+    )
+    const { result, rerender } = renderHook(
+      () => {
+        const activeSave = useActiveSave()
+        useLayoutEffect(() => {
+          committed.push({ session: userId, repositoryUser: activeSave.cloudRepository?.userId ?? null })
+        })
+        return activeSave
+      },
+      { wrapper },
+    )
+    await waitFor(() => expect(result.current.cloudRepository?.userId).toBe('user-1'))
+
+    userId = 'user-2'
+    rerender()
+    await waitFor(() => expect(result.current.kind).toBe('local'))
+    userId = null
+    rerender()
+    await settle()
+
+    const afterSwitch = committed.filter((render) => render.session !== 'user-1')
+    expect(afterSwitch.length).toBeGreaterThan(0)
+    expect(afterSwitch.every((render) => render.repositoryUser === null)).toBe(true)
   })
 
   it('returns to the local save on sign-out', async () => {
