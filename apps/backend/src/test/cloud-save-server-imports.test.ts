@@ -840,7 +840,8 @@ describe('Diving-Fish server import', () => {
     let charts: { dx: unknown[]; sd: unknown[] } = {
       // The score mask: an AP at 100.6% comes back as 101% without a DX score
       dx: [{ ...divingFishChart(CHARTS.kiminoDxMaster, 101), fc: 'ap', dxScore: 0 }],
-      sd: [],
+      // Anything under 10% is masked as 0%
+      sd: [{ ...divingFishChart(CHARTS.kiminoStdMaster, 0), dxScore: 0 }],
     }
     upstream.http = async (url) =>
       url.href === 'https://www.diving-fish.com/api/maimaidxprober/query/player'
@@ -854,7 +855,7 @@ describe('Diving-Fish server import', () => {
       })
 
     const masked = await run()
-    expect(masked.body.job).toMatchObject({ status: 'succeeded', counts: { fetched: 1, inserted: 0, rejected: 1 } })
+    expect(masked.body.job).toMatchObject({ status: 'succeeded', counts: { fetched: 2, inserted: 0, rejected: 2 } })
     expect(await records(user.saveId)).toHaveLength(0)
 
     // Unmasked, the exact score is stored
