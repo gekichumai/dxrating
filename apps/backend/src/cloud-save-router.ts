@@ -30,6 +30,16 @@ import {
   updateSave,
 } from './services/cloud-save/saves'
 import { cloudSaveRateLimits } from './services/rate-limit'
+import { applyClientImportChunk } from './services/cloud-save/client-imports'
+import {
+  beginServerImport,
+  failInterruptedImport,
+  replayOutcome,
+  runServerImport,
+  type ServerImportFailure,
+  type UpstreamFetch,
+} from './services/cloud-save/server-imports'
+import { fetchDivingFishImport, fetchLxnsImport } from './services/cloud-save/upstream-imports'
 
 const os = implement(appContract).$context<ApiContext>()
 
@@ -210,11 +220,51 @@ const recordsHandler = {
     ),
 }
 
-// Server imports and chunked client imports arrive with design PR 6; until then the routes exist (behind the
-// flag) and answer 501.
-const notYet = function* () {
-  return yield* Effect.fail(new ORPCError('NOT_IMPLEMENTED', { message: 'Not implemented yet' }))
-}
+/** Server imports (LXNS and Diving-Fish) one user may run at a time (§11.4) */
+export const SERVER_IMPORT_CONCURRENCY = 1
+// LXNS and Diving-Fish share one slot per user; they hold no write slot while they wait for the upstream
+const serverImportSlot = writeConcurrency(SERVER_IMPORT_CONCURRENCY)
+const serverImports = requireFeature('server_imports')
+
+/** How long an LXNS or Diving-Fish fetch may take before the job fails (`timeout`) */
+const API_IMPORT_TIMEOUT = '2 minutes'
+
+/**
+ * A server job (LXNS, Diving-Fish): replays answer the job as it is; otherwise the job runs to its end and the
+ * answer is the job, succeeded or failed (`errorCode` tells why; a failed job wrote nothing).
+ */
+const serverImport = <R>(
+  context: { user: { id: string }; refundRateLimit: () => void },
+  input: { id: string; idempotencyKey: string; trigger: 'user' | 'auto' },
+  source: 'lxns' | 'diving-fish',
+  fetch: Effect.Effect<UpstreamFetch, ServerImportFailure, R>,
+) =>
+  // Starting and handing over are one unit: an interruption in between fails the new job (`interrupted`) instead of
+  // leaving it running
+  Effect.uninterruptibleMask((restore) =>
+    Effect.gen(function* () {
+      const database = yield* Database
+      const started = yield* apiErrors(
+        beginServerImport(database, {
+          userId: context.user.id,
+          saveId: input.id,
+          source,
+          trigger: input.trigger,
+          idempotencyKey: input.idempotencyKey,
+        }),
+      )
+      if (started.replayed) {
+        // nothing was fetched: the request gives its rate limit unit back, as the NET route does
+        context.refundRateLimit()
+        const { job, revision } = replayOutcome(started)
+        return { job, revision }
+      }
+      const { job, revision } = yield* restore(
+        runServerImport(database, started, fetch, { timeout: API_IMPORT_TIMEOUT }),
+      ).pipe(Effect.onInterrupt(() => failInterruptedImport(database, started.job.id)))
+      return { job, revision }
+    }),
+  )
 
 const importsHandler = {
   client: cloudSave.imports.client
@@ -222,19 +272,66 @@ const importsHandler = {
     .use(feature)
     .use(limit('clientImports'))
     .use(writes)
-    .handler(handlerGen(notYet)),
+    .handler(
+      handlerGen(function* ({ context, input }) {
+        const database = yield* Database
+        const startedAt = yield* Clock.currentTimeMillis
+        const { id, ...chunk } = input
+        const { result, replayed, hashMismatch } = yield* apiErrors(
+          applyClientImportChunk(database, context.user.id, id, chunk),
+        ).pipe(
+          Effect.withSpan('import.job', {
+            attributes: { 'import.source': input.source, 'import.fetched_by': 'client' },
+          }),
+        )
+        // a replayed chunk wrote nothing: it gives its rate limit unit back
+        if (replayed) context.refundRateLimit()
+        const durationMs = (yield* Clock.currentTimeMillis) - startedAt
+        yield* Effect.sync(() => {
+          if (hashMismatch)
+            Sentry.metrics.count('import.client_hash_mismatch', 1, { attributes: { source: input.source } })
+          // One line per chunk; no user, save or account IDs (§12.3)
+          log.info({
+            action: 'import.job',
+            jobId: result.job.id,
+            source: result.job.source,
+            fetchedBy: 'client',
+            trigger: result.job.trigger,
+            status: result.job.status,
+            chunkIndex: input.chunkIndex,
+            chunkCount: input.chunkCount,
+            replayed,
+            hashMismatch,
+            ...result.job.counts,
+            durationMs,
+          })
+        })
+        return result
+      }),
+    ),
   lxns: cloudSave.imports.lxns
     .use(session)
     .use(feature)
+    .use(serverImports)
     .use(limit('serverImports'))
-    .use(writes)
-    .handler(handlerGen(notYet)),
+    .use(serverImportSlot)
+    .handler(
+      handlerGen(function* ({ context, input }) {
+        return yield* serverImport(context, input, 'lxns', fetchLxnsImport(context.user.id))
+      }),
+    ),
   divingFish: cloudSave.imports.divingFish
     .use(session)
     .use(feature)
+    .use(serverImports)
     .use(limit('serverImports'))
-    .use(writes)
-    .handler(handlerGen(notYet)),
+    .use(serverImportSlot)
+    .handler(
+      handlerGen(function* ({ context, input }) {
+        const query = input.username !== undefined ? { username: input.username } : { qq: input.qq! }
+        return yield* serverImport(context, input, 'diving-fish', fetchDivingFishImport(query))
+      }),
+    ),
   get: cloudSave.imports.get
     .use(session)
     .use(feature)

@@ -46,8 +46,10 @@ export const requireFeature = (flag: FeatureFlag) => {
  * batch). Use after `requireSession` and `requireFeature`, so a disabled feature stays a 404.
  *
  * The budget counts served requests: when the rest of the chain answers TOO_MANY_REQUESTS itself (busy: too many
- * writes in flight, the save locked past the lock timeout), the request did no work and its units are given back,
- * so a client following `Retry-After: 1` does not use up a daily budget.
+ * writes in flight, the save locked past the lock timeout) or CONFLICT `IMPORT_IN_PROGRESS` (an import of the source
+ * is already running), the request did no work and its units are given back, so a client following `Retry-After: 1`
+ * or polling a running import does not use up a daily budget. A handler that answers without doing work (an
+ * idempotent replay) gives them back itself with `context.refundRateLimit()`.
  */
 export const rateLimit = <TInput = unknown>(limit: KeyedRateLimit, cost?: (input: TInput) => number) =>
   os.$context<SessionApiContext>().middleware(async ({ context, next }, input: TInput) => {
@@ -61,15 +63,24 @@ export const rateLimit = <TInput = unknown>(limit: KeyedRateLimit, cost?: (input
         data: { retryAfterSeconds },
       })
     }
+    let refunded = false
+    const refundRateLimit = () => {
+      if (refunded) return
+      refunded = true
+      limit.refund(context.user.id, units, takenAt)
+    }
     try {
-      return await next()
+      return await next({ context: { refundRateLimit } })
     } catch (error) {
-      if (error instanceof ORPCError && error.code === 'TOO_MANY_REQUESTS') {
-        limit.refund(context.user.id, units, takenAt)
-      }
+      if (error instanceof ORPCError && isNoWorkError(error)) refundRateLimit()
       throw error
     }
   })
+/** Answers that mean the request did no work: busy (429), or an import of the source already running (409) */
+const isNoWorkError = (error: ORPCError<string, unknown>) =>
+  error.code === 'TOO_MANY_REQUESTS' ||
+  (error.code === 'CONFLICT' && (error.data as { reason?: unknown } | undefined)?.reason === 'IMPORT_IN_PROGRESS')
+
 const RETRY_AFTER_BUSY_SECONDS = 1
 
 /**
