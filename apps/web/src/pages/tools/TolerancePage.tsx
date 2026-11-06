@@ -8,6 +8,7 @@ import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { SheetImage } from '@/components/sheet/SheetListItem'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { ToleranceCalculator } from '@/components/tools/ToleranceCalculator'
+import { DIFFICULTIES } from '@/models/difficulties'
 import { useFilteredSheets } from '@/songs'
 
 export type ToleranceSelectedSheet = {
@@ -35,7 +36,7 @@ export function limitResultsBySong<T extends { songId: string }>(results: readon
 }
 
 const sheetLabel = (sheet: { type: string; difficulty: string; internalLevelValue: number }) =>
-  `${sheet.type.toUpperCase()} ${sheet.difficulty.toUpperCase()} ${sheet.internalLevelValue.toFixed(1)}`
+  `${sheet.type.toUpperCase()} ${DIFFICULTIES[sheet.difficulty as keyof typeof DIFFICULTIES]?.title ?? sheet.difficulty} ${sheet.internalLevelValue.toFixed(1)}`
 
 export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sheet }) => {
   const { t } = useTranslation(['tools'])
@@ -47,9 +48,9 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
       <header className="flex flex-col gap-2">
-        <h1 className="m-0 text-3xl font-bold">{t('tools:tolerance.title')}</h1>
-        <p className="m-0 text-sm text-slate-700">{t('tools:tolerance.intro')}</p>
-        <Link to="/tools/rating" className="self-start text-sm text-slate-700">
+        <h1 className="page-title m-0">{t('tools:tolerance.title')}</h1>
+        <p className="page-description m-0">{t('tools:tolerance.intro')}</p>
+        <Link to="/tools/rating" className="link self-start text-sm">
           {t('tools:rating.title')} →
         </Link>
       </header>
@@ -70,6 +71,10 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
           size="small"
           fullWidth
         />
+        {/* Always mounted, so screen readers hear how many charts match */}
+        <p role="status" className="sr-only">
+          {deferredQuery ? t('tools:tolerance.result-count', { count: visibleResults.length }) : ''}
+        </p>
         {visibleResults.length > 0 && (
           <ul className="m-0 p-0 list-none flex flex-col">
             {visibleResults.map((result) => (
@@ -82,8 +87,10 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
                 >
                   <SheetImage name={result.imageName} size="small" alt="" />
                   <span className="flex flex-col min-w-0">
-                    <span className="truncate text-sm font-medium">{result.title}</span>
-                    <span className="text-xs text-slate-600 tabular-nums">{sheetLabel(result)}</span>
+                    <span lang="ja" translate="no" className="truncate text-sm font-medium">
+                      {result.title}
+                    </span>
+                    <span className="text-xs text-secondary tabular-nums">{sheetLabel(result)}</span>
                   </span>
                 </Link>
               </li>
@@ -91,7 +98,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
           </ul>
         )}
         {deferredQuery && visibleResults.length === 0 && (
-          <p className="m-0 px-1 text-sm text-slate-600">{t('tools:tolerance.no-results')}</p>
+          <p className="m-0 px-1 text-sm text-secondary">{t('tools:tolerance.no-results')}</p>
         )}
       </MaterialSurface>
 
@@ -102,17 +109,19 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
             <div className="flex flex-col min-w-0">
               <a
                 href={buildSheetPath({ songId: sheet.songId, type: sheet.type, difficulty: sheet.difficulty })}
-                className="truncate font-bold text-inherit"
+                lang="ja"
+                translate="no"
+                className="link truncate font-bold"
               >
                 {sheet.title}
               </a>
-              <span className="text-xs text-slate-600 tabular-nums">{sheetLabel(sheet)}</span>
+              <span className="text-xs text-secondary tabular-nums">{sheetLabel(sheet)}</span>
             </div>
           </MaterialSurface>
           <ToleranceCalculator key={sheet.id} sheet={sheet} source="tool_page" />
         </>
       ) : (
-        <p className="m-0 text-sm text-slate-600">{t('tools:tolerance.pick-a-chart')}</p>
+        <p className="m-0 text-sm text-secondary">{t('tools:tolerance.pick-a-chart')}</p>
       )}
     </div>
   )

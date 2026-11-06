@@ -221,18 +221,18 @@ export const importFromNETRecords = async (
         </span>
         {lastRecord && (
           <>
-            <span className="text-sm text-zinc-500">{t('rating-calculator:io.import.net-records.latest-play')}</span>
-            <span className="text-xs text-zinc-500">
+            <span className="text-sm text-secondary">{t('rating-calculator:io.import.net-records.latest-play')}</span>
+            <span className="text-xs text-secondary">
               {lastRecord.sheet.songId} [{lastRecord.sheet.type}]
             </span>
             {lastRecordPlayedAt && (
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-secondary">
                 {t('rating-calculator:io.import.net-records.date', {
                   date: lastRecordPlayedAt,
                 })}
               </span>
             )}
-            {/* <span className="text-xs text-zinc-500">
+            {/* <span className="text-xs text-secondary">
                       Rating:
                     </span> */}
           </>
@@ -285,7 +285,7 @@ export const importFromNETRecords = async (
       <div className="flex min-w-0 max-w-[22rem] flex-col items-start gap-0.5">
         <div className="font-bold leading-snug">{title}</div>
         {subtitle && (
-          <div className="break-words text-left text-xs font-normal leading-relaxed text-zinc-500">{subtitle}</div>
+          <div className="break-words text-left text-xs font-normal leading-relaxed text-secondary">{subtitle}</div>
         )}
       </div>,
     )

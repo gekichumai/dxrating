@@ -193,28 +193,30 @@ export const RatingCalculatorAddEntryForm: FC<{
             {selectedSheet && (
               <div className="flex flex-col items-start gap-0.5">
                 {found && (
-                  <div>
-                    {t('rating-calculator:add-entry.current-rating')}:{' '}
-                    {calculateRating(selectedSheet.internalLevelValue, found.achievementRate).ratingAwardValue}
+                  <div className="num">
+                    {t('rating-calculator:add-entry.current-rating-value', {
+                      value: calculateRating(selectedSheet.internalLevelValue, found.achievementRate).ratingAwardValue,
+                    })}
                   </div>
                 )}
                 {replacing ? (
                   <div className="flex flex-col items-start font-bold">
-                    <div>
-                      {t('rating-calculator:add-entry.new-rating')}: {replacing.newRating.ratingAwardValue}
+                    <div className="num">
+                      {t('rating-calculator:add-entry.new-rating-value', {
+                        value: replacing.newRating.ratingAwardValue,
+                      })}
                     </div>
-                    <div className="text-sm bg-amber-3 b-2 border-solid border-amber-4 text-black px-1.5 rounded inline-flex">
+                    <div className="glass-inset num text-sm text-accent-strong px-1.5 inline-flex">
                       +{replacing.diff}
                     </div>
                   </div>
                 ) : (
                   achievementRate && (
-                    <div className="flex flex-col items-center gap-1">
-                      {t('rating-calculator:add-entry.rating')}:{' '}
-                      {
-                        calculateRating(selectedSheet.internalLevelValue, Number.parseFloat(achievementRate))
-                          .ratingAwardValue
-                      }
+                    <div className="num flex flex-col items-center gap-1">
+                      {t('rating-calculator:add-entry.rating-value', {
+                        value: calculateRating(selectedSheet.internalLevelValue, Number.parseFloat(achievementRate))
+                          .ratingAwardValue,
+                      })}
                     </div>
                   )
                 )}

@@ -83,6 +83,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
             } catch (error) {
               analytics.failed('invalid_file')
               console.error(error)
+              toast.error(t('rating-calculator:io.import.aqua-dx.error'))
             }
           }
           reader.readAsText(file)
