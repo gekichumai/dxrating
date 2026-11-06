@@ -8,6 +8,12 @@ import { RatingCalculatorContext } from '@/models/context/RatingCalculatorContex
 import { initI18n } from '@/setup/init-i18n'
 import { ProgressSummaryPage } from '../ProgressSummaryPage'
 
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ children, params, to }: { children: React.ReactNode; params?: { level: string }; to: string }) => (
+    <a href={to.replace('$level', params?.level ?? '')}>{children}</a>
+  ),
+}))
+
 vi.mock('@/models/context/useAppContext', () => ({
   useAppContextDXDataVersion: () => 'MAGiCAL',
 }))

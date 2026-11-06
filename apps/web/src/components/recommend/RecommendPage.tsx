@@ -13,6 +13,14 @@ import { type FC, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
+import {
+  DemoScoresNotice,
+  ImportScoresLink,
+  NoScoresState,
+  ScorePageFrame,
+  ScorePageHeader,
+  difficultyTextStyle,
+} from '@/components/scores/ScorePage'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { captureAnalyticsEvent } from '@/lib/analytics'
@@ -21,7 +29,7 @@ import { DIFFICULTIES } from '@/models/difficulties'
 import type { Region } from '@/models/context/AppContext'
 import { type UserRecords, useUserRecords } from '@/models/useUserRecords'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
-import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
+import { difficultyInkClassName } from '@/utils/difficultyInk'
 
 const PER_BUCKET = 20
 
@@ -93,27 +101,24 @@ export const RecommendPage: FC = () => {
   }, [result])
 
   return (
-    <div className="mx-auto w-full max-w-3xl flex flex-col gap-4 px-4 pb-global">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold">{t('recommend:title')}</h1>
-        <p className="text-sm opacity-70">{t('recommend:description')}</p>
-        {isDemo && <p className="text-xs font-semibold text-amber-700">{t('recommend:demo')}</p>}
-      </header>
+    <ScorePageFrame>
+      <ScorePageHeader title={t('recommend:title')} description={t('recommend:description')}>
+        {isDemo && <DemoScoresNotice className="mt-3">{t('recommend:demo')}</DemoScoresNotice>}
+      </ScorePageHeader>
 
       {!result ? (
         <div className="flex justify-center py-12" aria-busy="true">
-          <CircularProgress size="2rem" />
+          <CircularProgress size="2rem" aria-label={t('recommend:loading')} />
         </div>
       ) : !result.hasRecords ? (
-        <MaterialSurface className="flex flex-col gap-2 p-4 text-sm">
-          <p className="m-0">{t('recommend:empty')}</p>
-          <Link to="/rating" className="text-blue-600">
-            {t('recommend:go-to-rating')}
-          </Link>
-        </MaterialSurface>
+        <NoScoresState
+          title={t('recommend:empty-title')}
+          description={t('recommend:empty')}
+          action={<ImportScoresLink>{t('recommend:go-to-rating')}</ImportScoresLink>}
+        />
       ) : (
         <>
-          <MaterialSurface className="grid grid-cols-3 gap-2 p-4 text-center">
+          <MaterialSurface as="dl" className="m-0 grid grid-cols-3 items-end gap-2 p-4 text-center">
             <Stat label={t('recommend:stats.total')} value={result.total} />
             <Stat label={t('recommend:stats.b15-floor')} value={result.b15Floor} />
             <Stat label={t('recommend:stats.b35-floor')} value={result.b35Floor} />
@@ -122,14 +127,15 @@ export const RecommendPage: FC = () => {
           <RecommendSection title={t('recommend:old')} items={result.b35} />
         </>
       )}
-    </div>
+    </ScorePageFrame>
   )
 }
 
+// Label above value; the grid aligns cell bottoms, so a label that wraps grows upwards and values stay level
 const Stat: FC<{ label: string; value: number }> = ({ label, value }) => (
-  <div className="flex flex-col">
-    <span className="text-xs opacity-70">{label}</span>
-    <span className="text-xl font-bold tabular-nums">{value}</span>
+  <div className="flex flex-col gap-0.5">
+    <dt className="text-xs leading-tight text-fg-2 text-balance">{label}</dt>
+    <dd className="m-0 text-xl font-semibold num text-fg-1">{value}</dd>
   </div>
 )
 
@@ -141,43 +147,55 @@ const RecommendSection: FC<{
   const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="m-0 text-lg font-bold">{title}</h2>
-      <MaterialSurface className="overflow-hidden">
+      <h2 className="section-title m-0 text-lg">{title}</h2>
+      <MaterialSurface>
         {items.length === 0 ? (
-          <p className="m-0 p-4 text-sm">{t('recommend:none')}</p>
+          <p className="m-0 p-4 text-sm text-fg-2">{t('recommend:none')}</p>
         ) : (
-          <ol className="m-0 list-none p-0 divide-y divide-zinc-500/15">
+          <ol className="m-0 list-none p-1 flex flex-col">
             {items.map((item) => {
               const difficulty = DIFFICULTIES[item.sheet.difficulty as DifficultyEnum]
               return (
                 <li key={item.sheet.id}>
                   <Link
                     to={buildSheetPath(item.sheet)}
-                    className="flex items-center gap-3 px-4 py-3 text-inherit no-underline hover:bg-zinc-500/10"
+                    className="flex items-center gap-3 rounded-[var(--radius-md)] px-2 py-2 text-fg-1 no-underline outline-offset-[-2px] transition-colors duration-[var(--duration-fast)] hover:bg-black/4"
                   >
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate font-semibold">{item.sheet.title}</span>
-                      <span className="flex flex-wrap gap-2 text-xs">
-                        <span>{getSheetTypeDisplayName(item.sheet.type, locale)}</span>
-                        <span
-                          className={`font-semibold ${difficultyInkClassName}`}
-                          style={difficultyInkStyle(item.sheet.difficulty)}
-                        >
-                          {difficulty?.title ?? item.sheet.difficulty}
+                    <img
+                      src={`https://shama.dxrating.net/images/cover/v2/${item.sheet.imageName}.jpg`}
+                      alt=""
+                      loading="lazy"
+                      width={44}
+                      height={44}
+                      className="size-11 shrink-0 self-start rounded-[var(--radius-md)] outline outline-1 outline-black/10 -outline-offset-1 sm:self-center"
+                    />
+                    <span className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span lang="ja" className="line-clamp-2 break-words font-semibold text-sm">
+                          {item.sheet.title}
                         </span>
-                        <span className="tabular-nums">{item.sheet.internalLevelValue.toFixed(1)}</span>
+                        <span className="flex flex-wrap gap-x-2 text-xs text-fg-2">
+                          <span
+                            className={`whitespace-nowrap font-semibold ${difficultyInkClassName}`}
+                            style={difficultyTextStyle(item.sheet.difficulty)}
+                          >
+                            {difficulty?.title ?? item.sheet.difficulty}
+                          </span>
+                          <span className="whitespace-nowrap">{getSheetTypeDisplayName(item.sheet.type, locale)}</span>
+                          <span className="whitespace-nowrap num">{item.sheet.internalLevelValue.toFixed(1)}</span>
+                        </span>
                       </span>
-                    </span>
-                    <span className="flex flex-col items-end text-sm tabular-nums">
-                      <span>
-                        {item.currentAchievement === null
-                          ? t('recommend:unplayed')
-                          : `${item.currentAchievement.toFixed(4)}%`}
-                        {' → '}
-                        <strong>{item.targetAchievement}%</strong>
-                      </span>
-                      <span className="text-xs font-semibold text-emerald-700">
-                        {t('recommend:gain', { gain: item.gain })}
+                      <span className="flex flex-row flex-wrap items-baseline gap-x-2 text-sm num sm:flex-col sm:items-end">
+                        <span className="whitespace-nowrap">
+                          {item.currentAchievement === null
+                            ? t('recommend:unplayed')
+                            : `${item.currentAchievement.toFixed(4)}%`}
+                          {' → '}
+                          <strong className="font-semibold">{item.targetAchievement}%</strong>
+                        </span>
+                        <span className="whitespace-nowrap text-xs font-semibold text-status-positive">
+                          {t('recommend:gain', { gain: item.gain })}
+                        </span>
                       </span>
                     </span>
                   </Link>
