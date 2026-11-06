@@ -111,9 +111,7 @@ function RootLayout() {
 
   const isLegalPage = isLegalPath(pathname)
   const isDevelopersPage = pathname === '/developers'
-  const isSongPage = pathname.startsWith('/songs/')
   const showAppChrome = !isDevelopersPage && !isLegalPage
-  const showTabs = showAppChrome && !isSongPage
   const compact = pathname !== '/'
 
   return (
@@ -128,7 +126,7 @@ function RootLayout() {
           )}
         >
           <VersionRegionSwitcher compact={compact} />
-          {showTabs && <AppTabs />}
+          {showAppChrome && <AppTabs />}
         </div>
       )}
     </header>
