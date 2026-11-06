@@ -17,17 +17,20 @@ export const SHEET_GRID_DEFAULT_MEDIA_QUERY = '(min-width: 1024px)'
 
 const isSheetListLayout = (value: unknown): value is SheetListLayout => value === 'list' || value === 'grid'
 
-// The choice for this page load when storage refuses it (a private window, blocked site data), so the switch still works
+// A choice made on this page load that storage refused to save (a full store, blocked site data, a private window). It
+// wins over whatever storage still holds, so the switch keeps working; the next save that succeeds clears it, and storage
+// (shared with other tabs) is the source again.
 let unsavedLayout: SheetListLayout | null = null
 
 const readStoredLayout = (): SheetListLayout | null => {
+  if (unsavedLayout) return unsavedLayout
   try {
     const stored = window.localStorage.getItem(SHEET_LIST_LAYOUT_STORAGE_KEY)
     if (isSheetListLayout(stored)) return stored
   } catch {
-    // Storage is unavailable: fall back to the choice made on this page load
+    // Storage is unavailable: no stored choice
   }
-  return unsavedLayout
+  return null
 }
 
 const subscribeToStoredLayout = (onChange: () => void) => {
@@ -70,11 +73,12 @@ export const useSheetListLayout = (): [SheetListLayout | null, (layout: SheetLis
   const layout = gridIsDefault === null ? null : (stored ?? (gridIsDefault ? 'grid' : 'list'))
 
   const setLayout = useCallback((next: SheetListLayout) => {
-    unsavedLayout = next
     try {
       window.localStorage.setItem(SHEET_LIST_LAYOUT_STORAGE_KEY, next)
+      unsavedLayout = null
     } catch {
-      // Kept for this page load only (unsavedLayout)
+      // Kept for this page load only, over any older choice storage still holds
+      unsavedLayout = next
     }
     window.dispatchEvent(new Event(SHEET_LIST_LAYOUT_CHANGED_EVENT))
   }, [])
