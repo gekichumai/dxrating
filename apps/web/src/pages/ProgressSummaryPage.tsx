@@ -131,7 +131,16 @@ export const ProgressSummaryPage: FC = () => {
             scroller.hasMore && '[mask-image:linear-gradient(to_right,black_calc(100%-24px),transparent)]',
           )}
         >
-          <table className="w-full text-sm border-collapse">
+          {/* Fixed layout from md: the eight target columns share the width equally, so the heat cells form an even
+              grid. Below md the table keeps its natural width and scrolls sideways under the sticky level column */}
+          <table className="w-full text-sm border-collapse md:table-fixed">
+            <colgroup>
+              <col className="md:w-24" />
+              <col className="md:w-28" />
+              {PROGRESS_COLUMNS.map((column) => (
+                <col key={column} />
+              ))}
+            </colgroup>
             <thead className="text-xs text-left text-fg-2">
               <tr>
                 <th scope="col" className={clsx('px-3 py-2 font-semibold', stickyColumn)}>

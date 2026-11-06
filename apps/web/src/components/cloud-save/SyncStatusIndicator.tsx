@@ -1,6 +1,6 @@
 import { ButtonBase, Popover } from '@mui/material'
 import clsx from 'clsx'
-import { type FC, useId, useState } from 'react'
+import { type CSSProperties, type FC, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import IconMdiCloudAlertOutline from '~icons/mdi/cloud-alert-outline'
 import IconMdiCloudCheckOutline from '~icons/mdi/cloud-check-outline'
@@ -23,7 +23,7 @@ const STATE_ICONS: Record<ScoreRepositoryStatus['state'], FC<{ className?: strin
  * The cloud save's sync state in the header (idle, syncing, offline, error), the number of changes waiting to be
  * sent and the sync issues. Renders nothing on the local save.
  */
-export const SyncStatusIndicator: FC = () => {
+export const SyncStatusIndicator: FC<{ className?: string; style?: CSSProperties }> = ({ className, style }) => {
   const { t, i18n } = useTranslation(['rating-calculator'])
   const status = useCloudSaveStatus()
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
@@ -55,7 +55,11 @@ export const SyncStatusIndicator: FC = () => {
         // One number only: the badge counts sync issues, the ones that need the user. Changes waiting to sync are in
         // the label and the popover, so the control keeps one width. The same 36px round action as the rest of the
         // header's glass pill
-        className="cloud-save-status-button relative flex size-9 shrink-0 items-center justify-center rounded-full text-fg-1"
+        className={clsx(
+          'cloud-save-status-button relative flex size-9 shrink-0 items-center justify-center rounded-full text-fg-1',
+          className,
+        )}
+        style={style}
         data-sync-state={state}
       >
         <Icon className={clsx('size-5', state === 'syncing' && 'cloud-save-pulse')} aria-hidden />

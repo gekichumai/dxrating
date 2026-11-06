@@ -1,6 +1,6 @@
 import { ButtonBase, Divider, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material'
 import clsx from 'clsx'
-import { type ComponentType, useState } from 'react'
+import { type ComponentType, type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MdiChevronDown from '~icons/mdi/chevron-down'
 import MdiCodeBraces from '~icons/mdi/code-braces'
@@ -18,32 +18,37 @@ import { UserChip } from '../global/preferences/UserChip'
 import { About } from '../global/site-meta/About'
 import { SyncStatusIndicator } from '../cloud-save/SyncStatusIndicator'
 import { useCloudSaveStatus } from '../../models/scores/CloudSaveUiContext'
+import { type HeaderTint, headerTintStyle } from './headerTints'
 
-// Community glyphs are monochrome (text-fg-1) like every other header action: the saturated brand discs were the
-// loudest colour in the bar for the least important links
+// Every header action keeps a hue of its own: a coloured glyph on a soft wash of it (styles/header-tints.css). The
+// community links are their solid brand discs with a white logo, as before the glass pill
 const COMMUNITY_LINKS: {
   key: 'discord' | 'qq' | 'github'
   // Brand names stay untranslated; only the QQ group needs a localized short label.
   shortLabel?: string
   href: string
   Icon: ComponentType<{ className?: string }>
+  tint: HeaderTint
 }[] = [
   {
     key: 'discord',
     shortLabel: 'Discord',
     href: 'https://discord.gg/8CFgUPxyrU',
     Icon: DiscordLogo,
+    tint: 'discord',
   },
   {
     key: 'qq',
     href: 'https://qun.qq.com/universal-share/share?ac=1&authKey=Msn1eQwZatECqVPNu99z7yM9encUTFgkQlCrknZJ3mLKemZ1g2JLHskeZctaBa1z&busi_data=eyJncm91cENvZGUiOiI3MTU2MDczNjAiLCJ0b2tlbiI6Ii8wMDM4NkpOdDVOanRzTVdSQm5tKzZHbXNONFczTTVHa0M3a3dtcWU1TUxkYjFuQ3U5VEMzQ0srVWlDQjkvQVMiLCJ1aW4iOiIyNDAzOTAxNTExIn0%3D&data=e0__RlsOEZs1-dsLtR44_xvw9lEyXAdlviDKcK_XqyeS6gjDkceHeVGEiuGDKodjINLGUGNIWdmb9IdEmcYeWw&svctype=4&tempid=h5_group_info',
     Icon: QqLogo,
+    tint: 'qq',
   },
   {
     key: 'github',
     shortLabel: 'GitHub',
     href: 'https://github.com/gekichumai/dxrating',
     Icon: MdiGithub,
+    tint: 'github',
   },
 ]
 
@@ -55,12 +60,18 @@ const MCP_GUIDE_URL = 'https://mcp.dxrating.net/?via=dxrating-home'
 const DEVELOPERS_URL = '/developers'
 
 // Every header action is the same 36px round control inside one glass pill (3px padding + 1px border: 36 + 8 = 44px)
-const HEADER_ACTION_CLASS_NAME =
-  'flex size-9 shrink-0 items-center justify-center rounded-full text-fg-1 [transition-property:background-color] duration-[var(--duration-fast)] hover:bg-white/60'
+const HEADER_ACTION_CLASS_NAME = 'flex size-9 shrink-0 items-center justify-center rounded-full'
 
-// MCP and the developer API read as text links inside the same pill on wider screens
+// MCP and the developer API read as text links inside the same pill on wider screens: tinted glyph, plain label
 const DEVELOPER_PILL_SEGMENT_CLASS_NAME =
   'flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-fg-1 [transition-property:background-color] duration-[var(--duration-fast)] hover:bg-white/60'
+
+/** Wraps a preferences control (an MUI IconButton) so its button takes the given hue */
+const Tinted = ({ tint, children }: { tint: HeaderTint; children: ReactNode }) => (
+  <span className="header-tint contents" style={headerTintStyle(tint)}>
+    {children}
+  </span>
+)
 
 const PILL_DIVIDER = <span className="mx-1 h-5 w-px shrink-0 bg-black/12" aria-hidden />
 
@@ -77,14 +88,33 @@ const CommunityMenu = () => {
         title={t('root:external-links.community')}
         aria-haspopup="menu"
         aria-expanded={anchorEl ? 'true' : undefined}
-        className={clsx(HEADER_ACTION_CLASS_NAME, '2xs:w-auto 2xs:gap-0.5 2xs:pl-2.5 2xs:pr-1.5')}
+        className={clsx(
+          HEADER_ACTION_CLASS_NAME,
+          'header-tint header-tint-target 2xs:w-auto 2xs:gap-0.5 2xs:pl-1 2xs:pr-1.5 2xs:!bg-transparent 2xs:hover:!bg-white/60',
+        )}
+        style={headerTintStyle('discord')}
       >
-        <MdiAccountGroupOutline aria-hidden className="size-5" />
+        {/* Below 375px one tinted glyph; wider phones show the three brand discs, as before the glass header */}
+        <MdiAccountGroupOutline aria-hidden className="size-5 2xs:hidden" />
+        <span className="hidden 2xs:flex items-center" aria-hidden>
+          {COMMUNITY_LINKS.map(({ key, Icon, tint }, index) => (
+            <span
+              key={key}
+              className={clsx(
+                'header-brand-disc flex size-7 items-center justify-center rounded-full',
+                index > 0 && '-ml-2',
+              )}
+              style={headerTintStyle(tint)}
+            >
+              <Icon className="size-3.5" />
+            </span>
+          ))}
+        </span>
         <MdiChevronDown aria-hidden className="hidden 2xs:block size-4 text-fg-2" />
       </ButtonBase>
 
       <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-        {COMMUNITY_LINKS.map(({ key, shortLabel, href, Icon }) => (
+        {COMMUNITY_LINKS.map(({ key, shortLabel, href, Icon, tint }) => (
           <MenuItem
             key={key}
             component="a"
@@ -94,8 +124,8 @@ const CommunityMenu = () => {
             title={t(`root:external-links.${key}`)}
             onClick={() => setAnchorEl(null)}
           >
-            <ListItemIcon>
-              <Icon aria-hidden className="size-5 text-fg-1" />
+            <ListItemIcon className="header-tint" style={headerTintStyle(tint)}>
+              <Icon aria-hidden className="size-5 text-[var(--tint-ink)]" />
             </ListItemIcon>
             <ListItemText>{shortLabel ?? t('root:external-links.qq-short')}</ListItemText>
           </MenuItem>
@@ -109,8 +139,8 @@ const CommunityMenu = () => {
           title={t('root:external-links.mcp')}
           onClick={() => setAnchorEl(null)}
         >
-          <ListItemIcon>
-            <McpLogo aria-hidden className="size-5 text-fg-1" />
+          <ListItemIcon className="header-tint" style={headerTintStyle('mcp')}>
+            <McpLogo aria-hidden className="size-5 text-[var(--tint-ink)]" />
           </ListItemIcon>
           <ListItemText>{t('root:external-links.mcp-short')}</ListItemText>
         </MenuItem>
@@ -120,8 +150,8 @@ const CommunityMenu = () => {
           title={t('root:external-links.developers')}
           onClick={() => setAnchorEl(null)}
         >
-          <ListItemIcon>
-            <MdiCodeBraces aria-hidden className="size-5 text-fg-1" />
+          <ListItemIcon className="header-tint" style={headerTintStyle('api')}>
+            <MdiCodeBraces aria-hidden className="size-5 text-[var(--tint-ink)]" />
           </ListItemIcon>
           <ListItemText>{t('root:external-links.developers-short')}</ListItemText>
         </MenuItem>
@@ -146,7 +176,7 @@ export const TopBar = () => {
         </div>
       </div>
 
-      <div className="glass-thin !rounded-full flex items-center shrink-0 p-[3px] gap-0.5 [&_.MuiIconButton-root]:size-9 [&_.MuiIconButton-root]:p-0 [&_.MuiIconButton-root]:text-fg-1 [&_.MuiIconButton-root]:text-xl">
+      <div className="glass-thin !rounded-full flex items-center shrink-0 p-[3px] gap-0.5 [&_.MuiIconButton-root]:size-9 [&_.MuiIconButton-root]:p-0 [&_.MuiIconButton-root]:text-xl">
         <div className="hidden sm:flex items-center gap-0.5">
           <ButtonBase
             component="a"
@@ -155,9 +185,10 @@ export const TopBar = () => {
             rel="noopener"
             aria-label={t('root:external-links.mcp')}
             title={t('root:external-links.mcp')}
-            className={DEVELOPER_PILL_SEGMENT_CLASS_NAME}
+            className={clsx(DEVELOPER_PILL_SEGMENT_CLASS_NAME, 'header-tint')}
+            style={headerTintStyle('mcp')}
           >
-            <McpLogo aria-hidden className="size-4" />
+            <McpLogo aria-hidden className="size-4 text-[var(--tint-ink)]" />
             MCP
           </ButtonBase>
           <ButtonBase
@@ -165,13 +196,14 @@ export const TopBar = () => {
             href={DEVELOPERS_URL}
             aria-label={t('root:external-links.developers')}
             title={t('root:external-links.developers')}
-            className={DEVELOPER_PILL_SEGMENT_CLASS_NAME}
+            className={clsx(DEVELOPER_PILL_SEGMENT_CLASS_NAME, 'header-tint')}
+            style={headerTintStyle('api')}
           >
-            <MdiCodeBraces aria-hidden className="size-4" />
+            <MdiCodeBraces aria-hidden className="size-4 text-[var(--tint-ink)]" />
             API
           </ButtonBase>
           {PILL_DIVIDER}
-          {COMMUNITY_LINKS.map(({ key, href, Icon }) => (
+          {COMMUNITY_LINKS.map(({ key, href, Icon, tint }) => (
             <ButtonBase
               key={key}
               component="a"
@@ -180,7 +212,8 @@ export const TopBar = () => {
               rel="noopener"
               aria-label={t(`root:external-links.${key}`)}
               title={t(`root:external-links.${key}`)}
-              className={HEADER_ACTION_CLASS_NAME}
+              className={clsx(HEADER_ACTION_CLASS_NAME, 'header-brand-disc')}
+              style={headerTintStyle(tint)}
             >
               <Icon aria-hidden className="size-[1.125rem]" />
             </ButtonBase>
@@ -199,16 +232,26 @@ export const TopBar = () => {
 
         {/* Phones get one combined language + appearance button so the row keeps its width (DisplayPreferencesMenu) */}
         <div className="hidden sm:contents">
-          <LocaleSelector />
-          <ThemeSelector />
+          <Tinted tint="locale">
+            <LocaleSelector />
+          </Tinted>
+          <Tinted tint="theme">
+            <ThemeSelector />
+          </Tinted>
         </div>
         <div className="contents sm:hidden">
-          <DisplayPreferencesMenu />
+          <Tinted tint="preferences">
+            <DisplayPreferencesMenu />
+          </Tinted>
         </div>
-        <About />
+        <Tinted tint="about">
+          <About />
+        </Tinted>
         {/* Cloud saves only: without one the header is exactly the local-save layout */}
-        <SyncStatusIndicator />
-        <UserChip />
+        <SyncStatusIndicator className="header-tint header-tint-target" style={headerTintStyle('sync')} />
+        <Tinted tint="account">
+          <UserChip />
+        </Tinted>
       </div>
     </div>
   )

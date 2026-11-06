@@ -18,7 +18,8 @@
 }
 
 @media (hover: hover) {
-  .cloud-save-status-button:hover {
+  /* Unless the header tints it (header-tints.css), which brings its own hover wash */
+  .cloud-save-status-button:not(.header-tint):hover {
     background-color: rgb(var(--surface-rgb) / 0.6);
   }
   .cloud-save-save-option:hover:not([aria-current='true']) {

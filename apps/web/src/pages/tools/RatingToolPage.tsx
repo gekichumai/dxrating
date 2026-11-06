@@ -34,7 +34,14 @@ function useRatingToolAnalytics(tool: RatingToolKind, level: number | null, deps
   }
 }
 
-const LevelField: FC<{ value: string; onChange: (value: string) => void }> = ({ value, onChange }) => {
+/** Pair fields share a row; capped at sm+ so a 4-character value doesn't stretch across a wide column */
+const PAIR_FIELD_CLASS = 'flex-1 min-w-32 sm:max-w-56'
+
+const LevelField: FC<{ value: string; onChange: (value: string) => void; className?: string }> = ({
+  value,
+  onChange,
+  className = PAIR_FIELD_CLASS,
+}) => {
   const { t } = useTranslation(['tools'])
   const valid = validLevel(parseNumberInput(value))
   return (
@@ -48,27 +55,42 @@ const LevelField: FC<{ value: string; onChange: (value: string) => void }> = ({ 
       helperText={
         valid ? undefined : t('tools:rating.level-invalid', { min: MIN_INTERNAL_LEVEL, max: MAX_INTERNAL_LEVEL })
       }
-      className="flex-1 min-w-32"
+      className={className}
     />
   )
 }
 
-const ToolSection: FC<{ id: string; title: string; description: string; children: ReactNode }> = ({
-  id,
-  title,
-  description,
-  children,
-}) => (
-  <MaterialSurface as="section" className="flex flex-col gap-3 p-4" aria-labelledby={id}>
-    <div className="flex flex-col gap-1">
+const ToolSection: FC<{
+  id: string
+  title: string
+  description: string
+  /** Shown under the heading on mobile and beside it at sm+ */
+  headerAction?: ReactNode
+  className?: string
+  children: ReactNode
+}> = ({ id, title, description, headerAction, className, children }) => {
+  const heading = (
+    <div className="flex flex-col gap-1 min-w-0">
       <h2 id={id} className="m-0 text-lg font-bold">
         {title}
       </h2>
       <p className="m-0 text-sm text-secondary">{description}</p>
     </div>
-    {children}
-  </MaterialSurface>
-)
+  )
+  return (
+    <MaterialSurface as="section" className={`flex flex-col gap-3 p-4 ${className ?? ''}`} aria-labelledby={id}>
+      {headerAction ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          {heading}
+          {headerAction}
+        </div>
+      ) : (
+        heading
+      )}
+      {children}
+    </MaterialSurface>
+  )
+}
 
 /** The value `announce` describes, once typing has settled (the same 800ms as analytics), so a screen reader hears the
  result once instead of on every keystroke. The region is always mounted, so its first update is announced too */
@@ -136,7 +158,7 @@ const RatingForAchievement: FC = () => {
           InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
           error={!achievementValid}
           helperText={achievementValid ? undefined : t('tools:rating.achievement-invalid')}
-          className="flex-1 min-w-32"
+          className={PAIR_FIELD_CLASS}
         />
       </div>
       <Result
@@ -192,7 +214,7 @@ const AchievementForRating: FC = () => {
           inputProps={{ inputMode: 'numeric' }}
           error={!targetValid}
           helperText={targetValid ? undefined : t('tools:rating.target-invalid')}
-          className="flex-1 min-w-32"
+          className={PAIR_FIELD_CLASS}
         />
       </div>
       <Result label={t('tools:rating.reverse.result')} announce={neededText}>
@@ -218,16 +240,18 @@ const RatingTable: FC = () => {
       id="rating-table"
       title={t('tools:rating.table.title')}
       description={t('tools:rating.table.description')}
-    >
-      <div className="flex">
+      className="lg:sticky lg:top-4"
+      headerAction={
         <LevelField
           value={levelInput}
           onChange={(value) => {
             touch()
             setLevelInput(value)
           }}
+          className="w-full sm:w-40 sm:shrink-0"
         />
-      </div>
+      }
+    >
       {levels.length > 0 && (
         <MaterialSurface variant="thin" className="overflow-x-auto">
           <table className="w-full border-collapse text-sm tabular-nums">
@@ -279,7 +303,7 @@ export const RatingToolPage: FC = () => {
   const { t } = useTranslation(['tools'])
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
+    <div className="w-full max-w-2xl lg:max-w-6xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
       <header className="flex flex-col gap-2">
         <h1 className="page-title m-0">{t('tools:rating.title')}</h1>
         <p className="page-description m-0">{t('tools:rating.intro')}</p>
@@ -287,9 +311,14 @@ export const RatingToolPage: FC = () => {
           {t('tools:tolerance.title')} →
         </Link>
       </header>
-      <RatingForAchievement />
-      <AchievementForRating />
-      <RatingTable />
+      {/* Stacked on mobile; at lg the calculators sit left of the table so the whole tool fits above the fold */}
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start">
+        <div className="flex flex-col gap-4">
+          <RatingForAchievement />
+          <AchievementForRating />
+        </div>
+        <RatingTable />
+      </div>
     </div>
   )
 }
