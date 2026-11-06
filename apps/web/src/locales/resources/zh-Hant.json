@@ -130,6 +130,7 @@
     "details.region-available": "{{region}}：可遊玩",
     "details.region-unavailable": "{{region}}：無法遊玩",
     "details.achievement-to-rating.step": "比下一列高 {{value}}",
+    "details.achievement-to-rating.step-label": "差值",
     "details.unlock.label": "解鎖",
     "details.unlock.required": "需要",
     "details.unlock.not-required": "不需要",

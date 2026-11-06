@@ -69,7 +69,7 @@ export const SheetListItem: FC<{
     return (
       <>
         {!isControlled && (
-          <ResponsiveDialog open={open} setOpen={setOpen}>
+          <ResponsiveDialog open={open} setOpen={setOpen} hideCloseButton>
             {() => <SheetDialogContent sheet={sheet} onClose={() => setOpen(false)} {...SheetDialogContentProps} />}
           </ResponsiveDialog>
         )}

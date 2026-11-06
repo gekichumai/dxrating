@@ -137,6 +137,7 @@
     "details.region-available": "{{region}}: 이용 가능",
     "details.region-unavailable": "{{region}}: 이용 불가",
     "details.achievement-to-rating.step": "아래 행보다 {{value}} 높음",
+    "details.achievement-to-rating.step-label": "차이",
     "details.unlock.label": "해금",
     "details.unlock.required": "필요",
     "details.unlock.not-required": "필요 없음",
