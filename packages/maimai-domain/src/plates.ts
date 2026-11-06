@@ -284,6 +284,26 @@ function sortByDifficulty(sheets: Sheet[]): Sheet[] {
   return [...sheets].sort((a, b) => BASE_DIFFICULTIES.indexOf(a.difficulty) - BASE_DIFFICULTIES.indexOf(b.difficulty))
 }
 
+const plateChartsCache = new WeakMap<readonly Song[], Map<PlateVersionGroup, Map<PlateRegion, PlateChart[]>>>()
+
+/**
+ * `buildPlateCharts`, cached per song list, group and region: the chart sets only depend on the catalog, so
+ * evaluating every plate (home summary, plate list) scans the catalog once per group instead of once per call.
+ */
+export function getPlateCharts(
+  songs: readonly Song[],
+  group: PlateVersionGroup,
+  region: PlateRegion,
+): readonly PlateChart[] {
+  let byGroup = plateChartsCache.get(songs)
+  if (!byGroup) plateChartsCache.set(songs, (byGroup = new Map()))
+  let byRegion = byGroup.get(group)
+  if (!byRegion) byGroup.set(group, (byRegion = new Map()))
+  let charts = byRegion.get(region)
+  if (!charts) byRegion.set(region, (charts = buildPlateCharts(songs, group, region)))
+  return charts
+}
+
 export interface PlateSheetProgress {
   sheet: Sheet
   record: PlateRecord | undefined
@@ -319,7 +339,7 @@ export function evaluatePlate({
   region: PlateRegion
   records: ReadonlyMap<string, PlateRecord>
 }): PlateProgress {
-  const charts = buildPlateCharts(songs, plate.group, region).map((chart): PlateChartProgress => {
+  const charts = getPlateCharts(songs, plate.group, region).map((chart): PlateChartProgress => {
     const sheets = chart.requiredSheets.map((sheet) => {
       const record = records.get(sheet.id)
       return { sheet, record, met: meetsPlateCondition(plate.kind, record) }
