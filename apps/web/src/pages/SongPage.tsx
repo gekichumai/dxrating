@@ -67,7 +67,7 @@ export const SongPage: FC = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
+    <div className="max-w-2xl mx-auto px-4 pt-6 pb-global flex flex-col gap-4">
       <IconButton
         component="a"
         href="/"

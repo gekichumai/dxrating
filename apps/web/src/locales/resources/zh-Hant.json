@@ -538,7 +538,6 @@
     "auto-save.saved-records": "已儲存的記錄（{{count}} 條）",
     "quick-actions.title": "快捷操作",
     "quick-actions.show-only-b50": "僅顯示 B50",
-    "quick-actions.compact-mode": "緊湊模式",
     "table.no-entries": "暫無記錄。請匯入成績或新增譜面來計算 Rating。",
     "table.headers.chart": "譜面",
     "table.headers.included-in": "收錄於",
@@ -1231,6 +1230,9 @@
     "pool-size_one": "符合 {{count}} 張譜面",
     "pool-size_other": "符合 {{count}} 張譜面",
     "no-result": "沒有符合條件的譜面。",
+    "placeholder.title": "抽到的譜面會顯示在這裡",
+    "placeholder.hint_one": "點擊「抽一首」，從 {{count}} 張符合條件的譜面中抽取。",
+    "placeholder.hint_other": "點擊「抽一首」，從 {{count}} 張符合條件的譜面中抽取。",
     "open-chart": "查看譜面"
   },
   "home": {

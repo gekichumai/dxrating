@@ -36,6 +36,19 @@ export function limitResultsBySong<T extends { songId: string }>(results: readon
   })
 }
 
+/** Consecutive results of one song, so the desktop picker shows each song once with its charts as chips */
+export function groupResultsBySong<T extends { songId: string }>(
+  results: readonly T[],
+): { songId: string; sheets: T[] }[] {
+  const groups = new Map<string, T[]>()
+  for (const result of results) {
+    const sheets = groups.get(result.songId)
+    if (sheets) sheets.push(result)
+    else groups.set(result.songId, [result])
+  }
+  return [...groups].map(([songId, sheets]) => ({ songId, sheets }))
+}
+
 const sheetLabel = (sheet: { type: string; difficulty: string; internalLevelValue: number }) =>
   `${sheet.type.toUpperCase()} ${DIFFICULTIES[sheet.difficulty as keyof typeof DIFFICULTIES]?.title ?? sheet.difficulty} ${sheet.internalLevelValue.toFixed(1)}`
 
@@ -49,6 +62,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
   const deferredQuery = useDeferredValue(query.trim())
   const { results } = useFilteredSheets(deferredQuery)
   const visibleResults = deferredQuery ? limitResultsBySong(results, MAX_RESULT_SONGS) : []
+  const resultGroups = groupResultsBySong(visibleResults)
   const sheetPath = sheet
     ? buildSheetPath({ songId: sheet.songId, type: sheet.type, difficulty: sheet.difficulty })
     : ''
@@ -77,8 +91,9 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
       <p role="status" className="sr-only">
         {deferredQuery ? t('tools:tolerance.result-count', { count: visibleResults.length }) : ''}
       </p>
+      {/* Below lg: one row per chart. At lg: one row per song, with its charts as chips. */}
       {visibleResults.length > 0 && (
-        <ul className="m-0 p-0 list-none flex flex-col">
+        <ul className="m-0 p-0 list-none flex flex-col lg:hidden">
           {visibleResults.map((result) => (
             <li key={result.id}>
               <Link
@@ -95,6 +110,35 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
                   <span className="text-xs text-secondary tabular-nums">{sheetLabel(result)}</span>
                 </span>
               </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+      {resultGroups.length > 0 && (
+        <ul className="m-0 p-0 list-none hidden lg:flex flex-col gap-2">
+          {resultGroups.map(({ songId, sheets }) => (
+            <li key={songId} className="flex flex-col gap-1.5 px-1 py-1">
+              <span className="flex items-center gap-2 min-w-0">
+                <SheetImage name={sheets[0].imageName} size="small" alt="" />
+                <span lang="ja" translate="no" className="truncate text-sm font-medium">
+                  {sheets[0].title}
+                </span>
+              </span>
+              <ul className="m-0 p-0 list-none flex flex-wrap gap-1" aria-label={sheets[0].title}>
+                {sheets.map((result) => (
+                  <li key={result.id} className="flex">
+                    <Link
+                      to="/songs/$songId/$type/$difficulty/tolerance"
+                      params={{ songId: result.songId, type: result.type, difficulty: result.difficulty }}
+                      onClick={() => setQuery('')}
+                      aria-current={sheet?.id === result.id ? 'page' : undefined}
+                      className={`inline-flex items-center rounded-[var(--radius-md)] border border-solid border-[var(--glass-border)] px-2 py-0.5 text-xs leading-5 tabular-nums no-underline text-inherit hover:bg-black/5 ${sheet?.id === result.id ? 'font-bold' : ''}`}
+                    >
+                      {sheetLabel(result)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </li>
           ))}
         </ul>

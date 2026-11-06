@@ -177,7 +177,9 @@ describe('TopBar', () => {
     const sync = screen.getByRole('button', { name: /^Cloud save/ })
     const account = screen.getByRole('button', { name: 'User profile' })
     // Same glass pill, and the sync state sits right before the account it belongs to
-    expect(sync.parentElement).toBe(account.parentElement)
+    expect(sync.closest('.glass-thin')).toBe(account.closest('.glass-thin'))
+    // Tinted like every other header action
+    expect(sync.className).toContain('header-tint')
     expect(sync.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(sync.className).toContain('size-9')
     for (const name of ['Community', 'About DXRating']) expect(screen.getByRole('button', { name })).toBeTruthy()
