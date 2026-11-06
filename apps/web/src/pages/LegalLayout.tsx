@@ -2,6 +2,7 @@ import { useCanGoBack, useRouter } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { InternalLink } from '@/components/global/InternalLink'
 
 export interface LegalSection {
   /** The id of the section's h2 in the document */
@@ -58,9 +59,9 @@ export function LegalLayout({
 
   const crossLinks = (className: string) => (
     <footer className={clsx('legal-footer', className)}>
-      <a href={current === 'terms' ? '/privacy-policy' : '/terms-of-service'}>
+      <InternalLink href={current === 'terms' ? '/privacy-policy' : '/terms-of-service'}>
         {t(current === 'terms' ? 'terms.privacy' : 'terms.title')}
-      </a>
+      </InternalLink>
       <a href="https://discord.gg/8CFgUPxyrU">{t('terms.support')}</a>
     </footer>
   )

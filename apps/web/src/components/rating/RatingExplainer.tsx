@@ -2,6 +2,7 @@ import { calculateRatingAward, SCORE_COEFFICIENT_TABLE } from '@gekichumai/maima
 import { Link } from '@tanstack/react-router'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
+import { InternalLink } from '@/components/global/InternalLink'
 
 const EXAMPLE_CONSTANT = 14.7
 
@@ -96,9 +97,9 @@ export const RatingExplainer: FC = () => {
           ssp: rating(99.5),
         })}
       </p>
-      <a href="/constants" className="link self-start text-base">
+      <InternalLink href="/constants" className="link self-start text-base">
         {t('rating-explainer:constants.link')}
-      </a>
+      </InternalLink>
 
       <h3 className="text-lg font-bold m-0">{t('rating-explainer:faq.title')}</h3>
       <dl className="m-0 flex flex-col gap-3">

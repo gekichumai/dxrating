@@ -8,6 +8,8 @@ import { SongHubPage } from '../SongHubPage'
 const routeState = vi.hoisted(() => ({ params: { songId: 'dsng_d3kkdkrcqj' } }))
 
 vi.mock('@tanstack/react-router', () => ({
+  // InternalLink: no router in these tests, so links render as plain anchors
+  useRouter: () => undefined,
   getRouteApi: () => ({ useParams: () => routeState.params }),
 }))
 

@@ -6,6 +6,7 @@ import { SHEET_ROW_INSET, SheetRowLayoutContext } from '@/components/sheet/sheet
 import { getSheetTitleLabel } from '@/components/song/sheetDisplay'
 import { DEFAULT_LOCALE, type SupportedLocale, toSupportedLocale } from '@/setup/locale'
 import { formatSheetReleaseDateParts, sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
+import { InternalLink } from '@/components/global/InternalLink'
 
 type RecentPageProps = {
   charts: readonly RecentChartLink[]
@@ -140,7 +141,7 @@ const RecentChartRow: FC<{ chart: RecentChartLink; position: number; locale: Sup
     <li itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
       <meta itemProp="position" content={String(position)} />
       <link itemProp="url" href={chartUrl} />
-      <a
+      <InternalLink
         className={`block rounded-[var(--radius-md)] ${SHEET_ROW_INSET} text-fg-1 no-underline transition-colors duration-150 hover:bg-black/4 focus-visible:outline-offset-[-2px]`}
         href={chart.href}
       >
@@ -187,7 +188,7 @@ const RecentChartRow: FC<{ chart: RecentChartLink; position: number; locale: Sup
             />
           </SheetListItemContentView>
         </article>
-      </a>
+      </InternalLink>
     </li>
   )
 }

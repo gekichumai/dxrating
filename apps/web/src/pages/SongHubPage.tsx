@@ -8,6 +8,7 @@ import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { SheetImage } from '@/components/sheet/SheetListItem'
 import { SongChartsTable } from '@/components/song/hub/SongChartsTable'
 import { useSongSheets } from './useSongSheets'
+import { LinkBehavior } from '@/components/global/InternalLink'
 
 const routeApi = getRouteApi('/songs_/$songId')
 
@@ -32,7 +33,7 @@ export const SongHubPage: FC = () => {
     // Desktop (lg+): the song facts become a sticky left column and the charts table takes the rest of the width
     <div className="max-w-2xl mx-auto px-4 pt-6 pb-global flex flex-col gap-4 lg:max-w-6xl lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">
       <IconButton
-        component="a"
+        component={LinkBehavior}
         href="/"
         size="small"
         aria-label={t('song:back')}

@@ -6,6 +6,7 @@ import { type FC, type KeyboardEvent, type MouseEvent, type SyntheticEvent, useM
 import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '../../models/difficulties'
 import { DIFFICULTY_ORDER } from '../../models/constants'
+import { LinkBehavior } from '@/components/global/InternalLink'
 
 export interface SongSheetTabsProps {
   sheets: Sheet[]
@@ -93,7 +94,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
                 <Tab
                   key={type}
                   value={type}
-                  component="a"
+                  component={LinkBehavior}
                   href={hrefFor(type)}
                   onClick={keepModifiedClicks}
                   onKeyDown={activateOnSpace}
@@ -153,7 +154,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
               <Tab
                 key={difficulty}
                 value={difficulty}
-                component="a"
+                component={LinkBehavior}
                 href={hrefFor(activeType, difficulty)}
                 onClick={keepModifiedClicks}
                 onKeyDown={activateOnSpace}

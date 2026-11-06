@@ -47,6 +47,8 @@ const sheetMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@tanstack/react-router', () => ({
+  // InternalLink: no router in these tests, so links render as plain anchors
+  useRouter: () => undefined,
   getRouteApi: () => ({
     useSearch: () => routeState.search,
   }),

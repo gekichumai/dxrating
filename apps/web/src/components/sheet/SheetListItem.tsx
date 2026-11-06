@@ -29,6 +29,7 @@ import { SheetDialogContent, type SheetDialogContentProps } from './SheetDialogC
 import { buildSheetPath } from './sheetLinks'
 import { SHEET_TABLE_ROW_COLUMNS, SheetRowLayoutContext, useSheetRowLayout } from './sheetRowLayout'
 import { getSheetTypeAltTextKey, SHEET_TYPE_IMAGES, SHEET_TYPE_UTAGE_2P_END_ADORNMENT_IMAGE } from './sheetTypeAssets'
+import { LinkBehavior } from '@/components/global/InternalLink'
 
 export interface SheetListItemAnalyticsProps {
   source: SheetViewSource
@@ -86,7 +87,7 @@ export const SheetListItem: FC<{
         )}
 
         <ListItemButton
-          component="a"
+          component={LinkBehavior}
           href={buildSheetPath(sheet)}
           onClick={(e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return

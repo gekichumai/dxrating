@@ -32,6 +32,7 @@ import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
 import { DEFAULT_LOCALE, type SupportedLocale, toSupportedLocale } from '@/setup/locale'
 import { coverImageUrl } from '@/utils/shareImage/shareImage'
+import { InternalLink } from '@/components/global/InternalLink'
 
 const useLocale = (): SupportedLocale => {
   const { i18n } = useTranslation()
@@ -180,7 +181,7 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
                   {group.plates.map((plate) => {
                     const percent = percents?.get(plate.id)
                     return (
-                      <a
+                      <InternalLink
                         key={plate.id}
                         href={regionHref(platePath(plate.id), region)}
                         className="glass-inset px-2 xl:px-1.5 py-1.5 no-underline flex flex-col gap-1 transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:bg-surface/80"
@@ -196,7 +197,7 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
                             {t(`plates:condition-short.${plate.kind}`)}
                           </span>
                         )}
-                      </a>
+                      </InternalLink>
                     )
                   })}
                 </div>
@@ -378,9 +379,9 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
             ) : (
               <p className="text-sm text-fg-2 m-0">
                 {t('plates:progress.empty')}{' '}
-                <a href="/rating" className="link">
+                <InternalLink href="/rating" className="link">
                   {t('plates:progress.import')}
-                </a>
+                </InternalLink>
               </p>
             )}
             <div className="flex flex-wrap items-center gap-2">
@@ -449,7 +450,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                         className={`size-10 rounded-[var(--radius-md)] shrink-0 object-cover outline outline-1 -outline-offset-1 outline-black/10 ${doneHere ? 'opacity-50' : ''}`}
                       />
                       <div className="min-w-0 flex-1">
-                        <a
+                        <InternalLink
                           href={buildSheetPath({
                             songId: chart.songId,
                             type: chart.type,
@@ -459,7 +460,7 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
                           className="line-clamp-2 [overflow-wrap:anywhere] text-sm font-semibold text-fg-1 no-underline hover:underline underline-offset-2"
                         >
                           {chart.title}
-                        </a>
+                        </InternalLink>
                         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 min-w-0 text-xs text-fg-2">
                           <span className="truncate shrink-0 max-w-full" title={chart.version}>
                             {getSheetTypeDisplayName(chart.type, locale)} · {chart.version}
@@ -501,10 +502,10 @@ export const PlatePage: FC<{ data: PlatePageData }> = ({ data }) => {
         ))}
 
         <footer className="flex flex-col gap-2">
-          <a href={regionHref('/plates', data.region)} className="link self-start text-sm">
+          <InternalLink href={regionHref('/plates', data.region)} className="link self-start text-sm">
             {t('plates:other-plates')}
             <span aria-hidden> →</span>
-          </a>
+          </InternalLink>
         </footer>
       </div>
     </div>
