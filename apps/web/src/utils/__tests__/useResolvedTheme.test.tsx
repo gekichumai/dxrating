@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { afterEach, describe, expect, it } from 'vitest'
 import { THEME_ATTRIBUTE } from '@/setup/theme-script'
@@ -18,11 +18,10 @@ describe('useResolvedTheme', () => {
     const { result } = renderHook(() => useResolvedTheme())
     expect(result.current).toBe('light')
 
-    await act(async () => {
+    act(() => {
       document.documentElement.setAttribute(THEME_ATTRIBUTE, 'dark')
-      // MutationObserver callbacks run as microtasks
-      await Promise.resolve()
     })
-    expect(result.current).toBe('dark')
+    // MutationObserver callbacks are delivered asynchronously
+    await waitFor(() => expect(result.current).toBe('dark'))
   })
 })
