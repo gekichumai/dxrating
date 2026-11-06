@@ -53,19 +53,23 @@ export const SongChartsTable: FC<{
 
   return (
     <MaterialSurface as="section" className="p-3 flex flex-col gap-2" aria-labelledby="song-hub-charts-heading">
-      <h2 id="song-hub-charts-heading" className="m-0 text-base font-bold tracking-tight">
+      <h2 id="song-hub-charts-heading" className="section-title m-0">
         {t('song:hub.title')}
       </h2>
       <div className="overflow-x-auto -mx-1">
-        <table className="w-full border-collapse text-sm tabular-nums">
+        <table className="w-full border-collapse text-sm tabular-nums text-fg-1">
           <thead>
-            <tr className="text-left text-xs opacity-70">
-              <th className="px-1 py-1 font-medium">{t('song:hub.column.chart')}</th>
-              <th className="px-1 py-1 font-medium">{t('song:hub.column.level')}</th>
-              <th className="px-1 py-1 font-medium">{t('song:hub.column.constant')}</th>
-              <th className="px-1 py-1 font-medium">{t('song:hub.column.notes')}</th>
-              <th className="px-1 py-1 font-medium">{t('song:hub.column.designer')}</th>
-              <th className="px-1 py-1 font-medium">{t('song:hub.column.my-score')}</th>
+            <tr className="text-left text-xs text-fg-2">
+              <th className="px-1 py-1 font-normal whitespace-nowrap">{t('song:hub.column.chart')}</th>
+              <th className="px-1 py-1 font-normal whitespace-nowrap">{t('song:hub.column.level')}</th>
+              <th className="px-1 py-1 font-normal whitespace-nowrap">{t('song:hub.column.constant')}</th>
+              <th className="hidden sm:table-cell px-1 py-1 font-normal whitespace-nowrap">
+                {t('song:hub.column.notes')}
+              </th>
+              <th className="hidden sm:table-cell px-1 py-1 font-normal whitespace-nowrap">
+                {t('song:hub.column.designer')}
+              </th>
+              <th className="px-1 py-1 font-normal whitespace-nowrap">{t('song:hub.column.my-score')}</th>
             </tr>
           </thead>
           <tbody>
@@ -73,54 +77,48 @@ export const SongChartsTable: FC<{
               const record = mounted ? bySheetId.get(sheet.id) : undefined
               const raise = raises.get(sheet.id)
               const noteCounts = sheet.noteCounts
+              const designer = sheet.noteDesigner && sheet.noteDesigner !== '-' ? sheet.noteDesigner : '—'
+              const unavailableEverywhere = sheet.serverIds.length === 0
               return (
                 <tr
                   key={sheet.id}
                   className={clsx(
-                    'border-t border-solid border-0 border-black/8',
-                    sheet.id === activeSheetId && 'bg-black/4',
+                    // The whole row is the link target (stretched link below); hover tints the row where hover exists
+                    'relative border-t border-solid border-0 border-black/8 transition-[background-color] duration-150 hover:bg-black/4',
+                    sheet.id === activeSheetId && 'bg-accent-subtle',
                   )}
                 >
                   <td className="px-1 py-1.5 whitespace-nowrap">
                     <Link
                       to="/songs/$songId/$type/$difficulty"
                       params={{ songId, type: sheet.type, difficulty: sheet.difficulty }}
-                      className="inline-flex items-center gap-1 no-underline text-inherit"
+                      className="inline-flex items-center gap-1 no-underline text-inherit rounded-[var(--radius-sm)] after:absolute after:inset-0 after:content-['']"
                     >
-                      <span className="text-xs opacity-70">{t(`song:type.${sheet.type}`)}</span>
+                      <span className="inline-block w-[6.5em] shrink-0 text-xs text-fg-2">
+                        {t(`song:type.${sheet.type}`)}
+                      </span>
                       <SheetDifficulty difficulty={sheet.difficulty as DifficultyEnum} serverIds={sheet.serverIds} />
+                      {unavailableEverywhere && <span className="sr-only">{t('song:hub.unavailable-everywhere')}</span>}
                     </Link>
                   </td>
                   <td className="px-1 py-1.5">{sheet.level}</td>
                   <td className="px-1 py-1.5">
                     {sheet.isRatingEligible && sheet.internalLevelValue > 0 ? sheet.internalLevelValue.toFixed(1) : '—'}
                   </td>
-                  <td className="px-1 py-1.5 whitespace-nowrap">
-                    {noteCounts?.total ? (
-                      <span
-                        title={t('song:hub.notes-breakdown', {
-                          tap: noteCounts.tap ?? 0,
-                          hold: noteCounts.hold ?? 0,
-                          slide: noteCounts.slide ?? 0,
-                          touch: noteCounts.touch ?? 0,
-                          break: noteCounts.break ?? 0,
-                        })}
-                      >
-                        {noteCounts.total.toLocaleString('en-US')}
-                      </span>
-                    ) : (
-                      '—'
-                    )}
+                  <td className="hidden sm:table-cell px-1 py-1.5 whitespace-nowrap">
+                    {noteCounts?.total ? noteCounts.total.toLocaleString('en-US') : '—'}
                   </td>
-                  <td className="px-1 py-1.5 max-w-40 truncate">{sheet.noteDesigner ?? '—'}</td>
+                  <td className="hidden sm:table-cell px-1 py-1.5 max-w-40 truncate" title={designer}>
+                    <span translate="no">{designer}</span>
+                  </td>
                   <td className="px-1 py-1.5 whitespace-nowrap">
                     {record ? (
-                      <span className="font-medium">{formatAchievement(record.entry.achievementRate)}</span>
+                      <span className="font-semibold">{formatAchievement(record.entry.achievementRate)}</span>
                     ) : (
                       '—'
                     )}
                     {raise && (
-                      <div className="text-xs text-emerald-700">
+                      <div className="text-xs text-status-positive">
                         {t('song:hub.raise-hint', { target: raise.targetAchievement, gain: raise.gain })}
                       </div>
                     )}

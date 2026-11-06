@@ -2,24 +2,28 @@ import { SERVER_BADGE_ORDER } from '@/models/constants'
 import { getArcadeSongsUrl } from '@/catalog/arcadeSongs'
 import { CommentActions } from '../comments/CommentActions'
 import { filterComments, useCommentVisibility } from '../comments/commentVisibility'
-import { MULTIVER_AVAILABLE_VERSIONS, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
-import {
-  Button,
-  Chip,
-  CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-} from '@mui/material'
+import { MULTIVER_AVAILABLE_VERSIONS, TypeEnum, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
+import { Button, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material'
 import clsx from 'clsx'
-import { type FC, type PropsWithChildren, memo, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  type FC,
+  type PropsWithChildren,
+  type ReactNode,
+  memo,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
 import useSWR from 'swr'
 import { match } from 'ts-pattern'
+import MdiCheck from '~icons/mdi/check'
+import MdiClose from '~icons/mdi/close'
+import MdiComment from '~icons/mdi/comment'
+import MdiLock from '~icons/mdi/lock'
 import { apiClient as client } from '../../lib/orpc'
 import { useAuth } from '../../hooks/useAuth'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
@@ -28,16 +32,35 @@ import { formatSheetReleaseDateParts } from '../../utils/dateFormatting'
 import { calculateRating } from '../../utils/rating'
 import { useRenderedAt } from '../../utils/renderEnvironment'
 import { DXRank } from '../global/DXRank'
+import { MaterialSurface } from '../global/MaterialSurface'
 import { SheetTags } from '../sheet/tags/SheetTags'
 import { SheetDifficulty } from '../sheet/SheetListItem'
+import { SHEET_TYPE_IMAGES, getSheetTypeAltTextKey } from '../sheet/sheetTypeAssets'
 
 const PRESET_ACHIEVEMENT_RATES = [100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50]
 
-const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
-  <div className="font-lg font-bold">
-    <span className="pb-1 px-1 mb-1 border-b border-solid border-gray-200 tracking-tight">{children}</span>
-  </div>
-)
+// Hairline dividers only: rows carry no fill, so the glass panel behind them stays the one surface
+const tableSx = {
+  '& .MuiTableCell-root': { borderColor: 'var(--glass-border)', color: 'var(--fg-1)' },
+  '& .MuiTableHead-root .MuiTableCell-root': { color: 'var(--fg-2)', fontWeight: 400 },
+  '& .MuiTableBody-root .MuiTableRow-root:last-of-type > .MuiTableCell-root': { borderBottom: 0 },
+  // Cells align with the panel heading instead of MUI's 16px gutter
+  '& .MuiTableCell-root:first-of-type': { paddingLeft: 0 },
+  '& .MuiTableCell-root:last-of-type': { paddingRight: 0 },
+} as const
+
+/** A glass panel with its own heading, so heading navigation reaches every part of the chart page */
+const Section: FC<PropsWithChildren<{ title: ReactNode }>> = ({ title, children }) => {
+  const headingId = useId()
+  return (
+    <MaterialSurface as="section" className="p-3 flex flex-col gap-3" aria-labelledby={headingId}>
+      <h2 id={headingId} className="section-title m-0">
+        {title}
+      </h2>
+      {children}
+    </MaterialSurface>
+  )
+}
 
 const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
   const { t } = useTranslation(['sheet'])
@@ -73,12 +96,12 @@ const SheetAchievementRate: FC<{ value: number }> = ({ value }) => {
   const decimal = value % 1
 
   return (
-    <div className="inline-flex items-center">
-      <span className="font-bold">{integer}</span>
+    <span className="inline-flex items-center tabular-nums">
+      <span className="font-semibold">{integer}</span>
       <span>.</span>
-      <span className={clsx(decimal === 0 && 'text-zinc-4')}>{decimal.toFixed(4).slice(2)}</span>
+      <span className={clsx(decimal === 0 && 'text-fg-2')}>{decimal.toFixed(4).slice(2)}</span>
       <span>%</span>
-    </div>
+    </span>
   )
 }
 
@@ -123,18 +146,16 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   }, [multiverInternalLevelValues])
 
   return (
-    <div className="overflow-x-auto" ref={scrollableContainer}>
+    <div className="overflow-x-auto -mx-1 px-1" ref={scrollableContainer}>
       {multiverInternalLevelValues.filter((v) => v.internalLevelValue !== undefined).length > 0 ? (
-        <Table size="small" className="mb-4">
+        <Table size="small" sx={tableSx}>
           <TableHead>
             <TableRow>
               {multiverInternalLevelValues.map(({ version, available }) => (
                 <TableCell
                   key={version}
-                  className={clsx(
-                    appVersion === version && 'bg-amber-200 dark:bg-[rgb(251_191_36/0.2)]',
-                    !available && 'opacity-50',
-                  )}
+                  aria-current={appVersion === version ? 'true' : undefined}
+                  className={clsx(appVersion === version && 'bg-accent-subtle')}
                 >
                   <img
                     src={
@@ -143,7 +164,10 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                         : `https://shama.dxrating.net/images/version-title/${VERSION_SLUG_MAP.get(version)}.png`
                     }
                     alt={t('sheet:version-title-alt', { version })}
-                    className="h-40.75px w-83px min-w-[83px] -ml-1 touch-callout-none"
+                    className={clsx(
+                      'h-40.75px w-83px min-w-[83px] -ml-1 touch-callout-none',
+                      !available && 'opacity-50',
+                    )}
                     draggable={false}
                   />
                 </TableCell>
@@ -153,18 +177,19 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           <TableBody>
             <TableRow>
               {multiverInternalLevelValues.map(({ version, internalLevelValue, available, delta }) => (
-                <TableCell
-                  key={version}
-                  className={clsx(
-                    appVersion === version && 'bg-amber-200 dark:bg-[rgb(251_191_36/0.2)]',
-                    !available && 'opacity-50',
-                  )}
-                >
+                <TableCell key={version} className={clsx(appVersion === version && 'bg-accent-subtle')}>
                   {internalLevelValue === undefined ? (
-                    <div className="text-zinc-500 select-none">{available ? '—' : '／'}</div>
+                    <span className="text-fg-2">
+                      <span aria-hidden>{available ? '—' : '／'}</span>
+                      <span className="sr-only">
+                        {available
+                          ? t('sheet:internal-level-history.no-value')
+                          : t('sheet:internal-level-history.not-in-version')}
+                      </span>
+                    </span>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <span className="font-bold tabular-nums">{internalLevelValue?.toFixed(1)}</span>
+                      <span className="font-semibold tabular-nums">{internalLevelValue?.toFixed(1)}</span>
                       {delta !== undefined && <DeltaArrow delta={delta} />}
                     </div>
                   )}
@@ -174,14 +199,14 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           </TableBody>
         </Table>
       ) : (
-        <div className="text-zinc-500 px-1">{t('sheet:internal-level-history.empty')}</div>
+        <p className="m-0 text-sm text-fg-2">{t('sheet:internal-level-history.empty')}</p>
       )}
     </div>
   )
 }
 
 const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t } = useTranslation(['auth', 'sheet', 'global'])
+  const { t, i18n } = useTranslation(['auth', 'sheet', 'global'])
   const { session, user, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
   const visibility = useCommentVisibility(user?.id)
   const [content, setContent] = useState<string>('')
@@ -201,6 +226,11 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       created_at: c.created_at.toString(),
     }))
   })
+  // Comments load on the client only, so formatting them in the app locale cannot cause a hydration mismatch
+  const dateFormat = useMemo(
+    () => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }),
+    [i18n.language],
+  )
 
   const [{ loading: submitting }, handleSubmit] = useAsyncFn(async () => {
     const isAuthenticated = await ensureAuthenticated()
@@ -219,14 +249,17 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     setContent('')
   }, [sheet, content, ensureAuthenticated])
 
+  const visibleComments = filterComments(comments ?? [], visibility)
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <LoginDialog />
 
-      <div className="flex gap-2 mt-1 relative">
+      <div className="flex gap-2 relative">
         <TextField
           className="flex-grow"
           placeholder={t('sheet:comments.placeholder')}
+          inputProps={{ 'aria-label': t('sheet:comments.input-label') }}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           minRows={1}
@@ -240,57 +273,164 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         </Button>
 
         {!session && (
-          <div
-            className="absolute inset-0 flex items-center justify-center bg-white/80 rounded cursor-pointer z-1"
+          <button
+            type="button"
+            className="absolute inset-0 z-1 flex items-center justify-center m-0 p-0 border-0 font-inherit bg-white/60 backdrop-blur-sm rounded-[var(--radius-md)] cursor-pointer"
             onClick={openLoginDialog}
-            onKeyDown={(e) => e.key === 'Enter' && openLoginDialog()}
-            role="button"
-            tabIndex={0}
           >
-            <span className="font-bold text-sm text-zinc-600 underline underline-offset-2">
+            <span className="font-semibold text-sm text-accent-strong underline underline-offset-2">
               {t('auth:form.login-or-register-to-comment')}
             </span>
-          </div>
+          </button>
         )}
       </div>
 
       {isLoadingComments ? (
-        Array.from({ length: 1 }).map((_, i) => (
-          // oxlint-disable-next-line react/no-array-index-key -- index is stable
-          <div key={i} className="flex flex-col gap-1 bg-zinc-2 rounded-lg h-16 animate-pulse" />
-        ))
-      ) : (
-        <div className="flex flex-col gap-2">
-          {filterComments(comments ?? [], visibility).map((comment) => (
-            <div key={comment.id} className="flex flex-col gap-1 bg-zinc-1 rounded-lg px-4 py-2">
-              <div className="text-zinc-500 flex items-center">
-                <div className="text-sm font-bold">{comment.display_name ?? t('sheet:comments.anonymous')}</div>
+        <div className="h-16 rounded-[var(--radius-md)] bg-black/5 motion-safe:animate-pulse" />
+      ) : visibleComments.length > 0 ? (
+        <ul className="m-0 p-0 list-none flex flex-col gap-2">
+          {visibleComments.map((comment) => (
+            <li key={comment.id} className="glass-inset flex flex-col gap-1 px-3 py-2">
+              <div className="text-fg-2 flex items-center gap-1">
+                <span className="text-sm font-semibold text-fg-1">
+                  {comment.display_name ?? t('sheet:comments.anonymous')}
+                </span>
                 <CommentActions comment={comment} />
-                <div className="text-xs ml-auto">{new Date(comment.created_at).toLocaleString()}</div>
+                <time className="text-xs ml-auto tabular-nums" dateTime={comment.created_at}>
+                  {dateFormat.format(new Date(comment.created_at))}
+                </time>
               </div>
-              <div>
+              <div className="text-sm text-fg-1 break-words">
                 {comment.content.split('\n').map((line) => (
-                  <p key={line}>{line ?? ' '}</p>
+                  <p key={line} className="m-0">
+                    {line ?? ' '}
+                  </p>
                 ))}
               </div>
-            </div>
+            </li>
           ))}
-          {filterComments(comments ?? [], visibility).length === 0 && (
-            <div className="flex flex-col gap-1 bg-zinc-2 rounded-lg p-4 items-center text-zinc-5">
-              {t('sheet:comments.empty')}
-              {!session && ` ${t('sheet:comments.sign-in-to-comment')}`}
-            </div>
-          )}
-        </div>
+        </ul>
+      ) : (
+        <p className="glass-inset m-0 p-4 text-center text-sm text-fg-2">{t('sheet:comments.empty')}</p>
       )}
     </div>
   )
 }
 
+/** The utage kind (宴 / 協 / 光 …) as the list shows it, since utage charts have no difficulty pill */
+const UtageKindBadge: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+  const { t } = useTranslation(['sheet'])
+  const kind = sheet.difficulty.replace(/[【】]/g, '')
+  return (
+    <span className="relative inline-flex h-26px w-95.875px items-center justify-center select-none">
+      <img
+        src={SHEET_TYPE_IMAGES[TypeEnum.UTAGE]}
+        alt=""
+        className="absolute inset-0 h-full w-full object-contain touch-callout-none"
+        draggable={false}
+      />
+      <span className="relative text-white text-xs text-shadow-[0_1px_0_rgb(0_0_0_/_0.35)]" aria-hidden>
+        {kind}
+      </span>
+      <span className="sr-only">{`${t(getSheetTypeAltTextKey(sheet.type))} ${kind}`}</span>
+    </span>
+  )
+}
+
+/** The chart at a glance: difficulty and internal level, release date and tags (sits under the chart tabs) */
+export const SongSheetSummary: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+  const { t, i18n } = useTranslation(['sheet'])
+  const renderedAt = useRenderedAt()
+  const releaseDateParts = useMemo(
+    () => (sheet.releaseDate ? formatSheetReleaseDateParts(sheet.releaseDate, i18n.language, renderedAt) : null),
+    [sheet.releaseDate, i18n.language, renderedAt],
+  )
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        {sheet.isTypeUtage ? (
+          <>
+            <UtageKindBadge sheet={sheet} />
+            <span className="text-2xl font-semibold leading-tight tabular-nums text-fg-1">{sheet.level}</span>
+          </>
+        ) : (
+          <>
+            <SheetDifficulty difficulty={sheet.difficulty} serverIds={sheet.serverIds} isLocked={sheet.isLocked} />
+            <span className="text-2xl font-semibold leading-tight tabular-nums text-fg-1">
+              {sheet.internalLevelValue.toFixed(1)}
+            </span>
+          </>
+        )}
+      </div>
+
+      {sheet.isTypeUtage && sheet.comment && (
+        <p className="glass-inset m-0 self-start inline-flex items-start gap-1.5 px-2 py-1 text-sm text-fg-1">
+          <MdiComment aria-hidden className="h-3.5 w-3.5 shrink-0 mt-0.75 text-fg-2" />
+          <span lang="ja">{sheet.comment}</span>
+        </p>
+      )}
+
+      {releaseDateParts && <p className="m-0 text-sm text-fg-2">{t('sheet:release-date', releaseDateParts)}</p>}
+
+      <div className="flex flex-wrap gap-1">
+        <SheetTags sheet={sheet} />
+      </div>
+    </div>
+  )
+}
+
+const DetailRow: FC<PropsWithChildren<{ label: ReactNode; indent?: boolean }>> = ({ label, indent, children }) => (
+  <TableRow>
+    <TableCell component="th" scope="row" className={clsx('w-2/5 !font-normal !text-fg-2', indent && '!pl-4')}>
+      {label}
+    </TableCell>
+    <TableCell>{children}</TableCell>
+  </TableRow>
+)
+
+const NOTE_TYPES = ['tap', 'hold', 'slide', 'touch', 'break'] as const
+
+const RegionalAvailability: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+  const { t } = useTranslation(['sheet'])
+  return (
+    <ul className="m-0 p-0 list-none flex flex-wrap items-center gap-1.5">
+      {SERVER_BADGE_ORDER.map((region) => {
+        const available = sheet.serverIds.includes(region)
+        const label = region.toUpperCase()
+        return (
+          <li
+            key={region}
+            className={clsx(
+              'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-[var(--radius-sm)] text-xs font-semibold tracking-wide whitespace-nowrap',
+              available
+                ? 'bg-status-positive text-on-accent border border-solid border-transparent'
+                : 'border border-solid border-black/30 text-fg-2',
+            )}
+          >
+            {available ? (
+              <MdiCheck aria-hidden className="h-3.5 w-3.5" />
+            ) : (
+              <MdiClose aria-hidden className="h-3.5 w-3.5" />
+            )}
+            <span aria-hidden className={clsx(!available && 'line-through')}>
+              {label}
+            </span>
+            <span className="sr-only">
+              {available
+                ? t('sheet:details.region-available', { region: label })
+                : t('sheet:details.region-unavailable', { region: label })}
+            </span>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }> = memo(
   ({ sheet, isActive = true }) => {
-    const { t, i18n } = useTranslation(['sheet', 'global'])
-    const renderedAt = useRenderedAt()
+    const { t } = useTranslation(['sheet', 'song', 'global'])
     const ratings = useMemo(
       () =>
         [...PRESET_ACHIEVEMENT_RATES]
@@ -301,219 +441,133 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
           })),
       [sheet.internalLevelValue],
     )
-    const releaseDateParts = useMemo(
-      () => (sheet.releaseDate ? formatSheetReleaseDateParts(sheet.releaseDate, i18n.language, renderedAt) : null),
-      [sheet.releaseDate, i18n.language, renderedAt],
-    )
+    const designer = sheet.noteDesigner && sheet.noteDesigner !== '-' ? sheet.noteDesigner : '—'
 
     return (
-      <div className="flex flex-col gap-2 relative">
-        <div className="flex items-center gap-2 flex-wrap">
-          <SheetDifficulty difficulty={sheet.difficulty} serverIds={sheet.serverIds} isLocked={sheet.isLocked} />
-          {!sheet.isTypeUtage && (
-            <span className="font-bold tabular-nums text-2xl">{sheet.internalLevelValue.toFixed(1)}</span>
-          )}
-          {sheet.isTypeUtage && (
-            <span className="font-bold tracking-tighter tabular-nums text-xl text-zinc-600">{sheet.level}</span>
-          )}
-        </div>
+      <>
+        {!sheet.isTypeUtage && (
+          <Section title={t('sheet:internal-level-history.title')}>
+            <InternalLevelHistory sheet={sheet} />
+          </Section>
+        )}
 
-        <div className="text-sm">
-          <div className="text-zinc-600">{releaseDateParts && t('sheet:release-date', releaseDateParts)}</div>
-        </div>
+        <Section title={t('sheet:details.title')}>
+          <Table size="small" sx={tableSx} className="tabular-nums">
+            <TableBody>
+              <DetailRow label={t('sheet:details.category')}>
+                <span lang="ja">{sheet.category}</span>
+              </DetailRow>
+              <DetailRow label={t('sheet:details.song-artist')}>
+                <span lang="ja" translate="no" className="break-words">
+                  {sheet.artist}
+                </span>
+              </DetailRow>
+              {sheet.version && <DetailRow label={t('song:hub.version')}>{sheet.version}</DetailRow>}
 
-        <div className="flex flex-wrap gap-1">
-          <SheetTags sheet={sheet} />
-        </div>
+              {!sheet.isTypeUtage && (
+                <>
+                  <DetailRow label={t('sheet:details.bpm')}>{sheet.bpm}</DetailRow>
+                  <DetailRow label={t('sheet:details.chart-designer')}>
+                    <span translate="no" className="break-words">
+                      {designer}
+                    </span>
+                  </DetailRow>
 
-        <div className="flex flex-col gap-6 mt-2">
-          {!sheet.isTypeUtage && (
-            <div className="flex flex-col gap-1">
-              <SectionHeader>{t('sheet:internal-level-history.title')}</SectionHeader>
-              <InternalLevelHistory sheet={sheet} />
-            </div>
-          )}
-
-          <div className="flex flex-col gap-1">
-            <SectionHeader>{t('sheet:details.title')}</SectionHeader>
-            <div>
-              <Table size="small" className="mb-4">
-                <TableHead>
-                  <TableRow>
-                    <TableCell width="100px">{t('sheet:details.category')}</TableCell>
-                    <TableCell width="200px">{sheet.category}</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>{t('sheet:details.song-artist')}</TableCell>
-                    <TableCell>{sheet.artist}</TableCell>
-                  </TableRow>
-
-                  {!sheet.isTypeUtage && (
+                  {(sheet.noteCounts.tap ?? 0) > 0 && (
                     <>
-                      <TableRow>
-                        <TableCell>{t('sheet:details.bpm')}</TableCell>
-                        <TableCell>{sheet.bpm}</TableCell>
-                      </TableRow>
-
-                      <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
-                        <TableCell>{t('sheet:details.chart-designer')}</TableCell>
-                        <TableCell>{sheet.noteDesigner}</TableCell>
-                      </TableRow>
-
-                      {(sheet.noteCounts.tap ?? 0) > 0 && (
-                        <>
-                          <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
-                            <TableCell colSpan={2}>{t('sheet:details.notes-statistics.title')}</TableCell>
-                          </TableRow>
-
-                          <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
-                            <TableCell>— {t('sheet:details.notes-statistics.tap')}</TableCell>
-                            <TableCell>{sheet.noteCounts.tap ?? 0}</TableCell>
-                          </TableRow>
-
-                          <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
-                            <TableCell>— {t('sheet:details.notes-statistics.hold')}</TableCell>
-                            <TableCell>{sheet.noteCounts.hold ?? 0}</TableCell>
-                          </TableRow>
-
-                          <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
-                            <TableCell>— {t('sheet:details.notes-statistics.slide')}</TableCell>
-                            <TableCell>{sheet.noteCounts.slide ?? 0}</TableCell>
-                          </TableRow>
-
-                          <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
-                            <TableCell>— {t('sheet:details.notes-statistics.touch')}</TableCell>
-                            <TableCell>{sheet.noteCounts.touch ?? 0}</TableCell>
-                          </TableRow>
-
-                          <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
-                            <TableCell>— {t('sheet:details.notes-statistics.break')}</TableCell>
-                            <TableCell>{sheet.noteCounts.break ?? 0}</TableCell>
-                          </TableRow>
-
-                          <TableRow className="bg-gray-1 dark:bg-[var(--glass-inset-bg)]">
-                            <TableCell>— {t('sheet:details.notes-statistics.total')}</TableCell>
-                            <TableCell>{sheet.noteCounts.total?.toLocaleString('en-US')}</TableCell>
-                          </TableRow>
-                        </>
-                      )}
+                      <DetailRow label={t('sheet:details.notes-statistics.title')}>
+                        <span className="font-semibold">{sheet.noteCounts.total?.toLocaleString('en-US')}</span>
+                      </DetailRow>
+                      {NOTE_TYPES.map((noteType) => (
+                        <DetailRow key={noteType} label={t(`sheet:details.notes-statistics.${noteType}`)} indent>
+                          {sheet.noteCounts[noteType] ?? 0}
+                        </DetailRow>
+                      ))}
                     </>
                   )}
+                </>
+              )}
 
-                  <TableRow>
-                    <TableCell>{t('sheet:details.regional-availability')}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {SERVER_BADGE_ORDER.map((region) => [region, sheet.serverIds.includes(region)] as const).map(
-                          ([region, available]) => (
-                            <div
-                              key={region}
-                              className={clsx(
-                                'uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs',
-                                available ? '!bg-green-500' : '!bg-gray-300',
-                              )}
-                            >
-                              {region}
-                            </div>
-                          ),
-                        )}{' '}
-                      </div>
-                    </TableCell>
-                  </TableRow>
+              <DetailRow label={t('sheet:details.regional-availability')}>
+                <RegionalAvailability sheet={sheet} />
+              </DetailRow>
 
-                  <TableRow>
-                    <TableCell>{t('sheet:details.unlock-required')}</TableCell>
-                    <TableCell>
-                      <div
-                        className={clsx(
-                          'uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs inline-flex',
-                          // gray-500 lightens in dark; keep the light fill under white text
-                          sheet.isLocked ? '!bg-yellow-500' : '!bg-gray-500 dark:!bg-[#6b7280]',
-                        )}
-                      >
-                        {sheet.isLocked ? t('global:locked') : t('global:available')}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+              <DetailRow label={t('sheet:details.unlock')}>
+                {sheet.isLocked ? (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-status-warning text-on-accent text-xs font-semibold">
+                    <MdiLock aria-hidden className="h-3.5 w-3.5" />
+                    {t('sheet:details.unlock-status.required')}
+                  </span>
+                ) : (
+                  t('sheet:details.unlock-status.not-required')
+                )}
+              </DetailRow>
+            </TableBody>
+          </Table>
 
-              <div className="mt-4 text-xs text-zinc-500 text-right">
-                <Trans
-                  i18nKey="sheet:details.credits"
-                  components={{
-                    link: (
-                      <a href={getArcadeSongsUrl(sheet)} rel="noreferrer" target="_blank" className="tracking-tighter">
-                        arcade-songs.zetaraku.dev
-                      </a>
-                    ),
-                  }}
-                />
-              </div>
-            </div>
-          </div>
+          <p className="m-0 text-xs text-fg-2 text-right">
+            <Trans
+              i18nKey="sheet:details.credits"
+              components={{
+                link: (
+                  <a href={getArcadeSongsUrl(sheet)} rel="noreferrer" target="_blank" className="link">
+                    arcade-songs.zetaraku.dev
+                  </a>
+                ),
+              }}
+            />
+          </p>
+        </Section>
 
-          {isActive && (
-            <div className="flex flex-col gap-1">
-              <SectionHeader>{t('sheet:comments.title')}</SectionHeader>
-              <Comments sheet={sheet} />
-            </div>
-          )}
+        {isActive && (
+          <Section title={t('sheet:comments.title')}>
+            <Comments sheet={sheet} />
+          </Section>
+        )}
 
-          {!sheet.isTypeUtage && (
-            <div className="flex flex-col gap-1">
-              <SectionHeader>{t('sheet:details.achievement-to-rating.title')}</SectionHeader>
-              <div>
-                <Table className="tabular-nums" size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell width="100px">{t('sheet:details.achievement-to-rating.achievement')}</TableCell>
-                      <TableCell width="50px">{t('sheet:details.achievement-to-rating.rating')}</TableCell>
+        {!sheet.isTypeUtage && (
+          <Section title={t('sheet:details.achievement-to-rating.title')}>
+            <Table className="tabular-nums" size="small" sx={tableSx}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t('sheet:details.achievement-to-rating.achievement')}</TableCell>
+                  <TableCell>{t('sheet:details.achievement-to-rating.rating')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {ratings.map((rating, i) => {
+                  const nextRating = i === ratings.length - 1 ? null : ratings[i + 1]
+                  const step = nextRating ? rating.rating.ratingAwardValue - nextRating.rating.ratingAwardValue : null
+
+                  return (
+                    <TableRow key={rating.achievementRate}>
+                      <TableCell component="th" scope="row" className="!font-normal">
+                        <div className="flex items-center gap-1">
+                          <DXRank rank={rating.rating.rank} className="h-8" />
+                          <SheetAchievementRate value={rating.achievementRate} />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{rating.rating.ratingAwardValue}</span>
+                          {step !== null && (
+                            <span className="glass-inset rounded-[var(--radius-xs)] px-1 text-xs text-fg-2">
+                              <span aria-hidden>+{step}</span>
+                              <span className="sr-only">
+                                {t('sheet:details.achievement-to-rating.step', { value: step })}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {ratings.map((rating, i) => {
-                      const nextRating = i === ratings.length - 1 ? null : ratings[i + 1]
-
-                      return (
-                        <TableRow
-                          key={rating.achievementRate}
-                          sx={{
-                            '&:last-child td, &:last-child th': { border: 0 },
-                          }}
-                        >
-                          <TableCell component="th" scope="row">
-                            <div className={clsx('flex items-center font-sans')}>
-                              <DXRank rank={rating.rating.rank} className="h-8" />
-                              <SheetAchievementRate value={rating.achievementRate} />
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="relative font-sans">
-                              <span className="font-bold">{rating.rating.ratingAwardValue}</span>
-
-                              {nextRating && (
-                                <div className="absolute -bottom-5 -left-1 px-1 text-xs text-zinc-500 bg-zinc-100 shadow-[0_0_0_1px_var(--un-shadow-color)] shadow-zinc-300/80 rounded-xs">
-                                  ↑{' '}
-                                  <span className="font-bold">
-                                    {rating.rating.ratingAwardValue - nextRating.rating.ratingAwardValue}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </Section>
+        )}
+      </>
     )
   },
 )

@@ -44,6 +44,7 @@ vi.mock('@/components/song/SongSheetContent', () => ({
   SongSheetContent: ({ sheet }: { sheet: { difficulty: string } }) => (
     <section data-testid="sheet-content">{sheet.difficulty}</section>
   ),
+  SongSheetSummary: () => <div data-testid="sheet-summary" />,
 }))
 
 vi.mock('@/components/tools/ToleranceCalculator', () => ({
@@ -70,7 +71,9 @@ describe('SongPage', () => {
   it('uses the home page (chart search) as the client fallback for the back link', () => {
     const { container } = render(<SongPage />)
 
-    expect(container.querySelector('a')?.getAttribute('href')).toBe('/')
+    const back = container.querySelector('a')
+    expect(back?.getAttribute('href')).toBe('/')
+    expect(back?.getAttribute('aria-label')).toBe('Back')
   })
 
   it('links to the song hub instead of repeating the all-charts table', () => {

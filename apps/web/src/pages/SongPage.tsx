@@ -1,12 +1,13 @@
 import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { IconButton } from '@mui/material'
-import { type FC, useMemo } from 'react'
+import { type FC, type MouseEvent, useMemo } from 'react'
 import { Link, getRouteApi, useNavigate } from '@tanstack/react-router'
 import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
+import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { TYPE_ORDER, getHighestDifficulty } from '../models/constants'
 import { SongHeader } from '../components/song/SongHeader'
-import { SongSheetContent } from '../components/song/SongSheetContent'
+import { SongSheetContent, SongSheetSummary } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
 import { constantTableLevelOf, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { versionPagePath, versionSlug } from '@/components/chartDiscovery/versionPages'
@@ -67,61 +68,73 @@ export const SongPage: FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
-      <a
+      <IconButton
+        component="a"
         href="/"
-        onClick={(e) => {
+        size="small"
+        aria-label={t('song:back')}
+        onClick={(e: MouseEvent<HTMLAnchorElement>) => {
           if (window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
             e.preventDefault()
             window.history.back()
           }
         }}
-        className="self-start -ml-2 no-underline text-inherit"
+        className="self-start -ml-2 -mb-2"
       >
-        <IconButton component="span" size="small">
-          <MdiArrowLeft />
-        </IconButton>
-      </a>
+        <MdiArrowLeft aria-hidden />
+      </IconButton>
 
       {headerSheet && <SongHeader sheet={headerSheet} />}
 
-      <SongSheetTabs
-        sheets={song.sheets}
-        availableTypes={availableTypes}
-        activeType={activeType}
-        activeDifficulty={activeDifficulty}
-        onTypeChange={handleTypeChange}
-        onDifficultyChange={handleDifficultyChange}
-        hrefFor={(sheetType, sheetDifficulty) =>
-          buildSheetPath({
-            songId,
-            type: sheetType,
-            difficulty: sheetDifficulty ?? getHighestDifficulty(flattenedSheets.filter((s) => s.type === sheetType)),
-          })
-        }
-      />
+      <MaterialSurface as="section" className="p-3 flex flex-col gap-3" aria-label={t('song:chart-section-label')}>
+        <SongSheetTabs
+          sheets={song.sheets}
+          availableTypes={availableTypes}
+          activeType={activeType}
+          activeDifficulty={activeDifficulty}
+          onTypeChange={handleTypeChange}
+          onDifficultyChange={handleDifficultyChange}
+          hrefFor={(sheetType, sheetDifficulty) =>
+            buildSheetPath({
+              songId,
+              type: sheetType,
+              difficulty: sheetDifficulty ?? getHighestDifficulty(flattenedSheets.filter((s) => s.type === sheetType)),
+            })
+          }
+        />
 
-      <Link to="/songs/$songId" params={{ songId: song.id }} className="self-start text-sm text-slate-700">
-        {t('song:hub.all-charts-link')} →
-      </Link>
+        {visibleSheets.map((sheet) => (
+          <SongSheetSummary key={sheet.id} sheet={sheet} />
+        ))}
+
+        <Link to="/songs/$songId" params={{ songId: song.id }} className="link self-start text-sm">
+          {t('song:hub.all-charts-link')}
+          <span aria-hidden> →</span>
+        </Link>
+      </MaterialSurface>
 
       {visibleSheets.map((sheet) => (
-        <div key={sheet.id}>
-          <SongSheetContent sheet={sheet} isActive />
-        </div>
+        <SongSheetContent key={sheet.id} sheet={sheet} isActive />
       ))}
 
       {activeSheet && <ToleranceCalculator key={activeSheet.id} sheet={activeSheet} source="chart_page" />}
 
-      {constantTableLevel && (
-        <a href={constantTablePath(constantTableLevel)} className="self-start text-sm text-slate-700">
-          {t('constants:chart-link', { level: constantTableLevel })} →
-        </a>
-      )}
+      {(constantTableLevel || (activeSheet && versionSlug(activeSheet.version))) && (
+        <nav className="flex flex-col gap-2 text-sm" aria-label={t('song:related-pages')}>
+          {constantTableLevel && (
+            <a href={constantTablePath(constantTableLevel)} className="link self-start">
+              {t('constants:chart-link', { level: constantTableLevel })}
+              <span aria-hidden> →</span>
+            </a>
+          )}
 
-      {activeSheet && versionSlug(activeSheet.version) && (
-        <a href={versionPagePath(activeSheet.version)} className="self-start text-sm text-slate-700">
-          {t('versions:chart-link', { version: activeSheet.version })} →
-        </a>
+          {activeSheet && versionSlug(activeSheet.version) && (
+            <a href={versionPagePath(activeSheet.version)} className="link self-start">
+              {t('versions:chart-link', { version: activeSheet.version })}
+              <span aria-hidden> →</span>
+            </a>
+          )}
+        </nav>
       )}
     </div>
   )

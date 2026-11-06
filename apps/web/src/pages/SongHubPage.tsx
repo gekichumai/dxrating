@@ -1,5 +1,7 @@
 import { getRouteApi } from '@tanstack/react-router'
-import type { FC } from 'react'
+import { IconButton } from '@mui/material'
+import type { FC, MouseEvent } from 'react'
+import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { useTranslation } from 'react-i18next'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
@@ -21,13 +23,29 @@ export const SongHubPage: FC = () => {
 
   const aliases = [...new Set(searchAcronyms)].filter((alias) => alias && alias !== song.title)
   const facts: { key: string; label: string; value: string }[] = [
-    { key: 'artist', label: t('song:hub.artist'), value: song.artist },
-    ...(song.bpm ? [{ key: 'bpm', label: t('song:hub.bpm'), value: String(song.bpm) }] : []),
+    { key: 'artist', label: t('sheet:details.song-artist'), value: song.artist },
+    ...(song.bpm ? [{ key: 'bpm', label: t('sheet:details.bpm'), value: String(song.bpm) }] : []),
     ...(song.version ? [{ key: 'version', label: t('song:hub.version'), value: String(song.version) }] : []),
   ]
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
+      <IconButton
+        component="a"
+        href="/"
+        size="small"
+        aria-label={t('song:back')}
+        onClick={(e: MouseEvent<HTMLAnchorElement>) => {
+          if (window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
+            e.preventDefault()
+            window.history.back()
+          }
+        }}
+        className="self-start -ml-2 -mb-2"
+      >
+        <MdiArrowLeft aria-hidden />
+      </IconButton>
+
       <MaterialSurface as="header" className="p-3 flex gap-3 items-start">
         <SheetImage
           name={song.imageName}
@@ -36,18 +54,24 @@ export const SongHubPage: FC = () => {
           className="h-20 w-20 shrink-0 rounded-lg overflow-hidden outline outline-1 -outline-offset-1 outline-black/10"
         />
         <div className="min-w-0 flex flex-col gap-1">
-          <h1 className="m-0 text-xl font-bold tracking-tight break-words">{song.title}</h1>
+          <h1
+            lang="ja"
+            translate="no"
+            className="m-0 text-xl font-semibold leading-tight text-fg-1 break-words text-balance"
+          >
+            {song.title}
+          </h1>
           <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm">
             {facts.map((fact) => (
               <div key={fact.key} className="contents" data-testid={`song-hub-${fact.key}`}>
-                <dt className="opacity-70">{fact.label}</dt>
-                <dd className="m-0 min-w-0 break-words tabular-nums">{fact.value}</dd>
+                <dt className="text-fg-2">{fact.label}</dt>
+                <dd className="m-0 min-w-0 break-words tabular-nums text-fg-1">{fact.value}</dd>
               </div>
             ))}
             {aliases.length > 0 && (
               <div className="contents" data-testid="song-hub-aliases">
-                <dt className="opacity-70">{t('song:hub.aliases')}</dt>
-                <dd className="m-0 min-w-0 break-words">{aliases.join(' / ')}</dd>
+                <dt className="text-fg-2">{t('song:hub.aliases')}</dt>
+                <dd className="m-0 min-w-0 break-words text-fg-1">{aliases.join(' / ')}</dd>
               </div>
             )}
           </dl>
