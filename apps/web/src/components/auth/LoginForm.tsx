@@ -1,5 +1,6 @@
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
-import { Alert, Button, Chip, CircularProgress, Divider, TextField } from '@mui/material'
+import { useResolvedTheme } from '@/utils/useResolvedTheme'
+import { Alert, Button, Chip, CircularProgress, Divider, TextField, useMediaQuery } from '@mui/material'
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -22,6 +23,13 @@ interface LoginFormValues {
 
 type AuthProvider = 'google' | 'github' | 'passkey' | 'email'
 
+/** Id of the form's heading, stable across sign-in and sign-up, so a dialog around the form can take it as its name */
+export const loginFormTitleId = (idPrefix: string) => `${idPrefix}-auth-form-title`
+
+const LAST_USED_CHIP_CLASS = '!h-5 !text-xs !font-semibold'
+// On the filled (last used) button, the chip inverts so it doesn't vanish into the same accent fill
+const LAST_USED_BUTTON_CHIP_CLASS = `${LAST_USED_CHIP_CLASS} !bg-surface/90 !text-accent-strong`
+
 export const LoginForm = ({
   idPrefix = 'auth',
   onPendingChange,
@@ -37,7 +45,8 @@ export const LoginForm = ({
     handleSubmit: handleFormSubmit,
     formState: { errors, isValid },
   } = useForm<LoginFormValues>({
-    mode: 'onChange',
+    // Errors appear once a field is left or the form is submitted, not on the first keystroke
+    mode: 'onTouched',
     defaultValues: { email: '', password: '' },
   })
   const haptic = useWebHaptics()
@@ -48,6 +57,20 @@ export const LoginForm = ({
   const [error, setError] = useState<string | null>(null)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
+  const resolvedTheme = useResolvedTheme()
+  const turnstileTheme = resolvedTheme ?? 'auto'
+  // The flexible widget is at least 300px wide; below 360px viewports it would overflow the card, so use compact (150px)
+  const turnstileCompact = useMediaQuery('(max-width: 359.98px)', { noSsr: true })
+  const turnstileSize = turnstileCompact ? 'compact' : 'flexible'
+  // A theme or size change recreates the Turnstile widget, and removing a widget fires no callback, so a token from the
+  // old widget would outlive it (and its expiry). Drop it whenever the widget is replaced; submission waits for the
+  // replacement to succeed.
+  const turnstileWidgetKey = `${turnstileTheme}-${turnstileSize}`
+  const [tokenWidgetKey, setTokenWidgetKey] = useState(turnstileWidgetKey)
+  if (tokenWidgetKey !== turnstileWidgetKey) {
+    setTokenWidgetKey(turnstileWidgetKey)
+    setTurnstileToken(null)
+  }
   const lastUsedMethod = authClient.getLastUsedLoginMethod() as AuthProvider | null
   const isLastUsed = (provider: AuthProvider) => lastUsedMethod === provider
 
@@ -59,9 +82,14 @@ export const LoginForm = ({
   const captchaHeaders = turnstileToken ? { 'x-captcha-response': turnstileToken } : undefined
   const waitingForTurnstile = !!TURNSTILE_SITE_KEY && !turnstileToken
   const buttonLoading = loading || (isValid && waitingForTurnstile)
-  const buttonDisabled = loading || !isValid || waitingForTurnstile
+  // Submit stays available so validation can run and focus the first invalid field; only a running request blocks it
+  const buttonDisabled = loading
 
   const onSubmit = async (data: LoginFormValues) => {
+    if (waitingForTurnstile) {
+      setError(t('auth:form.captcha-pending'))
+      return
+    }
     setActiveProvider('email')
     setError(null)
     try {
@@ -133,7 +161,7 @@ export const LoginForm = ({
     setTurnstileToken(null)
   }
 
-  const formTitleId = `${idPrefix}-${isSignUp ? 'sign-up' : 'sign-in'}-form-title`
+  const formTitleId = loginFormTitleId(idPrefix)
   const emailId = `${idPrefix}-${isSignUp ? 'sign-up' : 'sign-in'}-email`
   const passwordId = `${idPrefix}-${isSignUp ? 'sign-up' : 'sign-in'}-password`
 
@@ -146,18 +174,20 @@ export const LoginForm = ({
         noValidate
       >
         <div className="text-center mb-1">
-          <h2 id={formTitleId} className="text-xl font-bold m-0">
+          <h2 id={formTitleId} className="text-xl font-semibold leading-tight text-fg-1 m-0">
             {isSignUp ? t('auth:sign-up.title') : t('auth:form.title')}
           </h2>
-          <div className="text-sm text-zinc-500 mt-1">{t('auth:form.subtitle')}</div>
+          <p className="text-sm text-fg-2 mt-1 mb-0 text-pretty">
+            {isSignUp ? t('auth:sign-up.subtitle') : t('auth:form.subtitle')}
+          </p>
         </div>
 
-        <p className="m-0 text-center text-xs leading-relaxed text-zinc-500">
+        <p className="m-0 text-center text-xs leading-relaxed text-fg-2 text-pretty">
           <Trans
             t={t}
             i18nKey="auth:terms.notice"
             components={{
-              terms: <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="underline" />,
+              terms: <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="link" />,
             }}
           />
         </p>
@@ -170,16 +200,25 @@ export const LoginForm = ({
             type="button"
             variant={isLastUsed('github') ? 'contained' : 'outlined'}
             startIcon={
-              pendingProvider === 'github' ? <CircularProgress size={20} /> : <IconLogosGithub className="w-5 h-5" />
+              pendingProvider === 'github' ? (
+                <CircularProgress size={20} />
+              ) : (
+                <IconLogosGithub className="w-5 h-5 dark:invert" />
+              )
             }
             endIcon={
               isLastUsed('github') ? (
-                <Chip label={t('auth:form.last-used')} size="small" color="primary" className="!h-5 !text-[0.65rem]" />
+                <Chip
+                  label={t('auth:form.last-used')}
+                  size="small"
+                  color="primary"
+                  className={LAST_USED_BUTTON_CHIP_CLASS}
+                />
               ) : undefined
             }
             onClick={() => handleSocial('github')}
             disabled={loading}
-            className="!py-2.5 !text-sm !normal-case"
+            className="!py-2.5 !text-sm"
             fullWidth
           >
             {t('auth:form.continue-with-github')}
@@ -192,12 +231,17 @@ export const LoginForm = ({
             }
             endIcon={
               isLastUsed('google') ? (
-                <Chip label={t('auth:form.last-used')} size="small" color="primary" className="!h-5 !text-[0.65rem]" />
+                <Chip
+                  label={t('auth:form.last-used')}
+                  size="small"
+                  color="primary"
+                  className={LAST_USED_BUTTON_CHIP_CLASS}
+                />
               ) : undefined
             }
             onClick={() => handleSocial('google')}
             disabled={loading}
-            className="!py-2.5 !text-sm !normal-case"
+            className="!py-2.5 !text-sm"
             fullWidth
           >
             {t('auth:form.continue-with-google')}
@@ -215,13 +259,13 @@ export const LoginForm = ({
                     label={t('auth:form.last-used')}
                     size="small"
                     color="primary"
-                    className="!h-5 !text-[0.65rem]"
+                    className={LAST_USED_BUTTON_CHIP_CLASS}
                   />
                 ) : undefined
               }
               onClick={handlePasskey}
               disabled={loading}
-              className="!py-2.5 !text-sm !normal-case"
+              className="!py-2.5 !text-sm"
               fullWidth
             >
               {t('auth:form.sign-in-with-passkey')}
@@ -231,9 +275,9 @@ export const LoginForm = ({
 
         <Divider className="!my-1">
           {isLastUsed('email') ? (
-            <Chip label={t('auth:form.last-used')} size="small" color="primary" className="!h-5 !text-[0.65rem]" />
+            <Chip label={t('auth:form.last-used')} size="small" color="primary" className={LAST_USED_CHIP_CLASS} />
           ) : (
-            <span className="text-xs text-zinc-400">{t('auth:form.or')}</span>
+            <span className="text-xs text-fg-2">{t('auth:form.or')}</span>
           )}
         </Divider>
 
@@ -290,18 +334,35 @@ export const LoginForm = ({
 
         {TURNSTILE_SITE_KEY && (
           <Turnstile
+            key={turnstileWidgetKey}
             ref={turnstileRef}
             siteKey={TURNSTILE_SITE_KEY}
-            onSuccess={setTurnstileToken}
+            onSuccess={(token) => {
+              setTurnstileToken(token)
+              // The "wait for the security check" message is stale once the check passes
+              setError((current) => (current === t('auth:form.captcha-pending') ? null : current))
+            }}
             onExpire={() => setTurnstileToken(null)}
-            options={{ size: 'flexible', theme: 'light', appearance: 'interaction-only' }}
+            options={{
+              size: turnstileSize,
+              // The widget's iframe takes a theme option rather than CSS: follow the page theme, OS preference until known
+              theme: turnstileTheme,
+              appearance: 'interaction-only',
+            }}
             style={{ borderRadius: 12, overflow: 'hidden' }}
           />
         )}
 
-        <Button type="submit" variant="contained" disabled={buttonDisabled} className="!py-2.5" fullWidth>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={buttonDisabled}
+          aria-busy={buttonLoading || undefined}
+          className="!py-2.5"
+          fullWidth
+        >
           {buttonLoading ? (
-            <CircularProgress size={20} />
+            <CircularProgress size={20} color="inherit" aria-label={t('auth:form.pending')} />
           ) : isSignUp ? (
             t('auth:sign-up.label')
           ) : (
@@ -315,7 +376,7 @@ export const LoginForm = ({
         variant="text"
         onClick={toggleView}
         disabled={loading}
-        className="!mt-2 !text-sm !normal-case"
+        className="!mt-2 !text-sm"
         fullWidth
         size="small"
       >

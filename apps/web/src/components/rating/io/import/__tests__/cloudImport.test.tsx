@@ -11,10 +11,11 @@ import { autoNetImportKey, ServerImportFailedError } from '@/models/scores/cloud
 import { LocalScoreRepository } from '@/models/scores/LocalScoreRepository'
 import type {
   ImportProgress,
-  ScoreRepository,
   ServerImportArgs,
   ServerImportKind,
+  WebScoreRepository,
 } from '@/models/scores/ScoreRepository'
+import { importReviewController } from '@/models/scores/importReview'
 import { initI18n } from '@/setup/init-i18n'
 import { migrateLegacyImportEntries } from '@/catalog/savedDataMigration'
 import { importFallbackEntries, importFileEntries, importPath } from '../cloudImport'
@@ -70,7 +71,7 @@ function fakeCloud(serverImportsEnabled = true, failure?: Error) {
       if (failure) throw failure
       yield { stage: 'done', progress: 1, job }
     },
-  } as unknown as ScoreRepository & { applyImport: ReturnType<typeof vi.fn> }
+  } as unknown as WebScoreRepository & { applyImport: ReturnType<typeof vi.fn> }
   return { repository, serverImports }
 }
 
@@ -94,16 +95,34 @@ describe('importPath', () => {
 })
 
 describe('importFileEntries', () => {
-  it('imports into the local save exactly as before, without asking', async () => {
+  it('previews an import into the local save and applies it once confirmed, without the cloud dialog', async () => {
     render(<CloudImportConfirmDialog />)
     const repository = LocalScoreRepository.inMemory([{ sheetId: 'dsht_5mk3yr8gme', achievementRate: 99 }])
     const applyImport = vi.spyOn(repository, 'applyImport')
 
-    await importFileEntries(repository, [ENTRY], { source: 'aqua-dx', mode: 'replace' })
+    const pending = importFileEntries(repository, [ENTRY], { source: 'aqua-dx', mode: 'replace' })
+    // The local save's import preview (meta#35), not the cloud save's merge / clear-first choice
+    await vi.waitFor(() => expect(importReviewController.getRequest()).not.toBeNull())
+    expect(screen.queryByRole('dialog')).toBeNull()
+    importReviewController.getRequest()!.resolve(true)
 
+    await expect(pending).resolves.toEqual({ count: 1 })
     expect(applyImport).toHaveBeenCalledWith([ENTRY], { source: 'aqua-dx', mode: 'replace' })
     expect(repository.entries()).toEqual([ENTRY])
-    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('leaves the local save as it was when its preview is cancelled', async () => {
+    const saved = [{ sheetId: 'dsht_5mk3yr8gme', achievementRate: 99 }]
+    const repository = LocalScoreRepository.inMemory(saved)
+    const applyImport = vi.spyOn(repository, 'applyImport')
+
+    const pending = importFileEntries(repository, [ENTRY], { source: 'aqua-dx', mode: 'replace' })
+    await vi.waitFor(() => expect(importReviewController.getRequest()).not.toBeNull())
+    importReviewController.getRequest()!.resolve(false)
+
+    await expect(pending).resolves.toBeNull()
+    expect(applyImport).not.toHaveBeenCalled()
+    expect(repository.entries()).toEqual(saved)
   })
 
   it('asks a cloud save to merge by default', async () => {

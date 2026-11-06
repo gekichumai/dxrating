@@ -4,7 +4,9 @@ import { fetchEventSource } from '@microsoft/fetch-event-source'
 import * as Sentry from '@sentry/tanstackstart-react'
 import i18n from 'i18next'
 import { WebHaptics } from 'web-haptics'
-import type { ScoreRepository } from '@/models/scores/ScoreRepository'
+import toast from 'react-hot-toast'
+import { reviewAndApplyImport } from '@/models/scores/importReview'
+import type { WebScoreRepository } from '@/models/scores/ScoreRepository'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import {
@@ -27,6 +29,7 @@ import { ImportAlreadyRunningError, ServerImportFailedError } from '@/models/sco
 const ERROR_CODE_I18N = NET_IMPORT_ERROR_I18N
 
 const ERROR_CODE_DETAIL_I18N: Partial<Record<NetImportErrorCode, string>> = {
+  NET_MAINTENANCE: 'rating-calculator:io.import.net-records.errors.maintenance-detail',
   AIME_CARD_UNAVAILABLE: 'rating-calculator:io.import.net-records.errors.aime-card-unavailable-detail',
 }
 
@@ -113,7 +116,7 @@ export interface CloudNetImportOptions {
 
 export const importFromNETRecords = async (
   catalog: SongCatalog,
-  repository: ScoreRepository,
+  repository: WebScoreRepository,
   mode: 'merge' | 'replace',
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
   authParams?: AuthParams,
@@ -221,19 +224,35 @@ export const importFromNETRecords = async (
       console.warn('[importFromNETRecords]', warning.message, warning.row)
     }
 
-    console.log(entries, mode)
-
     if (path === 'client-fallback') {
       // A cloud save with server imports off (§7.4): the one case where this page uploads what it fetched. The
-      // records are client_reported and never shown as verified
+      // records are client_reported and never shown as verified. It only merges, so it is not previewed
       await importFallbackEntries(repository, entries, 'maimai-net', {
         claimedSource: `maimai-net-${region}`,
         trigger: cloud?.trigger ?? (authParams ? 'user' : 'auto'),
         idempotencyKey: cloud?.idempotencyKey,
       })
     } else {
-      // merge: a higher achievement replaces the saved values of its chart
-      await repository.applyImport(entries, { source: 'maimai-net', mode })
+      // merge: a higher achievement replaces the saved values of its chart. A manual import is always previewed; an
+      // automatic one only when it would lower or remove a saved score
+      const { applied } = await reviewAndApplyImport(
+        repository,
+        entries,
+        { source: 'maimai-net', mode },
+        { trigger: trigger === 'manual' ? 'manual' : 'automatic' },
+      )
+      if (!applied) {
+        captureAnalyticsEvent('rating_import_failed', {
+          source: 'maimai_net',
+          duration_ms: performance.now() - importStart,
+          error_code: 'cancelled_by_user',
+          mode,
+          trigger,
+        })
+        netImportProgress.update(null)
+        toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
+        return
+      }
     }
 
     const lastRecord = data.recent.at(0)
@@ -250,18 +269,18 @@ export const importFromNETRecords = async (
         </span>
         {lastRecord && (
           <>
-            <span className="text-sm text-zinc-500">{t('rating-calculator:io.import.net-records.latest-play')}</span>
-            <span className="text-xs text-zinc-500">
+            <span className="text-sm text-secondary">{t('rating-calculator:io.import.net-records.latest-play')}</span>
+            <span className="text-xs text-secondary">
               {lastRecord.sheet.songId} [{lastRecord.sheet.type}]
             </span>
             {lastRecordPlayedAt && (
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-secondary">
                 {t('rating-calculator:io.import.net-records.date', {
                   date: lastRecordPlayedAt,
                 })}
               </span>
             )}
-            {/* <span className="text-xs text-zinc-500">
+            {/* <span className="text-xs text-secondary">
                       Rating:
                     </span> */}
           </>
@@ -320,7 +339,7 @@ export const importFromNETRecords = async (
       <div className="flex min-w-0 max-w-[22rem] flex-col items-start gap-0.5">
         <div className="font-bold leading-snug">{title}</div>
         {subtitle && (
-          <div className="break-words text-left text-xs font-normal leading-relaxed text-zinc-500">{subtitle}</div>
+          <div className="break-words text-left text-xs font-normal leading-relaxed text-secondary">{subtitle}</div>
         )}
       </div>,
     )

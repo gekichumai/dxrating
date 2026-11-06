@@ -10,6 +10,7 @@ import {
   ImportTooLargeError,
   NothingToImportError,
 } from '@/models/scores/cloudImports'
+import { reviewAndApplyImport } from '@/models/scores/importReview'
 import type {
   ImportMeta,
   ImportProgress,
@@ -17,6 +18,7 @@ import type {
   ScoreRepository,
   ServerImportArgs,
   ServerImportKind,
+  WebScoreRepository,
 } from '@/models/scores/ScoreRepository'
 
 /**
@@ -40,15 +42,19 @@ export function importPath(repository: Pick<ScoreRepository, 'kind' | 'serverImp
  * then the user chooses to merge or to clear the save first (§5.3 rule 5); `null` when they cancel. The entries are
  * validated as the server will before asking: the dialog says how many will be left out, and a file none of whose
  * records can be imported throws `NothingToImportError` without asking, leaving the save as it was. On the local
- * save, exactly the call it always was.
+ * save, the import preview, confirmation and undo snapshot of `reviewAndApplyImport` (meta#35); `null` when the
+ * visitor cancels the preview.
  */
 export async function importFileEntries(
-  repository: ScoreRepository,
+  repository: WebScoreRepository,
   entries: PlayEntry[],
   meta: ImportMeta,
   migrate: (entries: PlayEntry[]) => Promise<PlayEntry[]> = migrateLegacyImportEntries,
 ): Promise<ImportResult | null> {
-  if (repository.kind !== 'cloud') return repository.applyImport(entries, meta)
+  if (repository.kind !== 'cloud') {
+    const reviewed = await reviewAndApplyImport(repository, entries, meta, { trigger: 'manual' })
+    return reviewed.applied ? (reviewed.result ?? { count: entries.length }) : null
+  }
   const migrated = await migrate(entries)
   const plan = clientImportPlan(meta.source, repository.serverImportsEnabled !== false, meta.claimedSource)
   let importable = migrated.length

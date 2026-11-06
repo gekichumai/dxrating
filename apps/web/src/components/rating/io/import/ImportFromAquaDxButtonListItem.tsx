@@ -67,8 +67,12 @@ export const ImportFromAquaDxButtonListItem: FC<{
               }
 
               const result = await importFileEntries(repository, entries, { source: 'aqua-dx', mode: 'replace' })
-              // A cloud save asks to merge or clear first; `null`: the user cancelled
-              if (!result) return
+              // `null`: the user cancelled the preview (local save) or the merge / clear-first choice (cloud save)
+              if (!result) {
+                analytics.failed('cancelled_by_user')
+                toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
+                return
+              }
               analytics.succeeded(result.count, importResult.warnings.length)
               haptic.trigger('success')
               // A cloud save counts what the server took, not what was sent
@@ -77,8 +81,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
             } catch (error) {
               analytics.failed('invalid_file')
               console.error(error)
-              const message = cloudImportErrorMessage(error, t)
-              if (message) toast.error(message)
+              toast.error(cloudImportErrorMessage(error, t) ?? t('rating-calculator:io.import.aqua-dx.error'))
             }
           }
           reader.readAsText(file)

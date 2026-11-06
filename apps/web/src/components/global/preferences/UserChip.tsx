@@ -5,7 +5,7 @@ import { useAsync } from 'react-use'
 import MdiAccountCheck from '~icons/mdi/account-check'
 import MdiLogin from '~icons/mdi/login'
 import { authClient } from '../../../lib/auth-client'
-import { LoginForm } from '../../auth/LoginForm'
+import { LoginForm, loginFormTitleId } from '../../auth/LoginForm'
 import { ResponsiveDialog } from '../ResponsiveDialog'
 import { UserProfileModal } from './UserProfileModal'
 
@@ -35,12 +35,12 @@ export const ProfileImage: FC<{
 
   return !src && gravatarEmailHash.loading ? (
     <div className="shrink-0 rounded-full flex items-center justify-center" style={{ width: size, height: size }}>
-      <MdiAccountCheck />
+      <MdiAccountCheck aria-hidden="true" />
     </div>
   ) : (
     <img
       src={src}
-      className="shrink-0 rounded-full bg-gray-4 shadow"
+      className="shrink-0 rounded-full bg-accent-subtle outline outline-1 outline-black/10 -outline-offset-1"
       style={{
         width: size,
         height: size,
@@ -49,6 +49,8 @@ export const ProfileImage: FC<{
     />
   )
 }
+
+const AUTH_FORM_TITLE_ID = loginFormTitleId('account-dialog')
 
 export const UserChip: FC = () => {
   const { t } = useTranslation(['auth'])
@@ -66,7 +68,8 @@ export const UserChip: FC = () => {
         setOpen={(opened) => setOpen(opened ? 'auth' : null)}
         maxWidth="xs"
         disableClose={authPending}
-        drawerHeight="70vh"
+        drawerHeight="70dvh"
+        labelledBy={AUTH_FORM_TITLE_ID}
       >
         {() => (
           <LoginForm idPrefix="account-dialog" onPendingChange={handlePendingChange} onSuccess={() => setOpen(null)} />
@@ -76,10 +79,8 @@ export const UserChip: FC = () => {
       <UserProfileModal open={open === 'profile'} onClose={() => setOpen(null)} />
 
       {pending ? (
-        <div className="p-2 text-[1.5rem]">
-          <div className="h-[1.2em] w-[1.2em] px-[0.1em] -mt-[0.1em] text-black/54">
-            <CircularProgress disableShrink size="1em" color="inherit" />
-          </div>
+        <div className="flex size-9 items-center justify-center text-fg-2">
+          <CircularProgress disableShrink size="1.125rem" color="inherit" aria-label={t('auth:user-menu.loading')} />
         </div>
       ) : (
         <IconButton
@@ -89,7 +90,11 @@ export const UserChip: FC = () => {
           aria-label={t(session ? 'auth:user-menu.open-profile' : 'auth:user-menu.sign-in')}
           title={t(session ? 'auth:user-menu.open-profile' : 'auth:user-menu.sign-in')}
         >
-          {session ? <ProfileImage email={user?.email} image={user?.image} size="1.2em" /> : <MdiLogin />}
+          {session ? (
+            <ProfileImage email={user?.email} image={user?.image} size="1.2em" />
+          ) : (
+            <MdiLogin aria-hidden="true" />
+          )}
         </IconButton>
       )}
     </>

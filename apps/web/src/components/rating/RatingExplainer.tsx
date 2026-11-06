@@ -1,10 +1,12 @@
 import { calculateRatingAward, SCORE_COEFFICIENT_TABLE } from '@gekichumai/maimai-domain'
+import { Link } from '@tanstack/react-router'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 
 const EXAMPLE_CONSTANT = 14.7
 
-const RANK_LABELS: Record<string, string> = {
+/** Display labels for the rank ids of the score coefficient table */
+export const RANK_LABELS: Record<string, string> = {
   sssp: 'SSS+',
   sss: 'SSS',
   ssp: 'SS+',
@@ -38,21 +40,27 @@ export const RatingExplainer: FC = () => {
 
   return (
     <section
-      className="w-full max-w-3xl mx-auto px-4 py-6 flex flex-col gap-4 text-slate-800"
+      className="w-full max-w-3xl mx-auto px-4 py-6 flex flex-col gap-4 text-fg-1"
       aria-labelledby="rating-explainer"
     >
-      <h2 id="rating-explainer" className="text-2xl font-bold text-slate-950 m-0">
+      <h2 id="rating-explainer" className="text-2xl font-bold m-0">
         {t('rating-explainer:title')}
       </h2>
-      <p className="m-0 text-sm leading-relaxed">{t('rating-explainer:intro')}</p>
+      <p className="m-0 text-base leading-relaxed max-w-[65ch] text-pretty">{t('rating-explainer:intro')}</p>
+      <p className="m-0 text-base leading-relaxed max-w-[65ch] text-pretty">
+        {t('rating-explainer:single-chart.hint')}{' '}
+        <Link to="/tools/rating" className="link">
+          {t('rating-explainer:single-chart.link')} →
+        </Link>
+      </p>
 
-      <h3 className="text-lg font-bold text-slate-950 m-0">{t('rating-explainer:formula.title')}</h3>
-      <p className="m-0 text-sm leading-relaxed">{t('rating-explainer:formula.body')}</p>
+      <h3 className="text-lg font-bold m-0">{t('rating-explainer:formula.title')}</h3>
+      <p className="m-0 text-base leading-relaxed max-w-[65ch] text-pretty">{t('rating-explainer:formula.body')}</p>
 
-      <h3 className="text-lg font-bold text-slate-950 m-0">{t('rating-explainer:table.title')}</h3>
-      <div className="bg-white/90 border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <h3 className="text-lg font-bold m-0">{t('rating-explainer:table.title')}</h3>
+      <div className="glass overflow-hidden">
         <table className="w-full text-sm border-collapse">
-          <thead className="text-xs text-slate-600 text-left">
+          <thead className="text-xs text-secondary text-left">
             <tr>
               <th className="px-4 py-1.5 font-normal">{t('rating-explainer:table.rank')}</th>
               <th className="px-2 py-1.5 font-normal text-right">{t('rating-explainer:table.achievement')}</th>
@@ -62,7 +70,7 @@ export const RatingExplainer: FC = () => {
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-black/6">
             {RANK_COEFFICIENT_ROWS.map((row) => (
               <tr key={row.label}>
                 <td className="px-4 py-1.5 font-bold">{row.label}</td>
@@ -75,8 +83,8 @@ export const RatingExplainer: FC = () => {
         </table>
       </div>
 
-      <h3 className="text-lg font-bold text-slate-950 m-0">{t('rating-explainer:example.title')}</h3>
-      <p className="m-0 text-sm leading-relaxed">
+      <h3 className="text-lg font-bold m-0">{t('rating-explainer:example.title')}</h3>
+      <p className="m-0 text-base leading-relaxed max-w-[65ch] text-pretty">
         {t('rating-explainer:example.body', {
           constant: EXAMPLE_CONSTANT.toFixed(1),
           sssp: rating(100.5),
@@ -84,16 +92,18 @@ export const RatingExplainer: FC = () => {
           ssp: rating(99.5),
         })}
       </p>
-      <a href="/constants" className="self-start text-sm">
+      <a href="/constants" className="link self-start text-base">
         {t('rating-explainer:constants.link')}
       </a>
 
-      <h3 className="text-lg font-bold text-slate-950 m-0">{t('rating-explainer:faq.title')}</h3>
+      <h3 className="text-lg font-bold m-0">{t('rating-explainer:faq.title')}</h3>
       <dl className="m-0 flex flex-col gap-3">
         {RATING_FAQ_KEYS.map((key) => (
           <div key={key}>
-            <dt className="font-bold text-sm">{t(`rating-explainer:faq.q${key}`)}</dt>
-            <dd className="m-0 mt-1 text-sm leading-relaxed">{t(`rating-explainer:faq.a${key}`)}</dd>
+            <dt className="font-bold text-base">{t(`rating-explainer:faq.q${key}`)}</dt>
+            <dd className="m-0 mt-1 text-base leading-relaxed max-w-[65ch] text-pretty">
+              {t(`rating-explainer:faq.a${key}`)}
+            </dd>
           </div>
         ))}
       </dl>

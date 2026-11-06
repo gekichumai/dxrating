@@ -1,6 +1,7 @@
 import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from '@mui/material'
 import { useId } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toggleFocusRing } from '../../focusRing'
 
 export type NetAutoImportMode = false | 'replace' | 'merge'
 
@@ -21,7 +22,7 @@ export function NetImportAutoImportOptions({
       <FormLabel id={labelId}>
         <div className="flex flex-col gap-1">
           <span>{t('rating-calculator:io.import.net-records.dialog.auto-import.label')}</span>
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-secondary">
             {t('rating-calculator:io.import.net-records.dialog.auto-import.description')}
           </span>
         </div>
@@ -37,7 +38,7 @@ export function NetImportAutoImportOptions({
           <FormControlLabel
             key={mode}
             value={mode === 'disabled' ? 'false' : mode}
-            control={<Radio size="small" />}
+            control={<Radio size="small" sx={toggleFocusRing} />}
             className="min-h-11 !mr-0"
             label={
               <div className="flex flex-col py-1">
@@ -45,7 +46,7 @@ export function NetImportAutoImportOptions({
                   {t(`rating-calculator:io.import.net-records.dialog.auto-import.options.${mode}.title`)}
                 </span>
                 {mode !== 'disabled' && (
-                  <span className="text-xs opacity-60">
+                  <span className="text-xs text-secondary">
                     {t(`rating-calculator:io.import.net-records.dialog.auto-import.options.${mode}.description`)}
                   </span>
                 )}

@@ -99,6 +99,47 @@ describe('MCP analytics events', () => {
     expectNoPrivateData(serialized)
   })
 
+  it('describes a 2026-07-28 server/discover, with the client of its _meta and the same id as its later calls', async () => {
+    const meta = {
+      'io.modelcontextprotocol/protocolVersion': '2026-07-28',
+      'io.modelcontextprotocol/clientInfo': { name: 'claude-ai', version: '0.2.0' },
+      'io.modelcontextprotocol/clientCapabilities': {},
+    }
+    const modern = (body: Record<string, unknown>, method: string) => {
+      const request = new Request('https://mcp.dxrating.net/mcp?via=guide-claude', {
+        method: 'POST',
+        headers: new Headers({
+          ...Object.fromEntries(headers),
+          'mcp-protocol-version': '2026-07-28',
+          'mcp-method': method,
+        }),
+        body: JSON.stringify(body),
+      })
+      return observeMcpRequest(request, (r) => handleMcpRequest(r, catalog)).then((observed) =>
+        buildMcpAnalyticsEvents(
+          context({ headers: request.headers }),
+          observed.requestBody,
+          observed.responseBody,
+          SECRET,
+          new Date('2026-10-30T12:00:00Z'),
+        ),
+      )
+    }
+    const [discover] = await modern(
+      { jsonrpc: '2.0', id: 1, method: 'server/discover', params: { _meta: meta } },
+      'server/discover',
+    )
+    const [list] = await modern({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: { _meta: meta } }, 'tools/list')
+    expect(discover).toMatchObject({
+      event: 'mcp_server_discover',
+      properties: { client_name: 'claude-ai', client_class: 'claude', protocol_version: '2026-07-28', outcome: 'ok' },
+    })
+    expect(list).toMatchObject({ event: 'mcp_tools_list', properties: { client_name: 'claude-ai' } })
+    // every 2026-07-28 request names its client, so the probe and the calls after it count as one client
+    expect(list!.distinct_id).toBe(discover!.distinct_id)
+    expectNoPrivateData(JSON.stringify([discover, list]))
+  })
+
   it('describes a tools/list with its count', async () => {
     const { events } = await exchange({ jsonrpc: '2.0', id: 1, method: 'tools/list' })
     expect(events[0]!.event).toBe('mcp_tools_list')

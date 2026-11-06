@@ -6,9 +6,8 @@ import { MULTIVER_AVAILABLE_VERSIONS, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@
 import {
   Button,
   ButtonGroup,
-  Chip,
   CircularProgress,
-  IconButton,
+  DialogTitle,
   Table,
   TableBody,
   TableCell,
@@ -18,11 +17,14 @@ import {
 } from '@mui/material'
 import clsx from 'clsx'
 import { RecordProvenanceBadge } from '../cloud-save/ProvenanceBadge'
-import { type FC, type PropsWithChildren, memo, useEffect, useMemo, useRef, useState } from 'react'
+import { MotionConfig } from 'framer-motion'
+import { type FC, type PropsWithChildren, type ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
 import useSWR from 'swr'
 import { match } from 'ts-pattern'
+import IconMdiCheck from '~icons/mdi/check'
+import IconMdiLock from '~icons/mdi/lock'
 import IconMdiSearchWeb from '~icons/mdi/search-web'
 import IconMdiSpotify from '~icons/mdi/spotify'
 import IconMdiYouTube from '~icons/mdi/youtube'
@@ -32,14 +34,11 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { FlattenedSheet } from '../../songs'
 import { formatSheetReleaseDateParts } from '../../utils/dateFormatting'
-import { calculateRating } from '../../utils/rating'
 import { useRenderedAt } from '../../utils/renderEnvironment'
-import { DXRank } from '../global/DXRank'
+import { AchievementRatingTable } from './AchievementRatingTable'
 import { SheetDialogContentHeader } from './SheetDialogContentHeader'
 import { SheetTitle } from './SheetListItem'
 import { SheetTags } from './tags/SheetTags'
-
-const PRESET_ACHIEVEMENT_RATES = [100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50]
 
 const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
   const { t } = useTranslation(['sheet'])
@@ -71,15 +70,34 @@ const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
 }
 
 const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
-  <div className="font-lg font-bold">
-    <span className="pb-1 px-1 mb-1 border-b border-solid border-gray-200 tracking-tight">{children}</span>
-  </div>
+  <h3 className="section-title m-0 px-1 pb-1 border-b border-solid border-black/8">{children}</h3>
 )
 
-const CommentCreatedAt: FC<{ createdAt: string }> = ({ createdAt }) => {
-  const formattedDate = useMemo(() => new Date(createdAt).toLocaleString(), [createdAt])
+/**
+ * The dialog title: MUI's DialogTitle takes the id the Dialog is labelled by. Outside a Dialog (the mobile drawer, the
+ * song page) it is a plain h2.
+ */
+const SheetDialogTitleHeading: FC<{ className?: string; children?: ReactNode }> = ({ className, children }) => (
+  // The reset is on the h2 and the title's own size and layout on an inner span, so the reset can't override them
+  <DialogTitle component="h2" className="min-w-0" sx={{ m: 0, p: 0, font: 'inherit', letterSpacing: 'inherit' }}>
+    <span className={className}>{children}</span>
+  </DialogTitle>
+)
 
-  return <div className="text-xs ml-auto">{formattedDate}</div>
+// Comments load on the client only, so formatting in the app locale cannot differ from a server render
+const CommentCreatedAt: FC<{ createdAt: string }> = ({ createdAt }) => {
+  const { i18n } = useTranslation()
+  const formattedDate = useMemo(
+    () =>
+      new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(createdAt)),
+    [createdAt, i18n.language],
+  )
+
+  return (
+    <time className="text-xs ml-auto tabular-nums" dateTime={createdAt}>
+      {formattedDate}
+    </time>
+  )
 }
 
 const ReleaseDateText: FC<{ releaseDate: string }> = ({ releaseDate }) => {
@@ -146,48 +164,40 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     <div className="flex flex-col gap-2">
       <LoginDialog />
 
-      <div className="flex gap-2 mt-1 relative">
-        <TextField
-          className="flex-grow"
-          placeholder={t('sheet:comments.placeholder')}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          minRows={1}
-          maxRows={3}
-          multiline
-          data-attr="comment-input"
-          disabled={!session}
-        />
-        <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
-          {submitting ? <CircularProgress size={24} /> : t('global:submit')}
+      {session ? (
+        <div className="flex gap-2 mt-1">
+          <TextField
+            className="flex-grow"
+            label={t('sheet:comments.input-label')}
+            placeholder={t('sheet:comments.placeholder')}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            minRows={1}
+            maxRows={3}
+            multiline
+            data-attr="comment-input"
+          />
+          <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
+            {submitting ? <CircularProgress size={24} aria-label={t('global:submit')} /> : t('global:submit')}
+          </Button>
+        </div>
+      ) : (
+        <Button variant="outlined" className="self-start" onClick={openLoginDialog}>
+          {t('auth:form.login-or-register-to-comment')}
         </Button>
-
-        {!session && (
-          <div
-            className="absolute inset-0 flex items-center justify-center bg-white/80 rounded cursor-pointer z-1"
-            onClick={openLoginDialog}
-            onKeyDown={(e) => e.key === 'Enter' && openLoginDialog()}
-            role="button"
-            tabIndex={0}
-          >
-            <span className="font-bold text-sm text-zinc-600 underline underline-offset-2">
-              {t('auth:form.login-or-register-to-comment')}
-            </span>
-          </div>
-        )}
-      </div>
+      )}
 
       {isLoadingComments ? (
         Array.from({ length: 1 }).map((_, i) => (
           // oxlint-disable-next-line react/no-array-index-key -- index is stable
-          <div key={i} className="flex flex-col gap-1 bg-zinc-2 rounded-lg h-16 animate-pulse" />
+          <div key={i} className="glass-inset h-16 motion-safe:animate-pulse" />
         ))
       ) : (
         <div className="flex flex-col gap-2">
           {filterComments(comments ?? [], visibility).map((comment) => (
-            <div key={comment.id} className="flex flex-col gap-1 bg-zinc-1 rounded-lg px-4 py-2">
-              <div className="text-zinc-500 flex items-center">
-                <div className="text-sm font-bold">{comment.display_name ?? t('sheet:comments.anonymous')}</div>
+            <div key={comment.id} className="glass-inset flex flex-col gap-1 px-4 py-2">
+              <div className="text-fg-2 flex items-center gap-1">
+                <div className="text-sm font-semibold">{comment.display_name ?? t('sheet:comments.anonymous')}</div>
                 <CommentActions comment={comment} />
 
                 <CommentCreatedAt createdAt={comment.created_at} />
@@ -200,10 +210,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             </div>
           ))}
           {filterComments(comments ?? [], visibility).length === 0 && (
-            <div className="flex flex-col gap-1 bg-zinc-2 rounded-lg p-4 items-center text-zinc-5">
-              {t('sheet:comments.empty')}
-              {!session && ` ${t('sheet:comments.sign-in-to-comment')}`}
-            </div>
+            <p className="glass-inset m-0 p-4 text-center text-sm text-fg-2">{t('sheet:comments.empty')}</p>
           )}
         </div>
       )}
@@ -214,292 +221,288 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 export interface SheetDialogContentProps {
   sheet: FlattenedSheet
   currentAchievementRate?: number
+  /** Shows a close button in the header (the dialog otherwise closes only on Escape or the backdrop) */
+  onClose?: () => void
 }
 
-export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, currentAchievementRate }) => {
-  const { t } = useTranslation(['sheet', 'global'])
-  const ratings = useMemo(() => {
-    const rates = [...PRESET_ACHIEVEMENT_RATES]
-    if (currentAchievementRate && !rates.includes(currentAchievementRate)) {
-      rates.push(currentAchievementRate)
-    }
-    rates.sort((a, b) => b - a)
-    return rates.map((rate) => ({
-      achievementRate: rate,
-      rating: calculateRating(sheet.internalLevelValue, rate),
-    }))
-  }, [sheet, currentAchievementRate])
+const externalLinkProps = { target: '_blank', rel: 'noopener noreferrer' } as const
+
+export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, currentAchievementRate, onClose }) => {
+  const { t, i18n } = useTranslation(['sheet', 'global'])
+  const numberFormat = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language])
 
   return (
-    <div className="flex flex-col gap-2 relative">
-      <SheetDialogContentHeader sheet={sheet} />
+    // Under reduced motion the cover, star and tag springs become instant; opacity fades remain
+    <MotionConfig reducedMotion="user">
+      <div className="flex flex-col gap-2 relative">
+        <SheetDialogContentHeader sheet={sheet} onClose={onClose} />
 
-      <SheetTitle sheet={sheet} enableAltNames enableClickToCopy className="text-lg font-bold" />
+        <SheetTitle
+          sheet={sheet}
+          enableAltNames
+          enableClickToCopy
+          headingComponent={SheetDialogTitleHeading}
+          className="text-lg font-semibold"
+        />
 
-      <div className="text-sm -mt-2">
-        <div className="text-zinc-600">{sheet.releaseDate && <ReleaseDateText releaseDate={sheet.releaseDate} />}</div>
-      </div>
+        <div className="text-sm -mt-2">
+          <div className="text-fg-2">{sheet.releaseDate && <ReleaseDateText releaseDate={sheet.releaseDate} />}</div>
+        </div>
 
-      <div className="flex flex-wrap gap-1">
-        <SheetTags sheet={sheet} />
-      </div>
+        <div className="flex flex-wrap gap-1">
+          <SheetTags sheet={sheet} />
+        </div>
 
-      {/* Opened from a saved score of a cloud save: where that score came from */}
-      {currentAchievementRate !== undefined && <RecordProvenanceBadge sheetId={sheet.id} className="self-start" />}
+        {/* Opened from a saved score of a cloud save: where that score came from */}
+        {currentAchievementRate !== undefined && <RecordProvenanceBadge sheetId={sheet.id} className="self-start" />}
 
-      <div className="flex items-center">
-        <IconMdiSearchWeb className="mr-2" />
+        <div className="flex flex-wrap items-center gap-2">
+          <IconMdiSearchWeb aria-hidden="true" className="text-fg-2" />
 
-        <Button
-          startIcon={<IconMdiYouTube />}
-          variant="outlined"
-          href={`https://www.youtube.com/results?search_query=${encodeURIComponent(
-            `maimai ${sheet.title} ${sheet.difficulty}`,
-          )}`}
-          target="_blank"
-          className="inline-flex !text-[#ff0000] !b-[#ff0000] !hover:bg-[#ff000009] font-bold mr-2"
-        >
-          YouTube
-        </Button>
+          <Button
+            startIcon={<IconMdiYouTube aria-hidden="true" className="text-[#ff0000]" />}
+            variant="outlined"
+            color="inherit"
+            size="small"
+            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(
+              `maimai ${sheet.title} ${sheet.difficulty}`,
+            )}`}
+            {...externalLinkProps}
+            aria-label={t('sheet:external-search.youtube')}
+            className="!border-black/25"
+          >
+            YouTube
+          </Button>
 
-        <div className="inline-flex !text-[#00A1D6] !b-[#00A1D6] b-solid b-1 mr-1 rounded-xl items-center">
-          <RiBilibiliFill className="ml-2.5" />
-          <ButtonGroup>
+          <ButtonGroup variant="outlined" color="inherit" size="small" className="[&_.MuiButton-root]:!border-black/25">
             <Button
+              startIcon={<RiBilibiliFill aria-hidden="true" className="text-[#00A1D6]" />}
               href={`bilibili://search?keyword=${encodeURIComponent(`${sheet.title} ${sheet.difficulty}`)}`}
-              target="_blank"
-              className="!rounded-none !text-[#00A1D6] !hover:bg-[#00A1D609] font-bold !b-none"
+              {...externalLinkProps}
+              aria-label={t('sheet:external-search.bilibili-app')}
             >
-              App
+              {t('sheet:external-search.app')}
             </Button>
             <Button
               href={`https://search.bilibili.com/all?keyword=${encodeURIComponent(
                 `${sheet.title} ${sheet.difficulty}`,
               )}`}
-              target="_blank"
-              className="!rounded-none !text-[#00A1D6] !hover:bg-[#00A1D609] font-bold !b-none"
+              {...externalLinkProps}
+              aria-label={t('sheet:external-search.bilibili-web')}
             >
-              Web
+              {t('sheet:external-search.web')}
             </Button>
           </ButtonGroup>
+
+          <Button
+            startIcon={<IconMdiSpotify aria-hidden="true" className="text-[#1db954]" />}
+            variant="outlined"
+            color="inherit"
+            size="small"
+            href={`https://open.spotify.com/search/${encodeURIComponent(`${sheet.title} ${sheet.artist}`)}`}
+            {...externalLinkProps}
+            aria-label={t('sheet:external-search.spotify')}
+            className="!border-black/25"
+          >
+            Spotify
+          </Button>
         </div>
 
-        <IconButton
-          href={`https://open.spotify.com/search/${encodeURIComponent(`${sheet.title} ${sheet.artist}`)}`}
-          target="_blank"
-          className="inline-flex !text-[#1db954] !b-[#1db954] !hover:bg-[#1db95409] font-bold"
-        >
-          <IconMdiSpotify className="h-6 w-6" />
-        </IconButton>
-      </div>
-
-      <div className="flex flex-col gap-6 mt-2">
-        {!sheet.isTypeUtage && (
-          <div className="flex flex-col gap-1">
-            <SectionHeader>{t('sheet:internal-level-history.title')}</SectionHeader>
-            <SheetInternalLevelHistory sheet={sheet} />
-          </div>
-        )}
-
-        <div className="flex flex-col gap-1">
-          <SectionHeader>{t('sheet:details.title')}</SectionHeader>
-          <div>
-            <Table size="small" className="mb-4">
-              <TableHead>
-                <TableRow>
-                  <TableCell width="100px">{t('sheet:details.category')}</TableCell>
-                  <TableCell width="200px">{sheet.category}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow>
-                  <TableCell>{t('sheet:details.song-artist')}</TableCell>
-                  <TableCell>{sheet.artist}</TableCell>
-                </TableRow>
-
-                {!sheet.isTypeUtage && (
-                  <>
-                    <TableRow>
-                      <TableCell>{t('sheet:details.bpm')}</TableCell>
-                      <TableCell>{sheet.bpm}</TableCell>
-                    </TableRow>
-
-                    <TableRow className="bg-gray-1">
-                      <TableCell>{t('sheet:details.chart-designer')}</TableCell>
-                      <TableCell>{sheet.noteDesigner}</TableCell>
-                    </TableRow>
-
-                    {(sheet.noteCounts.tap ?? 0) > 0 && (
-                      <>
-                        <TableRow className="bg-gray-1">
-                          <TableCell colSpan={2}>{t('sheet:details.notes-statistics.title')}</TableCell>
-                        </TableRow>
-
-                        <TableRow className="bg-gray-1">
-                          <TableCell>— {t('sheet:details.notes-statistics.tap')}</TableCell>
-                          <TableCell>{sheet.noteCounts.tap ?? 0}</TableCell>
-                        </TableRow>
-
-                        <TableRow className="bg-gray-1">
-                          <TableCell>— {t('sheet:details.notes-statistics.hold')}</TableCell>
-                          <TableCell>{sheet.noteCounts.hold ?? 0}</TableCell>
-                        </TableRow>
-
-                        <TableRow className="bg-gray-1">
-                          <TableCell>— {t('sheet:details.notes-statistics.slide')}</TableCell>
-                          <TableCell>{sheet.noteCounts.slide ?? 0}</TableCell>
-                        </TableRow>
-
-                        <TableRow className="bg-gray-1">
-                          <TableCell>— {t('sheet:details.notes-statistics.touch')}</TableCell>
-                          <TableCell>{sheet.noteCounts.touch ?? 0}</TableCell>
-                        </TableRow>
-
-                        <TableRow className="bg-gray-1">
-                          <TableCell>— {t('sheet:details.notes-statistics.break')}</TableCell>
-                          <TableCell>{sheet.noteCounts.break ?? 0}</TableCell>
-                        </TableRow>
-
-                        <TableRow className="bg-gray-1">
-                          <TableCell>— {t('sheet:details.notes-statistics.total')}</TableCell>
-                          <TableCell>{sheet.noteCounts.total?.toLocaleString('en-US')}</TableCell>
-                        </TableRow>
-                      </>
-                    )}
-                  </>
-                )}
-
-                <TableRow>
-                  <TableCell>{t('sheet:details.regional-availability')}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {SERVER_BADGE_ORDER.map((region) => [region, sheet.serverIds.includes(region)] as const).map(
-                        ([region, available]) => (
-                          <div
-                            key={region}
-                            className={clsx(
-                              'uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs',
-                              available ? '!bg-green-500' : '!bg-gray-300',
-                            )}
-                          >
-                            {region}
-                          </div>
-                        ),
-                      )}{' '}
-                    </div>
-                  </TableCell>
-                </TableRow>
-
-                <TableRow>
-                  <TableCell>{t('sheet:details.unlock-required')}</TableCell>
-                  <TableCell>
-                    <div
-                      className={clsx(
-                        'uppercase font-mono text-white font-bold select-none px-2 py-1 rounded-full text-xs inline-flex',
-                        sheet.isLocked ? '!bg-yellow-500' : '!bg-gray-500',
-                      )}
-                    >
-                      {sheet.isLocked ? t('global:locked') : t('global:available')}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-
-            <div className="mt-4 text-xs text-zinc-500 text-right">
-              <Trans
-                i18nKey="sheet:details.credits"
-                components={{
-                  link: (
-                    <a href={getArcadeSongsUrl(sheet)} rel="noreferrer" target="_blank" className="tracking-tighter">
-                      arcade-songs.zetaraku.dev
-                    </a>
-                  ),
-                }}
-              />
+        <div className="flex flex-col gap-6 mt-2">
+          {!sheet.isTypeUtage && (
+            <div className="flex flex-col gap-1">
+              <SectionHeader>{t('sheet:internal-level-history.title')}</SectionHeader>
+              <SheetInternalLevelHistory sheet={sheet} />
             </div>
-          </div>
-        </div>
+          )}
 
-        <div className="flex flex-col gap-1">
-          <SectionHeader>{t('sheet:comments.title')}</SectionHeader>
-          <SheetComments sheet={sheet} />
-        </div>
-
-        {!sheet.isTypeUtage && (
           <div className="flex flex-col gap-1">
-            <SectionHeader>{t('sheet:details.achievement-to-rating.title')}</SectionHeader>
+            <SectionHeader>{t('sheet:details.title')}</SectionHeader>
             <div>
-              <Table className="tabular-nums" size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell width="100px">{t('sheet:details.achievement-to-rating.achievement')}</TableCell>
-                    <TableCell width="50px">{t('sheet:details.achievement-to-rating.rating')}</TableCell>
-                  </TableRow>
-                </TableHead>
+              <Table
+                size="small"
+                className="mb-4 [&_th]:w-[40%] sm:[&_th]:w-[11rem] [&_th]:!text-fg-2 [&_th]:font-normal [&_th]:[word-break:auto-phrase]"
+              >
                 <TableBody>
-                  {ratings.map((rating, i) => {
-                    const nextRating = i === ratings.length - 1 ? null : ratings[i + 1]
-                    const isCurrentAchievementRateRow = rating.achievementRate === currentAchievementRate
+                  <TableRow>
+                    <TableCell component="th" scope="row">
+                      {t('sheet:details.category')}
+                    </TableCell>
+                    <TableCell>{sheet.category}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell component="th" scope="row">
+                      {t('sheet:details.song-artist')}
+                    </TableCell>
+                    <TableCell>{sheet.artist}</TableCell>
+                  </TableRow>
 
-                    return (
-                      <TableRow
-                        key={rating.achievementRate}
-                        sx={{
-                          '&:last-child td, &:last-child th': { border: 0 },
-                        }}
-                        className={clsx(isCurrentAchievementRateRow && 'bg-amber')}
-                      >
+                  {!sheet.isTypeUtage && (
+                    <>
+                      <TableRow>
                         <TableCell component="th" scope="row">
-                          <div className={clsx('flex items-center font-sans')}>
-                            <DXRank rank={rating.rating.rank} className="h-8" />
-                            <SheetAchievementRate value={rating.achievementRate} />
-                            {isCurrentAchievementRateRow && (
-                              <Chip label={t('global:current')} size="small" className="ml-2" color="default" />
-                            )}
-                          </div>
+                          {t('sheet:details.bpm')}
                         </TableCell>
-                        <TableCell>
-                          <div className="relative font-sans">
-                            <span className="font-bold">{rating.rating.ratingAwardValue}</span>
-
-                            {nextRating && (
-                              <div className="absolute -bottom-5 -left-1 px-1 text-xs text-zinc-500 bg-zinc-100 shadow-[0_0_0_1px_var(--un-shadow-color)] shadow-zinc-300/80 rounded-xs">
-                                ↑{' '}
-                                <span className="font-bold">
-                                  {rating.rating.ratingAwardValue - nextRating.rating.ratingAwardValue}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
+                        <TableCell>{sheet.bpm}</TableCell>
                       </TableRow>
-                    )
-                  })}
+
+                      <TableRow>
+                        <TableCell component="th" scope="row">
+                          {t('sheet:details.chart-designer')}
+                        </TableCell>
+                        <TableCell>{sheet.noteDesigner}</TableCell>
+                      </TableRow>
+
+                      {(sheet.noteCounts.tap ?? 0) > 0 && (
+                        <>
+                          <TableRow>
+                            <TableCell component="th" scope="rowgroup" colSpan={2}>
+                              {t('sheet:details.notes-statistics.title')}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow>
+                            <TableCell component="th" scope="row" className="!pl-8">
+                              {t('sheet:details.notes-statistics.tap')}
+                            </TableCell>
+                            <TableCell className="tabular-nums">
+                              {numberFormat.format(sheet.noteCounts.tap ?? 0)}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow>
+                            <TableCell component="th" scope="row" className="!pl-8">
+                              {t('sheet:details.notes-statistics.hold')}
+                            </TableCell>
+                            <TableCell className="tabular-nums">
+                              {numberFormat.format(sheet.noteCounts.hold ?? 0)}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow>
+                            <TableCell component="th" scope="row" className="!pl-8">
+                              {t('sheet:details.notes-statistics.slide')}
+                            </TableCell>
+                            <TableCell className="tabular-nums">
+                              {numberFormat.format(sheet.noteCounts.slide ?? 0)}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow>
+                            <TableCell component="th" scope="row" className="!pl-8">
+                              {t('sheet:details.notes-statistics.touch')}
+                            </TableCell>
+                            <TableCell className="tabular-nums">
+                              {numberFormat.format(sheet.noteCounts.touch ?? 0)}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow>
+                            <TableCell component="th" scope="row" className="!pl-8">
+                              {t('sheet:details.notes-statistics.break')}
+                            </TableCell>
+                            <TableCell className="tabular-nums">
+                              {numberFormat.format(sheet.noteCounts.break ?? 0)}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow>
+                            <TableCell component="th" scope="row" className="!pl-8">
+                              {t('sheet:details.notes-statistics.total')}
+                            </TableCell>
+                            <TableCell className="tabular-nums font-semibold">
+                              {sheet.noteCounts.total === undefined || sheet.noteCounts.total === null
+                                ? '—'
+                                : numberFormat.format(sheet.noteCounts.total)}
+                            </TableCell>
+                          </TableRow>
+                        </>
+                      )}
+                    </>
+                  )}
+
+                  <TableRow>
+                    <TableCell component="th" scope="row">
+                      {t('sheet:details.regional-availability')}
+                    </TableCell>
+                    <TableCell>
+                      <ul className="m-0 flex list-none flex-wrap items-center gap-1.5 p-0">
+                        {SERVER_BADGE_ORDER.map((region) => [region, sheet.serverIds.includes(region)] as const).map(
+                          ([region, available]) => (
+                            <li
+                              key={region}
+                              className={clsx(
+                                'inline-flex items-center gap-0.5 rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xs font-semibold uppercase tracking-[0.05em]',
+                                available
+                                  ? 'bg-status-positive text-on-accent'
+                                  : 'border border-solid border-black/25 text-fg-2 line-through',
+                              )}
+                            >
+                              {available && <IconMdiCheck aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />}
+                              {region}
+                              <span className="sr-only">
+                                {available ? t('sheet:details.available') : t('sheet:details.unavailable')}
+                              </span>
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    </TableCell>
+                  </TableRow>
+
+                  <TableRow>
+                    <TableCell component="th" scope="row">
+                      {t('sheet:details.unlock.label')}
+                    </TableCell>
+                    <TableCell>
+                      {sheet.isLocked ? (
+                        <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] bg-status-warning px-1.5 py-0.5 text-xs font-semibold text-on-accent">
+                          <IconMdiLock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                          {t('sheet:details.unlock.required')}
+                        </span>
+                      ) : (
+                        t('sheet:details.unlock.not-required')
+                      )}
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
+
+              <div className="mt-4 text-xs text-fg-2 text-right">
+                <Trans
+                  i18nKey="sheet:details.credits"
+                  components={{
+                    link: (
+                      <a href={getArcadeSongsUrl(sheet)} {...externalLinkProps} className="link">
+                        arcade-songs.zetaraku.dev
+                      </a>
+                    ),
+                  }}
+                />
+              </div>
             </div>
           </div>
-        )}
+
+          <div className="flex flex-col gap-1">
+            <SectionHeader>{t('sheet:comments.title')}</SectionHeader>
+            <SheetComments sheet={sheet} />
+          </div>
+
+          {!sheet.isTypeUtage && (
+            <div className="flex flex-col gap-1">
+              <SectionHeader>{t('sheet:details.achievement-to-rating.title')}</SectionHeader>
+              <AchievementRatingTable
+                internalLevelValue={sheet.internalLevelValue}
+                currentAchievementRate={currentAchievementRate}
+              />
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </MotionConfig>
   )
 })
 SheetDialogContent.displayName = 'memo(SheetDialogContent)'
-
-const SheetAchievementRate: FC<{ value: number }> = ({ value }) => {
-  const integer = Math.floor(value)
-  const decimal = value % 1
-
-  return (
-    <div className="inline-flex items-center">
-      <span className="font-bold">{integer}</span>
-      <span>.</span>
-      <span className={clsx(decimal === 0 && 'text-zinc-4')}>{decimal.toFixed(4).slice(2)}</span>
-      <span>%</span>
-    </div>
-  )
-}
 
 const SheetInternalLevelHistory: FC<{
   sheet: FlattenedSheet
@@ -556,7 +559,10 @@ const SheetInternalLevelHistory: FC<{
               {multiverInternalLevelValues.map(({ version, available }) => (
                 <TableCell
                   key={version}
-                  className={clsx(appVersion === version && 'bg-amber-200', !available && 'opacity-50')}
+                  className={clsx(
+                    appVersion === version && 'bg-amber-200 dark:bg-[rgb(251_191_36/0.2)]',
+                    !available && 'opacity-50',
+                  )}
                 >
                   <img
                     src={
@@ -577,13 +583,16 @@ const SheetInternalLevelHistory: FC<{
               {multiverInternalLevelValues.map(({ version, internalLevelValue, available, delta }) => (
                 <TableCell
                   key={version}
-                  className={clsx(appVersion === version && 'bg-amber-200', !available && 'opacity-50')}
+                  className={clsx(
+                    appVersion === version && 'bg-amber-200 dark:bg-[rgb(251_191_36/0.2)]',
+                    !available && 'opacity-50',
+                  )}
                 >
                   {internalLevelValue === undefined ? (
-                    <div className="text-zinc-500 select-none">{available ? '—' : '／'}</div>
+                    <div className="text-fg-2">{available ? '—' : '／'}</div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <span className="font-bold tabular-nums">{internalLevelValue?.toFixed(1)}</span>
+                      <span className="font-semibold tabular-nums">{internalLevelValue?.toFixed(1)}</span>
                       {delta !== undefined && <DeltaArrow delta={delta} />}
                     </div>
                   )}
@@ -593,7 +602,7 @@ const SheetInternalLevelHistory: FC<{
           </TableBody>
         </Table>
       ) : (
-        <div className="text-zinc-500 px-1">{t('sheet:internal-level-history.empty')}</div>
+        <p className="m-0 text-fg-2 px-1">{t('sheet:internal-level-history.empty')}</p>
       )}
     </div>
   )

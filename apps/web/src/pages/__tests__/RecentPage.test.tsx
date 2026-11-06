@@ -52,7 +52,7 @@ describe('RecentPage', () => {
     expect(link.getAttribute('href')).toBe('/songs/song-a/dx/master')
     expect(within(screen.getByRole('list')).getAllByRole('listitem')).toHaveLength(1)
 
-    const date = screen.getByText('2025-05-01')
+    const date = screen.getByText('May 1, 2025')
     expect(date.tagName.toLowerCase()).toBe('time')
     expect(date.getAttribute('datetime')).toBe('2025-05-01')
   })
@@ -62,7 +62,7 @@ describe('RecentPage', () => {
 
     const page = document.querySelector('[itemscope][itemtype="https://schema.org/CollectionPage"]')
     expect(page).toBeTruthy()
-    expect(page?.querySelector('[itemprop="name"]')?.textContent).toBe('Recently updated charts')
+    expect(page?.querySelector('[itemprop="name"]')?.textContent).toBe('New charts')
 
     const list = page?.querySelector('ol[itemprop="mainEntity"][itemscope][itemtype="https://schema.org/ItemList"]')
     expect(list?.querySelector('meta[itemprop="numberOfItems"]')?.getAttribute('content')).toBe('1')

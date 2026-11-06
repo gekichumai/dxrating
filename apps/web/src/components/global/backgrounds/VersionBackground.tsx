@@ -11,7 +11,7 @@ export function VersionBackground() {
       src={background}
       alt=""
       aria-hidden={true}
-      className="fixed inset-0 h-full-lvh w-full z-[-1] object-cover object-center select-none touch-callout-none"
+      className="version-background fixed inset-0 h-full-lvh w-full z-[-1] object-cover object-center select-none touch-callout-none"
       draggable={false}
     />
   )

@@ -4,6 +4,7 @@ import type { RecentChartLink } from '@/components/chartDiscovery/recentCharts'
 import { SheetListItemContentView, SheetListItemSummary } from '@/components/sheet/SheetListItem'
 import { getSheetTitleLabel } from '@/components/song/sheetDisplay'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
+import { formatSheetReleaseDateParts, sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
 
 type RecentPageProps = {
   charts: readonly RecentChartLink[]
@@ -25,16 +26,17 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
     >
       <div className="w-full flex flex-col gap-4">
         <header className="w-full flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-slate-950" itemProp="name">
+          <h1 className="page-title m-0" itemProp="name">
             {t('sheet:chart-discovery.recent.title')}
           </h1>
-          <p className="text-sm text-slate-700" itemProp="description">
+          <p className="page-description m-0" itemProp="description">
             {t('sheet:chart-discovery.recent.description', { count: charts.length })}
           </p>
         </header>
 
         <ol
-          className="w-full bg-white/90 border border-slate-200 rounded-lg shadow-sm divide-y divide-slate-200 overflow-hidden"
+          // Rows are --radius-md at a 4px inset, so they nest in the panel's --radius-lg
+          className="glass m-0 w-full list-none p-1"
           itemProp="mainEntity"
           itemScope
           itemType="https://schema.org/ItemList"
@@ -55,7 +57,7 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
                 <meta itemProp="position" content={String(index + 1)} />
                 <link itemProp="url" href={chartUrl} />
                 <a
-                  className="block px-4 text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
+                  className="block rounded-[var(--radius-md)] px-2 md:px-3 text-fg-1 no-underline transition-colors duration-150 hover:bg-black/4 focus-visible:outline-offset-[-2px]"
                   href={chart.href}
                 >
                   <article className="block" itemScope itemType="https://schema.org/MusicRecording" itemID={chartUrl}>
@@ -100,11 +102,18 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
                         metadata={
                           chart.releaseDate && (
                             <time
-                              className="text-xs text-zinc-500"
+                              className="text-xs text-fg-2 tabular-nums"
                               dateTime={chart.releaseDate}
                               itemProp="datePublished"
                             >
-                              {chart.releaseDate}
+                              {/* The date alone (no "days ago"), so the cached page never goes stale */}
+                              {
+                                formatSheetReleaseDateParts(
+                                  chart.releaseDate,
+                                  locale,
+                                  sheetReleaseDateTimestamp(chart.releaseDate),
+                                ).absoluteDate
+                              }
                             </time>
                           )
                         }

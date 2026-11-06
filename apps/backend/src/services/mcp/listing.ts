@@ -1,4 +1,4 @@
-import { SUPPORTED_PROTOCOL_VERSIONS } from '@modelcontextprotocol/sdk/types.js'
+import { SUPPORTED_PROTOCOL_VERSIONS } from '@modelcontextprotocol/server'
 import { ICONS } from './output'
 import { SERVER_DESCRIPTION, SERVER_NAME, SERVER_TITLE, serverVersion } from './server'
 
@@ -31,6 +31,12 @@ export const REPOSITORY = {
   subfolder: 'apps/backend',
 } as const
 
+/**
+ * The protocol revisions the endpoint serves: 2026-07-28 (per-request metadata, no handshake) and every 2025-era
+ * revision the SDK negotiates with an initialize
+ */
+export const MCP_PROTOCOL_VERSIONS = ['2026-07-28', ...SUPPORTED_PROTOCOL_VERSIONS]
+
 /** server.json */
 export function mcpListing() {
   return {
@@ -50,7 +56,7 @@ export const SERVER_CARD_CONTENT_TYPE = 'application/mcp-server-card+json'
 
 /**
  * The server card of the build build. Its name and version are those of serverInfo, which clients reconcile it with;
- * the rest says what server.json says. The server is stateless, so it serves every protocol version of the SDK.
+ * the rest says what server.json says. The server is stateless, so it serves every protocol version of the SDK, of both eras.
  */
 export function mcpServerCard(build = process.env.VERSION) {
   return {
@@ -62,9 +68,7 @@ export function mcpServerCard(build = process.env.VERSION) {
     websiteUrl: MCP_GUIDE_URL,
     repository: REPOSITORY,
     icons: ICONS,
-    remotes: [
-      { type: 'streamable-http', url: MCP_PUBLIC_URL, supportedProtocolVersions: [...SUPPORTED_PROTOCOL_VERSIONS] },
-    ],
+    remotes: [{ type: 'streamable-http', url: MCP_PUBLIC_URL, supportedProtocolVersions: MCP_PROTOCOL_VERSIONS }],
   }
 }
 

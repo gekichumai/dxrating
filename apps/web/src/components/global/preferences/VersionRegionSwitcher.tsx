@@ -15,7 +15,6 @@ import {
 import { useAppContext } from '../../../models/context/useAppContext'
 import { startViewTransition, wipeOriginFromElement } from '../../../utils/startViewTransition'
 import { VERSION_THEME } from '../../../theme'
-import { useVersionTheme } from '../../../utils/useVersionTheme'
 import { WebpSupportedImage } from '../WebpSupportedImage'
 
 const fromMergedVersionRegionId = (id: string) => {
@@ -77,27 +76,38 @@ const VERSION_GENERIC_REGIONS: VersionRegion[] = [
   region: '_generic' as const,
 }))
 
-const StyledSelect = styled(Select<string>)(({ theme }) => ({
-  '&': {
-    borderRadius: 12,
-    overflow: 'hidden',
+// A glass button rather than MUI's filled grey well: the whole surface is the combobox, so the focus ring (index.css)
+// follows its 12px radius (--radius-lg) instead of an accent underline
+const StyledSelect = styled(Select<string>)({
+  '& .MuiSelect-select.MuiSelect-select': {
+    borderRadius: 'inherit',
+    padding: '8px 36px 8px 16px',
   },
-  '& .MuiPaper-root': {
-    maxWidth: '19rem',
+  // Compact: the same 48px height as the navigation beside it
+  '&.version-switcher--compact .MuiSelect-select.MuiSelect-select': {
+    paddingBlock: 6,
   },
-  '& .MuiSelect-select': {
-    padding: theme.spacing(1, 2),
+  '& .MuiSelect-select:focus': {
+    backgroundColor: 'transparent',
+    borderRadius: 'inherit',
   },
-  '&:before': {
-    display: 'none',
+  '& .MuiSelect-icon': {
+    right: 8,
+    color: 'var(--fg-2)',
   },
-}))
+})
 
-export const VersionRegionSwitcher: FC = () => {
+const SUBHEADER_CLASS_NAME = 'bg-transparent px-3 pt-3 pb-1 text-xs font-semibold leading-normal text-fg-2'
+
+/**
+ * The game version and region picker. The full size (a large version logo over the region chip) is for the home page;
+ * `compact` puts a small logo beside the chip so inner pages start with their content. Phones in landscape always get
+ * the compact layout (index.css).
+ */
+export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = false }) => {
   const selectRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const { t } = useTranslation(['settings'])
-  const theme = useVersionTheme()
   const { version, region, setVersionAndRegion } = useAppContext()
   const selectLabel = t('settings:version-and-region.select')
   const currentId = toMergedVersionRegionId(version, region)
@@ -109,9 +119,14 @@ export const VersionRegionSwitcher: FC = () => {
       open={open}
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
-      MenuProps={{ transitionDuration: 0 }}
+      MenuProps={{ transitionDuration: 0, slotProps: { paper: { className: 'max-w-[20rem]' } } }}
       value={toMergedVersionRegionId(version, region)}
-      variant="filled"
+      variant="standard"
+      disableUnderline
+      className={clsx(
+        'version-switcher glass-thin [transition-property:background-color] duration-[var(--duration-fast)] hover:bg-white/55',
+        compact && 'version-switcher--compact',
+      )}
       SelectDisplayProps={{
         'aria-label': selectLabel,
       }}
@@ -127,11 +142,11 @@ export const VersionRegionSwitcher: FC = () => {
         }, origin)
       }}
       renderValue={(value) => (
-        <div className="flex flex-col gap-0.5">
+        <div className="version-switcher__value flex items-center gap-x-3 gap-y-1.5">
           <WebpSupportedImage
             objectFit="contain"
             src={{ at1x: VERSION_THEME[getVersionEnum(fromMergedVersionRegionId(value).version)].logo }}
-            className="h-32 w-auto touch-callout-none"
+            className="version-switcher__logo w-auto touch-callout-none"
             alt={t('settings:version-and-region.logo-alt', {
               version: getVersionEnum(fromMergedVersionRegionId(value).version),
             })}
@@ -139,12 +154,7 @@ export const VersionRegionSwitcher: FC = () => {
             draggable={false}
           />
 
-          <div
-            className="text-center text-sm tracking-wide font-bold rounded-full leading-none py-1.5 px-3 border border-solid border-zinc-9/10 self-center text-zinc-6"
-            style={{
-              background: `${theme.accentColor}33`,
-            }}
-          >
+          <div className="self-center rounded-full border border-solid border-[var(--glass-border)] bg-accent-subtle px-3 py-1.5 text-center text-sm font-semibold leading-none text-fg-1 whitespace-nowrap">
             {t('settings:region.title', {
               region: t(`settings:region.${fromMergedVersionRegionId(value).region}`),
             })}
@@ -157,13 +167,11 @@ export const VersionRegionSwitcher: FC = () => {
           {getVersionEnum(version)} · {t(`settings:region.${region}`)}
         </MenuItem>
       )}
-      <ListSubheader className="leading-normal py-4">{t('settings:version-and-region.select')}</ListSubheader>
-      {VERSION_SPECIFIC_REGIONS.map(({ id, versionEnum, region }, i) => (
-        <MenuItem
-          value={id}
-          key={id}
-          className={clsx('flex items-center gap-8 border-b border-solid border-gray-200', i === 0 && 'border-t')}
-        >
+      <ListSubheader disableSticky className={SUBHEADER_CLASS_NAME}>
+        {t('settings:version-and-region.select')}
+      </ListSubheader>
+      {VERSION_SPECIFIC_REGIONS.map(({ id, versionEnum, region }) => (
+        <MenuItem value={id} key={id} className="flex items-center gap-6">
           <WebpSupportedImage
             objectFit="contain"
             src={{ at1x: VERSION_THEME[versionEnum].logo }}
@@ -172,20 +180,18 @@ export const VersionRegionSwitcher: FC = () => {
             draggable={false}
           />
 
-          <div className="mr-2 opacity-70 flex flex-col items-start">
-            <span>{versionEnum}</span>
-            <span className="uppercase font-bold text-lg">{t(`settings:region.${region}`)}</span>
+          <div className="mr-2 flex flex-col items-start">
+            <span className="text-sm text-fg-2">{versionEnum}</span>
+            <span className="text-base font-semibold text-fg-1">{t(`settings:region.${region}`)}</span>
           </div>
         </MenuItem>
       ))}
 
-      <ListSubheader className="leading-normal py-4">{t('settings:version-and-region.select-generic')}</ListSubheader>
-      {uniqBy(VERSION_GENERIC_REGIONS, (versionRegion) => versionRegion.dxVersion).map(({ id, versionEnum }, i) => (
-        <MenuItem
-          value={id}
-          key={id}
-          className={clsx('flex items-center gap-4 border-b border-solid border-gray-200', i === 0 && 'border-t')}
-        >
+      <ListSubheader disableSticky className={clsx(SUBHEADER_CLASS_NAME, 'whitespace-normal')}>
+        {t('settings:version-and-region.select-generic')}
+      </ListSubheader>
+      {uniqBy(VERSION_GENERIC_REGIONS, (versionRegion) => versionRegion.dxVersion).map(({ id, versionEnum }) => (
+        <MenuItem value={id} key={id} className="flex items-center gap-4">
           <WebpSupportedImage
             objectFit="contain"
             src={{ at1x: VERSION_THEME[versionEnum].logo }}
@@ -194,16 +200,16 @@ export const VersionRegionSwitcher: FC = () => {
             draggable={false}
           />
 
-          <div className="mr-2 opacity-70 flex flex-col items-start">
-            <span>{versionEnum}</span>
-            <span className="uppercase text-xs">{t('settings:region._generic')}</span>
+          <div className="mr-2 flex flex-col items-start">
+            <span className="text-sm text-fg-1">{versionEnum}</span>
+            <span className="text-xs text-fg-2">{t('settings:region._generic')}</span>
           </div>
         </MenuItem>
       ))}
-      <ListItem className="flex justify-center items-center text-sm">
-        <div className="flex justify-center items-start max-w-[22rem] text-zinc-500">
-          <MdiInformation className="mr-2 shrink-0 mt-0.5" />
-          <span className="whitespace-normal">{t('settings:version-and-region.info')}</span>
+      <ListItem className="flex justify-center items-center px-3 pt-2 pb-3 text-xs leading-normal">
+        <div className="flex justify-center items-start text-fg-2">
+          <MdiInformation aria-hidden className="mr-2 shrink-0 mt-0.5" />
+          <span className="whitespace-normal text-pretty">{t('settings:version-and-region.info')}</span>
         </div>
       </ListItem>
     </StyledSelect>

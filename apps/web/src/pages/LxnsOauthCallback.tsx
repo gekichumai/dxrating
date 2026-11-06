@@ -1,60 +1,82 @@
 import { useNavigate } from '@tanstack/react-router'
-import { Button, CircularProgress } from '@mui/material'
+import { Button } from '@mui/material'
 import { type FC, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import { match } from 'ts-pattern'
 import IconCheck from '~icons/material-symbols/check-circle-outline'
 import IconError from '~icons/material-symbols/error-outline'
+
+type Outcome = { status: 'success' } | { status: 'error'; code: string }
+
+/**
+ * The backend redirects here with ?status=success, or ?status=error&error=<code> (access_denied, missing_params,
+ * exchange_failed, or whatever LXNS sent). A missing or unknown status (a reload, a bookmark, a stripped query) is
+ * treated as an error too, so the page never waits on something that will not arrive.
+ */
+function readOutcome(search: string): Outcome {
+  const params = new URLSearchParams(search)
+  if (params.get('status') === 'success') return { status: 'success' }
+  return { status: 'error', code: params.get('error') || 'missing_params' }
+}
+
+const REDIRECT_DELAY_MS = 2000
 
 export const LxnsOauthCallback: FC = () => {
   const { t } = useTranslation(['rating-calculator'])
   const navigate = useNavigate()
-  const params = new URLSearchParams(window.location.search)
-  const initialStatus = match(params.get('status'))
-    .with('success', () => 'success' as const)
-    .with('error', () => 'error' as const)
-    .otherwise(() => 'loading' as const)
-  const initialError = params.get('error') || 'unknown'
-
-  const [status] = useState<'loading' | 'success' | 'error'>(initialStatus)
-  const [error] = useState<string | null>(initialStatus === 'error' ? initialError : null)
+  // This route is client-only (ssr: false), so reading the URL in the first render cannot mismatch.
+  const [outcome] = useState(() => readOutcome(window.location.search))
 
   useEffect(() => {
-    if (status === 'success') {
-      toast.success(t('rating-calculator:io.import.lxns.callback.success'))
-      const timer = setTimeout(() => {
-        navigate({ to: '/rating' })
-      }, 2000)
-      return () => clearTimeout(timer)
-    }
+    if (outcome.status !== 'success') return
+    const timer = setTimeout(() => {
+      // The page itself is the feedback while it shows; the toast confirms the connection after the redirect.
+      toast.success(t('rating-calculator:io.import.lxns.callback.success'), { id: 'lxns-connected' })
+      navigate({ to: '/rating' })
+    }, REDIRECT_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [t, outcome, navigate])
 
-    if (status === 'error') {
-      toast.error(t('rating-calculator:io.import.lxns.callback.error', { error: error || 'unknown' }))
-    }
-  }, [t, status, error])
+  const backButton = (
+    <Button variant={outcome.status === 'error' ? 'contained' : 'text'} onClick={() => navigate({ to: '/rating' })}>
+      {t('rating-calculator:io.import.lxns.callback.back')}
+    </Button>
+  )
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4 p-8 min-h-[50vh]">
-      {status === 'loading' && <CircularProgress size="2rem" />}
-
-      {status === 'success' && (
-        <>
-          <IconCheck className="text-green-500 text-5xl" />
-          <p className="text-lg font-medium">{t('rating-calculator:io.import.lxns.callback.success')}</p>
-          <p className="text-sm text-zinc-500">{t('rating-calculator:io.import.lxns.callback.redirecting')}</p>
-        </>
-      )}
-
-      {status === 'error' && (
-        <>
-          <IconError className="text-red-500 text-5xl" />
-          <p className="text-lg font-medium">{t('rating-calculator:io.import.lxns.callback.error', { error })}</p>
-          <Button variant="contained" onClick={() => navigate({ to: '/rating' })}>
-            {t('rating-calculator:io.import.lxns.close')}
-          </Button>
-        </>
-      )}
+    <div className="flex min-h-[50vh] items-center justify-center px-4 py-8">
+      <section
+        aria-labelledby="lxns-callback-title"
+        className="glass flex w-full max-w-md flex-col items-center gap-3 p-6 text-center sm:p-8"
+      >
+        {outcome.status === 'success' ? (
+          <>
+            <IconCheck aria-hidden="true" className="size-12 text-status-positive" />
+            <h1 id="lxns-callback-title" className="m-0 text-xl font-semibold leading-snug text-fg-1 text-balance">
+              {t('rating-calculator:io.import.lxns.callback.success-title')}
+            </h1>
+            <p className="m-0 text-base leading-normal text-fg-1 text-pretty">
+              {t('rating-calculator:io.import.lxns.callback.success-body')}
+            </p>
+            <p className="m-0 text-sm leading-normal text-fg-2">
+              {t('rating-calculator:io.import.lxns.callback.redirecting')}
+            </p>
+          </>
+        ) : (
+          <>
+            <IconError aria-hidden="true" className="size-12 text-danger" />
+            <h1 id="lxns-callback-title" className="m-0 text-xl font-semibold leading-snug text-fg-1 text-balance">
+              {t('rating-calculator:io.import.lxns.callback.error-title')}
+            </h1>
+            <p className="m-0 text-base leading-normal text-fg-2 text-pretty">
+              {outcome.code === 'access_denied'
+                ? t('rating-calculator:io.import.lxns.callback.error-access-denied')
+                : t('rating-calculator:io.import.lxns.callback.error')}
+            </p>
+          </>
+        )}
+        <div className="mt-2">{backButton}</div>
+      </section>
     </div>
   )
 }

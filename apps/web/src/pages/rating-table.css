@@ -31,8 +31,11 @@
 .rating-table thead th {
   position: relative;
   padding: 8px;
-  background: color-mix(in srgb, var(--theme-canvas) 25%, white);
-  border-bottom: 1px solid color-mix(in srgb, var(--theme-accent) 25%, transparent);
+  /* Sticky over the rows: the glass material, so the header stays legible without a flat fill */
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .rating-table-sort {
@@ -41,7 +44,7 @@
   border: 0;
   padding: 0;
   color: inherit;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
   gap: 3px;
@@ -63,18 +66,18 @@
 }
 
 .rating-table-sort:enabled:hover::after {
-  background: rgb(15 23 42 / 6%);
+  background: rgb(var(--ink-rgb) / 6%);
 }
 
 .rating-table-sort:enabled:active::after {
-  background: rgb(15 23 42 / 10%);
+  background: rgb(var(--ink-rgb) / 10%);
 }
 
 .rating-table-sort:disabled {
   opacity: 1;
 }
 
-.rating-table-sort > div > div {
+.rating-table-sort > div > span {
   padding: 0 3px;
 }
 
@@ -83,7 +86,7 @@
 }
 
 .rating-table-sort:focus-visible::after {
-  outline: 2px solid var(--theme-accent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
 }
 
@@ -95,7 +98,7 @@
   box-sizing: border-box;
   height: var(--rating-row-height);
   padding: 0 8px;
-  border-bottom: 1px solid rgb(15 23 42 / 10%);
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 8%);
 }
 
 .rating-table-row > td.rating-col--chart {
@@ -134,8 +137,8 @@
   -webkit-line-clamp: 2;
   overflow: hidden;
   overflow-wrap: anywhere;
-  font-size: 14px;
-  line-height: 17px;
+  font-size: 0.875rem;
+  line-height: 1.2;
   font-weight: 600;
 }
 
@@ -147,8 +150,8 @@
   display: flex;
   flex-wrap: wrap;
   column-gap: 5px;
-  font-size: 11px;
-  line-height: 14px;
+  font-size: 0.75rem;
+  line-height: 1.33;
 }
 
 .rating-chart-meta > span {
@@ -159,7 +162,7 @@
   display: none;
 }
 .rating-value-cell {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 600;
 }
 .rating-table .rating-row-remove {
@@ -182,8 +185,8 @@
     text-align: center;
   }
   .rating-table td.rating-col--includedIn > span {
-    width: 34px;
-    font-size: 11px;
+    width: 2.5rem;
+    font-size: 0.75rem;
   }
 
   .rating-table .rating-col--achievementRate {
@@ -196,7 +199,7 @@
   }
   .rating-table thead th {
     padding: 8px 6px;
-    font-size: 12px;
+    font-size: 0.75rem;
   }
   .rating-table-row > td {
     padding: 0 6px;
@@ -211,16 +214,16 @@
     height: 32px;
   }
   .rating-chart-title {
-    font-size: 13px;
-    line-height: 16px;
+    font-size: 0.8125rem;
+    line-height: 1.2;
   }
   .rating-chart-copy {
     gap: 2px;
   }
   .rating-chart-meta {
     column-gap: 4px;
-    font-size: 10px;
-    line-height: 12px;
+    font-size: 0.75rem;
+    line-height: 1.33;
   }
   .rating-mobile-flags {
     display: flex;
@@ -230,10 +233,9 @@
   }
   .rating-table .rating-mobile-flags > * {
     width: auto;
-    padding: 1px 4px;
-    font-size: 9px;
-    line-height: 12px;
-    box-shadow: none;
+    padding: 0 6px;
+    font-size: 0.75rem;
+    line-height: 1.33;
   }
   .rating-mobile-action {
     display: block;
@@ -243,15 +245,15 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    line-height: 20px;
+    line-height: 1.1;
   }
   .rating-table .rating-row-remove {
     margin-inline-end: -7px;
-    color: rgb(15 23 42 / 55%);
+    color: var(--fg-2);
   }
   .rating-col--achievementRate > span {
-    font-size: 13px;
-    letter-spacing: -0.3px;
+    font-size: 0.8125rem;
+    letter-spacing: -0.02em;
   }
   /* Cloud saves: no room beside the achievement on phones; the chart dialog shows the provenance */
   .rating-table .rating-provenance-icon {
@@ -268,12 +270,9 @@
   .rating-col--includedIn .rating-table-sort {
     justify-content: center;
   }
-  .rating-table-sort > div {
-    font-size: 10px;
-  }
-  .rating-table-sort > div > div {
-    padding: 0 3px;
-    font-size: 10px;
+  .rating-table-sort > div,
+  .rating-table-sort > div > span {
+    font-size: 0.75rem;
   }
 }
 
@@ -283,14 +282,16 @@
   }
 }
 
+/* Rows sit on the records glass panel: B50 rows get a translucent tint of their bucket colour (amber B15, cyan B35,
+   as on the pills and the histogram); the palette variables mirror on the dark theme */
 .rating-table-row {
-  background: rgb(255 255 255 / 65%);
+  background: transparent;
 }
 .rating-table-row[data-bucket='b15'] {
-  background: #fff7d6;
+  background: rgb(var(--c-amber-100) / 55%);
 }
 .rating-table-row[data-bucket='b35'] {
-  background: #e4f7fb;
+  background: rgb(var(--c-cyan-100) / 55%);
 }
 .rating-table-sort svg {
   margin: 0;
@@ -324,21 +325,32 @@
 .rating-tools .MuiButton-root {
   max-width: 100%;
 }
+/* The OneShot label is too long for one line on the narrowest cards: break between phrases (文節), not mid-word */
+.rating-oneshot .MuiButton-root {
+  word-break: auto-phrase;
+}
+/* Import, maimai NET settings, export and clear: whole buttons wrap, never their labels. Two equal columns by default;
+   a label wider than half the card takes the whole line. When the card has room for all four, they share one row */
+.rating-tools > section {
+  container-type: inline-size;
+}
+.rating-io-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rating-io-actions > .MuiButton-root {
+  flex: 1 1 calc(50% - 4px);
+  min-width: max-content;
+  white-space: nowrap;
+}
+@container (min-width: 34rem) {
+  .rating-io-actions > .MuiButton-root {
+    flex-basis: 0;
+  }
+}
 .rating-statistics {
-  position: relative;
   min-width: 0;
-}
-.rating-statistics .rating-statistics-toggle {
-  position: absolute;
-  top: 0;
-  inset-inline-end: 0;
-}
-.rating-statistics--details {
-  padding-top: 40px;
-}
-.rating-records {
-  background: rgb(255 255 255 / 85%);
-  border-radius: 16px;
 }
 .rating-table-controls {
   display: flex;
@@ -351,11 +363,11 @@
   margin: 0;
 }
 .rating-table-controls .MuiFormControlLabel-label {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .rating-add-form {
   padding: 12px 16px 16px;
-  border-bottom: 1px solid rgb(15 23 42 / 10%);
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 8%);
 }
 .rating-add-fields {
   display: flex;
@@ -378,8 +390,7 @@
 }
 .rating-add-fields .rating-add-submit {
   min-height: 40px;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 .rating-add-preview {
   display: flex;
@@ -392,7 +403,7 @@
   min-width: 0;
 }
 .rating-records .MuiTableContainer-root {
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   box-shadow: none;
 }
 .rating-table th.rating-col--chart {
@@ -412,7 +423,7 @@
 }
 @media (max-width: 400px) {
   .rating-statistics-overview .text-3xl {
-    font-size: 24px;
+    font-size: 1.5rem;
   }
 }
 @media (max-width: 767px) {
