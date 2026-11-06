@@ -101,7 +101,8 @@ export function buildDxStarRows(
     const progress = dxScoreProgress(records.get(sheet.id)?.best.dxScore, maxDxScore(sheet.noteCounts))
     if (!progress) continue
     row.withDxScore++
-    row.percentSum += progress.percent
+    // The exact share: truncating each chart before averaging would bias the mean down
+    row.percentSum += (progress.dxScore / progress.max) * 100
     for (let star = 1; star <= progress.stars; star++) row.atLeast[star - 1]!++
   }
   return [...rows.values()].map(({ percentSum, ...row }) => ({

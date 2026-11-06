@@ -71,4 +71,16 @@ describe('ProgressSummaryPage', () => {
     expect(row.averagePercent).toBeGreaterThanOrEqual(93)
     expect(row.averagePercent).toBeLessThan(93.1)
   })
+
+  it('averages the exact DX score shares, truncating only the mean', () => {
+    const sheets = [
+      { id: 'a', level: '13', type: 'dx', internalLevelValue: 13.0, serverIds: ['jp'], noteCounts: { total: 1000 } },
+      { id: 'b', level: '13', type: 'dx', internalLevelValue: 13.0, serverIds: ['jp'], noteCounts: { total: 1000 } },
+    ] as never
+    const records = new Map([
+      ['a', { best: { dxScore: 2815 } }],
+      ['b', { best: { dxScore: 2816 } }],
+    ])
+    expect(buildDxStarRows(sheets, records).find((r) => r.level === '13')!.averagePercent).toBe(93.85)
+  })
 })
