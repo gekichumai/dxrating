@@ -94,7 +94,7 @@ export const SongChartsTable: FC<{
                       params={{ songId, type: sheet.type, difficulty: sheet.difficulty }}
                       className="inline-flex items-center gap-1 no-underline text-inherit rounded-[var(--radius-sm)] after:absolute after:inset-0 after:content-['']"
                     >
-                      <span className="inline-block w-[6.5em] shrink-0 text-xs text-fg-2">
+                      <span className="inline-block sm:w-[6.5em] shrink-0 text-xs text-fg-2">
                         {t(`song:type.${sheet.type}`)}
                       </span>
                       <SheetDifficulty difficulty={sheet.difficulty as DifficultyEnum} serverIds={sheet.serverIds} />
@@ -118,7 +118,7 @@ export const SongChartsTable: FC<{
                       '—'
                     )}
                     {raise && (
-                      <div className="text-xs text-status-positive">
+                      <div className="text-xs text-status-positive whitespace-normal">
                         {t('song:hub.raise-hint', { target: raise.targetAchievement, gain: raise.gain })}
                       </div>
                     )}

@@ -223,7 +223,8 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     })
     return data.map((c) => ({
       ...c,
-      created_at: c.created_at.toString(),
+      // ISO, so it is a valid <time dateTime> and parses the same everywhere
+      created_at: new Date(c.created_at).toISOString(),
     }))
   })
   // Comments load on the client only, so formatting them in the app locale cannot cause a hydration mismatch
@@ -404,7 +405,7 @@ const RegionalAvailability: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             className={clsx(
               'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-[var(--radius-sm)] text-xs font-semibold tracking-wide whitespace-nowrap',
               available
-                ? 'bg-status-positive text-on-accent border border-solid border-transparent'
+                ? 'bg-status-positive text-white border border-solid border-transparent'
                 : 'border border-solid border-black/30 text-fg-2',
             )}
           >
@@ -494,7 +495,7 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
 
               <DetailRow label={t('sheet:details.unlock')}>
                 {sheet.isLocked ? (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-status-warning text-on-accent text-xs font-semibold">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-status-warning text-white text-xs font-semibold">
                     <MdiLock aria-hidden className="h-3.5 w-3.5" />
                     {t('sheet:details.unlock-status.required')}
                   </span>
