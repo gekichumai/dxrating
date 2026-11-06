@@ -114,7 +114,7 @@ describe('AppTabs', () => {
 
     render(<AppTabs />)
 
-    const recentTab = screen.getByRole('link', { name: 'Recently updated charts' })
+    const recentTab = screen.getByRole('link', { name: 'New charts' })
 
     expect(recentTab.hasAttribute('data-selected')).toBe(true)
     expect(recentTab.getAttribute('aria-busy')).toBe('true')

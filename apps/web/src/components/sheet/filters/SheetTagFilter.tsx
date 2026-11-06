@@ -4,11 +4,12 @@ import type { FC, ReactNode } from 'react'
 import { type Control, useController } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { LongPressCallbackReason, useLongPress } from 'use-long-press'
+import MdiCheck from '~icons/mdi/check'
 import { Markdown } from '../../global/Markdown'
 import { useCombinedTags } from '../../../models/useCombinedTags'
 import { useSheets } from '../../../songs'
 import { MotionTooltip } from '../../../utils/motion'
-import { zoomTransitions } from '../../../utils/motionConstants'
+import { chipPresenceTransitions } from '../sheetMotion'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { SheetFilterSection } from './SheetFilterSection'
@@ -45,28 +46,35 @@ const SheetTagFilterInputTag = ({
   return (
     <ButtonBase
       {...bind()}
-      className={clsx('rounded-lg overflow-hidden', skeleton && 'pointer-events-none animate-pulse')}
+      aria-pressed={skeleton ? undefined : selected}
+      aria-hidden={skeleton || undefined}
+      tabIndex={skeleton ? -1 : undefined}
+      className={clsx('rounded-lg overflow-hidden', skeleton && 'pointer-events-none motion-safe:animate-pulse')}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          onToggle()
-        }
+        if (e.key !== 'Enter' && e.key !== ' ') return
+        e.preventDefault()
+        // Shift+Enter is the keyboard path to "select only", which pointers get by holding
+        if (e.shiftKey) onOnly()
+        else onToggle()
       }}
       focusRipple
     >
+      {/* Selected shows a check as well as the fill; nothing is dimmed, so unselected text keeps its contrast */}
       <Chip
         label={label}
+        icon={selected ? <MdiCheck aria-hidden="true" /> : undefined}
         color={selected ? 'primary' : 'default'}
         size="small"
-        className={clsx('!rounded-l-lg !rounded-r-none transition leading-none', !anySelected && 'opacity-50')}
+        className={clsx(
+          '!rounded-l-lg !rounded-r-none transition leading-none',
+          anySelected && !selected && '!bg-black/6',
+        )}
       />
       <Chip
         label={count}
         color="default"
         size="small"
-        className={clsx(
-          '!rounded-r-lg !rounded-l-none transition leading-none !bg-gray-3',
-          !anySelected && 'opacity-50',
-        )}
+        className="!rounded-r-lg !rounded-l-none transition leading-none tabular-nums !bg-black/10"
       />
     </ButtonBase>
   )
@@ -91,7 +99,7 @@ const SheetTagFilterInput = ({ value, onChange }: { value: number[]; onChange: (
 
   const renderTag = (e: NonNullable<typeof tagsWithCount>[number]) => (
     <MotionTooltip
-      {...zoomTransitions}
+      {...chipPresenceTransitions}
       key={e.id}
       title={<Markdown content={localizeMessage(e.localized_description)} />}
       arrow
@@ -151,10 +159,12 @@ const SheetTagFilterInput = ({ value, onChange }: { value: number[]; onChange: (
       {groupedTags?.map((group) => (
         <div key={group.id} className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: group.color }} />
-            <span className="text-xs font-medium text-zinc-500 tracking-tight">
-              {localizeMessage(group.localized_name)}
-            </span>
+            <div
+              aria-hidden="true"
+              className="w-2 h-2 rounded-full shrink-0"
+              style={{ backgroundColor: group.color }}
+            />
+            <span className="text-xs font-semibold text-fg-2">{localizeMessage(group.localized_name)}</span>
           </div>
           <div className="flex flex-wrap gap-1.5">{group.tags.map(renderTag)}</div>
         </div>

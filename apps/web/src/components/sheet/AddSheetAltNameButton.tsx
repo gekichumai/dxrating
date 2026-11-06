@@ -14,7 +14,7 @@ import { SheetListItemContent } from './SheetListItem'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 
 export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t } = useTranslation(['sheet'])
+  const { t } = useTranslation(['sheet', 'auth'])
   const [open, setOpen] = useState(false)
   const { session, openLoginDialog, LoginDialog } = useAuth()
 
@@ -54,7 +54,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
     <>
       <LoginDialog />
       <MotionButtonBase
-        className="h-6 border-1 border-solid border-gray-200 rounded-lg inline-flex self-start items-center justify-center px-2 cursor-pointer bg-gray-100 hover:bg-gray-200 hover:border-gray-300 active:bg-gray-300 active:border-gray-400 transition mt-2"
+        className="h-6 glass-inset inline-flex self-start items-center justify-center gap-1 px-2 cursor-pointer text-fg-1 hover:bg-white/80 active:bg-black/6 transition-colors duration-150 mt-2"
         onClick={() => {
           setOpen(true)
           captureAnalyticsEvent('add_sheet_alt_name_button_clicked', {
@@ -64,9 +64,9 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
           })
         }}
       >
-        <IconMdiPlus className="h-4 w-4" />
+        <IconMdiPlus aria-hidden="true" className="h-4 w-4" />
 
-        <span className="ml-1 text-xs">{t('sheet:aliases.add-new')}</span>
+        <span className="text-xs font-semibold">{t('sheet:aliases.add-new')}</span>
       </MotionButtonBase>
 
       <Dialog
@@ -78,49 +78,45 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
           paper: 'w-full',
         }}
       >
-        <div className="flex flex-col gap-2 p-4 relative w-full">
-          <div className="text-lg font-bold">{t('sheet:aliases.dialog-title')}</div>
+        <div className="flex flex-col gap-2 p-4 w-full">
+          <h2 className="m-0 text-lg font-semibold">{t('sheet:aliases.dialog-title')}</h2>
           <div className="text-lg">
             <SheetListItemContent sheet={sheet} />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <TextField
-              label={t('sheet:aliases.input-label')}
-              variant="outlined"
-              value={newAltName}
-              onChange={(e) => setNewAltName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleAddAltName()
-                }
-              }}
-              data-attr="add-alias-input"
-            />
+          {session ? (
+            <div className="flex flex-col gap-2">
+              <TextField
+                label={t('sheet:aliases.input-label')}
+                variant="outlined"
+                value={newAltName}
+                onChange={(e) => setNewAltName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddAltName()
+                  }
+                }}
+                data-attr="add-alias-input"
+              />
 
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleAddAltName}
-              startIcon={<IconMdiPlus />}
-              disabled={newAltName.trim().length === 0 || newAltName.trim().length > 100 || !session || loading}
-              type="submit"
-            >
-              {loading ? t('sheet:aliases.adding') : t('sheet:aliases.add-button')}
-            </Button>
-          </div>
-
-          {!session && (
-            <div
-              className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8 z-1 cursor-pointer"
-              onClick={openLoginDialog}
-              onKeyDown={(e) => e.key === 'Enter' && openLoginDialog()}
-              role="button"
-              tabIndex={0}
-            >
-              <span className="text-center font-bold text-sm text-zinc-600 underline underline-offset-2">
-                {t('sheet:aliases.login-required')}
-              </span>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleAddAltName}
+                startIcon={<IconMdiPlus />}
+                disabled={newAltName.trim().length === 0 || newAltName.trim().length > 100 || loading}
+                type="submit"
+              >
+                {loading ? t('sheet:aliases.adding') : t('sheet:aliases.add-button')}
+              </Button>
+            </div>
+          ) : (
+            // Signed out: say why and offer the one action, instead of a disabled form under an overlay
+            <div className="flex flex-col items-start gap-2">
+              <p className="m-0 text-sm text-fg-2">{t('sheet:aliases.login-required')}</p>
+              <Button variant="contained" onClick={openLoginDialog}>
+                {t('auth:login.label')}
+              </Button>
             </div>
           )}
         </div>

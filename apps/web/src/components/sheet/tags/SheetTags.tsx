@@ -5,7 +5,7 @@ import { type CSSProperties, type FC, useMemo } from 'react'
 import type { FlattenedSheet } from '../../../songs'
 import { deriveColor } from '../../../utils/color'
 import { MotionButtonBase, MotionTooltip } from '../../../utils/motion'
-import { zoomTransitions } from '../../../utils/motionConstants'
+import { chipPresenceTransitions } from '../sheetMotion'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import { Markdown } from '../../global/Markdown'
 import { SheetTagsAddButton } from './SheetTagsAddButton'
@@ -22,7 +22,12 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const inner = () => {
     if (isLoading || !data) {
       return (
-        <MotionButtonBase {...zoomTransitions} className="h-6 w-16 bg-gray-200 rounded-lg animate-pulse" disabled />
+        <MotionButtonBase
+          {...chipPresenceTransitions}
+          className="h-6 w-16 bg-black/6 rounded-[var(--radius-md)] motion-safe:animate-pulse"
+          disabled
+          aria-hidden="true"
+        />
       )
     }
 
@@ -34,25 +39,7 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       <>
         {data.map((tag) => (
           <MotionTooltip
-            {...{
-              exit: {
-                scale: 0.9,
-                opacity: 0,
-              },
-              initial: {
-                scale: 0,
-                opacity: 0,
-              },
-              animate: {
-                scale: 1,
-                opacity: 1,
-              },
-              transition: {
-                type: 'spring' as const,
-                stiffness: 500,
-                damping: 30,
-              },
-            }}
+            {...chipPresenceTransitions}
             key={tag.id}
             title={<Markdown content={localizeMessage(tag.localized_description)} />}
             arrow
@@ -73,6 +60,8 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
               key={tag.id}
               label={localizeMessage(tag.localized_name)}
               size="small"
+              // Focusable, so the description tooltip also opens from the keyboard (MUI Tooltip opens on focus)
+              tabIndex={0}
               // Group colours are pastels: dark mode's light chip text would vanish on them
               className="cursor-help px-0.5 dark:!text-[var(--tag-fg)]"
               style={
@@ -93,7 +82,7 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   return (
     <div className="flex items-center gap-1">
       <div className="flex flex-1 items-center gap-1">
-        <IconMdiTag className="mr-1" />
+        <IconMdiTag aria-hidden="true" className="mr-1 text-fg-2" />
       </div>
 
       <motion.div layoutRoot className="flex flex-wrap gap-1">

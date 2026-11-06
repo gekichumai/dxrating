@@ -40,7 +40,8 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
         ref={ref}
         onBlur={onBlur}
         TextFieldProps={{
-          variant: 'filled',
+          variant: 'outlined',
+          size: 'small',
           label,
           error: invalid,
           helperText: error?.message,
@@ -49,7 +50,7 @@ const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
       />
 
       <TouchDeviceGuard renderOnlyOn="touch">
-        <div className="block md:hidden h-px w-full flex-1 bg-gray-300 mx-2 select-none" />
+        <div aria-hidden="true" className="block md:hidden h-px w-full flex-1 bg-black/12 mx-2" />
       </TouchDeviceGuard>
 
       <TouchDeviceGuard renderOnlyOn="touch">
