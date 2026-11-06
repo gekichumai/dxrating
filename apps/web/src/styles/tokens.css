@@ -30,6 +30,9 @@
   --fg-1: #18181b;
   --fg-2: #52525b;
   --danger: #b91c1c;
+  /* Status fills that carry white text (>=4.5:1): availability, unlock, success and warning badges */
+  --status-positive: #047857;
+  --status-warning: #b45309;
 
   /* Glass levels */
   --glass-tint: color-mix(in oklab, var(--accent) 7%, transparent);

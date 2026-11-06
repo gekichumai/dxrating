@@ -47,6 +47,10 @@ export default defineConfig({
         2: 'var(--fg-2)',
       },
       danger: 'var(--danger)',
+      status: {
+        positive: 'var(--status-positive)',
+        warning: 'var(--status-warning)',
+      },
     },
     fontFamily: {
       mono: '"IBM Plex Mono", "JetBrains Mono", Menlo, Consolas, Courier, monospace',
