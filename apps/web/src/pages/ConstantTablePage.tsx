@@ -26,6 +26,7 @@ import { DIFFICULTIES } from '@/models/difficulties'
 import type { SupportedLocale } from '@/setup/locale'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { InternalLink } from '@/components/global/InternalLink'
 
 export const constantTableRange = (table: ConstantTable) => ({
   max: table.groups[0]?.constant ?? '-',
@@ -109,13 +110,13 @@ const ConstantGroupTable: FC<{
                   className={done ? 'bg-[color-mix(in_oklab,var(--status-positive)_7%,transparent)]' : undefined}
                 >
                   <td className={`px-4 py-1.5 ${sticky}`}>
-                    <a
+                    <InternalLink
                       href={chart.href}
                       lang="ja"
                       className="text-fg-1 font-semibold no-underline hover:underline underline-offset-2 [overflow-wrap:anywhere]"
                     >
                       {chart.title}
-                    </a>
+                    </InternalLink>
                     <div lang="ja" className="text-xs text-fg-2 [overflow-wrap:anywhere]">
                       {chart.artist}
                     </div>
@@ -197,7 +198,11 @@ const ConstantTile: FC<{
 
   return (
     <li className="min-w-0">
-      <a href={chart.href} title={label} className="group flex min-w-0 flex-col gap-1 no-underline text-fg-1">
+      <InternalLink
+        href={chart.href}
+        title={label}
+        className="group flex min-w-0 flex-col gap-1 no-underline text-fg-1"
+      >
         <span
           className={clsx(
             'relative block aspect-square overflow-hidden rounded-[var(--radius-md)] outline outline-1 -outline-offset-1 outline-black/10 bg-black/6',
@@ -247,7 +252,7 @@ const ConstantTile: FC<{
             <CompletionBadges record={record} />
           </span>
         )}
-      </a>
+      </InternalLink>
     </li>
   )
 }
@@ -398,7 +403,7 @@ export const ConstantTableIndexPage: FC<{ tables: ConstantTableSummary[] }> = ({
         <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 list-none p-0 m-0">
           {tables.map((table) => (
             <li key={table.level}>
-              <a
+              <InternalLink
                 href={constantTablePath(table.level)}
                 className="glass block h-full p-4 no-underline text-fg-1 transition-shadow duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:shadow-[var(--shadow-1-hover)]"
               >
@@ -410,7 +415,7 @@ export const ConstantTableIndexPage: FC<{ tables: ConstantTableSummary[] }> = ({
                     ? m.constants_index_levelCountSingle({ count: table.count, value: table.min }, { locale })
                     : m.constants_index_levelCount(table, { locale })}
                 </div>
-              </a>
+              </InternalLink>
             </li>
           ))}
         </ul>

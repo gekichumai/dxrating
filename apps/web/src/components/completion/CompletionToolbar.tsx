@@ -15,6 +15,7 @@ import {
 } from './completion'
 import { buildCompletionShareImage } from './completionShareImage'
 import type { CompletionFilter, CompletionOverlayState } from './useCompletionOverlay'
+import { InternalLink } from '@/components/global/InternalLink'
 
 const FILTERS: CompletionFilter[] = ['all', 'pending', 'unplayed', 'done']
 
@@ -50,9 +51,9 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
         className="w-full min-h-[46px] px-4 py-3 text-sm text-fg-1 flex flex-wrap items-center gap-x-3 gap-y-1"
       >
         <span>{m.completion_empty({}, { locale })}</span>
-        <a href="/rating" className="link">
+        <InternalLink href="/rating" className="link">
           {m.completion_emptyLink({}, { locale })}
-        </a>
+        </InternalLink>
       </MaterialSurface>
     )
   }
@@ -139,9 +140,9 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
             </span>
           </FilterChip>
         ))}
-        <a href="/me/progress" className="link ms-auto text-sm">
+        <InternalLink href="/me/progress" className="link ms-auto text-sm">
           {m.completion_progressLink({}, { locale })}
-        </a>
+        </InternalLink>
       </fieldset>
     </MaterialSurface>
   )

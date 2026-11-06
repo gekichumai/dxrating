@@ -9,6 +9,8 @@ import { initI18n } from '@/setup/init-i18n'
 import { buildDxStarRows, ProgressSummaryPage } from '../ProgressSummaryPage'
 
 vi.mock('@tanstack/react-router', () => ({
+  // InternalLink: no router in these tests, so links render as plain anchors
+  useRouter: () => undefined,
   Link: ({ children, params, to }: { children: React.ReactNode; params?: { level: string }; to: string }) => (
     <a href={to.replace('$level', params?.level ?? '')}>{children}</a>
   ),

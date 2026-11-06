@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import type { ReactNode } from 'react'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { InternalLink } from '@/components/global/InternalLink'
 
 export interface LegalSection {
   /** The id of the section's h2 in the document */
@@ -59,9 +60,9 @@ export function LegalLayout({
 
   const crossLinks = (className: string) => (
     <footer className={clsx('legal-footer', className)}>
-      <a href={current === 'terms' ? '/privacy-policy' : '/terms-of-service'}>
+      <InternalLink href={current === 'terms' ? '/privacy-policy' : '/terms-of-service'}>
         {current === 'terms' ? m.auth_terms_privacy({}, { locale }) : m.auth_terms_title({}, { locale })}
-      </a>
+      </InternalLink>
       <a href="https://discord.gg/8CFgUPxyrU">{m.auth_terms_support({}, { locale })}</a>
     </footer>
   )

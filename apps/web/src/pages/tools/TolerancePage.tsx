@@ -12,6 +12,7 @@ import { DIFFICULTIES } from '@/models/difficulties'
 import { useFilteredSheets } from '@/songs'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { InternalLink } from '@/components/global/InternalLink'
 
 export type ToleranceSelectedSheet = {
   id: string
@@ -188,9 +189,9 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
         <MaterialSurface variant="thin" className="flex items-center gap-3 p-3 lg:col-start-1 lg:row-start-1">
           <SheetImage name={sheet.imageName} size="large" alt="" />
           <div className="flex flex-col min-w-0">
-            <a href={sheetPath} lang="ja" translate="no" className="link font-bold [overflow-wrap:anywhere]">
+            <InternalLink href={sheetPath} lang="ja" translate="no" className="link font-bold [overflow-wrap:anywhere]">
               {sheet.title}
-            </a>
+            </InternalLink>
             <span className="text-xs text-secondary num">{sheetLabel(sheet)}</span>
           </div>
         </MaterialSurface>
