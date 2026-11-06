@@ -61,40 +61,42 @@ const BucketStatistics: FC<{
 }> = ({ title, count, subtotal, min, avg, max }) => {
   const { t } = useTranslation(['rating-calculator'])
   return (
-    <div className="flex flex-col items-start gap-2 min-w-0">
-      <h3 className="m-0 flex flex-wrap items-baseline gap-x-1 leading-tight">
+    // Its columns come from BUCKET_STATISTICS_GRID, so the B15 and B35 figures line up whatever their digit counts
+    <div className="col-span-full grid [grid-template-columns:subgrid] items-end gap-y-2 min-w-0">
+      <h3 className="col-span-full m-0 flex flex-wrap items-baseline gap-x-1 leading-tight">
         <span className="text-lg font-semibold">{title}</span>
         <span className="text-sm font-normal text-secondary num">{count}</span>
       </h3>
 
-      {/* Subtotal, a divider, then min / avg / max: the trio is spaced tighter than its gap to the subtotal */}
-      <div className="grid w-full grid-cols-[auto_1px_repeat(3,minmax(0,1fr))] items-end gap-x-4">
-        <RatingCalculatorStatisticsFactItem
-          size="md"
-          label={t('rating-calculator:statistics.subtotal')}
-          value={subtotal}
-          className="pe-2"
-        />
-        <div className="h-12 w-px self-center bg-gray-300" aria-hidden="true" />
-        <RatingCalculatorStatisticsFactItem
-          size="md"
-          label={t('rating-calculator:statistics.min')}
-          value={formatNumber(min)}
-        />
-        <RatingCalculatorStatisticsFactItem
-          size="md"
-          label={t('rating-calculator:statistics.avg')}
-          value={formatNumber(avg)}
-        />
-        <RatingCalculatorStatisticsFactItem
-          size="md"
-          label={t('rating-calculator:statistics.max')}
-          value={formatNumber(max)}
-        />
-      </div>
+      <RatingCalculatorStatisticsFactItem
+        size="md"
+        label={t('rating-calculator:statistics.subtotal')}
+        value={subtotal}
+        className="pe-2"
+      />
+      <div className="h-12 w-px self-center bg-gray-300" aria-hidden="true" />
+      <RatingCalculatorStatisticsFactItem
+        size="md"
+        label={t('rating-calculator:statistics.min')}
+        value={formatNumber(min)}
+      />
+      <RatingCalculatorStatisticsFactItem
+        size="md"
+        label={t('rating-calculator:statistics.avg')}
+        value={formatNumber(avg)}
+      />
+      <RatingCalculatorStatisticsFactItem
+        size="md"
+        label={t('rating-calculator:statistics.max')}
+        value={formatNumber(max)}
+      />
     </div>
   )
 }
+
+// Subtotal, a divider, then min / avg / max: the trio is spaced tighter than its gap to the subtotal. Both buckets
+// share these columns (BucketStatistics is a subgrid of them)
+const BUCKET_STATISTICS_GRID = 'grid w-full grid-cols-[auto_1px_repeat(3,minmax(0,1fr))] gap-x-4 gap-y-4'
 
 function RatingCalculatorStatisticsOverview({ className, style, ref }: RatingCalculatorStatisticsOverviewProps) {
   const { b35Entries, b15Entries, statistics } = useRatingEntries()
@@ -109,22 +111,24 @@ function RatingCalculatorStatisticsOverview({ className, style, ref }: RatingCal
     >
       <RatingCalculatorStatisticsFactItem size="lg" label={t('rating-calculator:statistics.total')} value={b50Sum} />
 
-      <BucketStatistics
-        title={t('rating-calculator:statistics.best-15')}
-        count={t('rating-calculator:statistics.entries', { current: b15Entries.length, total: 15 })}
-        subtotal={formatNumber(b15Sum)}
-        min={b15Min}
-        avg={b15Average}
-        max={b15Max}
-      />
-      <BucketStatistics
-        title={t('rating-calculator:statistics.best-35')}
-        count={t('rating-calculator:statistics.entries', { current: b35Entries.length, total: 35 })}
-        subtotal={b35Sum}
-        min={b35Min}
-        avg={b35Average}
-        max={b35Max}
-      />
+      <div className={BUCKET_STATISTICS_GRID}>
+        <BucketStatistics
+          title={t('rating-calculator:statistics.best-15')}
+          count={t('rating-calculator:statistics.entries', { current: b15Entries.length, total: 15 })}
+          subtotal={formatNumber(b15Sum)}
+          min={b15Min}
+          avg={b15Average}
+          max={b15Max}
+        />
+        <BucketStatistics
+          title={t('rating-calculator:statistics.best-35')}
+          count={t('rating-calculator:statistics.entries', { current: b35Entries.length, total: 35 })}
+          subtotal={formatNumber(b35Sum)}
+          min={b35Min}
+          avg={b35Average}
+          max={b35Max}
+        />
+      </div>
     </div>
   )
 }

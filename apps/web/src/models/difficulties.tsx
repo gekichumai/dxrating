@@ -6,8 +6,9 @@ import { DifficultyEnum } from '@gekichumai/dxdata'
  *   white text)
  * - `solid`: a fill that carries white text (>=4.5:1)
  * - `ink`: text on light glass over any version background (>=4.5:1)
- * - `inkDark`: text on dark glass in the dark theme (>=5.2:1), the brand colour lightened in OKLCH; pair it with `ink`
- *   through a CSS variable or the `dark:` variant (html[data-theme="dark"]), never by reading the theme in render
+ * - `inkDark`: text on dark glass in the dark theme (>=5.2:1), and on the rating table's amber and cyan bucket tints
+ *   over it (>=4.9:1), the brand colour lightened in OKLCH; pair it with `ink` through a CSS variable or the `dark:`
+ *   variant (html[data-theme="dark"]), never by reading the theme in render
  * `solid` and `ink` are the brand colour darkened in OKLCH with hue and chroma kept.
  */
 export const DIFFICULTIES: Record<
@@ -45,7 +46,7 @@ export const DIFFICULTIES: Record<
     color: '#f64861',
     solid: '#dc2c4d',
     ink: '#ca0f3f',
-    inkDark: '#ff6377',
+    inkDark: '#ff7a8a',
   },
   [DifficultyEnum.Master]: {
     title: 'MASTER',
@@ -53,7 +54,7 @@ export const DIFFICULTIES: Record<
     color: '#9e45e2',
     solid: '#9e45e2',
     ink: '#9034d3',
-    inkDark: '#c873ff',
+    inkDark: '#cf85ff',
     dark: true,
   },
   [DifficultyEnum.ReMaster]: {
