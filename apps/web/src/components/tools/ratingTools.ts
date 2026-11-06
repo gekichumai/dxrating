@@ -1,9 +1,13 @@
 import {
   SCORE_COEFFICIENT_TABLE,
   calculateRatingAward,
+  NOTE_TYPES,
   calculateTolerance,
+  judgementLoss,
+  judgementsFor,
+  type ToleranceJudgement,
   type ToleranceNoteCounts,
-  type ToleranceResult,
+  type ToleranceNoteType,
 } from '@gekichumai/maimai-domain'
 
 export const MIN_INTERNAL_LEVEL = 1
@@ -58,33 +62,45 @@ export function minimumAchievementForRating(internalLevel: number, targetRating:
 export const ratingFor = (internalLevel: number, achievement: number) =>
   calculateRatingAward(internalLevel, achievement)
 
-export type ToleranceJudgementRow = {
-  type: 'tap' | 'hold' | 'slide' | 'touch'
-  count: number
-  great: number
-  good: number
-  miss: number
+export type ToleranceCell = {
+  judgement: ToleranceJudgement
+  /** Achievement (in %) one of these costs */
+  loss: number
+  /** One of these costs as much as this many TAP GREATs */
+  rate: number
+  /** Most of these the chart allows when every other note is CRITICAL PERFECT */
+  soloMax: number
+  /** soloMax is the note count: every such note may take this judgement */
+  capped: boolean
 }
 
-const NOTE_MULTIPLIER = { tap: 1, hold: 2, slide: 3, touch: 1 } as const
+export type ToleranceRow = {
+  type: ToleranceNoteType
+  count: number
+  cells: ToleranceCell[]
+}
+
 const EPSILON = 1e-9
 
-/** Allowed GREAT / GOOD / MISS per note type (each on its own, capped at that type's note count) */
-export function toleranceRows(counts: ToleranceNoteCounts, result: ToleranceResult): ToleranceJudgementRow[] {
-  const max = (loss: number, cap: number) =>
-    loss > 0 ? Math.min(cap, Math.floor(result.allowedLoss / loss + EPSILON)) : 0
-  return (['tap', 'hold', 'slide', 'touch'] as const)
-    .filter((type) => counts[type] > 0)
-    .map((type) => {
-      const m = NOTE_MULTIPLIER[type]
+/** Per note type and judgement: the cost in TAP GREATs and the most allowed on its own (capped at the note count) */
+export function toleranceRows(counts: ToleranceNoteCounts, target: number): ToleranceRow[] {
+  const allowedLoss = Math.max(0, 101 - target)
+  const tapGreat = judgementLoss(counts, 'tap', 'great')
+  return NOTE_TYPES.filter((type) => counts[type] > 0).map((type) => ({
+    type,
+    count: counts[type],
+    cells: judgementsFor(type).map((judgement) => {
+      const loss = judgementLoss(counts, type, judgement)
+      const fits = loss > 0 ? Math.floor(allowedLoss / loss + EPSILON) : counts[type]
       return {
-        type,
-        count: counts[type],
-        great: max(result.tapGreatLoss * m, counts[type]),
-        good: max(result.tapGoodLoss * m, counts[type]),
-        miss: max(result.tapMissLoss * m, counts[type]),
+        judgement,
+        loss,
+        rate: tapGreat > 0 ? loss / tapGreat : 0,
+        soloMax: Math.min(counts[type], fits),
+        capped: fits >= counts[type],
       }
-    })
+    }),
+  }))
 }
 
 export { calculateTolerance }
