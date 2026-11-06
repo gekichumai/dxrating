@@ -1,3 +1,4 @@
+import { Breadcrumb } from '@/components/completion/TableChrome'
 import { CircularProgress } from '@mui/material'
 import { createFileRoute } from '@tanstack/react-router'
 import { LoginForm } from '@/components/auth/LoginForm'
@@ -39,6 +40,10 @@ function AccountSecurityPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pb-12 sm:px-6 md:pt-10">
+      {/* Reached from the account dialog, not the navigation: the breadcrumb is the way back */}
+      <div className="mb-3">
+        <Breadcrumb items={[{ label: m.auth_accountSecurity_title({}, { locale }) }]} />
+      </div>
       <section className="glass min-h-80 p-4 sm:p-8">
         {isPending ? (
           <>
