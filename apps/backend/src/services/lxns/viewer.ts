@@ -11,7 +11,7 @@ import * as lxns from './index'
  * `./index` keeps the raw `userId: string` implementations; oxlint confines imports of it to this directory and tests.
  */
 
-export { LxnsError, LxnsStateMismatch } from './index'
+export { LxnsError, LxnsStateInvalid, LxnsStateMismatch } from './index'
 
 export const generateAuthorizationUrl = <U>(viewer: Named<U, string>, proof: ViewerIs<U>) =>
   Effect.suspend(() => lxns.generateAuthorizationUrl(viewerId(viewer, proof)))
