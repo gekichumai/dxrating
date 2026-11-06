@@ -75,9 +75,11 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ 
               main: versionTheme.accentStrongDarkColor,
               contrastText: '#111114',
             },
-            // --danger (dark.css)
+            // --danger (dark.css). Fills carry dark text, so the hover shade (`dark`, contained buttons) is set rather
+            // than derived: MUI's darkened #f87171 is rgb(173 79 79), 3.6:1 under #111114; #ef4444 keeps 5.0:1
             error: {
               main: '#f87171',
+              dark: '#ef4444',
               contrastText: '#111114',
             },
             text: {
