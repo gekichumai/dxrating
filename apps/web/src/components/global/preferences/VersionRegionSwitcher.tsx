@@ -1,8 +1,7 @@
 import type { VersionEnum } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import uniqBy from 'lodash-es/uniqBy'
-import { type FC, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
+import { type FC, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MdiInformation from '~icons/mdi/information'
 import {
@@ -106,14 +105,29 @@ export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = fal
   ].map(toOption)
   const generic = uniqBy(VERSION_GENERIC_REGIONS, (versionRegion) => versionRegion.dxVersion).map(toOption)
 
-  const pick = (option: VersionPickerOption) => {
-    const next = fromMergedVersionRegionId(option.key)
-    const origin = wipeOriginFromElement(triggerRef.current)
-    flushSync(() => setOpen(false))
-    if (option.key === currentId) return
+  // A pick waits for the picker to finish closing, then the new version wipes in from the switcher, as it did when the
+  // switcher was a menu. Starting the wipe while the sheet is still on screen would freeze the sheet and its backdrop
+  // in the old snapshot and hide the wipe behind them. startViewTransition skips the wipe under reduced motion.
+  const pendingRef = useRef<{ version: DXVersion; region: Region } | null>(null)
+  const fallbackRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const applyPending = () => {
+    clearTimeout(fallbackRef.current)
+    const next = pendingRef.current
+    pendingRef.current = null
+    if (!next) return
     void startViewTransition(() => {
       setVersionAndRegion(next.version, next.region)
-    }, origin)
+    }, wipeOriginFromElement(triggerRef.current))
+  }
+  useEffect(() => () => clearTimeout(fallbackRef.current), [])
+
+  const pick = (option: VersionPickerOption) => {
+    setOpen(false)
+    if (option.key === currentId) return
+    pendingRef.current = fromMergedVersionRegionId(option.key)
+    // In case the close transition never reports back (e.g. the dialog unmounts first)
+    clearTimeout(fallbackRef.current)
+    fallbackRef.current = setTimeout(applyPending, 1000)
   }
 
   return (
@@ -152,6 +166,7 @@ export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = fal
         pagesTitle={t('settings:version-and-region.select-generic')}
         options={generic}
         onPick={pick}
+        onExited={applyPending}
         footnote={
           <p className="m-0 flex items-start gap-2 text-xs leading-normal text-fg-2">
             <MdiInformation aria-hidden className="mt-0.5 shrink-0" />

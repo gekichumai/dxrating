@@ -183,8 +183,17 @@ export const VersionPicker: FC<{
   pagesTitle?: string
   /** A note under the choices */
   footnote?: ReactNode
-}> = ({ open, onClose, title, ...props }) => (
-  <ResponsiveDialog open={open} setOpen={(next) => !next && onClose()} title={title} maxWidth="sm" drawerHeight="auto">
+  /** Runs once the picker has finished closing */
+  onExited?: () => void
+}> = ({ open, onClose, title, onExited, ...props }) => (
+  <ResponsiveDialog
+    open={open}
+    setOpen={(next) => !next && onClose()}
+    title={title}
+    maxWidth="sm"
+    drawerHeight="auto"
+    onExited={onExited}
+  >
     {() => <VersionPickerContent {...props} onClose={onClose} />}
   </ResponsiveDialog>
 )
