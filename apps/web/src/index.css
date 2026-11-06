@@ -277,3 +277,87 @@ html {
     color: HighlightText;
   }
 }
+/* Edge fade for horizontal scrollers, driven by the scroller's own scroll position. At the start only the end edge
+   fades, mid-scroll both do, and at the end only the start edge. A row that fits has an inactive scroll timeline, so
+   both lengths stay at 0 and nothing fades. Browsers without scroll-driven animations get no fade either: the cut-off
+   item at the edge still shows there is more, and a static fade would wrongly dim rows that fit.
+   The animation only follows scrolling and never runs on its own, so it stays on under reduced motion.
+   `scroll-fade-x-none` (uno.config.ts) turns it off where a breakpoint stops the row scrolling, since a mask also
+   clips focus rings and shadows past the border box. */
+@property --scroll-fade-start {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --scroll-fade-end {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+.scroll-fade-x {
+  -webkit-mask-image: var(
+    --scroll-fade-x-mask,
+    linear-gradient(
+      to right,
+      transparent,
+      #000 var(--scroll-fade-start),
+      #000 calc(100% - var(--scroll-fade-end)),
+      transparent
+    )
+  );
+  mask-image: var(
+    --scroll-fade-x-mask,
+    linear-gradient(
+      to right,
+      transparent,
+      #000 var(--scroll-fade-start),
+      #000 calc(100% - var(--scroll-fade-end)),
+      transparent
+    )
+  );
+}
+
+/* For a table whose first column sticks while the rest scrolls under it: only the end edge fades, so the pinned
+   column keeps full contrast mid-scroll. */
+.scroll-fade-x.scroll-fade-x-end-only {
+  -webkit-mask-image: var(
+    --scroll-fade-x-mask,
+    linear-gradient(to right, #000 calc(100% - var(--scroll-fade-end)), transparent)
+  );
+  mask-image: var(
+    --scroll-fade-x-mask,
+    linear-gradient(to right, #000 calc(100% - var(--scroll-fade-end)), transparent)
+  );
+}
+
+/* While keyboard focus is inside, drop the fade: snapping can rest a focused item inside the faded edge, which would
+   dim its label and focus ring. Through the variable, so the end-only variant follows too. */
+.scroll-fade-x:has(:focus-visible) {
+  --scroll-fade-x-mask: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  .scroll-fade-x {
+    animation: scroll-fade-x linear both;
+    animation-timeline: scroll(self inline);
+  }
+}
+
+@keyframes scroll-fade-x {
+  from {
+    --scroll-fade-start: 0px;
+    --scroll-fade-end: 24px;
+  }
+  10% {
+    --scroll-fade-start: 24px;
+  }
+  90% {
+    --scroll-fade-end: 24px;
+  }
+  to {
+    --scroll-fade-start: 24px;
+    --scroll-fade-end: 0px;
+  }
+}

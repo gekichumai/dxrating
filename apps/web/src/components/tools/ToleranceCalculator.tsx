@@ -129,38 +129,40 @@ export const ToleranceCalculator: FC<{
               <p className="m-0 text-sm tabular-nums">
                 {t('tools:tolerance.allowed-loss', { value: result.allowedLoss.toFixed(4) })}
               </p>
-              <MaterialSurface variant="thin" className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm tabular-nums">
-                  <thead>
-                    <tr className="text-left text-xs text-secondary">
-                      <th scope="col" className="px-3 py-2 font-medium">
-                        {t('tools:tolerance.note-type')}
-                      </th>
-                      <th scope="col" className="px-3 py-2 font-medium text-right">
-                        GREAT
-                      </th>
-                      <th scope="col" className="px-3 py-2 font-medium text-right">
-                        GOOD
-                      </th>
-                      <th scope="col" className="px-3 py-2 font-medium text-right">
-                        MISS
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.type} className="border-t border-t-solid border-black/6">
-                        <th scope="row" className="px-3 py-2 text-left font-medium">
-                          {t(`tools:tolerance.type.${row.type}`)}{' '}
-                          <span className="text-xs font-normal text-secondary">×{formatCount(row.count)}</span>
+              <MaterialSurface variant="thin" className="overflow-hidden">
+                <div className="scroll-fade-x overflow-x-auto">
+                  <table className="w-full border-collapse text-sm tabular-nums">
+                    <thead>
+                      <tr className="text-left text-xs text-secondary">
+                        <th scope="col" className="px-3 py-2 font-medium">
+                          {t('tools:tolerance.note-type')}
                         </th>
-                        <td className="px-3 py-2 text-right">{formatCount(row.great)}</td>
-                        <td className="px-3 py-2 text-right">{formatCount(row.good)}</td>
-                        <td className="px-3 py-2 text-right">{formatCount(row.miss)}</td>
+                        <th scope="col" className="px-3 py-2 font-medium text-right">
+                          GREAT
+                        </th>
+                        <th scope="col" className="px-3 py-2 font-medium text-right">
+                          GOOD
+                        </th>
+                        <th scope="col" className="px-3 py-2 font-medium text-right">
+                          MISS
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {rows.map((row) => (
+                        <tr key={row.type} className="border-t border-t-solid border-black/6">
+                          <th scope="row" className="px-3 py-2 text-left font-medium">
+                            {t(`tools:tolerance.type.${row.type}`)}{' '}
+                            <span className="text-xs font-normal text-secondary">×{formatCount(row.count)}</span>
+                          </th>
+                          <td className="px-3 py-2 text-right">{formatCount(row.great)}</td>
+                          <td className="px-3 py-2 text-right">{formatCount(row.good)}</td>
+                          <td className="px-3 py-2 text-right">{formatCount(row.miss)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </MaterialSurface>
               {counts.break > 0 && (
                 <dl className="m-0 grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">

@@ -129,7 +129,7 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   }, [multiverInternalLevelValues])
 
   return (
-    <div className="relative overflow-x-auto -mx-1 px-1" ref={scrollableContainer}>
+    <div className="scroll-fade-x relative overflow-x-auto -mx-1 px-1" ref={scrollableContainer}>
       {multiverInternalLevelValues.filter((v) => v.internalLevelValue !== undefined).length > 0 ? (
         <Table size="small" sx={tableSx}>
           <TableHead>

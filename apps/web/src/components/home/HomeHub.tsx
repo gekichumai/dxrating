@@ -5,7 +5,6 @@ import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { SheetImage } from '@/components/sheet/SheetListItem'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
-import { useHorizontalOverflow } from '@/components/completion/TableChrome'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { plateRegionSearch } from '@/components/plates/plateData'
 import {
@@ -113,7 +112,6 @@ const QuickStats: FC = () => {
 
 export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recentSongs }) => {
   const { t } = useTranslation(['home', 'sheet'])
-  const recentScroller = useHorizontalOverflow<HTMLDivElement>()
   // Scores live on the client only: the server and cached HTML stay user-agnostic
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
@@ -137,15 +135,9 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
           {/* Phones scroll one row of 8 covers; from lg the strip spans the hub as a one-row grid and shows more covers
               (10 at lg, 13 at xl, as many as fit a row). Hidden by CSS, not matchMedia, so SSR stays deterministic.
               Covers sit 12px in, so they keep their own radius. On phones the row snaps cover by cover, each stopping at
-              that 12px inset, and fades at an edge that has more covers past it. */}
+              that 12px inset, and fades at an edge that has more covers past it (scroll-fade-x). */}
           <MaterialSurface className="w-full">
-            <div
-              ref={recentScroller.ref}
-              className={clsx(
-                'overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-3 lg:overflow-visible lg:snap-none',
-                recentScroller.fade,
-              )}
-            >
+            <div className="scroll-fade-x overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-3 lg:scroll-fade-x-none lg:overflow-visible lg:snap-none">
               <ul className="m-0 flex list-none gap-3 p-3 lg:grid lg:grid-cols-[repeat(auto-fill,minmax(5rem,1fr))]">
                 {recentSongs.map((song, index) => (
                   <li
@@ -185,10 +177,10 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
           On phones two scrolling rows keep the search results near the top; wider screens get the full grid. The phone
           scroller bleeds to the screen edges (-mx-4 against the page's 16px gutter) and snaps with a 16px scroll padding,
           so a resting card lines up with the section title and the next column runs off the screen edge, not sliced
-          at the gutter. A scroller clips on both axes, so 4px of vertical padding (offset by a negative margin) holds
+          at the gutter, and the edge with more cards past it fades. A scroller clips on both axes, so 4px of vertical padding (offset by a negative margin) holds
           the cards' border, shadow and 3px focus outline.
         */}
-        <ul className="-mx-4 -my-1 grid list-none grid-flow-col grid-rows-2 auto-cols-[minmax(10.5rem,46%)] gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-4 px-4 py-1 pb-2 sm:m-0 sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:grid-cols-3 sm:overflow-visible sm:p-0 lg:grid-cols-4 xl:grid-cols-6">
+        <ul className="scroll-fade-x -mx-4 -my-1 grid list-none grid-flow-col grid-rows-2 auto-cols-[minmax(10.5rem,46%)] gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-4 px-4 py-1 pb-2 sm:scroll-fade-x-none sm:m-0 sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:grid-cols-3 sm:overflow-visible sm:p-0 lg:grid-cols-4 xl:grid-cols-6">
           {HOME_FEATURES.map((feature) => {
             const Icon = FEATURE_ICONS[feature.id]
             return (

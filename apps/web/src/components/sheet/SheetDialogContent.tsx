@@ -547,7 +547,7 @@ const SheetInternalLevelHistory: FC<{
   }, [multiverInternalLevelValues])
 
   return (
-    <div className="overflow-x-auto" ref={scrollableContainer}>
+    <div className="scroll-fade-x overflow-x-auto" ref={scrollableContainer}>
       {multiverInternalLevelValues.filter((v) => v.internalLevelValue !== undefined).length > 0 ? (
         <Table size="small" className="mb-4">
           <TableHead>
