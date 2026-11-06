@@ -47,14 +47,14 @@ const cellBorder = 'border-0 border-t border-solid border-[var(--glass-border)]'
 const RatingColumn: FC<{
   rows: RatingRow[]
   currentAchievementRate?: number
-  /** Only needed when the columns sit side by side; stacked, the first column's header covers both */
-  headerOnlyWhenSplit?: boolean
-}> = ({ rows, currentAchievementRate, headerOnlyWhenSplit }) => {
+  /** Shown only when the columns sit side by side; stacked, it is visually hidden but still labels its rows for screen readers */
+  headerVisibleOnlyWhenSplit?: boolean
+}> = ({ rows, currentAchievementRate, headerVisibleOnlyWhenSplit }) => {
   const { t } = useTranslation(['sheet', 'global'])
 
   return (
     <table className="w-full border-collapse tabular-nums text-sm text-fg-1">
-      <thead className={clsx(headerOnlyWhenSplit && 'hidden @[34rem]:table-header-group')}>
+      <thead className={clsx(headerVisibleOnlyWhenSplit && 'sr-only @[34rem]:not-sr-only')}>
         <tr className="text-xs text-fg-2">
           <th scope="col" colSpan={2} className="px-2 pb-1 text-start font-normal">
             {t('sheet:details.achievement-to-rating.achievement')}
@@ -133,7 +133,7 @@ export const AchievementRatingTable: FC<{ internalLevelValue: number; currentAch
       <div className="@container">
         <div className="grid grid-cols-1 items-start @[34rem]:grid-cols-2 @[34rem]:gap-x-6">
           <RatingColumn rows={upper} currentAchievementRate={currentAchievementRate} />
-          <RatingColumn rows={lower} currentAchievementRate={currentAchievementRate} headerOnlyWhenSplit />
+          <RatingColumn rows={lower} currentAchievementRate={currentAchievementRate} headerVisibleOnlyWhenSplit />
         </div>
       </div>
     )
