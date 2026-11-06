@@ -98,22 +98,30 @@
   }
 }
 
-/* The glass material itself. The shortcuts in uno.config.ts pair these with radius and padding utilities. */
-.surface-glass,
-.surface-glass-thin,
-.surface-glass-overlay,
-.surface-glass-bar {
+/*
+ * The glass material itself, on the class names used in markup (the UnoCSS shortcuts of the same names only add the
+ * radius, because shortcuts cannot expand plain stylesheet classes). UnoCSS utilities are scoped under `body`, so a
+ * utility next to a glass class still overrides it.
+ */
+.glass,
+.material-surface,
+.glass-thin,
+.material-surface-thin,
+.glass-overlay,
+.glass-bar {
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
 
-.surface-glass {
+.glass,
+.material-surface {
   background-color: var(--glass-bg);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-highlight), var(--shadow-1);
 }
 
-.surface-glass-thin {
+.glass-thin,
+.material-surface-thin {
   background-color: var(--glass-thin-bg);
   border: 1px solid var(--glass-border);
   -webkit-backdrop-filter: var(--glass-blur-thin);
@@ -121,19 +129,19 @@
 }
 
 /* Nested on another glass surface: no second blur (stacked backdrop filters cost a lot and add nothing) */
-.surface-glass-inset {
+.glass-inset {
   background-color: var(--glass-inset-bg);
   border: 1px solid var(--glass-border);
 }
 
-.surface-glass-overlay {
+.glass-overlay {
   background-color: var(--glass-overlay-bg);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-highlight), var(--shadow-overlay);
 }
 
 /* The header: accent-tinted glass that fades into the page, with the accent kept solid behind the status bar */
-.surface-glass-bar {
+.glass-bar {
   background-image: linear-gradient(
     to bottom,
     var(--accent) 0,
@@ -144,15 +152,17 @@
 }
 
 @media (forced-colors: active) {
-  .surface-glass,
-  .surface-glass-thin,
-  .surface-glass-inset,
-  .surface-glass-overlay {
+  .glass,
+  .material-surface,
+  .glass-thin,
+  .material-surface-thin,
+  .glass-inset,
+  .glass-overlay {
     background: Canvas;
     border-color: CanvasText;
   }
 
-  .surface-glass-bar {
+  .glass-bar {
     background: Canvas;
     border-bottom: 1px solid CanvasText;
   }
@@ -172,18 +182,21 @@
 
 /* Set on elements carrying a lang attribute (the document, and song titles via lang="ja"); descendants inherit.
    Japanese titles need the Japanese glyph forms even when the page locale is Chinese; Korean breaks between words */
+html[lang|='ja'],
 [lang|='ja'] {
   font-family:
     Torus, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Noto Sans JP', 'Noto Sans CJK JP', Meiryo,
     system-ui, sans-serif;
 }
 
+html[lang='zh-Hans'],
 [lang='zh-Hans'] {
   font-family:
     Torus, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC', system-ui,
     sans-serif;
 }
 
+html[lang='zh-Hant'],
 [lang='zh-Hant'] {
   font-family: Torus, 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', system-ui, sans-serif;
 }

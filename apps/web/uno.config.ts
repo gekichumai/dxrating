@@ -81,18 +81,17 @@ export default defineConfig({
   shortcuts: {
     'flex-container':
       'flex flex-col items-center justify-center py-4 gap-4 max-w-7xl mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
-    // Tinted-glass surfaces (src/styles/tokens.css): never a flat solid fill.
+    // Tinted-glass surfaces: the material is defined on these class names in src/styles/tokens.css (shortcuts cannot
+    // expand stylesheet classes), the shortcuts add the radius. Never a flat solid fill. glass-bar (header) is CSS only.
     // glass: page panels and cards. glass-thin: lighter, for controls floating on the background (tab bar).
     // glass-inset: nested inside another glass surface (no second blur). glass-overlay: dialogs, menus, popovers.
-    glass: 'surface-glass rounded-[var(--radius-lg)]',
-    'glass-thin': 'surface-glass-thin rounded-[var(--radius-lg)]',
-    'glass-inset': 'surface-glass-inset rounded-[var(--radius-md)]',
-    'glass-overlay': 'surface-glass-overlay rounded-[var(--radius-xl)]',
-    // The header: accent-tinted glass fading into the page, accent kept solid behind the status bar
-    'glass-bar': 'surface-glass-bar',
+    glass: 'rounded-[var(--radius-lg)]',
+    'glass-thin': 'rounded-[var(--radius-lg)]',
+    'glass-inset': 'rounded-[var(--radius-md)]',
+    'glass-overlay': 'rounded-[var(--radius-xl)]',
     // Kept as aliases for existing call sites
-    'material-surface': 'surface-glass rounded-[var(--radius-lg)]',
-    'material-surface-thin': 'surface-glass-thin rounded-[var(--radius-lg)]',
+    'material-surface': 'rounded-[var(--radius-lg)]',
+    'material-surface-thin': 'rounded-[var(--radius-lg)]',
     // An inline link that reads as a link: accent text that passes 4.5:1 on glass, underlined
     link: 'text-accent-strong underline decoration-1 underline-offset-2 hover:decoration-2',
     // Secondary text: never zinc-400/500 or opacity, which fail contrast on glass
