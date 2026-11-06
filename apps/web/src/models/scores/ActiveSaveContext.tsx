@@ -361,9 +361,17 @@ export function useActiveSaveDecision(): ActiveSave {
     }
   }, [setActiveSaveId])
 
+  // Ownership is enforced here, during render, not only by the effect above that disposes the repository: on the
+  // first render after a sign-out or an account switch, the previous user's save is never exposed (its scores read,
+  // or changes queued in it). A session still loading keeps what is shown
+  const exposedRepository =
+    cloudRepository && userId !== null && (userId === undefined || cloudRepository.userId === userId)
+      ? cloudRepository
+      : null
+
   const flushBeforeSignOut = useCallback(async () => {
-    await cloudRepository?.flush()
-  }, [cloudRepository])
+    await exposedRepository?.flush()
+  }, [exposedRepository])
 
   const listSaves = useCallback(() => dependencies.listSaves(), [dependencies])
 
@@ -377,10 +385,10 @@ export function useActiveSaveDecision(): ActiveSave {
 
   return useMemo(
     () => ({
-      kind: cloudRepository ? 'cloud' : 'local',
+      kind: exposedRepository ? 'cloud' : 'local',
       decided,
-      saveId: cloudRepository?.saveId ?? null,
-      cloudRepository,
+      saveId: exposedRepository?.saveId ?? null,
+      cloudRepository: exposedRepository,
       setActiveSaveId,
       flushBeforeSignOut,
       listSaves,
@@ -388,7 +396,7 @@ export function useActiveSaveDecision(): ActiveSave {
       features,
       refreshFeatures,
     }),
-    [cloudRepository, decided, setActiveSaveId, flushBeforeSignOut, listSaves, userId, features, refreshFeatures],
+    [exposedRepository, decided, setActiveSaveId, flushBeforeSignOut, listSaves, userId, features, refreshFeatures],
   )
 }
 
