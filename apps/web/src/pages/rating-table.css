@@ -235,6 +235,35 @@
   font-size: 1.125rem;
   font-weight: 600;
 }
+/* The rating stays on the row's centre line like every other cell; the next step hangs under it */
+.rating-value-stack {
+  position: relative;
+  display: inline-block;
+}
+/* The next B50 step: quiet, desktop only (the phone rating column has no room) */
+.rating-next-target {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: -2px;
+  display: none;
+  align-items: center;
+  gap: 1px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+.rating-next-target-icon {
+  width: 0.95em;
+  height: 0.95em;
+  color: var(--accent-strong);
+}
+@media (min-width: 1024px) {
+  .rating-next-target {
+    display: inline-flex;
+  }
+}
 .rating-table .rating-row-remove {
   width: 44px;
   height: 44px;

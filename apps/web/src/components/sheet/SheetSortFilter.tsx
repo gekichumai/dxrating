@@ -13,7 +13,7 @@ import {
   Grow,
 } from '@mui/material'
 import clsx from 'clsx'
-import { MotionConfig, useReducedMotion } from 'framer-motion'
+import { MotionConfig, useReducedMotion } from 'motion/react'
 import { type FC, useContext, useEffect, useId, useState, useTransition } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'

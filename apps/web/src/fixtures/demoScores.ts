@@ -29,12 +29,29 @@ function mulberry32(seed: number) {
 
 const ACHIEVEMENT_STEPS = [100.8, 100.6, 100.52, 100.3, 100.1, 99.7, 99.3, 98.6, 97.4, 95.2, 91.0, 84.5]
 
+/** A DX score near what the achievement suggests: about 99% of the maximum at 100.8%, falling as it drops */
+function demoDxScore(
+  totalNotes: number | null | undefined,
+  achievementRate: number,
+  comboFlag: PlayEntry['comboFlag'],
+  roll: number,
+): number | undefined {
+  if (!totalNotes) return undefined
+  const max = totalNotes * 3
+  const allPerfect = comboFlag === 'ap' || comboFlag === 'app'
+  const share = Math.min(1, Math.max(0.5, 0.99 - (100.8 - achievementRate) * 0.022 + (roll - 0.5) * 0.03))
+  return Math.min(max, Math.round(max * (allPerfect ? Math.max(share, 0.96) : share)))
+}
+
 /**
  * A fixture of plausible scores over the catalog: about a fifth of the rating-eligible standard sheets, harder
- * sheets getting lower achievements, with a mix of combo and sync flags. Deterministic for a given catalog.
+ * sheets getting lower achievements, with a mix of combo and sync flags and a DX score that tracks the achievement.
+ * Deterministic for a given catalog. The DX scores draw from their own stream, so the picked sheets and achievements
+ * stay what they were before DX scores were added.
  */
 export function buildDemoScores(catalog: Pick<SongCatalog, 'sheets'>, seed = 20261102): PlayEntry[] {
   const random = mulberry32(seed)
+  const dxRandom = mulberry32(seed ^ 0x5f3759df)
   const entries: PlayEntry[] = []
   for (const sheet of catalog.sheets) {
     if (!sheet.isRatingEligible || random() > 0.22) continue
@@ -54,7 +71,15 @@ export function buildDemoScores(catalog: Pick<SongCatalog, 'sheets'>, seed = 202
           : null
     const syncRoll = random()
     const syncFlag = comboFlag && syncRoll < 0.3 ? (syncRoll < 0.1 ? 'fsdp' : 'fsd') : syncRoll < 0.5 ? 'fs' : null
-    entries.push({ sheetId: sheet.id, identity: sheet.identity, achievementRate, comboFlag, syncFlag })
+    const dxScore = demoDxScore(sheet.noteCounts?.total, achievementRate, comboFlag, dxRandom())
+    entries.push({
+      sheetId: sheet.id,
+      identity: sheet.identity,
+      achievementRate,
+      comboFlag,
+      syncFlag,
+      ...(dxScore === undefined ? {} : { dxScore }),
+    })
   }
   return entries
 }

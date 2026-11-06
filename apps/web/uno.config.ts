@@ -33,6 +33,8 @@ export default defineConfig({
         'background-image': `linear-gradient${handler.bracket(s)}`,
       }),
     ],
+    // Turns off the scroll-fade-x edge fade (index.css) at a breakpoint where the row no longer scrolls
+    ['scroll-fade-x-none', { '--scroll-fade-x-mask': 'none' }],
     [
       'touch-callout-none',
       {

@@ -1,5 +1,4 @@
 import { SERVER_BADGE_ORDER } from '@/models/constants'
-import { getArcadeSongsUrl } from '@/catalog/arcadeSongs'
 import { CommentActions } from '../comments/CommentActions'
 import { filterComments, useCommentVisibility } from '../comments/commentVisibility'
 import { MULTIVER_AVAILABLE_VERSIONS, TypeEnum, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
@@ -16,7 +15,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Trans, useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
 import useSWR from 'swr'
 import { match } from 'ts-pattern'
@@ -129,7 +128,7 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   }, [multiverInternalLevelValues])
 
   return (
-    <div className="relative overflow-x-auto -mx-1 px-1" ref={scrollableContainer}>
+    <div className="scroll-fade-x relative overflow-x-auto -mx-1 px-1" ref={scrollableContainer}>
       {multiverInternalLevelValues.filter((v) => v.internalLevelValue !== undefined).length > 0 ? (
         <Table size="small" sx={tableSx}>
           <TableHead>
@@ -482,19 +481,6 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
               </DetailRow>
             </TableBody>
           </Table>
-
-          <p className="m-0 text-xs text-fg-2 text-right">
-            <Trans
-              i18nKey="sheet:details.credits"
-              components={{
-                link: (
-                  <a href={getArcadeSongsUrl(sheet)} rel="noreferrer" target="_blank" className="link">
-                    arcade-songs.zetaraku.dev
-                  </a>
-                ),
-              }}
-            />
-          </p>
         </Section>
 
         {isActive && (

@@ -13,7 +13,11 @@ const API_SCHEMA_VERSION = 1
 
 export const DXDATA_PATH = '/api/v1/dxdata'
 export const DXDATA_BROWSER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400'
-export const DXDATA_CDN_CACHE_CONTROL = 'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800'
+// The publisher (dxdata-assembly-line) only moves the publication pointer in Postgres; nothing purges the edge.
+// So the edge keeps the body for a minute, then revalidates it in the background with the stored ETag. An
+// unchanged catalog costs one metadata query and a bodiless 304, and a new one reaches the edge within about a
+// minute of publication. stale-while-revalidate keeps every visitor on a cached copy while that happens.
+export const DXDATA_CDN_CACHE_CONTROL = 'public, max-age=60, stale-while-revalidate=86400, stale-if-error=604800'
 
 export const DXDATA_CORS_OPTIONS = {
   origin: '*',

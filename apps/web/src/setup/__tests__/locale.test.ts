@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  withLocaleQuery,
   LOCALE_COOKIE_MAX_AGE_SECONDS,
   LOCALE_COOKIE_NAME,
   LOCALE_STORAGE_KEY,
@@ -100,5 +101,20 @@ describe('locale detection', () => {
 
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith(LOCALE_STORAGE_KEY, 'zh-Hant')
     expect(document.cookie).toContain(`${LOCALE_COOKIE_NAME}=zh-Hant`)
+  })
+})
+
+describe('withLocaleQuery', () => {
+  it('carries a supported ?locale= of the search onto the path', () => {
+    expect(withLocaleQuery('/songs/a/dx/master', { locale: 'ja' })).toBe('/songs/a/dx/master?locale=ja')
+    expect(withLocaleQuery('/songs/a/dx/master', { locale: 'zh-Hant', q: 'x' })).toBe(
+      '/songs/a/dx/master?locale=zh-Hant',
+    )
+  })
+
+  it('leaves the path alone without a usable locale', () => {
+    expect(withLocaleQuery('/songs/a/dx/master', {})).toBe('/songs/a/dx/master')
+    expect(withLocaleQuery('/songs/a/dx/master', { locale: 'fr' })).toBe('/songs/a/dx/master')
+    expect(withLocaleQuery('/songs/a/dx/master', { locale: 123 })).toBe('/songs/a/dx/master')
   })
 })

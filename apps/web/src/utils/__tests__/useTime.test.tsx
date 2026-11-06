@@ -35,4 +35,20 @@ describe('useTime', () => {
 
     expect(screen.getByText('20分钟前')).toBeTruthy()
   })
+
+  it('abbreviates units in the short form', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(Date.parse('2026-07-18T03:40:00.000Z'))
+    await i18n.changeLanguage('en')
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <RenderEnvironmentProvider renderedAt={Date.parse('2026-07-18T03:40:00.000Z')}>
+          <TimeProbe />
+        </RenderEnvironmentProvider>
+      </I18nextProvider>,
+    )
+
+    expect(screen.getByText('20 min. ago')).toBeTruthy()
+  })
 })
