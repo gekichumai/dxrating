@@ -2,7 +2,7 @@ import { ServerEnum, TypeEnum, type DifficultyEnum, type NoteCounts, type Sheet,
 import type { SupportedLocale } from '@/setup/locale'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { createServerI18n } from '@/setup/init-i18n'
-import { buildSheetLink } from '@/components/sheet/sheetLinks'
+import { buildSheetLink, songHubPath } from '@/components/sheet/sheetLinks'
 import { getSheetPageTitle, getSheetTitleLabel, getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { buildChartOgImageAlt, buildChartOgImageUrl } from '@/routes/-chart-og-meta'
 
@@ -19,7 +19,8 @@ type SeoRouteMatch = {
 
 type JsonLdNode = Record<string, unknown>
 
-type StructuredDataSong = Pick<Song, 'artist' | 'bpm' | 'category' | 'id' | 'imageName' | 'title'>
+type StructuredDataSong = Pick<Song, 'artist' | 'bpm' | 'category' | 'id' | 'imageName' | 'title'> &
+  Partial<Pick<Song, 'searchAcronyms'>>
 
 type StructuredDataSheet = Pick<
   Sheet,
@@ -85,6 +86,27 @@ export function resolveSeoLocale(matches?: readonly SeoRouteMatch[]): SupportedL
 
 export function formatSeoTitle(title: string) {
   return `${title} - DXRating`
+}
+
+// Routes whose head sets the full page title themselves
+const SELF_TITLED_ROUTE_IDS = new Set(['/songs/$songId/$type/$difficulty', '/songs_/$songId'])
+
+type RootHeadMatch = { routeId?: unknown; status?: string; globalNotFound?: boolean }
+
+/**
+ * The root head's title and robots state. A 404 (no route matched, or a loader threw notFound()) renders at the root,
+ * so the root gives it the not-found title and `noindex`. A loader's notFound() marks only the finalized root `match`:
+ * `matches` is the array from before loading. Self-titled routes own the title only of a page that rendered.
+ */
+export function resolveRootHeadState(match: RootHeadMatch, matches: readonly RootHeadMatch[]) {
+  const isNotFound = [match, ...matches].some((m) => m.status === 'notFound' || m.globalNotFound === true)
+  const includeRootTitle = !isNotFound && !matches.some((m) => SELF_TITLED_ROUTE_IDS.has(String(m.routeId)))
+  return { isNotFound, includeRootTitle }
+}
+
+/** The not-found page's title and `noindex` */
+export function buildNotFoundSeoMeta(locale: SupportedLocale): SeoMeta[] {
+  return [{ title: formatSeoTitle(t(locale, 'root:not-found.title')) }, { name: 'robots', content: 'noindex' }]
 }
 
 export function buildRootSeoMeta(locale: SupportedLocale, options: { includeTitle?: boolean } = {}): SeoMeta[] {
@@ -374,6 +396,95 @@ export function buildSongSheetSeo(
   }
 }
 
+const songHubUrl = (songId: string) => `https://dxrating.net${songHubPath(songId)}`
+
+type SongHubSeoSong = Pick<Song, 'artist' | 'category' | 'id' | 'imageName' | 'title'> & {
+  bpm?: number | null
+  aliases?: readonly string[]
+}
+
+/** Song hub titles carry the BPM, since "<song> bpm" is a common search; without a BPM they fall back to the song alone */
+export function buildSongHubTitle(song: { title: string; bpm?: number | null }, locale: SupportedLocale) {
+  return song.bpm
+    ? t(locale, 'song:seo.hub-title', { title: song.title, bpm: song.bpm })
+    : t(locale, 'song:seo.hub-title-no-bpm', { title: song.title })
+}
+
+export function buildSongHubSeo(song: SongHubSeoSong, locale: SupportedLocale) {
+  const title = buildSongHubTitle(song, locale)
+  const description = t(locale, 'song:seo.hub-description', {
+    title: song.title,
+    artist: song.artist,
+    bpmFact: song.bpm ? t(locale, 'song:seo.hub-bpm-fact', { bpm: song.bpm }) : '',
+  })
+  const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
+  const url = songHubUrl(song.id)
+  const websiteId = 'https://dxrating.net/#website'
+  const pageId = `${url}#webpage`
+  const breadcrumbId = `${url}#breadcrumb`
+  const recordingId = `${url}#song`
+  const aliases = [...new Set(song.aliases ?? [])].filter((alias) => alias && alias !== song.title)
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': pageId,
+        url,
+        name: title,
+        description,
+        image,
+        inLanguage: locale,
+        isPartOf: { '@id': websiteId },
+        breadcrumb: { '@id': breadcrumbId },
+        mainEntity: { '@id': recordingId },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': breadcrumbId,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'DXRating', item: 'https://dxrating.net/' },
+          { '@type': 'ListItem', position: 2, name: song.title, item: url },
+        ],
+      },
+      {
+        '@type': 'MusicRecording',
+        '@id': recordingId,
+        name: song.title,
+        ...(aliases.length ? { alternateName: aliases } : {}),
+        byArtist: { '@type': 'MusicGroup', name: song.artist },
+        image,
+        url,
+        genre: song.category,
+        ...(song.bpm ? { additionalProperty: [propertyValue('BPM', song.bpm)] } : {}),
+      },
+    ],
+  }
+
+  return {
+    title,
+    description,
+    url,
+    image,
+    structuredData,
+    meta: [
+      { title },
+      { name: 'description', content: description },
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:image', content: image },
+      { property: 'og:url', content: url },
+      { property: 'og:type', content: 'music.song' },
+      { property: 'og:locale', content: OG_LOCALES[locale] },
+      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:title', content: title },
+      { name: 'twitter:description', content: description },
+      { name: 'twitter:image', content: image },
+    ] satisfies SeoMeta[],
+  }
+}
+
 const propertyValue = (name: string, value: unknown): JsonLdNode | null => {
   if (value === null || value === undefined || value === '') return null
 
@@ -455,7 +566,13 @@ export function buildSongSheetStructuredData(
         {
           '@type': 'ListItem',
           position: 2,
-          name: `${song.title} ${sheetLabel}`,
+          name: song.title,
+          item: songHubUrl(song.id),
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: sheetLabel,
           item: chartUrl,
         },
       ],
@@ -476,6 +593,7 @@ export function buildSongSheetStructuredData(
       '@type': 'MusicRecording',
       '@id': songId,
       name: song.title,
+      ...(song.searchAcronyms?.length ? { alternateName: [...new Set(song.searchAcronyms)] } : {}),
       byArtist: {
         '@type': 'MusicGroup',
         name: song.artist,
@@ -638,5 +756,42 @@ export function buildVersionPageSeo(
     ],
   }
 
+  return { ...seo, structuredData }
+}
+/** Per-user achievement summary (`/me/progress`): titled but never indexed */
+export function buildProgressSummarySeo(locale: SupportedLocale) {
+  return {
+    meta: [{ title: formatSeoTitle(t(locale, 'completion:progress.title')) }, { name: 'robots', content: 'noindex' }],
+  }
+}
+
+/** Per-user top lists (`/me/records`): titled but never indexed */
+export function buildToplistsSeo(locale: SupportedLocale) {
+  return {
+    meta: [{ title: formatSeoTitle(t(locale, 'toplists:title')) }, { name: 'robots', content: 'noindex' }],
+  }
+}
+
+/** SEO for the public calculator pages under /tools (tools:<tool>.seo-title / seo-description) */
+export function buildToolPageSeo(locale: SupportedLocale, tool: 'tolerance' | 'rating') {
+  const seo = buildCollectionSeo(
+    locale,
+    `/tools/${tool}`,
+    t(locale, `tools:${tool}.seo-title`),
+    t(locale, `tools:${tool}.seo-description`),
+  )
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    '@id': `${seo.url}#webapp`,
+    url: seo.url,
+    name: t(locale, `tools:${tool}.title`),
+    description: seo.description,
+    applicationCategory: 'UtilityApplication',
+    operatingSystem: 'Any',
+    inLanguage: locale,
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  }
   return { ...seo, structuredData }
 }

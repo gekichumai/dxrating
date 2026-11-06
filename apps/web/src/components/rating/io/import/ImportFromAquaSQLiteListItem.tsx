@@ -161,7 +161,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
     <>
       <DialogTitle className="flex flex-col items-start">
         <div>{t('rating-calculator:io.import.aqua-sqlite.dialog-title')}</div>
-        <div className="text-sm text-zinc-500">
+        <div className="text-sm text-secondary">
           {mode === 'select-user'
             ? t('rating-calculator:io.import.aqua-sqlite.select-user')
             : t('rating-calculator:io.import.aqua-sqlite.confirm-import')}
@@ -180,10 +180,11 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
                     className="w-16 h-16 rounded-md bg-gray-400"
                   />
                 </ListItemAvatar>
-                <ListItemText className="flex flex-col">
-                  <div>{user.user_name}</div>
-                  <div className="tabular-nums font-mono">Rating {user.highest_rating}</div>
-                </ListItemText>
+                <ListItemText
+                  primary={user.user_name}
+                  secondary={`${t('rating-calculator:table.headers.rating')} ${user.highest_rating}`}
+                  secondaryTypographyProps={{ className: 'num' }}
+                />
               </ListItemButton>,
 
               i !== users.length - 1 && <Divider component="li" key={`divider-after-${user.id}`} />,
@@ -251,8 +252,11 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
                 toast.error(cloudImportErrorMessage(error, t) ?? String(formatErrorMessage(error)))
                 return
               }
-              // A cloud save asks to merge or clear first; `null`: the user cancelled
-              if (!result) return
+              // `null`: the user cancelled the preview (local save) or the merge / clear-first choice (cloud save)
+              if (!result) {
+                analytics.failed('cancelled_by_user')
+                return
+              }
               analytics.succeeded(result.count, warnings.length)
 
               haptic.trigger('success')

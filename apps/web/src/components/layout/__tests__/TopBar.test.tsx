@@ -37,6 +37,12 @@ vi.mock('../../global/preferences/LocaleSelector', () => ({
   LocaleSelector: () => <button type="button" aria-label="Language" />,
 }))
 
+// ThemeSelector needs MUI's CssVarsProvider; its own behaviour is not under test here
+vi.mock('../../global/preferences/ThemeSelector', () => ({
+  ThemeSelector: () => <button type="button" aria-label="Appearance" />,
+  DisplayPreferencesMenu: () => <button type="button" aria-label="Language and appearance" />,
+}))
+
 vi.mock('../../global/preferences/UserChip', () => ({
   UserChip: () => <button type="button" aria-label="User profile" />,
 }))
@@ -139,14 +145,14 @@ describe('TopBar', () => {
     ).toBe('/developers')
   })
 
-  it('uses a higher contrast version stamp over the themed header color', () => {
+  it('uses the primary text token for the version stamp on the tinted header', () => {
     render(
       <AppContextProvider>
         <TopBar />
       </AppContextProvider>,
     )
 
-    expect(screen.getByText(/v1\.6\.138/).className).toContain('text-black/75')
+    expect(screen.getByText(/v1\.6\.138/).className).toContain('text-fg-1')
   })
 
   it('shows no sync status on the local save', () => {
@@ -158,28 +164,8 @@ describe('TopBar', () => {
     expect(screen.queryByRole('button', { name: /^Cloud save/ })).toBeNull()
   })
 
-  it('keeps the local-save header unchanged: full community trigger, usual icon button padding', () => {
-    const { container } = render(
-      <AppContextProvider>
-        <TopBar />
-      </AppContextProvider>,
-    )
-    const trigger = screen.getByRole('button', { name: 'Community' })
-    expect(trigger.hasAttribute('data-compact')).toBe(false)
-    expect(trigger.className).toContain('2xs:p-1')
-    // Discord, QQ and GitHub, then the MCP and API badges (shown from 375px and 480px)
-    // The badges, not the ripple
-    const badges = [...trigger.children].filter((child) => child.className.includes('rounded-full'))
-    expect(badges).toHaveLength(5)
-    expect(badges[3]?.className).toContain('2xs:flex')
-    expect(badges[0]?.getAttribute('style')).toBeNull()
-    const row = container.querySelector('[class*="MuiIconButton-root"]')
-    expect(row?.hasAttribute('data-sync-pill')).toBe(false)
-    expect(row?.className).toContain('[&_.MuiIconButton-root]:p-1.5')
-  })
-
-  it('makes room for the sync pill below 480px: compact community trigger, tighter icon buttons below 375px', () => {
-    const { container } = render(
+  it('puts the sync pill in the header action pill, before the account button, and keeps every other control', () => {
+    render(
       <AppContextProvider>
         <CloudSaveUiContext.Provider
           value={cloudUi({ state: 'error', pendingCount: 3, lastSyncedRevision: 3, issues: [] })}
@@ -188,30 +174,13 @@ describe('TopBar', () => {
         </CloudSaveUiContext.Provider>
       </AppContextProvider>,
     )
-    const trigger = screen.getByRole('button', { name: 'Community' })
-    expect(trigger.getAttribute('data-compact')).toBe('true')
-    expect(trigger.className).toContain('xs:p-1')
-    expect(trigger.className).not.toContain('2xs:p-1')
-    // The badges, not the ripple
-    const badges = [...trigger.children].filter((child) => child.className.includes('rounded-full'))
-    // The three community badges stay; the MCP badge waits for 480px (the menu still lists it)
-    expect(badges[0]?.className).toContain('size-5')
-    expect(badges[3]?.className).toContain('xs:flex')
-    expect(badges[3]?.className).not.toContain('2xs:flex')
-    // Discord stays on top of the tight stack
-    expect((badges[0] as HTMLElement).style.zIndex).toBe('3')
-    expect((badges[2] as HTMLElement).style.zIndex).toBe('1')
-    const row = container.querySelector('[data-sync-pill="true"]')
-    expect(row?.className).toContain('[&_.MuiIconButton-root]:p-1')
-    expect(row?.className).not.toContain('[&_.MuiIconButton-root]:p-1.5')
-    expect(row?.className).toContain('2xs:[&_.MuiIconButton-root]:p-2')
-    // Every header control still renders
-    for (const name of ['Language', 'About DXRating', 'User profile'])
-      expect(screen.getByRole('button', { name })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /^Cloud save/ })).toBeTruthy()
-
-    fireEvent.click(trigger)
-    expect(within(screen.getByRole('menu')).getAllByRole('menuitem')).toHaveLength(5)
+    const sync = screen.getByRole('button', { name: /^Cloud save/ })
+    const account = screen.getByRole('button', { name: 'User profile' })
+    // Same glass pill, and the sync state sits right before the account it belongs to
+    expect(sync.parentElement).toBe(account.parentElement)
+    expect(sync.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(sync.className).toContain('size-9')
+    for (const name of ['Community', 'About DXRating']) expect(screen.getByRole('button', { name })).toBeTruthy()
   })
 
   it('shows the sync status while a cloud save is active', () => {

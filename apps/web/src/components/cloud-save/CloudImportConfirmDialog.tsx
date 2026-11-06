@@ -41,11 +41,16 @@ export const CloudImportConfirmDialog: FC = () => {
     <Dialog open onClose={cancel} maxWidth="xs" fullWidth aria-labelledby={titleId}>
       {step === 'choose' ? (
         <>
-          <DialogTitle id={titleId} ref={headingRef} tabIndex={-1} className="outline-none">
+          <DialogTitle
+            id={titleId}
+            ref={headingRef}
+            tabIndex={-1}
+            className="outline-none !text-lg !font-semibold !leading-snug !text-fg-1 !pb-2"
+          >
             {t('rating-calculator:cloud-save.import-confirm.title', { count: request.count })}
           </DialogTitle>
           <DialogContent>
-            <DialogContentText className="text-pretty">
+            <DialogContentText className="!text-sm !text-fg-2 text-pretty">
               {t('rating-calculator:cloud-save.import-confirm.description')}
             </DialogContentText>
             {request.leftOut > 0 && (
@@ -54,13 +59,15 @@ export const CloudImportConfirmDialog: FC = () => {
               </Alert>
             )}
           </DialogContent>
-          <DialogActions className="flex-wrap gap-1">
+          <DialogActions className="flex-wrap !px-4 !pb-4 !gap-1">
             {/* The destructive path away from the primary action */}
             <Button color="error" onClick={() => goTo('confirm-clear')}>
               {t('rating-calculator:cloud-save.import-confirm.clear-first')}
             </Button>
             <div className="flex-1" />
-            <Button onClick={cancel}>{t('rating-calculator:cloud-save.import-confirm.cancel')}</Button>
+            <Button onClick={cancel} color="inherit">
+              {t('rating-calculator:cloud-save.import-confirm.cancel')}
+            </Button>
             <Button variant="contained" onClick={() => request.resolve('merge')}>
               {t('rating-calculator:cloud-save.import-confirm.merge')}
             </Button>
@@ -68,7 +75,12 @@ export const CloudImportConfirmDialog: FC = () => {
         </>
       ) : (
         <>
-          <DialogTitle id={titleId} ref={headingRef} tabIndex={-1} className="outline-none">
+          <DialogTitle
+            id={titleId}
+            ref={headingRef}
+            tabIndex={-1}
+            className="outline-none !text-lg !font-semibold !leading-snug !text-fg-1 !pb-2"
+          >
             {t('rating-calculator:cloud-save.import-confirm.clear-title')}
           </DialogTitle>
           <DialogContent>
@@ -76,8 +88,10 @@ export const CloudImportConfirmDialog: FC = () => {
               {t('rating-calculator:cloud-save.import-confirm.clear-description')}
             </Alert>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => goTo('choose')}>{t('rating-calculator:cloud-save.import-confirm.back')}</Button>
+          <DialogActions className="!px-4 !pb-4 !gap-1">
+            <Button onClick={() => goTo('choose')} color="inherit">
+              {t('rating-calculator:cloud-save.import-confirm.back')}
+            </Button>
             <Button color="error" variant="contained" onClick={() => request.resolve('replace')}>
               {t('rating-calculator:cloud-save.import-confirm.clear-confirm')}
             </Button>

@@ -1,6 +1,6 @@
-import { Chip, Dialog, Grow } from '@mui/material'
+import { Button, Chip, Dialog, Grow } from '@mui/material'
 import clsx from 'clsx'
-import { type FC, useState } from 'react'
+import { type CSSProperties, type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
@@ -11,7 +11,7 @@ import type { FlattenedSheet } from '../../../songs'
 import { deriveColor } from '../../../utils/color'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
 import { MotionButtonBase, MotionTooltip } from '../../../utils/motion'
-import { zoomTransitions } from '../../../utils/motionConstants'
+import { chipPresenceTransitions } from '../sheetMotion'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import { Markdown } from '../../global/Markdown'
 import { SheetListItemContent } from '../SheetListItem'
@@ -20,7 +20,7 @@ import { useSheetTags } from './useSheetTags'
 const SheetTagsAddDialog: FC<{
   sheet: FlattenedSheet
 }> = ({ sheet }) => {
-  const { t } = useTranslation(['sheet'])
+  const { t } = useTranslation(['sheet', 'auth'])
   const [pending, setPending] = useState(false)
   const localizeMessage = useLocalizedMessageTranslation()
   const { session, openLoginDialog, LoginDialog } = useAuth()
@@ -71,12 +71,12 @@ const SheetTagsAddDialog: FC<{
   return (
     <div className="flex flex-col gap-2 p-4 relative">
       <LoginDialog />
-      <div className="text-lg font-bold">{t('sheet:tags.add.title')}</div>
+      <h2 className="m-0 text-lg font-semibold">{t('sheet:tags.add.title')}</h2>
       <div className="text-lg">
         <SheetListItemContent sheet={sheet} />
       </div>
 
-      <div className="h-px w-full bg-gray-2 mt-1 mb-2" />
+      <div className="h-px w-full bg-black/8 mt-1 mb-2" />
       <div className="flex flex-wrap gap-2">
         {loadingTags || loadingExistingTags ? (
           Array.from({ length: 5 }).map((_, i) => (
@@ -89,7 +89,7 @@ const SheetTagsAddDialog: FC<{
               <div key={group?.id} className="flex gap-1 items-center">
                 <div className="flex items-center">
                   <div className="text-base py-1 whitespace-nowrap">{localizeMessage(group?.localized_name)}</div>
-                  <div className="w-px h-7 bg-gray-2 shrink-0 ml-2" />
+                  <div className="w-px h-7 bg-black/8 shrink-0 ml-2" />
                 </div>
                 <div className="flex flex-wrap gap-1 grow ml-2">
                   {tags.map((tag) => {
@@ -97,7 +97,7 @@ const SheetTagsAddDialog: FC<{
 
                     return (
                       <MotionTooltip
-                        {...zoomTransitions}
+                        {...chipPresenceTransitions}
                         key={tag.id}
                         title={<Markdown content={localizeMessage(tag.localized_description)} />}
                         arrow
@@ -120,13 +120,17 @@ const SheetTagsAddDialog: FC<{
                           onClick={() => addTag(tag.id)}
                           disabled={pending || exists}
                           className={clsx(
-                            'rounded-lg border border-solid',
+                            // Group colours are pastels: dark mode's light chip text would vanish on them
+                            'rounded-lg border border-solid dark:!text-[var(--tag-fg)]',
                             pending && 'animate-pulse -animate-delay-1000',
                           )}
-                          style={{
-                            backgroundColor: tag.group?.color,
-                            borderColor: deriveColor(tag.group?.color ?? '#000', 'border'),
-                          }}
+                          style={
+                            {
+                              backgroundColor: tag.group?.color,
+                              borderColor: deriveColor(tag.group?.color ?? '#000', 'border'),
+                              '--tag-fg': tag.group?.color ? deriveColor(tag.group.color, 'text') : undefined,
+                            } as CSSProperties
+                          }
                         />
                       </MotionTooltip>
                     )
@@ -139,16 +143,12 @@ const SheetTagsAddDialog: FC<{
       </div>
 
       {!session && (
-        <div
-          className="text-gray-500 absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 p-8 cursor-pointer"
-          onClick={openLoginDialog}
-          onKeyDown={(e) => e.key === 'Enter' && openLoginDialog()}
-          role="button"
-          tabIndex={0}
-        >
-          <span className="text-center font-bold text-sm text-zinc-600 underline underline-offset-2">
-            {t('sheet:tags.add.login-required')}
-          </span>
+        // Signed out: a real button on a scrim over the tag picker, reachable by keyboard and named by its text
+        <div className="absolute inset-0 z-1 flex flex-col items-center justify-center gap-2 bg-white/85 p-8 text-center">
+          <p className="m-0 text-sm text-fg-1">{t('sheet:tags.add.login-required')}</p>
+          <Button variant="contained" onClick={openLoginDialog}>
+            {t('auth:login.label')}
+          </Button>
         </div>
       )}
     </div>
@@ -166,15 +166,15 @@ export const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => 
       </Dialog>
 
       <MotionButtonBase
-        // {...zoomTransitions}
-        className="h-6 border-1 border-solid border-gray-200 rounded-lg flex items-center justify-center px-2 cursor-pointer bg-gray-100 hover:bg-gray-200 hover:border-gray-300 active:bg-gray-300 active:border-gray-400 transition"
+        // {...chipPresenceTransitions}
+        className="h-6 glass-inset flex items-center justify-center gap-1 px-2 cursor-pointer text-fg-1 hover:bg-white/80 active:bg-black/6 transition-colors duration-150"
         onClick={() => {
           setOpen(true)
         }}
       >
-        <IconMdiTagPlus className="h-4 w-4" />
+        <IconMdiTagPlus aria-hidden="true" className="h-4 w-4" />
 
-        <span className="ml-1 text-xs">{t('sheet:tags.add.button')}</span>
+        <span className="text-xs font-semibold">{t('sheet:tags.add.button')}</span>
       </MotionButtonBase>
     </>
   )

@@ -89,13 +89,18 @@ describe('MCP endpoint', () => {
       headers: {
         Origin: 'https://inspector.example',
         'Access-Control-Request-Method': 'POST',
-        'Access-Control-Request-Headers': 'content-type, mcp-protocol-version',
+        'Access-Control-Request-Headers': 'content-type, mcp-protocol-version, mcp-method, mcp-name',
       },
     })
     expect(res.status).toBe(204)
     expect(res.headers.get('access-control-allow-origin')).toBe('*')
     expect(res.headers.get('access-control-allow-credentials')).toBeNull()
-    expect(res.headers.get('access-control-allow-headers')?.toLowerCase()).toContain('mcp-protocol-version')
+    const allowed = res.headers
+      .get('access-control-allow-headers')
+      ?.toLowerCase()
+      .split(/\s*,\s*/)
+    // 2026-07-28 requests mirror their method and tool name in Mcp-Method and Mcp-Name
+    expect(allowed).toEqual(expect.arrayContaining(['mcp-protocol-version', 'mcp-method', 'mcp-name']))
   })
 
   it('has no stream of server messages', async () => {

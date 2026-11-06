@@ -22,6 +22,7 @@ import { useAuth } from '../../../../hooks/useAuth'
 import { apiClient } from '../../../../lib/orpc'
 import { WebHaptics } from 'web-haptics'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
+import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
@@ -95,7 +96,18 @@ const LxnsImportDialogContent: FC<{
         // Server imports are off (§7.4): uploaded as client_reported, never verified
         await importFallbackEntries(repository, entries, 'lxns')
       } else {
-        await repository.applyImport(entries, { source: 'lxns', mode: 'replace' })
+        // The local save: previewed and confirmed, and it can be undone (meta#35)
+        const { applied } = await reviewAndApplyImport(
+          repository,
+          entries,
+          { source: 'lxns', mode: 'replace' },
+          { trigger: 'manual' },
+        )
+        if (!applied) {
+          analytics.failed('cancelled_by_user')
+          setState('connected')
+          return
+        }
       }
       analytics.succeeded(entries.length, importResult.warnings.length)
       haptics.trigger('success')
@@ -150,7 +162,7 @@ const LxnsImportDialogContent: FC<{
 
         {state === 'not-connected' && (
           <>
-            <p className="text-sm text-zinc-500">{t('rating-calculator:io.import.lxns.description')}</p>
+            <p className="text-sm text-secondary">{t('rating-calculator:io.import.lxns.description')}</p>
           </>
         )}
 
@@ -161,14 +173,14 @@ const LxnsImportDialogContent: FC<{
         {state === 'connecting' && (
           <div className="w-full flex justify-center items-center gap-2 py-4">
             <CircularProgress size="1rem" />
-            <span className="text-sm text-zinc-500">{t('rating-calculator:io.import.lxns.connecting')}</span>
+            <span className="text-sm text-secondary">{t('rating-calculator:io.import.lxns.connecting')}</span>
           </div>
         )}
 
         {state === 'importing' && (
           <div className="w-full flex justify-center items-center gap-2 py-4">
             <CircularProgress size="1rem" />
-            <span className="text-sm text-zinc-500">{t('rating-calculator:io.import.lxns.importing')}</span>
+            <span className="text-sm text-secondary">{t('rating-calculator:io.import.lxns.importing')}</span>
           </div>
         )}
       </DialogContent>
@@ -227,9 +239,9 @@ export const ImportFromLxnsButtonListItem: FC<{
           primary={t('rating-calculator:io.import.lxns.title')}
           secondary={
             isAuthenticated ? (
-              <div className="flex gap-1">
+              <span className="flex gap-1">
                 <ImportRegionSupportTag region="cn" />
-              </div>
+              </span>
             ) : (
               t('rating-calculator:io.import.lxns.login-required')
             )

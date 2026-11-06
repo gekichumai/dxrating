@@ -62,9 +62,13 @@ export const ImportFromJSONButtonListItem: FC<{
               } else {
                 entries = parsed.entries
               }
-              // A cloud save asks to merge or clear first; `null`: the user cancelled
               const result = await importFileEntries(repository, entries, { source: 'dxrating-json', mode: 'replace' })
-              if (!result) return
+              // `null`: the user cancelled the preview (local save) or the merge / clear-first choice (cloud save)
+              if (!result) {
+                analytics.failed('cancelled_by_user')
+                toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
+                return
+              }
               // A cloud save counts what the server took: entries that match no chart or that it rejects are left out
               analytics.succeeded(result.count)
               haptic.trigger('success')

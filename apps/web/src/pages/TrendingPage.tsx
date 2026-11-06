@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { buildTrendingChartLinks } from '@/components/chartDiscovery/trendingCharts'
 import { SheetListItem } from '@/components/sheet/SheetListItem'
 import { orpc, type RouterOutputs } from '@/lib/orpc'
+import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
+import { formatSheetReleaseDateParts, sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
 
 type TrendingData = RouterOutputs['analytics']['trending']
 
@@ -26,13 +28,17 @@ export const buildTrendingQueryOptions = (initialTrendingData?: TrendingData, is
     staleTime: trendingQueryStaleTime,
   })
 
+// The range is a pair of calendar dates: format them as dates in the app locale, never as raw ISO strings
+const formatTrendingDate = (date: string, locale: string) =>
+  formatSheetReleaseDateParts(date, locale, sheetReleaseDateTimestamp(date)).absoluteDate
+
 const TrendingChartsSkeleton: FC<{ label: string }> = ({ label }) => (
-  <div aria-busy="true" aria-label={label} className="w-full" role="status">
+  <div aria-busy="true" aria-label={label} className="glass w-full p-1" role="status">
     {Array.from({ length: 6 }, (_, index) => (
-      <div className="w-full px-4 py-1" key={index}>
+      <div className="w-full px-2 md:px-3 py-1" key={index}>
         <div className="flex items-center w-full p-1 gap-2 tabular-nums relative">
           <Skeleton variant="rounded" className="!h-12 !w-12 !min-w-[3rem] !rounded" />
-          <div className="ml-2 pr-12 flex-1 min-w-0">
+          <div className="ml-2 flex-1 min-w-0">
             <div className="flex flex-col gap-2">
               <div className="flex flex-col md:flex-row md:items-center gap-x-2 gap-y-1">
                 <Skeleton variant="text" className="!text-lg !w-42 max-w-full" />
@@ -44,7 +50,7 @@ const TrendingChartsSkeleton: FC<{ label: string }> = ({ label }) => (
               <Skeleton variant="text" className="!text-sm !w-20" />
             </div>
           </div>
-          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+          <div className="ml-auto shrink-0 pl-2">
             <Skeleton variant="text" className="!text-xl !w-8" />
           </div>
         </div>
@@ -54,7 +60,8 @@ const TrendingChartsSkeleton: FC<{ label: string }> = ({ label }) => (
 )
 
 export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => {
-  const { t } = useTranslation(['sheet'])
+  const { t, i18n } = useTranslation(['sheet'])
+  const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
   const isServerRender = import.meta.env.SSR
   const trendingQuery = useQuery(buildTrendingQueryOptions(initialTrendingData, isServerRender))
   const trendingData = isServerRender ? initialTrendingData : trendingQuery.data
@@ -75,18 +82,21 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
     >
       <div className="w-full flex flex-col gap-4">
         <header className="w-full flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-slate-950" itemProp="name">
+          <h1 className="page-title m-0" itemProp="name">
             {t('sheet:chart-discovery.trending.title')}
           </h1>
-          <p className="text-sm text-slate-700" itemProp="description">
-            {hasDateRange
-              ? t('sheet:chart-discovery.trending.description-with-dates', {
-                  count: charts.length,
-                  dateFrom: trendingData?.dateFrom,
-                  dateTo: trendingData?.dateTo,
-                })
-              : t('sheet:chart-discovery.trending.description', { count: charts.length })}
-          </p>
+          {/* The count only means something once the list has loaded */}
+          {!isLoading && !trendingQuery.isError && charts.length > 0 && (
+            <p className="page-description m-0" itemProp="description">
+              {hasDateRange
+                ? t('sheet:chart-discovery.trending.description-with-dates', {
+                    count: charts.length,
+                    dateFrom: formatTrendingDate(trendingData!.dateFrom!, locale),
+                    dateTo: formatTrendingDate(trendingData!.dateTo!, locale),
+                  })
+                : t('sheet:chart-discovery.trending.description', { count: charts.length })}
+            </p>
+          )}
         </header>
 
         {trendingQuery.isError && (
@@ -117,7 +127,7 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
           <TrendingChartsSkeleton label={t('sheet:chart-discovery.trending.loading')} />
         ) : trendingQuery.isError ? null : charts.length > 0 ? (
           <ol
-            className="w-full list-none p-0 m-0"
+            className="glass w-full list-none p-1 m-0"
             itemProp="mainEntity"
             itemScope
             itemType="https://schema.org/ItemList"

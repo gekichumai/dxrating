@@ -69,15 +69,15 @@ export const SyncStatusIndicator: FC = () => {
         aria-expanded={anchorEl ? 'true' : 'false'}
         aria-controls={anchorEl ? popoverId : undefined}
         // One number only: the badge counts sync issues, the ones that need the user. Changes waiting to sync are in
-        // the label and the popover, so the pill keeps one width and the header row stays clear of the logo. Below
-        // 375px it shrinks like the header's icon buttons.
-        className="cloud-save-status-button relative flex size-8 items-center justify-center rounded-full bg-white/35 text-black/75 2xs:mr-1 2xs:size-9"
+        // the label and the popover, so the control keeps one width. The same 36px round action as the rest of the
+        // header's glass pill
+        className="cloud-save-status-button relative flex size-9 shrink-0 items-center justify-center rounded-full text-fg-1"
         data-sync-state={state}
       >
         <Icon className={clsx('size-5', state === 'syncing' && 'cloud-save-pulse')} aria-hidden />
         {issues.length > 0 && (
           <span
-            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-700 px-1 text-[0.625rem] font-bold leading-none text-white shadow-sm tabular-nums"
+            className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-status-warning px-1 text-[0.625rem] font-bold leading-none text-on-accent shadow-sm tabular-nums"
             aria-hidden
           >
             {issues.length}
@@ -98,24 +98,31 @@ export const SyncStatusIndicator: FC = () => {
             className: 'cloud-save-surface',
             role: 'dialog',
             'aria-label': t('rating-calculator:cloud-save.title'),
-            sx: { mt: 1, width: '22rem', maxWidth: 'calc(100vw - 1rem)', borderRadius: '0.75rem', p: '0.375rem' },
+            sx: {
+              mt: 1,
+              width: '22rem',
+              maxWidth: 'calc(100vw - 1rem)',
+              borderRadius: 'var(--radius-lg)',
+              p: '0.375rem',
+              backgroundImage: 'none',
+            },
           },
         }}
       >
         <div className="flex flex-col gap-2 p-2">
           <div className="flex items-center gap-2">
-            <Icon className="size-5 shrink-0 text-zinc-600" aria-hidden />
+            <Icon className="size-5 shrink-0 text-fg-2" aria-hidden />
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-zinc-900">{t('rating-calculator:cloud-save.title')}</div>
+              <div className="text-sm font-semibold text-fg-1">{t('rating-calculator:cloud-save.title')}</div>
               {/* Not a live region: the sync cycles would be read out while the popover is open */}
-              <p className="m-0 text-xs text-zinc-600">
+              <p className="m-0 text-xs text-fg-2">
                 {[stateText, pendingText].filter(Boolean).join(labelSeparator(i18n.language))}
               </p>
             </div>
           </div>
           {/* The header's announcement is hidden while the popover is open (a modal): the same one, here */}
           <output className="sr-only">{announcement}</output>
-          <h3 className="m-0 mt-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          <h3 className="m-0 mt-1 text-xs font-semibold uppercase tracking-wide text-fg-2">
             {t('rating-calculator:cloud-save.issues.title')}
           </h3>
         </div>

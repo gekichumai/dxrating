@@ -95,6 +95,15 @@ export function mergeImportedEntries(current: readonly PlayEntry[], imported: re
   return merged
 }
 
+/** The saved entries an import leaves: `merge` keeps the save and adds or raises charts, `replace` becomes the save */
+export function nextEntriesForImport(
+  current: readonly PlayEntry[],
+  imported: readonly PlayEntry[],
+  mode: ImportMeta['mode'],
+): PlayEntry[] {
+  return mode === 'merge' ? mergeImportedEntries(current, imported) : [...imported]
+}
+
 /**
  * The local save: the entries under `localStorage['rating-calculator-entries']`, in the format the web has always
  * written (existing saves load unchanged). Every write replaces the whole key, as before. Without a storage (SSR,
@@ -195,7 +204,8 @@ export class LocalScoreRepository implements WebScoreRepository {
 
   async applyImport(entries: PlayEntry[], meta: ImportMeta): Promise<ImportResult> {
     // Written before the promise settles, so the import is visible as soon as this returns
-    this.write(meta.mode === 'merge' ? mergeImportedEntries(this.currentEntries, entries) : [...entries])
+    // `planImport` previews exactly this result
+    this.write(nextEntriesForImport(this.currentEntries, entries, meta.mode))
     return { count: entries.length }
   }
 
@@ -206,6 +216,33 @@ export class LocalScoreRepository implements WebScoreRepository {
   /** @internal The saved data migrations (legacy sheet IDs); not a user action */
   applyMigration(entries: readonly PlayEntry[]) {
     this.write(entries)
+  }
+
+  /**
+   * @internal The storage the save is kept in: the visitor's save keeps its import undo next to it (`importReview`).
+   * `null` for a save in memory only (demos, tests).
+   */
+  get storageArea(): Storage | null {
+    return this.storage
+  }
+
+  /**
+   * @internal Puts back the entries saved before an import (`importUndo`); the local save keeps no provenance.
+   * Unlike other writes, a restore that the storage refuses changes nothing and returns `false`, so the undo snapshot
+   * is not given up for a restore that would be lost on reload.
+   */
+  restoreImportSnapshot(entries: readonly PlayEntry[]): boolean {
+    if (this.storage) {
+      try {
+        this.storage.setItem(RATING_ENTRIES_STORAGE_KEY, JSON.stringify(entries))
+      } catch {
+        return false
+      }
+    }
+    this.currentEntries = entries
+    this.invalidateRecords()
+    this.notify()
+    return true
   }
 
   /** @internal Wholesale replacement, for the `modifyEntries` compatibility adapter only */

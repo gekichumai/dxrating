@@ -144,8 +144,9 @@ describe('UserProfileModal', () => {
       )
       const tab = screen.getByRole('button', { name: 'Cloud save' })
       expect(tab.className).toContain('whitespace-nowrap')
-      expect(tab.parentElement?.className).toContain('overflow-x-auto')
-      expect(tab.parentElement?.children).toHaveLength(4)
+      const row = tab.closest('ul')
+      expect(row?.className).toContain('overflow-x-auto')
+      expect(row?.children).toHaveLength(4)
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
     }

@@ -7,7 +7,7 @@ export const LoadError: FC<{ message: string; onRetry: () => void }> = ({ messag
   const { t } = useTranslation(['rating-calculator'])
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-      <p role="alert" className="m-0 text-sm text-red-700">
+      <p role="alert" className="m-0 text-sm text-danger">
         {message}
       </p>
       <Button size="small" onClick={onRetry}>

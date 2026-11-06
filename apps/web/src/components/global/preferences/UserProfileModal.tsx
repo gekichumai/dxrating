@@ -1,4 +1,4 @@
-import { Dialog, Grow, IconButton, SwipeableDrawer } from '@mui/material'
+import { Dialog, Fade, Grow, IconButton, SwipeableDrawer, useMediaQuery } from '@mui/material'
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'framer-motion'
 import { type FC, useState } from 'react'
@@ -34,7 +34,16 @@ const CLOUD_SAVE_SECTION = {
   labelKey: 'rating-calculator:cloud-save.title',
 } as const
 
-const TRANSITION = { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const }
+// A section switch is a frequent interaction: short, on --ease-out. Under reduced motion MotionConfig (theme
+// provider) drops the y offset and keeps the fade
+const TRANSITION = { duration: 0.15, ease: [0.2, 0, 0, 1] as const }
+
+export const USER_PROFILE_TITLE_ID = 'user-profile-dialog-title'
+
+// Section switcher rows: md radius; the selected one is a raised inset glass row in semibold with an accent bar,
+// so the state doesn't rest on the fill alone
+const NAV_ITEM_CLASS =
+  'relative flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] text-sm transition-colors duration-150 cursor-pointer border border-solid w-full text-left'
 
 const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const { t } = useTranslation(['auth'])
@@ -45,6 +54,8 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const activeSection = sections.some((section) => section.key === selectedSection) ? selectedSection : 'profile'
   const [direction, setDirection] = useState(0)
   const isLargeDevice = useIsLargeDevice()
+  // Phones with the cloud save section: four labels (long in CJK) scroll sideways rather than truncate
+  const scrollsSideways = !isLargeDevice && sections.length > SECTIONS.length
   const { data: sessionData } = authClient.useSession()
   const confirmLogout = useConfirmDialog()
   const activeSave = useActiveSave()
@@ -66,49 +77,100 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
     onClose()
   }
 
+  const title = (
+    <h2 id={USER_PROFILE_TITLE_ID} className="text-xl font-semibold leading-tight text-fg-1 m-0">
+      {t('auth:user-profile.title')}
+    </h2>
+  )
+
+  const closeButton = (
+    <IconButton
+      onClick={onClose}
+      size="small"
+      aria-label={t('auth:user-profile.close')}
+      title={t('auth:user-profile.close')}
+      className="!text-fg-2 !shrink-0"
+    >
+      <IconMdiClose className="text-lg" aria-hidden="true" />
+    </IconButton>
+  )
+
   const sidebar = (
+    // Transparent on the dialog's glass, separated from the content by a hairline instead of a grey fill
     <div
       className={clsx(
-        'flex flex-col gap-6 bg-zinc-50 dark:bg-zinc-900/60',
-        isLargeDevice ? 'w-56 shrink-0 p-6 pr-4 justify-between' : 'flex-row gap-2 p-3 pb-2',
+        'flex flex-col gap-6',
+        isLargeDevice
+          ? 'w-56 shrink-0 p-6 pr-4 justify-between border-0 border-r border-solid border-black/8'
+          : 'gap-3 px-4 pb-3',
       )}
     >
-      <div className={clsx('flex flex-col gap-4', !isLargeDevice && 'flex-row gap-2 flex-1 min-w-0')}>
-        {isLargeDevice && <h1 className="text-xl font-bold m-0 px-3">{t('auth:user-profile.title')}</h1>}
-        {/* Phones: one row that scrolls sideways when the labels do not fit (four sections, long CJK labels) */}
-        <div
-          className={clsx(
-            'flex flex-col gap-0.5',
-            !isLargeDevice && 'flex-row gap-1 flex-1 min-w-0 overflow-x-auto overscroll-x-contain',
-          )}
-        >
-          {sections.map(({ key, icon: Icon, labelKey }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => handleSectionChange(key)}
-              className={clsx(
-                'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer border-none bg-transparent w-full text-left',
-                activeSection === key
-                  ? 'bg-zinc-200/70 dark:bg-zinc-700/70 text-zinc-900 dark:text-white'
-                  : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-700 dark:hover:text-zinc-300',
-                !isLargeDevice && 'flex-1 justify-center whitespace-nowrap',
-              )}
-            >
-              <Icon className="text-base" />
-              <span>{t(labelKey)}</span>
-            </button>
-          ))}
-        </div>
+      <div className={clsx('flex flex-col gap-4', !isLargeDevice && 'gap-3')}>
+        {isLargeDevice ? (
+          <div className="px-3">{title}</div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">{title}</div>
+            {closeButton}
+          </div>
+        )}
+        <nav aria-label={t('auth:user-profile.sections')}>
+          {/* Phones: one row; with the cloud save section it scrolls sideways when the labels do not fit */}
+          <ul
+            className={clsx(
+              'm-0 p-0 list-none flex flex-col gap-0.5',
+              !isLargeDevice && 'flex-row gap-1 overflow-x-auto overscroll-x-contain',
+            )}
+          >
+            {sections.map(({ key, icon: Icon, labelKey }) => {
+              const selected = activeSection === key
+              return (
+                <li
+                  key={key}
+                  className={clsx(!isLargeDevice && (scrollsSideways ? 'flex-1 shrink-0' : 'flex-1 min-w-0'))}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleSectionChange(key)}
+                    // A section of this dialog, not a page, so the current item is `true`
+                    aria-current={selected ? 'true' : undefined}
+                    className={clsx(
+                      NAV_ITEM_CLASS,
+                      selected
+                        ? 'glass-inset shadow-[var(--shadow-1)] font-semibold text-fg-1'
+                        : 'border-transparent bg-transparent text-fg-2 hover:bg-black/4 hover:text-fg-1',
+                      !isLargeDevice && 'justify-center !gap-2 !px-2',
+                      scrollsSideways && 'whitespace-nowrap',
+                    )}
+                  >
+                    {/* The accent bar marks the selected section alongside the weight change */}
+                    {selected && isLargeDevice && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-y-2 start-0 w-[3px] rounded-full bg-accent-strong"
+                      />
+                    )}
+                    <Icon className="text-base shrink-0" aria-hidden="true" />
+                    <span className="truncate">{t(labelKey)}</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
       </div>
 
       {isLargeDevice && (
+        // Signing out is reversible and loses nothing, so it is a neutral action rather than a red one
         <button
           type="button"
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-red-500 transition-colors cursor-pointer border-none bg-transparent w-full text-left"
+          className={clsx(
+            NAV_ITEM_CLASS,
+            'border-transparent bg-transparent text-fg-2 hover:bg-black/4 hover:text-fg-1',
+          )}
         >
-          <IconMdiLogout className="text-base" />
+          <IconMdiLogout className="text-base shrink-0" aria-hidden="true" />
           <span>{t('auth:logout.label')}</span>
         </button>
       )}
@@ -116,13 +178,15 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   )
 
   const slideVariants = {
-    enter: (dir: number) => ({ y: dir > 0 ? 20 : -20, opacity: 0 }),
+    enter: (dir: number) => ({ y: dir > 0 ? 8 : -8, opacity: 0 }),
     center: { y: 0, opacity: 1 },
-    exit: (dir: number) => ({ y: dir > 0 ? -20 : 20, opacity: 0 }),
+    exit: (dir: number) => ({ y: dir > 0 ? -8 : 8, opacity: 0 }),
   }
 
   const content = (
-    <div className="flex-1 overflow-y-auto p-6 sm:p-8 relative">
+    <div
+      className={clsx('flex-1 overflow-y-auto overscroll-contain relative', isLargeDevice ? 'p-8 pt-12' : 'p-4 pt-1')}
+    >
       <AnimatePresence mode="wait" custom={direction} initial={false}>
         <motion.div
           key={activeSection}
@@ -133,11 +197,11 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
           exit="exit"
           transition={TRANSITION}
         >
-          {activeSection === 'profile' && <ProfileSection />}
+          {activeSection === 'profile' && <ProfileSection idPrefix="account-dialog" />}
           {activeSection === 'accounts' && <ConnectedAccountsSection />}
           {activeSection === 'cloud-save' && <CloudSaveSection />}
           {activeSection === 'security' && (
-            <SecuritySection currentSessionToken={sessionData?.session?.token} idPrefix="account-dialog" />
+            <SecuritySection currentSessionToken={sessionData?.session?.token} idPrefix="account-dialog" titleAs="h3" />
           )}
         </motion.div>
       </AnimatePresence>
@@ -156,13 +220,10 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
         onCancel={confirmLogout.onCancel}
       />
 
-      {/* Close button */}
-      <IconButton onClick={onClose} className="!absolute !top-2 !right-2 !z-10" size="small">
-        <IconMdiClose className="text-lg" />
-      </IconButton>
+      {isLargeDevice && <div className="absolute top-3 end-3 z-10">{closeButton}</div>}
 
       {isLargeDevice ? (
-        <div className="flex h-[min(36rem,80vh)]">
+        <div className="flex h-[min(36rem,80dvh)]">
           {sidebar}
           {content}
         </div>
@@ -171,13 +232,13 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
           {sidebar}
           {content}
           {/* Mobile logout at bottom */}
-          <div className="p-3 pt-0">
+          <div className="px-4 pt-2 pb-3 border-0 border-t border-solid border-black/8">
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center justify-center gap-2 w-full py-2 rounded-md text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer border-none bg-transparent"
+              className={clsx(NAV_ITEM_CLASS, 'justify-center !gap-2 glass-inset text-fg-1 hover:bg-accent-subtle')}
             >
-              <IconMdiLogout className="text-base" />
+              <IconMdiLogout className="text-base" aria-hidden="true" />
               <span>{t('auth:logout.label')}</span>
             </button>
           </div>
@@ -192,19 +253,20 @@ export const UserProfileModal: FC<{
   onClose: () => void
 }> = ({ open, onClose }) => {
   const isLargeDevice = useIsLargeDevice()
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
 
   if (isLargeDevice) {
     return (
       <Dialog
         open={open}
         onClose={onClose}
-        TransitionComponent={Grow}
+        TransitionComponent={reducedMotion ? Fade : Grow}
         maxWidth={false}
+        aria-labelledby={USER_PROFILE_TITLE_ID}
         PaperProps={{
           sx: {
             width: '52rem',
             maxWidth: 'calc(100vw - 2rem)',
-            borderRadius: '0.75rem',
             overflow: 'hidden',
           },
         }}
@@ -222,14 +284,19 @@ export const UserProfileModal: FC<{
       open={open}
       onClose={onClose}
       onOpen={() => {}}
+      transitionDuration={reducedMotion ? 150 : undefined}
       sx={{
         '& .MuiDrawer-paper': {
           height: 'calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem)',
-          borderRadius: '0.75rem 0.75rem 0 0',
         },
       }}
+      PaperProps={{
+        role: 'dialog',
+        'aria-modal': true,
+        'aria-labelledby': USER_PROFILE_TITLE_ID,
+      }}
     >
-      <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-300 my-3" />
+      <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-black/15 my-3" aria-hidden="true" />
       <div className="overflow-hidden h-full pb-[env(safe-area-inset-bottom)]">
         <ModalContent onClose={onClose} />
       </div>

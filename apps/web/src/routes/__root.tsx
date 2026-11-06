@@ -1,14 +1,16 @@
-import { HeadContent, Outlet, Scripts, createRootRoute, useLocation } from '@tanstack/react-router'
+import { HeadContent, Outlet, Scripts, createRootRoute, useLocation, useRouter } from '@tanstack/react-router'
 import { CircularProgress } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import i18n from 'i18next'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
-import { type CSSProperties, Suspense, useEffect, useMemo } from 'react'
+import clsx from 'clsx'
+import { type CSSProperties, Suspense, useEffect, useMemo, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import { NetImportSettingsProvider } from '@/components/rating/io/import/NetImportSettingsContext'
 import { NetImportProgress } from '@/components/rating/io/import/NetImportProgress'
+import { ImportReviewHost } from '@/components/rating/io/import/ImportReviewDialog'
 import { CustomizedToaster } from '@/components/global/CustomizedToaster'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { SideEffector } from '@/components/global/SideEffector'
@@ -24,16 +26,16 @@ import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculat
 import { CatalogProvider } from '@/catalog/CatalogContext'
 import { loadCatalogMeta } from '@/catalog/catalogSource'
 import { createServerI18n } from '@/setup/init-i18n'
-import { buildRootSeoMeta, resolveSeoLocale } from '@/utils/seo'
+import { buildNotFoundSeoMeta, buildRootSeoMeta, resolveRootHeadState, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
+import { useThemeColorSync } from '@/utils/useThemeColorSync'
 import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
+import { THEME_INLINE_SCRIPT } from '@/setup/theme-script'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
 import 'virtual:uno.css'
 
 const queryClient = new QueryClient()
-
-const SONG_DETAIL_ROUTE_ID = '/songs/$songId/$type/$difficulty'
 
 const fallbackElement = (
   <div className="flex items-center justify-center h-50% w-full p-6">
@@ -58,7 +60,7 @@ export const Route = createRootRoute({
   shouldReload: false,
   head: ({ match, matches }) => {
     const locale = resolveSeoLocale([match, ...matches])
-    const includeRootTitle = !matches.some((match) => String(match.routeId) === SONG_DETAIL_ROUTE_ID)
+    const { isNotFound, includeRootTitle } = resolveRootHeadState(match, matches)
 
     return {
       meta: [
@@ -68,6 +70,7 @@ export const Route = createRootRoute({
           content: 'width=device-width, initial-scale=1.0, viewport-fit=cover',
         },
         ...buildRootSeoMeta(locale, { includeTitle: includeRootTitle }),
+        ...(isNotFound ? buildNotFoundSeoMeta(locale) : []),
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         {
           name: 'msapplication-config',
@@ -78,48 +81,72 @@ export const Route = createRootRoute({
         pathname: matches[matches.length - 1]?.pathname ?? '/',
         search: matches[matches.length - 1]?.search,
       }),
-      scripts: [{ children: ZOD_JITLESS_INLINE_SCRIPT }],
+      // The theme script first: it sets <html data-theme> before the body paints (setup/theme-script.ts)
+      scripts: [{ children: THEME_INLINE_SCRIPT }, { children: ZOD_JITLESS_INLINE_SCRIPT }],
     }
   },
   component: RootComponent,
 })
 
+const isLegalPath = (pathname: string) => pathname === '/privacy-policy' || pathname === '/terms-of-service'
+
+/**
+ * The site header: one tinted-glass band (accent solid only behind the status bar) holding the top row and, on app
+ * pages, the version switcher and primary navigation. The switcher is full size on the home page only; inner pages get
+ * the compact row so their content starts near the top.
+ */
 function RootLayout() {
-  const versionTheme = useVersionTheme()
-  const location = useLocation()
+  const { pathname } = useLocation()
 
-  const pathname = location.pathname
-
-  const isPrivacyPolicy = pathname === '/privacy-policy' || pathname === '/terms-of-service'
+  const isLegalPage = isLegalPath(pathname)
   const isDevelopersPage = pathname === '/developers'
   const isSongPage = pathname.startsWith('/songs/')
-  const showTabs = !isSongPage && !isPrivacyPolicy && !isDevelopersPage
+  const showAppChrome = !isDevelopersPage && !isLegalPage
+  const showTabs = showAppChrome && !isSongPage
+  const compact = pathname !== '/'
 
   return (
-    <>
-      {/* Constrain the sticky tint source to its own height so the header still scrolls away. */}
-      <div>
-        <TopBar standalone={isPrivacyPolicy || isDevelopersPage} transparent={isPrivacyPolicy} />
-      </div>
-      {!isDevelopersPage && !isPrivacyPolicy && (
+    <header className="glass-bar pb-3 sm:pb-4">
+      <TopBar />
+      {showAppChrome && (
         <div
-          className="w-full flex flex-col items-center justify-center text-white text-2xl font-bold gap-4 pt-4 pb-4"
-          style={{
-            backgroundImage: `linear-gradient(
-    to bottom,
-    ${versionTheme.accentColor},
-    ${versionTheme.accentColor} env(safe-area-inset-top),
-    ${versionTheme.accentColor}00
-  )
-`,
-          }}
+          className={clsx(
+            'page-gutter flex items-center justify-center pt-3',
+            compact ? 'flex-row flex-wrap gap-2 md:gap-3' : 'app-chrome--full flex-col gap-3 sm:pt-4',
+          )}
         >
-          <VersionRegionSwitcher />
+          <VersionRegionSwitcher compact={compact} />
           {showTabs && <AppTabs />}
         </div>
       )}
-    </>
+    </header>
   )
+}
+
+/** Moves focus to the new page's main landmark and announces its title after a client-side navigation */
+function RouteChangeAnnouncer() {
+  const router = useRouter()
+  const announcerRef = useRef<HTMLOutputElement>(null)
+
+  useEffect(
+    () =>
+      router.subscribe('onResolved', ({ fromLocation, toLocation }) => {
+        // Query-only changes (typing in search, filters) keep focus where it is
+        if (!fromLocation || fromLocation.pathname === toLocation.pathname) return
+        // Two frames: the head (document.title) updates after the route resolves
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            const main = document.getElementById('main-content')
+            if (main && !main.contains(document.activeElement)) main.focus({ preventScroll: true })
+            if (announcerRef.current) announcerRef.current.textContent = document.title
+          }),
+        )
+      }),
+    [router],
+  )
+
+  // <output> is an implicit polite status region; it is in the DOM from the first render, before any text is set
+  return <output ref={announcerRef} aria-live="polite" aria-atomic="true" className="sr-only" />
 }
 
 function OAuthErrorHandler() {
@@ -129,10 +156,18 @@ function OAuthErrorHandler() {
     const params = new URLSearchParams(window.location.search)
     const error = params.get('error')
     if (!error) return
+    // The LXNS import callback carries its own ?status=error&error=… and explains it on the page
+    if (window.location.pathname === '/io/import/lxns/oauth_callback') return
 
-    const key = `auth:user-profile.oauth-error.${error}` as const
-    const message = t(key, { defaultValue: '' })
-    toast.error(message || t('auth:user-profile.oauth-error.default', { error }), { id: 'oauth-error' })
+    // The raw provider code means nothing to people: keep it in the console for debugging, show plain copy
+    console.warn('[oauth] sign-in returned an error', error, params.get('error_description') ?? '')
+    if (error === 'access_denied') {
+      // Cancelling at the provider is a choice, not a failure
+      toast(t('auth:user-profile.oauth-error.access_denied'), { id: 'oauth-error' })
+    } else {
+      const message = t(`auth:user-profile.oauth-error.${error}` as const, { defaultValue: '' })
+      toast.error(message || t('auth:user-profile.oauth-error.default'), { id: 'oauth-error' })
+    }
 
     params.delete('error')
     params.delete('error_description')
@@ -163,6 +198,7 @@ function RootComponent() {
                         <SideEffector />
                         <CustomizedToaster />
                         <NetImportProgress />
+                        <ImportReviewHost />
                         <OAuthErrorHandler />
                         <RegionVersionUpdatePrompt />
                         <AppLayout />
@@ -181,29 +217,31 @@ function RootComponent() {
 
 function AppLayout() {
   const { t } = useTranslation(['root'])
-  const versionTheme = useVersionTheme()
   const { pathname } = useLocation()
-  const isLegalPage = pathname === '/privacy-policy' || pathname === '/terms-of-service'
+  const isLegalPage = isLegalPath(pathname)
 
   return (
     <div className="h-full w-full relative">
       <a href="#main-content" className="skip-to-content">
         {t('root:skip-to-content')}
       </a>
+      <RouteChangeAnnouncer />
       <VersionBackground />
 
-      {isLegalPage && (
-        <div
-          aria-hidden="true"
-          className="fixed inset-0 pointer-events-none"
-          style={{ background: `color-mix(in srgb, ${versionTheme.accentColor} 10%, rgba(255, 255, 255, 0.95))` }}
-        />
-      )}
       <div className="h-full w-full relative">
         <Suspense fallback={fallbackElement}>
           <RootLayout />
           <main id="main-content" tabIndex={-1}>
-            <Outlet />
+            {isLegalPage ? (
+              // Legal text reads on one glass sheet instead of a full-viewport white overlay
+              <div className="page-gutter pb-global">
+                <div className="glass mx-auto max-w-[808px]">
+                  <Outlet />
+                </div>
+              </div>
+            ) : (
+              <Outlet />
+            )}
           </main>
         </Suspense>
       </div>
@@ -213,14 +251,23 @@ function AppLayout() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const theme = useVersionTheme()
+  useThemeColorSync(theme.accentColor)
   const { locale, renderedAt } = Route.useRouteContext()
 
   return (
     <html
       lang={locale}
+      // data-theme is set on this element by the pre-paint theme script before hydration and cannot be known on the
+      // server (the HTML is cached per locale and path): the one attribute React may not compare. Applies to <html>
+      // itself only, not to its children.
+      suppressHydrationWarning
       style={
         {
           '--theme-accent': theme.accentColor,
+          // Design tokens (src/styles/tokens.css) derive every surface tint and accent role from these two
+          '--accent': theme.accentColor,
+          '--accent-strong-light': theme.accentStrongColor,
+          '--accent-strong-dark': theme.accentStrongDarkColor,
           '--theme-canvas': theme.canvasColor ?? theme.accentColor,
         } as CSSProperties
       }

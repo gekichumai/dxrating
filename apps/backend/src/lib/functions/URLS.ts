@@ -22,6 +22,14 @@ export const URLS = {
 
   CHECKLIST: {
     ERROR: ['https://maimaidx-eng.com/maimai-mobile/error/', 'https://maimaidx.jp/maimai-mobile/error/'],
-    MAINTENANCE: ['定期メンテナンス中です', 'Sorry, servers are under maintenance.'],
+    // maimai NET (JP scheduled, JP emergency, international) and the Aime login gateway
+    MAINTENANCE: [
+      '定期メンテナンス中です',
+      '緊急メンテナンス中です',
+      'Sorry, servers are under maintenance.',
+      '現在メンテナンスを行っております',
+    ],
+    // where the Aime login gateway and maimai NET send every request during maintenance
+    MAINTENANCE_REDIRECT: /\/maintenance(?:\.html|\/|$)/,
   },
 }

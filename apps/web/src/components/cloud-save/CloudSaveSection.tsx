@@ -21,10 +21,10 @@ const Group: FC<{
   return (
     <section className="flex flex-col gap-2" aria-labelledby={id}>
       <div className="flex flex-col gap-0.5">
-        <h2 id={id} className="m-0 text-sm font-semibold text-zinc-800">
+        <h2 id={id} className="m-0 text-sm font-semibold text-fg-1">
           {title}
         </h2>
-        {description && <p className="m-0 text-xs text-zinc-500 text-pretty">{description}</p>}
+        {description && <p className="m-0 text-xs text-fg-2 text-pretty">{description}</p>}
       </div>
       {children}
     </section>
@@ -80,10 +80,14 @@ export const CloudSaveSection: FC = () => {
     <div ref={sectionRef} className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         {/* Takes the focus when "Back up to cloud" goes away (the migration made a cloud save active) */}
-        <h1 className="text-lg font-bold m-0 outline-none" tabIndex={-1} data-cloud-migration-focus-return="">
+        <h1
+          className="text-lg font-semibold text-fg-1 m-0 outline-none"
+          tabIndex={-1}
+          data-cloud-migration-focus-return=""
+        >
           {t('rating-calculator:cloud-save.title')}
         </h1>
-        <p className="text-sm text-zinc-500 m-0">
+        <p className="text-sm text-fg-2 m-0">
           {/* Nothing is in sync until a cloud save is active */}
           {t(cloud ? 'rating-calculator:cloud-save.description' : 'rating-calculator:cloud-save.description-inactive')}
         </p>
