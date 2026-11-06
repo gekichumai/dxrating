@@ -35,6 +35,7 @@ import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
 import { THEME_INLINE_SCRIPT } from '@/setup/theme-script'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
 import 'virtual:uno.css'
+import '@/components/layout/app-chrome.css'
 
 const queryClient = new QueryClient()
 
@@ -114,6 +115,7 @@ function RootLayout() {
         <div
           className={clsx(
             'page-gutter flex items-center justify-center pt-3',
+            // app-chrome--full becomes one row from 1024px (components/layout/app-chrome.css)
             compact ? 'flex-row flex-wrap gap-2 md:gap-3' : 'app-chrome--full flex-col gap-3 sm:pt-4',
           )}
         >
@@ -235,11 +237,9 @@ function AppLayout() {
           <RootLayout />
           <main id="main-content" tabIndex={-1}>
             {isLegalPage ? (
-              // Legal text reads on one glass sheet instead of a full-viewport white overlay
+              // LegalLayout draws the one glass reading card (and, on desktop, the contents sidebar beside it)
               <div className="page-gutter pb-global">
-                <div className="glass mx-auto max-w-[808px]">
-                  <Outlet />
-                </div>
+                <Outlet />
               </div>
             ) : (
               <Outlet />
