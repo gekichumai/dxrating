@@ -643,3 +643,22 @@ export const withMaimaiNETClient = <A, E, R>(
       (client) => client.disposeEffect().pipe(Effect.orDie),
     ).pipe(Effect.flatMap(use)),
   )
+export type NetGatewayStatus = 'ok' | 'maintenance' | 'unknown'
+
+/**
+ * Whether the region's login page is reachable or in SEGA's maintenance, from one anonymous request with no
+ * credentials (the same detection as a real import). Never fails: anything else, including a timeout, is `unknown`.
+ */
+export const gatewayStatusEffect = (client: MaimaiNETJpClient | MaimaiNETIntlClient, region: 'jp' | 'intl') =>
+  client.fetchAsDOMEffect(region === 'jp' ? URLS.JP.LOGIN_PAGE : URLS.INTL.LOGIN_PAGE).pipe(
+    Effect.as<NetGatewayStatus>('ok'),
+    Effect.timeout('8 seconds'),
+    Effect.catch((error) =>
+      Effect.succeed<NetGatewayStatus>(
+        error instanceof NetImportError && error.code === 'NET_MAINTENANCE' ? 'maintenance' : 'unknown',
+      ),
+    ),
+  )
+
+export const netGatewayStatusEffect = (region: 'jp' | 'intl') =>
+  withMaimaiNETClient(region, (client) => gatewayStatusEffect(client, region))

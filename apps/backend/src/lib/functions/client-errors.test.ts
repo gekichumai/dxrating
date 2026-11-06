@@ -7,6 +7,7 @@ import {
   MaimaiNETJpClient,
   NetImportError,
   NetRequestError,
+  gatewayStatusEffect,
   netErrorPageMessage,
   netStepOf,
   pageSignals,
@@ -211,5 +212,34 @@ describe('what SEGA said when it refused a login (the 2026-11-01 outage)', () =>
       step: 'login_submit',
       upstreamMessage: '[id] is locked. Try later.',
     })
+  })
+})
+describe('the maimai NET status the import UI warns with', () => {
+  const status = (client: MaimaiNETIntlClient | MaimaiNETJpClient, region: 'intl' | 'jp') =>
+    Effect.runPromise(gatewayStatusEffect(client, region))
+
+  it('reads SEGA maintenance from the gateway redirect, the JP 503 and the maintenance page text', async () => {
+    expect(await status(stubbed(new MaimaiNETIntlClient(), () => redirect(AIME_MAINTENANCE_URL)).client, 'intl')).toBe(
+      'maintenance',
+    )
+    expect(await status(stubbed(new MaimaiNETJpClient(), () => html(JP_EMERGENCY_MAINTENANCE, 503)).client, 'jp')).toBe(
+      'maintenance',
+    )
+    expect(await status(stubbed(new MaimaiNETIntlClient(), () => html(AIME_MAINTENANCE)).client, 'intl')).toBe(
+      'maintenance',
+    )
+  })
+
+  it('is ok for a login page and unknown when NET cannot be reached', async () => {
+    expect(
+      await status(
+        stubbed(new MaimaiNETJpClient(), () => html('<form><input name="token" value="t"></form>')).client,
+        'jp',
+      ),
+    ).toBe('ok')
+    const unreachable = stubbed(new MaimaiNETIntlClient(), () => {
+      throw new Error('connect ETIMEDOUT')
+    })
+    expect(await status(unreachable.client, 'intl')).toBe('unknown')
   })
 })

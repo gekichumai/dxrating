@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
@@ -9,6 +9,8 @@ import { importFromNETRecords } from './importFromNETRecords'
 import { netImportProgress } from './netImportProgressStore'
 
 vi.mock('./importFromNETRecords', () => ({ importFromNETRecords: vi.fn() }))
+const { netStatus } = vi.hoisted(() => ({ netStatus: { intl: false, jp: false } }))
+vi.mock('./useMaimaiNetStatus', () => ({ useMaimaiNetStatus: () => netStatus }))
 vi.mock('@/models/context/useAppContext', () => ({ useAppContextDXDataVersion: () => 'circle-plus' }))
 
 beforeAll(() => initI18n())
@@ -21,6 +23,9 @@ beforeEach(() => {
     removeItem: (key: string) => storage.delete(key),
   })
   netImportProgress.update(null)
+  netStatus.intl = false
+  netStatus.jp = false
+  sessionStorage.clear()
 })
 afterEach(cleanup)
 
@@ -159,5 +164,28 @@ describe('global auto-import settings', () => {
       ),
     )
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  })
+})
+
+describe('SEGA maintenance notice', () => {
+  const openSettings = () => {
+    render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
+    fireEvent.click(screen.getByRole('button', { name: 'Auto-import' }))
+  }
+
+  it('warns before anyone types credentials while the selected region is in maintenance, until dismissed', async () => {
+    netStatus.intl = true
+    openSettings()
+    expect(screen.getByText('maimai NET (International) is under maintenance')).toBeTruthy()
+    const notice = screen.getByRole('alert')
+    fireEvent.click(within(notice).getByRole('button', { name: 'Close' }))
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
+    expect(sessionStorage.getItem('net-maintenance-notice-dismissed:intl')).toBe('1')
+  })
+
+  it('stays quiet when the selected region is up', () => {
+    netStatus.jp = true
+    openSettings()
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 })
