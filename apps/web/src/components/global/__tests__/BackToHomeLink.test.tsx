@@ -5,15 +5,12 @@ import { BackToHomeLink } from '../BackToHomeLink'
 
 const back = vi.fn()
 const navigate = vi.fn()
-let origin: string | undefined
+let origin: { pathname: string; href: string } | undefined
 let canGoBack = true
-let search: Record<string, unknown> = {}
 
 vi.mock('@tanstack/react-router', () => ({
   useRouter: () => ({ history: { back }, navigate }),
   useCanGoBack: () => canGoBack,
-  useRouterState: ({ select }: { select: (state: { location: { search: unknown } }) => unknown }) =>
-    select({ location: { search } }),
 }))
 
 vi.mock('@/components/layout/navigationOrigins', () => ({
@@ -28,13 +25,12 @@ describe('BackToHomeLink', () => {
   beforeEach(() => {
     back.mockClear()
     navigate.mockClear()
-    origin = '/'
+    origin = { pathname: '/', href: '/' }
     canGoBack = true
-    search = {}
   })
 
   it('renders nothing unless the page was reached from Home', () => {
-    origin = '/versions'
+    origin = { pathname: '/versions', href: '/versions' }
     const { container } = render(<BackToHomeLink />)
     expect(container.innerHTML).toBe('')
 
@@ -43,11 +39,11 @@ describe('BackToHomeLink', () => {
     expect(second.container.innerHTML).toBe('')
   })
 
-  it('is a real link to Home, keeping the URL locale', () => {
-    search = { locale: 'ja' }
+  it('is a real link to the Home it came from, search included', () => {
+    origin = { pathname: '/', href: '/?locale=ja&q=Can%20Do' }
     render(<BackToHomeLink />)
     const link = screen.getByRole('link', { name: 'Back to home' })
-    expect(link.getAttribute('href')).toBe('/?locale=ja')
+    expect(link.getAttribute('href')).toBe('/?locale=ja&q=Can%20Do')
     expect(link.textContent).toBe('Home')
   })
 

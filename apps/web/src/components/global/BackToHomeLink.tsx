@@ -1,11 +1,10 @@
-import { useCanGoBack, useRouter, useRouterState } from '@tanstack/react-router'
+import { useCanGoBack, useRouter } from '@tanstack/react-router'
 import type { FC, MouseEvent } from 'react'
 import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { InternalLink, isPlainNavigationClick } from '@/components/global/InternalLink'
 import { useNavigationOrigin } from '@/components/layout/navigationOrigins'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
-import { withLocaleQuery } from '@/setup/locale'
 
 /**
  * "← Home" on a page the visitor opened from the home page (New charts after "See all" or the Explore card). Going
@@ -17,14 +16,14 @@ export const BackToHomeLink: FC<{ className?: string }> = ({ className }) => {
   const locale = useLocale()
   const router = useRouter()
   const canGoBack = useCanGoBack()
-  const fromHome = useNavigationOrigin() === '/'
-  const search = useRouterState({ select: (state) => state.location.search })
+  const origin = useNavigationOrigin()
 
-  if (!fromHome) return null
+  if (origin?.pathname !== '/') return null
 
   return (
     <InternalLink
-      href={withLocaleQuery('/', search)}
+      // The Home it came from, search included, for a new tab or when Back is not available
+      href={origin.href}
       aria-label={m.root_notFound_backToHome({}, { locale })}
       onClick={(event: MouseEvent<HTMLAnchorElement>) => {
         // The entry before this one is the home page (that is how this page was reached), so Back returns to it

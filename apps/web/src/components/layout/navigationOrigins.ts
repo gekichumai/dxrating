@@ -7,11 +7,18 @@ import { useEffect, useSyncExternalStore } from 'react'
  * Back and Forward land on entries that still know their origin; a reload starts empty, and nothing reaches the
  * server, so server and cached HTML never depend on it.
  */
-const originByEntry = new Map<string, string>()
+/** The page an entry was reached from: its path, and its full href (search included) to return to */
+export type NavigationOrigin = { pathname: string; href: string }
+
+const originByEntry = new Map<string, NavigationOrigin>()
 const listeners = new Set<() => void>()
 let version = 0
 
-type LocationLike = { pathname: string; state: { __TSR_key?: string; key?: string; __TSR_index?: number } }
+type LocationLike = {
+  pathname: string
+  href: string
+  state: { __TSR_key?: string; key?: string; __TSR_index?: number }
+}
 
 const entryKey = (location: LocationLike | undefined) => location?.state.__TSR_key ?? location?.state.key
 
@@ -26,9 +33,9 @@ export const recordNavigationOrigin = (from: LocationLike | undefined, to: Locat
   const fromIndex = from?.state.__TSR_index
   const toIndex = to.state.__TSR_index
   if (!from || !toKey || originByEntry.has(toKey) || fromIndex === undefined || toIndex === undefined) return
-  let origin: string | undefined
+  let origin: NavigationOrigin | undefined
   if (toIndex === fromIndex + 1) {
-    origin = from.pathname
+    origin = { pathname: from.pathname, href: from.href }
   } else if (toIndex === fromIndex && from.pathname === to.pathname) {
     const fromKey = entryKey(from)
     origin = fromKey ? originByEntry.get(fromKey) : undefined
@@ -57,8 +64,8 @@ const subscribe = (listener: () => void) => {
   return () => listeners.delete(listener)
 }
 
-/** The pathname the current page was reached from in this visit, or undefined (direct visit, reload, server) */
-export const useNavigationOrigin = (): string | undefined => {
+/** The page the current one was reached from in this visit, or undefined (direct visit, reload, server) */
+export const useNavigationOrigin = (): NavigationOrigin | undefined => {
   const key = useRouterState({ select: (state) => entryKey(state.location) })
   useSyncExternalStore(
     subscribe,
