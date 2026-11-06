@@ -55,7 +55,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
     setNewPassword('')
     setConfirmPassword('')
     setAttempted(false)
-  }, [currentPassword, newPassword])
+  }, [currentPassword, newPassword, locale])
 
   const togglePasswordVisibility = (field: keyof typeof visiblePasswords) => {
     setVisiblePasswords((visible) => ({ ...visible, [field]: !visible[field] }))
@@ -251,7 +251,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading 
     }
     toast.success(m.auth_userProfile_passkeys_added({}, { locale }))
     queryClient.invalidateQueries({ queryKey: ['passkeys'] })
-  }, [queryClient])
+  }, [queryClient, locale])
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirmDelete.confirm()

@@ -32,7 +32,7 @@ export const ProfileSection: FC<{ idPrefix?: string }> = ({ idPrefix = 'profile'
       return
     }
     toast.success(m.auth_updateDisplayName_toastSuccess({ name: displayName }, { locale }))
-  }, [displayName])
+  }, [displayName, locale])
 
   const displayNameId = `${idPrefix}-display-name`
   const emailId = `${idPrefix}-email`

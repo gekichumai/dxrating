@@ -11,7 +11,7 @@
  * else (a key that is not a string literal, t passed along as a value, `defaultValue`, other i18n APIs, an existing
  * `locale` or `m` binding) is left untouched and listed, for a hand port.
  *
- * Usage: node scripts/i18n/codemod.ts [--dry] [files…]   (default: every .ts/.tsx file under src)
+ * Usage: node scripts/i18n/codemod.ts [--dry] [--deps-only] [files…]   (default: every .ts/.tsx file under src)
  */
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
@@ -312,16 +312,68 @@ function fixImports(source: string, file: string, used: { usedMessages: boolean;
   return applyEdits(source, edits)
 }
 
+/**
+ * Adds `locale` to the dependency list of every `use*` hook whose callback reads it: `useCallback(fn, [a])` →
+ * `useCallback(fn, [a, locale])`. i18next's `t` followed the current language even from a stale closure; a message
+ * call bound to `{ locale }` does not, so a memoized callback must be recreated when the language switches in place.
+ */
+export function addLocaleDeps(file: string, source: string): string {
+  const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  const edits: Edit[] = []
+  const readsLocale = (fn: ts.Node) => {
+    if (declaresName(fn, 'locale', true) && !ts.isArrowFunction(fn)) return false
+    let found = false
+    const visit = (node: ts.Node) => {
+      if (found) return
+      if (ts.isIdentifier(node) && node.text === 'locale') {
+        const parent = node.parent
+        const isPropertyName =
+          (ts.isPropertyAccessExpression(parent) && parent.name === node) ||
+          (ts.isPropertyAssignment(parent) && parent.name === node)
+        if (!isPropertyName) found = true
+        return
+      }
+      ts.forEachChild(node, visit)
+    }
+    ts.forEachChild(fn, visit)
+    return found
+  }
+  const visit = (node: ts.Node) => {
+    if (ts.isCallExpression(node)) {
+      const callee = node.expression
+      const name = ts.isIdentifier(callee) ? callee.text : ts.isPropertyAccessExpression(callee) ? callee.name.text : ''
+      const deps = node.arguments[node.arguments.length - 1]
+      const fn = node.arguments.find((arg) => ts.isArrowFunction(arg) || ts.isFunctionExpression(arg))
+      if (/^use[A-Z]/.test(name) && fn && deps && deps !== fn && ts.isArrayLiteralExpression(deps)) {
+        const params = (fn as ts.ArrowFunction).parameters
+        const shadowed = params.some((param) => declaresName(param, 'locale'))
+        const listed = deps.elements.some((element) => ts.isIdentifier(element) && element.text === 'locale')
+        if (!shadowed && !listed && readsLocale(fn)) {
+          const end = deps.getEnd() - 1
+          const text = deps.elements.length ? (deps.elements.hasTrailingComma ? ' locale' : ', locale') : 'locale'
+          edits.push({ start: end, end, text })
+        }
+      }
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(sf)
+  return applyEdits(source, edits)
+}
+
 if (import.meta.main) {
   const args = process.argv.slice(2)
   const dry = args.includes('--dry')
+  // Only the dependency-list pass, for files already ported by hand
+  const depsOnly = args.includes('--deps-only')
   const targets = args.filter((arg) => !arg.startsWith('--')).map((arg) => path.resolve(arg))
   const files = targets.length ? targets : listFiles(srcRoot)
   const findings: Finding[] = []
   let changed = 0
   for (const file of files) {
     const source = readFileSync(file, 'utf8')
-    const result = transformSource(file, source)
+    const result = depsOnly ? { output: source, findings: [] } : transformSource(file, source)
+    result.output = addLocaleDeps(file, result.output)
     findings.push(...result.findings)
     if (result.output !== source) {
       changed++
