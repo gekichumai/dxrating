@@ -18,10 +18,14 @@ raw id, another user's proof or no proof is a type error. The pattern and its li
 
 | Proof | Minted by | Demanded by |
 |---|---|---|
-| `ViewerIs<U>`: `U` is the signed-in user of this request | `withViewer(context.user, k)` | `services/lxns/viewer.ts` (every LXNS credential read or write) |
+| `ViewerIs<U>`: `U` is the signed-in user of this request | `withViewer(context.viewer, k)` | `services/lxns/viewer.ts` (every LXNS credential read or write, and `lxns.complete`) |
 
-`services/lxns/index.ts` keeps the raw `userId: string` implementations. oxlint (`no-restricted-imports`) allows
-imports of it only from `services/lxns/`, `app.ts` (the OAuth callback, which has no viewer yet) and tests.
+`context.viewer` is a `SessionViewer`: a class with a `#private` field, exported as a type only, so neither an object
+literal nor a spread copy with another `id` type-checks. Only `viewerFromSession` makes one, and oxlint
+(`no-restricted-imports` with `importNames`) allows importing it in `app.ts` alone, where the request's session is read.
+
+`services/lxns/index.ts` keeps the raw `userId: string` implementations. oxlint allows imports of it (any spelling:
+`./lxns`, `./lxns/index`, `./lxns/index.ts`) only from `services/lxns/` and tests.
 
 ## Where to stop
 
