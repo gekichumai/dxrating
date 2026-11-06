@@ -14,6 +14,7 @@ import {
   NetImportError,
   type NetImportErrorCode,
   isNetImportErrorCode,
+  netImportErrorCodeOf,
   unexpectedErrorSubtitle,
 } from './netImportErrorFeedback'
 import { captureAnalyticsEvent } from '@/lib/analytics'
@@ -183,10 +184,10 @@ export const importFromNETRecords = async (
           netImportProgress.update({ status: 'running', stage, progress: progress.progress })
         },
       ).catch((error: unknown) => {
-        // The stream's error codes are the ones the old route reports
-        if (error instanceof ServerImportFailedError && isNetImportErrorCode(error.code)) {
-          throw new NetImportError(error.code, error.message)
-        }
+        // The stream's error codes are the ones the old route reports; a replayed or polled job carries them in
+        // lowercase
+        const code = error instanceof ServerImportFailedError ? netImportErrorCodeOf(error.code) : null
+        if (code) throw new NetImportError(code, error instanceof Error ? error.message : undefined)
         throw error
       })
       haptics.trigger('success')

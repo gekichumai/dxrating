@@ -278,6 +278,16 @@ describe('importFromNETRecords on a cloud save', () => {
     expect(repository.applyImport).not.toHaveBeenCalled()
   })
 
+  it('shows the same maimai NET message for the lowercase code of a replayed or polled job', async () => {
+    const { repository } = fakeCloud(true, new ServerImportFailedError('invalid_credentials', null))
+
+    await importFromNETRecords(catalog, repository, 'merge', undefined, { region: 'jp', username: 'a', password: 'b' })
+
+    render(<>{netImportProgress.getSnapshot()?.message}</>)
+    expect(screen.getByText('Unable to sign in. Check your SEGA ID and password.')).toBeTruthy()
+    expect(document.body.textContent).not.toContain('invalid_credentials')
+  })
+
   it('with server imports off, fetches in the browser and merges as an auto job claiming the region (§7.4)', async () => {
     localStorage.setItem('import-net-records', JSON.stringify({ region: 'jp', username: 'sega', password: 'pw' }))
     vi.mocked(fetchEventSource).mockImplementationOnce(async (_url, options) => {

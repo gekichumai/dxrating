@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { NET_IMPORT_ERROR_I18N, isNetImportErrorCode } from '@/components/rating/io/import/netImportErrorFeedback'
+import { NET_IMPORT_ERROR_I18N, netImportErrorCodeOf } from '@/components/rating/io/import/netImportErrorFeedback'
 import { IMPORT_IN_PROGRESS } from '@/models/scores/cloudImports'
 
 /**
@@ -7,7 +7,8 @@ import { IMPORT_IN_PROGRESS } from '@/models/scores/cloudImports'
  * up on says so, anything else asks to try again. Never a bare error code.
  */
 export function importFailureMessage(code: string | null | undefined, t: TFunction): string {
-  if (code && isNetImportErrorCode(code)) return t(NET_IMPORT_ERROR_I18N[code])
+  const net = netImportErrorCodeOf(code)
+  if (net) return t(NET_IMPORT_ERROR_I18N[net])
   if (code === 'abandoned') return t('rating-calculator:cloud-save.import.errors.abandoned')
   if (code === IMPORT_IN_PROGRESS) return t('rating-calculator:cloud-save.import.errors.already-running')
   return t('rating-calculator:cloud-save.import.errors.generic')
@@ -22,6 +23,8 @@ const HISTORY_FAILURE_KEYS: Record<string, string> = {
 
 /** Why a past import failed, in a few words for its history row */
 export function importHistoryFailure(code: string | null | undefined, t: TFunction): string {
-  const key = code && Object.hasOwn(HISTORY_FAILURE_KEYS, code) ? HISTORY_FAILURE_KEYS[code]! : null
+  // A NET job's persisted code (`invalid_credentials`) reads as the stream's (`INVALID_CREDENTIALS`)
+  const lookup = netImportErrorCodeOf(code) ?? code
+  const key = lookup && Object.hasOwn(HISTORY_FAILURE_KEYS, lookup) ? HISTORY_FAILURE_KEYS[lookup]! : null
   return t(key ?? 'rating-calculator:cloud-save.history.failure.generic')
 }
