@@ -321,6 +321,30 @@
 .rating-tools .MuiButton-root {
   max-width: 100%;
 }
+/* The OneShot label is too long for one line on the narrowest cards: break between phrases (文節), not mid-word */
+.rating-oneshot .MuiButton-root {
+  word-break: auto-phrase;
+}
+/* Import, maimai NET settings, export and clear: whole buttons wrap, never their labels. Two equal columns by default;
+   a label wider than half the card takes the whole line. When the card has room for all four, they share one row */
+.rating-tools > section {
+  container-type: inline-size;
+}
+.rating-io-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rating-io-actions > .MuiButton-root {
+  flex: 1 1 calc(50% - 4px);
+  min-width: max-content;
+  white-space: nowrap;
+}
+@container (min-width: 34rem) {
+  .rating-io-actions > .MuiButton-root {
+    flex-basis: 0;
+  }
+}
 .rating-statistics {
   min-width: 0;
 }
@@ -362,8 +386,7 @@
 }
 .rating-add-fields .rating-add-submit {
   min-height: 40px;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 .rating-add-preview {
   display: flex;
