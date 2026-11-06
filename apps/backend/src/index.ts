@@ -2,7 +2,6 @@ import { initSentry, Sentry } from './lib/functions/sentry'
 initSentry()
 
 import './logger'
-import * as Sentry from '@sentry/node'
 import { Effect } from 'effect'
 import { runMain } from '@effect/platform-node/NodeRuntime'
 import { app, dxdataStore } from './app'
