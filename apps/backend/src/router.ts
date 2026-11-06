@@ -30,6 +30,8 @@ import { AppConfig } from './config'
 import { renderChartOgImageOutputEffect } from './services/functions/chart-og-image/index'
 import { CatalogIdentityError } from './services/catalog-identities'
 import { CatalogIdentities, McpCatalogSource } from './services/application'
+import { CloudSaveOptInError, FeatureFlags } from './services/feature-flags'
+import { requireSession } from './orpc-middleware'
 
 export interface ApiContext
   extends
@@ -965,6 +967,30 @@ const lxnsHandler = {
   ),
 }
 
+const featuresHandler = {
+  get: os.features.get.use(requireSession).handler(
+    handlerGen(function* ({ context }) {
+      const featureFlags = yield* FeatureFlags
+      return yield* featureFlags.features(context.user.id)
+    }),
+  ),
+  optInCloudSave: os.features.optInCloudSave.use(requireSession).handler(
+    handlerGen(function* ({ context, input }) {
+      const featureFlags = yield* FeatureFlags
+      return yield* featureFlags.optInCloudSave(context.user.id, input.consentVersion).pipe(
+        Effect.catchTag('CloudSaveOptInError', (error: CloudSaveOptInError) =>
+          Effect.fail(
+            error.reason === 'unavailable'
+              ? // Outside the opt-in phase the route does not exist.
+                new ORPCError('NOT_FOUND')
+              : new ORPCError('FORBIDDEN', { message: 'Cloud save is disabled for this account' }),
+          ),
+        ),
+      )
+    }),
+  ),
+}
+
 export const appRouter = os.router({
   tags: tagsHandler,
   comments: commentsHandler,
@@ -975,4 +1001,5 @@ export const appRouter = os.router({
   maimai: maimaiHandler,
   maimaiNet: maimaiNetHandler,
   lxns: lxnsHandler,
+  features: featuresHandler,
 })

@@ -73,6 +73,7 @@ src/
 - `POST /aliases` — Create song alias (auth required)
 - `POST /monitoring/tunnel` — Sentry error tunnel
 - `POST /maimai/fetch-records` — Fetch MaimaiNET records
+- `GET /me/features`, `POST /me/features/cloud-save/opt-in` — Session-only cloud save flags (tagged `internal`, kept out of `/spec.json`)
 
 ### Direct Routes
 
@@ -106,6 +107,53 @@ Optional:
 - `VAULT_SECRET_PATH` — Optional vault secrets file
 - `MCP_ANALYTICS_SECRET` — HMAC secret of the daily-rotating MCP analytics distinct_id (random per process if unset)
 - `MCP_POSTHOG_KEY`, `MCP_POSTHOG_HOST`, `MCP_ANALYTICS_SAMPLE_RATE`, `MCP_ANALYTICS_DAILY_CAP` — MCP PostHog events (see `src/services/mcp/analytics.ts`)
+- `CLOUD_SAVE_MODE` — `off` (default) | `allowlist` | `optin` | `on`; see "Feature flags" below
+- `CLOUD_SAVE_ALLOWLIST_EMAILS` — Comma-separated emails that get cloud save while the mode is not `off` (verified emails only; email/password sign-ups are unverified, so grant those with `flag:set`)
+- `SERVER_IMPORTS` — `off` (default) | `on`; server-side imports into cloud saves
+
+## Feature flags (cloud save, gekichumai/meta#17)
+
+`src/services/feature-flags.ts` (`FeatureFlags`) answers `isEnabled(flag, userId)`
+and caches each user's state in memory for 60 seconds. Precedence for
+`cloud_save`:
+
+1. `CLOUD_SAVE_MODE=off` is the kill switch and overrides everything.
+2. A `feature_flag_overrides` row decides for its user (`enabled=false` turns one user off).
+3. A verified email in `CLOUD_SAVE_ALLOWLIST_EMAILS` turns it on.
+4. Otherwise `on` enables everyone; `allowlist` and `optin` enable nobody.
+
+`server_imports` additionally needs `SERVER_IMPORTS=on` and cloud save; an
+`enabled=false` row turns one user off. It defaults to `off` so that enabling
+cloud save never also starts server-side writes into saves.
+
+Routes behind a flag use `requireSession` then `requireFeature(flag)` from
+`src/orpc-middleware.ts`; a disabled feature answers 404 NOT_FOUND. Their
+contracts live in `packages/api-contract/src/private/`, are tagged
+`['internal', 'cloud-save']` and never join `publicContractRoutes`.
+
+Grant or revoke a flag for one user (upserts an `admin` override; running
+servers see it within 60 seconds):
+
+```bash
+pnpm --filter @gekichumai/backend flag:set cloud_save owner@example.com on
+node dist/flag-set.js cloud_save owner@example.com off   # in the production image
+```
+
+### Backup gate and rollback
+
+The cloud save migrations (`*_feature_flags`, `*_cloud_save`) only add tables
+and indexes, and each folder carries a hand-written `down.sql` that the
+Drizzle migrator never reads. CI runs up -> every `down.sql` newest first ->
+up (`pnpm test:migration-roundtrip`).
+
+- Before the first production deploy that contains them: confirm the Coolify
+  Postgres backup schedule exists and that a restore from it has been tested,
+  then take a manual `pg_dump` right before deploying.
+- Rollback: set `CLOUD_SAVE_MODE=off`, roll back the image and keep the
+  tables. Old images run unchanged on the new schema.
+- Run a `down.sql` only after `pg_dump -t 'score_*' -t feature_flag_overrides`
+  has produced a verified backup; run them newest first. Each one also removes
+  its migration ledger row so a later deploy applies the migration again.
 
 ## Deployment
 

@@ -724,13 +724,13 @@ for (const path of ['/api/v1/tags', '/api/v1/aliases']) {
   app.on(['GET', 'HEAD'], path, publicListEtag)
 }
 
-// Comment responses depend on the signed-in viewer and must never enter a shared cache.
-app.use('/api/v1/comments', (c, next) =>
+// Comment and /me responses depend on the signed-in viewer and must never enter a shared cache.
+const viewerPrivateCacheHeaders = createMiddleware((c, next) =>
   runApp(
     Effect.gen(function* () {
       yield* Effect.tryPromise({
         try: next,
-        catch: (cause) => new HttpAdapterError({ operation: 'Run comments handler', cause }),
+        catch: (cause) => new HttpAdapterError({ operation: 'Run viewer-dependent handler', cause }),
       })
       c.header('Cache-Control', 'private, no-store')
       c.header('CDN-Cache-Control', 'no-store')
@@ -740,6 +740,9 @@ app.use('/api/v1/comments', (c, next) =>
     { signal: c.req.raw.signal },
   ),
 )
+for (const path of ['/api/v1/comments', '/api/v1/me', '/api/v1/me/*']) {
+  app.use(path, viewerPrivateCacheHeaders)
+}
 
 app.all('/api/v1/*', (c) =>
   runApp(
