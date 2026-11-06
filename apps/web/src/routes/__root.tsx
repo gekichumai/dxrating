@@ -31,6 +31,7 @@ import { buildNotFoundSeoMeta, buildRootSeoMeta, resolveRootHeadState, resolveSe
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import { useThemeColorSync } from '@/utils/useThemeColorSync'
+import { useRevealFocusInScrollFade } from '@/utils/useRevealFocusInScrollFade'
 import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
 import { THEME_INLINE_SCRIPT } from '@/setup/theme-script'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
@@ -100,6 +101,7 @@ const isLegalPath = (pathname: string) => pathname === '/privacy-policy' || path
  */
 function RootLayout() {
   const pathname = useResolvedPathname()
+  useRevealFocusInScrollFade()
 
   const isLegalPage = isLegalPath(pathname)
   const isDevelopersPage = pathname === '/developers'
