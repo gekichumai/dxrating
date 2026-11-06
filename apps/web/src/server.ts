@@ -83,7 +83,8 @@ export default Sentry.withSentry(
     // The same release the Vite plugin uses for artifact uploads (see vite.config.ts)
     release: import.meta.env.VITE_SENTRY_RELEASE || undefined,
     environment: import.meta.env.VITE_SENTRY_ENVIRONMENT ?? 'development',
-    enabled: import.meta.env.PROD,
+    // Off unless this is a CI release or preview build (see src/setup/sentry-release.ts), so local runs send nothing
+    enabled: Boolean(import.meta.env.VITE_SENTRY_RELEASE),
     tracesSampleRate: 0.2,
     // OAuth callbacks carry one-time code and state in the query
     ...sentryScrubOptions,
