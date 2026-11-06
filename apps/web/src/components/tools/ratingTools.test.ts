@@ -1,6 +1,6 @@
-import { calculateAchievement, calculateRatingAward } from '@gekichumai/maimai-domain'
+import { calculateRatingAward } from '@gekichumai/maimai-domain'
 import { describe, expect, it } from 'vitest'
-import { calculateTolerance, minimumAchievementForRating, parseNumberInput, toleranceRows } from './ratingTools'
+import { minimumAchievementForRating, parseNumberInput } from './ratingTools'
 
 describe('minimumAchievementForRating', () => {
   it('finds the lowest achievement reaching a rating', () => {
@@ -21,24 +21,6 @@ describe('minimumAchievementForRating', () => {
     const max = calculateRatingAward(13, 100.5).ratingAwardValue
     expect(minimumAchievementForRating(13, max + 1)).toBeNull()
     expect(minimumAchievementForRating(13, max)).toBe(100.5)
-  })
-})
-
-describe('toleranceRows', () => {
-  it('keeps each type within the allowed loss', () => {
-    const counts = { tap: 500, hold: 60, slide: 80, touch: 20, break: 40 }
-    const result = calculateTolerance(counts, 100.5)
-    for (const row of toleranceRows(counts, result)) {
-      expect(calculateAchievement(counts, { great: { [row.type]: row.great } })).toBeGreaterThanOrEqual(100.5)
-      if (row.great < row.count) {
-        expect(calculateAchievement(counts, { great: { [row.type]: row.great + 1 } })).toBeLessThan(100.5)
-      }
-    }
-  })
-
-  it('omits note types the chart lacks', () => {
-    const counts = { tap: 300, hold: 30, slide: 30, touch: 0, break: 10 }
-    expect(toleranceRows(counts, calculateTolerance(counts, 100)).map((r) => r.type)).toEqual(['tap', 'hold', 'slide'])
   })
 })
 

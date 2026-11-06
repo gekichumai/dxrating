@@ -25,7 +25,7 @@ export const SongPage: FC = () => {
   const search = routeApi.useSearch()
   const localeSearch = keepLocaleSearch(search)
   const navigate = useNavigate()
-  const { t } = useTranslation(['constants', 'versions', 'song'])
+  const { t } = useTranslation(['constants', 'versions', 'song', 'tools'])
   const { song, flattenedSheets } = useSongSheets(songId)
 
   const availableTypes = useMemo(() => {
@@ -106,10 +106,24 @@ export const SongPage: FC = () => {
           <SongSheetSummary key={sheet.id} sheet={sheet} />
         ))}
 
-        <Link to="/songs/$songId" params={{ songId: song.id }} {...localeSearch} className="link self-start text-sm">
-          {t('song:hub.all-charts-link')}
-          <span aria-hidden> →</span>
-        </Link>
+        {/* The chart's own tools sit beside the hub link, so the tolerance page is one tap from the chart header */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          <Link to="/songs/$songId" params={{ songId: song.id }} {...localeSearch} className="link">
+            {t('song:hub.all-charts-link')}
+            <span aria-hidden> →</span>
+          </Link>
+          {activeSheet && (
+            <Link
+              to="/songs/$songId/$type/$difficulty/tolerance"
+              params={{ songId: activeSheet.songId, type: activeSheet.type, difficulty: activeSheet.difficulty }}
+              {...localeSearch}
+              className="link"
+            >
+              {t('tools:tolerance.chart-link')}
+              <span aria-hidden> →</span>
+            </Link>
+          )}
+        </div>
       </MaterialSurface>
 
       {visibleSheets.map((sheet) => (

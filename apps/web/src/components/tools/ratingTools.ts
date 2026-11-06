@@ -1,10 +1,4 @@
-import {
-  SCORE_COEFFICIENT_TABLE,
-  calculateRatingAward,
-  calculateTolerance,
-  type ToleranceNoteCounts,
-  type ToleranceResult,
-} from '@gekichumai/maimai-domain'
+import { SCORE_COEFFICIENT_TABLE, calculateRatingAward } from '@gekichumai/maimai-domain'
 
 export const MIN_INTERNAL_LEVEL = 1
 export const MAX_INTERNAL_LEVEL = 15
@@ -57,34 +51,3 @@ export function minimumAchievementForRating(internalLevel: number, targetRating:
 
 export const ratingFor = (internalLevel: number, achievement: number) =>
   calculateRatingAward(internalLevel, achievement)
-
-export type ToleranceJudgementRow = {
-  type: 'tap' | 'hold' | 'slide' | 'touch'
-  count: number
-  great: number
-  good: number
-  miss: number
-}
-
-const NOTE_MULTIPLIER = { tap: 1, hold: 2, slide: 3, touch: 1 } as const
-const EPSILON = 1e-9
-
-/** Allowed GREAT / GOOD / MISS per note type (each on its own, capped at that type's note count) */
-export function toleranceRows(counts: ToleranceNoteCounts, result: ToleranceResult): ToleranceJudgementRow[] {
-  const max = (loss: number, cap: number) =>
-    loss > 0 ? Math.min(cap, Math.floor(result.allowedLoss / loss + EPSILON)) : 0
-  return (['tap', 'hold', 'slide', 'touch'] as const)
-    .filter((type) => counts[type] > 0)
-    .map((type) => {
-      const m = NOTE_MULTIPLIER[type]
-      return {
-        type,
-        count: counts[type],
-        great: max(result.tapGreatLoss * m, counts[type]),
-        good: max(result.tapGoodLoss * m, counts[type]),
-        miss: max(result.tapMissLoss * m, counts[type]),
-      }
-    })
-}
-
-export { calculateTolerance }

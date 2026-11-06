@@ -1,6 +1,6 @@
 import type { NoteCounts, TypeEnum } from '@gekichumai/dxdata'
 import { InputAdornment, TextField } from '@mui/material'
-import { Link } from '@tanstack/react-router'
+import { Link, useSearch } from '@tanstack/react-router'
 import { type FC, useDeferredValue, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import MdiMagnify from '~icons/mdi/magnify'
@@ -11,6 +11,7 @@ import { buildSheetPath, songHubPath } from '@/components/sheet/sheetLinks'
 import { ToleranceCalculator } from '@/components/tools/ToleranceCalculator'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useFilteredSheets } from '@/songs'
+import { keepLocaleSearch } from '@/setup/locale'
 
 export type ToleranceSelectedSheet = {
   id: string
@@ -161,6 +162,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
         </header>
         {picker}
         <p className="m-0 text-sm text-secondary">{t('tools:tolerance.pick-a-chart')}</p>
+        <ChartPagesNote />
       </div>
     )
   }
@@ -193,6 +195,82 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
           <ToleranceCalculator key={sheet.id} sheet={sheet} source="tool_page" headingAs="h2" />
         </div>
         <div className="lg:col-start-1 lg:row-start-2">{picker}</div>
+      </div>
+    </div>
+  )
+}
+/** A real chart for the "see it on a chart page" link: catalog data, nothing about the viewer */
+const EXAMPLE_CHART = { songId: 'にゃーにゃー冒険譚', type: 'dx', difficulty: 'master', label: 'DX MASTER' } as const
+
+/**
+ * Tells picker visitors the calculator also lives on every chart page, with a miniature of that page. The miniature is
+ * static markup in the design tokens with no data in it, so the cached picker HTML stays the same for everyone.
+ */
+const ChartPagesNote: FC = () => {
+  const { t } = useTranslation(['tools'])
+  const search = useSearch({ strict: false })
+  return (
+    <MaterialSurface as="aside" aria-labelledby="tolerance-chart-pages" className="flex items-center gap-4 p-3">
+      <ChartPageMiniature />
+      <div className="flex min-w-0 flex-col gap-1">
+        <h2 id="tolerance-chart-pages" className="m-0 section-title">
+          {t('tools:tolerance.chart-pages.title')}
+        </h2>
+        <p className="m-0 text-sm text-secondary text-pretty">{t('tools:tolerance.chart-pages.body')}</p>
+        {/* The chart page itself, where the card lives, keeping the visitor's ?locale= variant */}
+        <Link
+          to="/songs/$songId/$type/$difficulty"
+          params={{ songId: EXAMPLE_CHART.songId, type: EXAMPLE_CHART.type, difficulty: EXAMPLE_CHART.difficulty }}
+          {...keepLocaleSearch(search)}
+          className="link self-start text-sm"
+        >
+          {t('tools:tolerance.chart-pages.example')}{' '}
+          <span lang="ja" translate="no">
+            {EXAMPLE_CHART.songId}
+          </span>{' '}
+          {EXAMPLE_CHART.label}
+          <span aria-hidden> →</span>
+        </Link>
+      </div>
+    </MaterialSurface>
+  )
+}
+
+const bar = 'block rounded-full bg-black/12'
+
+/** A chart page drawn small: header, difficulty tabs, summary, and the tolerance card picked out in the accent */
+const ChartPageMiniature: FC = () => {
+  const { t } = useTranslation(['tools'])
+  return (
+    <div aria-hidden className="glass-inset flex w-32 shrink-0 flex-col gap-1.5 p-2 xs:w-36 select-none">
+      <div className="flex items-center gap-1.5">
+        <span className="block size-6 shrink-0 rounded-[var(--radius-xs)] bg-[var(--accent-subtle)]" />
+        <span className="flex flex-col gap-1">
+          <span className={`${bar} h-1.5 w-14`} />
+          <span className={`${bar} h-1 w-9`} />
+        </span>
+      </div>
+      <div className="flex gap-1">
+        {[0, 1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className={`block h-1.5 flex-1 rounded-full ${i === 3 ? 'bg-[var(--accent)]' : 'bg-black/12'}`}
+          />
+        ))}
+      </div>
+      <span className={`${bar} h-1 w-full`} />
+      <span className={`${bar} h-1 w-3/4`} />
+      <div className="flex flex-col gap-1 rounded-[var(--radius-sm)] p-1.5 shadow-[inset_0_0_0_1.5px_var(--accent)] bg-[var(--accent-subtle)]">
+        <span className="text-[0.5625rem] font-bold leading-none text-fg-1">{t('tools:tolerance.section-title')}</span>
+        <span className="text-[0.5rem] leading-none text-fg-2 num">{t('tools:tolerance.budget.label')} 0.5000%</span>
+        <span className="block h-1 w-full overflow-hidden rounded-full bg-black/12">
+          <span className="block h-full w-3/5 rounded-full bg-[var(--accent)]" />
+        </span>
+        <span className="grid grid-cols-3 gap-0.5">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <span key={i} className="block h-2 rounded-[2px] bg-black/8" />
+          ))}
+        </span>
       </div>
     </div>
   )
