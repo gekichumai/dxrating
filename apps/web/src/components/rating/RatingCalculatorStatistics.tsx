@@ -10,11 +10,12 @@ import { useRatingEntries } from './useRatingEntries'
 
 /**
  * The bucket colours, the same hues as the B15/B35 pills and row tints in the table. Palette variables, so the SVG
- * follows the theme without a redraw; the average lines use a deeper step (lighter on the dark theme).
+ * follows the theme without a redraw. Bars use the 600 step for at least 3:1 against the glass (1.4.11); the average
+ * lines use a deeper step (both lighten on the dark theme).
  */
 const BUCKET_COLORS = {
-  b15: { bar: 'rgb(var(--c-amber-500))', line: 'rgb(var(--c-amber-700))', swatch: 'bg-amber-500' },
-  b35: { bar: 'rgb(var(--c-cyan-500))', line: 'rgb(var(--c-cyan-700))', swatch: 'bg-cyan-500' },
+  b15: { bar: 'rgb(var(--c-amber-600))', line: 'rgb(var(--c-amber-800))', swatch: 'bg-amber-600' },
+  b35: { bar: 'rgb(var(--c-cyan-600))', line: 'rgb(var(--c-cyan-800))', swatch: 'bg-cyan-600' },
 } as const
 
 const RatingCalculatorStatisticsFactItem: FC<{
