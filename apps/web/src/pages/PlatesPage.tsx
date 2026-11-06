@@ -238,7 +238,7 @@ const RemasterVariantLabel: FC = () => {
   return (
     <span
       title={t('plates:remaster-variant.description')}
-      className="shrink-0 px-1.5 py-px rounded-[var(--radius-xs)] text-[10px] font-semibold leading-4 whitespace-nowrap text-accent-strong bg-accent-subtle border border-solid border-[color-mix(in_oklab,var(--accent-strong)_35%,transparent)]"
+      className="min-w-0 max-w-full px-1.5 py-px rounded-[var(--radius-xs)] text-[10px] font-semibold leading-4 [overflow-wrap:anywhere] text-accent-strong bg-accent-subtle border border-solid border-[color-mix(in_oklab,var(--accent-strong)_35%,transparent)]"
     >
       {t('plates:remaster-variant.label')}
       <span className="sr-only">: {t('plates:remaster-variant.description')}</span>
