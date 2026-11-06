@@ -184,7 +184,7 @@ export const RatingCalculator = () => {
                 : t('rating-calculator:auto-save.title')}
             </h2>
 
-            <div className="mt-2">
+            <div className="rating-oneshot mt-2">
               <RenderToOneShotImageButton />
             </div>
 
