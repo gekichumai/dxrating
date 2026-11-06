@@ -996,7 +996,11 @@
     "rating.reverse.result": "필요한 달성률",
     "rating.reverse.unreachable": "도달 불가",
     "rating.table.title": "레이팅 표",
-    "rating.table.description": "선택한 상수와 인접 상수의 랭크별 레이팅입니다."
+    "rating.table.description": "선택한 상수와 인접 상수의 랭크별 레이팅입니다.",
+    "tolerance.search-another": "다른 채보 선택",
+    "tolerance.open-page": "별도 페이지로 열기",
+    "tolerance.sheet-seo-title": "{{title}} {{sheetLabel}} 허용 미스 계산",
+    "tolerance.sheet-seo-description": "{{title}} {{sheetLabel}}에서 SSS+ 등 목표 달성률을 넘기기 위해 GREAT·GOOD·MISS를 노트 종류별로 몇 개까지 낼 수 있는지 계산합니다. BREAK 50 / 100 감점 환산 포함."
   },
   "recommend": {
     "title": "레이팅 추천",

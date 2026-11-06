@@ -996,7 +996,11 @@
     "rating.reverse.result": "Achievement needed",
     "rating.reverse.unreachable": "Out of reach",
     "rating.table.title": "Rating table",
-    "rating.table.description": "Ratings at each rank for the chosen internal level and its neighbours."
+    "rating.table.description": "Ratings at each rank for the chosen internal level and its neighbours.",
+    "tolerance.search-another": "Pick another chart",
+    "tolerance.open-page": "Open as a page",
+    "tolerance.sheet-seo-title": "{{title}} {{sheetLabel}} Tolerance Calculator",
+    "tolerance.sheet-seo-description": "How many GREAT, GOOD and MISS you can afford on {{title}} {{sheetLabel}} and still reach SSS+ or any target achievement, per note type, with BREAK 50 / 100 conversions."
   },
   "recommend": {
     "title": "Rating boosts",

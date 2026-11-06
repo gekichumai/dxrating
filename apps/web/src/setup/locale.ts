@@ -32,7 +32,9 @@ export function toSupportedLocale(lng: string | null | undefined): SupportedLoca
  */
 export function keepLocaleSearch(search: unknown): { search?: { locale: SupportedLocale } } {
   if (typeof search !== 'object' || search === null) return {}
-  const locale = toSupportedLocale((search as Record<string, unknown>)[LOCALE_QUERY_PARAM] as string | undefined)
+  // The router parses search JSON-first, so `?locale=123` arrives as a number: only a string can name a locale
+  const value = (search as Record<string, unknown>)[LOCALE_QUERY_PARAM]
+  const locale = typeof value === 'string' ? toSupportedLocale(value) : null
   return locale ? { search: { locale } } : {}
 }
 

@@ -2,7 +2,7 @@ import { ServerEnum, TypeEnum, type DifficultyEnum, type NoteCounts, type Sheet,
 import type { SupportedLocale } from '@/setup/locale'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { createServerI18n } from '@/setup/init-i18n'
-import { buildSheetLink, songHubPath } from '@/components/sheet/sheetLinks'
+import { buildSheetLink, buildSheetTolerancePath, songHubPath } from '@/components/sheet/sheetLinks'
 import { getSheetPageTitle, getSheetTitleLabel, getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { buildChartOgImageAlt, buildChartOgImageUrl } from '@/routes/-chart-og-meta'
 
@@ -773,6 +773,34 @@ export function buildToplistsSeo(locale: SupportedLocale) {
 }
 
 /** SEO for the public calculator pages under /tools (tools:<tool>.seo-title / seo-description) */
+/** One chart's tolerance calculator, titled after the chart, at its own URL */
+export function buildSheetToleranceSeo(
+  locale: SupportedLocale,
+  sheet: { songId: string; title: string; type: TypeEnum; difficulty: DifficultyEnum | string },
+) {
+  const values = { title: sheet.title, sheetLabel: getSheetTitleLabel(sheet, locale) }
+  const seo = buildCollectionSeo(
+    locale,
+    buildSheetTolerancePath(sheet),
+    t(locale, 'tools:tolerance.sheet-seo-title', values),
+    t(locale, 'tools:tolerance.sheet-seo-description', values),
+  )
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    '@id': `${seo.url}#webapp`,
+    url: seo.url,
+    name: seo.title,
+    description: seo.description,
+    applicationCategory: 'UtilityApplication',
+    operatingSystem: 'Any',
+    inLanguage: locale,
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  }
+  return { ...seo, structuredData }
+}
+
 export function buildToolPageSeo(locale: SupportedLocale, tool: 'tolerance' | 'rating') {
   const seo = buildCollectionSeo(
     locale,
