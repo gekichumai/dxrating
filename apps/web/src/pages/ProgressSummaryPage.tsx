@@ -2,7 +2,7 @@ import { TypeEnum } from '@gekichumai/dxdata'
 import type { VersionedSheet } from '@gekichumai/maimai-domain'
 import { Link } from '@tanstack/react-router'
 import clsx from 'clsx'
-import { type CSSProperties, type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type CSSProperties, type FC, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import {
@@ -71,28 +71,27 @@ export function buildProgressRows(
 
 const targetSearch = (target: CompletionTarget) => (target === DEFAULT_COMPLETION_TARGET ? {} : { target })
 
-/** Whether a horizontal scroller still has content past its end edge, to show the edge fade only then */
+/**
+ * Whether a horizontal scroller still has content past its end edge, to show the edge fade only then. A callback ref,
+ * because the scroller mounts only once the records are in, after the first render.
+ */
 function useOverflowEnd<T extends HTMLElement>() {
-  const ref = useRef<T>(null)
   const [hasMore, setHasMore] = useState(false)
-  const measure = useCallback(() => {
-    const el = ref.current
+  const ref = useCallback((el: T | null) => {
     if (!el) return
-    setHasMore(el.scrollWidth - el.clientWidth - Math.abs(el.scrollLeft) > 1)
-  }, [])
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
+    const measure = () => setHasMore(el.scrollWidth - el.clientWidth - Math.abs(el.scrollLeft) > 1)
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(el)
+    // The table can widen without the scroller resizing (the chart list finishing loading)
+    if (el.firstElementChild) observer.observe(el.firstElementChild)
     el.addEventListener('scroll', measure, { passive: true })
     return () => {
       observer.disconnect()
       el.removeEventListener('scroll', measure)
     }
-  }, [measure])
-  return { ref, hasMore, measure }
+  }, [])
+  return { ref, hasMore }
 }
 
 // The level column stays put while the counts scroll sideways: glass over the scrolled cells, with an edge line
@@ -107,8 +106,6 @@ export const ProgressSummaryPage: FC = () => {
   const rows = useMemo(() => (catalog ? buildProgressRows(catalog.sheets, bySheetId) : null), [catalog, bySheetId])
 
   const scroller = useOverflowEnd<HTMLDivElement>()
-  const { measure } = scroller
-  useEffect(measure, [rows, measure])
 
   return (
     <ScorePageFrame width="5xl">
@@ -130,7 +127,7 @@ export const ProgressSummaryPage: FC = () => {
         <MaterialSurface
           ref={scroller.ref}
           className={clsx(
-            'w-full overflow-x-auto overscroll-x-contain [scrollbar-gutter:stable]',
+            'w-full overflow-x-auto overscroll-x-contain',
             scroller.hasMore && '[mask-image:linear-gradient(to_right,black_calc(100%-24px),transparent)]',
           )}
         >

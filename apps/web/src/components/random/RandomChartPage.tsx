@@ -26,13 +26,20 @@ import {
   type RandomChartFilters,
 } from './randomChart'
 
-/** The value once it has stopped changing for `delay` ms, so a slider drag is announced once, not on every step */
-function useSettled<T>(value: T, delay: number): T {
+/**
+ * The value once it has stopped changing for `delay` ms, so a slider drag is announced once, not on every step. The
+ * first value after `null` (still loading) is taken at once, so the count never shows a stale 0 after loading.
+ */
+function useSettled<T>(value: T | null, delay: number): T | null {
   const [settled, setSettled] = useState(value)
   useEffect(() => {
+    if (settled === null || value === null) {
+      setSettled(value)
+      return
+    }
     const timer = setTimeout(() => setSettled(value), delay)
     return () => clearTimeout(timer)
-  }, [value, delay])
+  }, [value, delay, settled])
   return settled
 }
 
@@ -67,7 +74,7 @@ export const RandomChartPage: FC = () => {
     })
   }
 
-  const settledPoolSize = useSettled(pool.length, 500)
+  const settledPoolSize = useSettled(catalog ? pool.length : null, 500)
 
   const update = (patch: Partial<RandomChartFilters>) => setFilters((current) => ({ ...current, ...patch }))
 
@@ -179,7 +186,7 @@ export const RandomChartPage: FC = () => {
             {t('random:roll')}
           </Button>
           <output className="text-sm text-fg-2 num">
-            {catalog ? (
+            {settledPoolSize !== null ? (
               t('random:pool-size', { count: settledPoolSize })
             ) : (
               <CircularProgress size="1rem" aria-label={t('random:loading')} />
