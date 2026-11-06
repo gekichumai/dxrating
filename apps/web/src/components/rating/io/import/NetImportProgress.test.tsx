@@ -103,7 +103,7 @@ describe('global auto-import settings', () => {
 
   it('sets up remembered credentials and auto-import without starting an import', async () => {
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    const trigger = screen.getByRole('button', { name: 'maimai NET settings' })
+    const trigger = screen.getByRole('button', { name: 'Import from maimai NET…' })
     fireEvent.click(trigger)
     for (const radio of screen.getAllByRole('radio')) expect(radio.hasAttribute('disabled')).toBe(true)
     fireEvent.change(screen.getByLabelText('SEGA ID'), { target: { value: 'fixture' } })
@@ -133,7 +133,7 @@ describe('global auto-import settings', () => {
         <NetImportSettingsButton />
       </NetImportSettingsProvider>,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import from maimai NET…' }))
     rerender(
       <NetImportSettingsProvider>
         <p>Another page</p>
@@ -149,11 +149,11 @@ describe('global auto-import settings', () => {
       JSON.stringify({ region: 'jp', username: 'fixture', password: 'fixture' }),
     )
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import from maimai NET…' }))
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     localStorage.setItem('rating-auto-import-from-net', '"merge"')
-    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import from maimai NET…' }))
     expect((screen.getByRole('radio', { name: /^Merge/ }) as HTMLInputElement).checked).toBe(true)
     fireEvent.click(screen.getByRole('radio', { name: 'Disabled' }))
     expect(localStorage.getItem('rating-auto-import-from-net')).toBe('false')
@@ -166,7 +166,7 @@ describe('global auto-import settings', () => {
     )
     localStorage.setItem('rating-auto-import-from-net', '"merge"')
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import from maimai NET…' }))
     fireEvent.click(screen.getByRole('button', { name: /Re-import now/ }))
     // the import starts once the complete catalog is there
     await waitFor(() =>
@@ -189,7 +189,7 @@ describe('global auto-import settings', () => {
 describe('SEGA maintenance notice', () => {
   const openSettings = () => {
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import from maimai NET…' }))
   }
 
   it('warns before anyone types credentials while the selected region is in maintenance, until dismissed', async () => {
