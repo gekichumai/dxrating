@@ -64,7 +64,7 @@ describe('RecentPage', () => {
     expect(page).toBeTruthy()
     expect(page?.querySelector('[itemprop="name"]')?.textContent).toBe('New charts')
 
-    const list = page?.querySelector('ol[itemprop="mainEntity"][itemscope][itemtype="https://schema.org/ItemList"]')
+    const list = page?.querySelector('[itemprop="mainEntity"][itemscope][itemtype="https://schema.org/ItemList"]')
     expect(list?.querySelector('meta[itemprop="numberOfItems"]')?.getAttribute('content')).toBe('1')
 
     const listItem = list?.querySelector(
@@ -78,8 +78,30 @@ describe('RecentPage', () => {
 
     const chart = listItem?.querySelector('article[itemscope][itemtype="https://schema.org/MusicRecording"]')
     expect(chart?.getAttribute('itemid')).toBe('https://dxrating.net/songs/song-a/dx/master')
-    expect(chart?.querySelector('h2 [itemprop="name"]')?.textContent).toBe('Song A')
+    expect(chart?.querySelector('h3 [itemprop="name"]')?.textContent).toBe('Song A')
     expect(chart?.querySelector('[itemprop="byArtist"] [itemprop="name"]')?.textContent).toBe('Artist A')
-    expect(chart?.querySelector('time[itemprop="datePublished"]')?.getAttribute('datetime')).toBe('2025-05-01')
+    expect(chart?.querySelector('meta[itemprop="datePublished"]')?.getAttribute('content')).toBe('2025-05-01')
+  })
+
+  it('groups charts under one heading per release date, numbering positions across groups', () => {
+    const second = {
+      ...charts[0],
+      songId: 'song-b',
+      title: 'Song B',
+      releaseDate: '2025-04-01',
+      releaseDateTimestamp: new Date('2025-04-01T06:00:00+09:00').valueOf(),
+      href: '/songs/song-b/dx/master',
+    }
+    const third = { ...second, difficulty: DifficultyEnum.ReMaster, href: '/songs/song-b/dx/remaster' }
+    render(<RecentPage charts={[charts[0], second, third]} />)
+
+    const dateHeadings = screen.getAllByRole('heading', { level: 2 })
+    expect(dateHeadings.map((heading) => heading.textContent)).toEqual(['May 1, 2025', 'Apr 1, 2025'])
+    expect(screen.getAllByRole('list').map((list) => within(list).getAllByRole('listitem').length)).toEqual([1, 2])
+    expect(
+      [...document.querySelectorAll('li[itemprop="itemListElement"] > meta[itemprop="position"]')].map((meta) =>
+        meta.getAttribute('content'),
+      ),
+    ).toEqual(['1', '2', '3'])
   })
 })
