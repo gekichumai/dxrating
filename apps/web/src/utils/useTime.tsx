@@ -29,11 +29,11 @@ export const useTime = (time?: string, length: 'short' | 'normal' = 'normal') =>
       }
 
       const dateString = date.toLocaleString(i18n.language)
-      const relativeTime = intlFormatDistance(date, new Date(now), { locale: i18n.language })
-
       if (length === 'short') {
-        return relativeTime
+        // Abbreviated units ("59 min. ago") so the header's build line fits beside the action pill at 375px.
+        return intlFormatDistance(date, new Date(now), { locale: i18n.language, style: 'short' })
       }
+      const relativeTime = intlFormatDistance(date, new Date(now), { locale: i18n.language })
       return `${dateString} (${relativeTime})`
     } catch {
       return 'unknown'
