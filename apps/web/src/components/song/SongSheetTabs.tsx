@@ -2,7 +2,7 @@ import { difficultyInkStyle } from '@/utils/difficultyInk'
 import { type DifficultyEnum, type Sheet, TypeEnum } from '@gekichumai/dxdata'
 import { Tab, Tabs } from '@mui/material'
 import clsx from 'clsx'
-import { type FC, type MouseEvent, type SyntheticEvent, useMemo } from 'react'
+import { type FC, type KeyboardEvent, type MouseEvent, type SyntheticEvent, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '../../models/difficulties'
 import { DIFFICULTY_ORDER } from '../../models/constants'
@@ -26,6 +26,13 @@ const isModifiedClick = (event: SyntheticEvent) => {
 
 const keepModifiedClicks = (event: MouseEvent) => {
   if (!isModifiedClick(event)) event.preventDefault()
+}
+
+// The tabs are links, which browsers activate with Enter only; the tab pattern also activates with Space
+const activateOnSpace = (event: KeyboardEvent<HTMLElement>) => {
+  if (event.key !== ' ' || event.repeat) return
+  event.preventDefault()
+  event.currentTarget.click()
 }
 
 // DX and STD read as the game's own short codes; the utage kinds have no short code, so they keep their name
@@ -88,6 +95,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
                   component="a"
                   href={hrefFor(type)}
                   onClick={keepModifiedClicks}
+                  onKeyDown={activateOnSpace}
                   aria-label={label}
                   title={label}
                   label={typeShortLabel(type, label)}
@@ -146,6 +154,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
                 component="a"
                 href={hrefFor(activeType, difficulty)}
                 onClick={keepModifiedClicks}
+                onKeyDown={activateOnSpace}
                 label={config?.title ?? difficulty}
                 classes={{
                   root: clsx(
