@@ -141,8 +141,14 @@ const CAPTCHA_MARKERS = [
  * digits are removed, and the result is cut to 200 characters.
  */
 export function pageSignals(html: string, submittedId?: string): string | undefined {
-  const dom = new DOMParser({ errorHandler: () => {} }).parseFromString(html, 'text/html')
-  const text = (selector: string) => dom.querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim() || undefined
+  // never throws: it only describes a failure, so an empty or broken page has no signals rather than a defect
+  let dom: Document | undefined
+  try {
+    dom = html.trim() ? new DOMParser({ errorHandler: () => {} }).parseFromString(html, 'text/html') : undefined
+  } catch {
+    dom = undefined
+  }
+  const text = (selector: string) => dom?.querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim() || undefined
   const parts = [
     text('#error') ?? text('.error') ?? text('title'),
     CAPTCHA_MARKERS.some((marker) => html.includes(marker)) ? 'captcha' : undefined,

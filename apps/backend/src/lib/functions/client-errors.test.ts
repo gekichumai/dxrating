@@ -190,6 +190,15 @@ describe('what SEGA said when it refused a login (the 2026-11-01 outage)', () =>
     expect(error).toMatchObject({ code: 'INTERNAL_ERROR', step: 'login_submit', upstreamMessage: 'Login | captcha' })
   })
 
+  it('keeps the typed failure when the international login answers with an empty body', async () => {
+    const { client } = stubbed(new MaimaiNETIntlClient(), (url) =>
+      url === URLS.INTL.LOGIN_PAGE ? html('<form></form>') : new Response('', { status: 502 }),
+    )
+    expect(pageSignals('')).toBeUndefined()
+    const error = await failure(client.loginEffect({ id: 'synthetic', password: 'synthetic' }))
+    expect(error).toMatchObject({ code: 'INTERNAL_ERROR', step: 'login_submit', upstreamMessage: undefined })
+  })
+
   it('records the gateway error text of an international rejection', async () => {
     const { client } = stubbed(new MaimaiNETIntlClient(), (url) => {
       if (url === URLS.INTL.LOGIN_PAGE) return html('<form></form>')
