@@ -406,7 +406,6 @@ export const LoginForm = ({
   )
 }
 function ConditionalPasskey({ onSuccess }: { onSuccess?: () => void }) {
-  const locale = useLocale()
   const haptic = useWebHaptics()
   useMountEffect(() => {
     let active = true
@@ -426,7 +425,7 @@ function ConditionalPasskey({ onSuccess }: { onSuccess?: () => void }) {
       if (!active || error) return
 
       haptic.trigger('success')
-      toast.success(m.auth_login_toastSuccess({}, { locale }))
+      toast.success(m.auth_login_toastSuccess({}))
       onSuccess?.()
     }
 

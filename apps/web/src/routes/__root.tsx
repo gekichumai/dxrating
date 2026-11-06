@@ -186,10 +186,10 @@ function OAuthErrorHandler() {
     console.warn('[oauth] sign-in returned an error', error, params.get('error_description') ?? '')
     if (error === 'access_denied') {
       // Cancelling at the provider is a choice, not a failure
-      toast(m.auth_userProfile_oauthError_access_denied({}, { locale }), { id: 'oauth-error' })
+      toast(m.auth_userProfile_oauthError_access_denied({}), { id: 'oauth-error' })
     } else {
       const message = Object.hasOwn(OAUTH_ERRORS, error) ? OAUTH_ERRORS[error]?.({}, { locale }) : undefined
-      toast.error(message || m.auth_userProfile_oauthError_default({}, { locale }), { id: 'oauth-error' })
+      toast.error(message || m.auth_userProfile_oauthError_default({}), { id: 'oauth-error' })
     }
 
     params.delete('error')

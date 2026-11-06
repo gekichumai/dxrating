@@ -66,4 +66,20 @@ export const AutoImport = () => {
     expect(output).toContain('}, [catalog])')
     expect(findings).toHaveLength(1)
   })
+
+  it('lets messages inside effects resolve the locale when they fire', () => {
+    const { output } = addLocaleDeps(
+      '/virtual/Component.tsx',
+      `export const Conditional = () => {
+  const locale = useLocale()
+  useMountEffect(() => {
+    void signIn().then(() => toast.success(m.auth_login_toastSuccess({}, { locale })))
+  })
+  return <span>{m.auth_login_title({}, { locale })}</span>
+}
+`,
+    )
+    expect(output).toContain('toast.success(m.auth_login_toastSuccess({}))')
+    expect(output).toContain('m.auth_login_title({}, { locale })')
+  })
 })

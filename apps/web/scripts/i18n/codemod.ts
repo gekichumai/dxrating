@@ -26,7 +26,15 @@ const idByKey = new Map(collectEntries(base).map((entry) => [entry.key, entry.id
 
 const HOOKS_WITH_DEPS = new Set(['useMemo', 'useCallback', 'useEffect', 'useLayoutEffect', 'useInsertionEffect'])
 // Effects never run during SSR, so messages inside them resolve the client locale when they fire, like i18next's `t`
-const EFFECT_HOOKS = new Set(['useEffect', 'useLayoutEffect', 'useInsertionEffect'])
+const EFFECT_HOOKS = new Set([
+  'useEffect',
+  'useLayoutEffect',
+  'useInsertionEffect',
+  // react-use effect variants
+  'useEffectOnce',
+  'useMountEffect',
+  'useUpdateEffect',
+])
 // Hooks that only memoize a value or callback: safe to recreate when the locale changes
 const MEMO_HOOKS = new Set(['useMemo', 'useCallback', 'useAsyncFn'])
 
@@ -369,7 +377,40 @@ export function addLocaleDeps(file: string, source: string): { output: string; f
     ts.forEachChild(fn, visit)
     return found
   }
+  // `m.key(inputs, { locale })` inside an effect: the effect may outlive a language switch (a mount-only effect, an
+  // async continuation), so let the client runtime resolve the locale when the message fires
+  const stripEffectLocales = (fn: ts.Node) => {
+    const visitInner = (node: ts.Node) => {
+      if (
+        ts.isCallExpression(node) &&
+        ts.isPropertyAccessExpression(node.expression) &&
+        ts.isIdentifier(node.expression.expression) &&
+        node.expression.expression.text === 'm' &&
+        node.arguments.length === 2
+      ) {
+        const options = node.arguments[1]
+        if (
+          ts.isObjectLiteralExpression(options) &&
+          options.properties.length === 1 &&
+          ts.isShorthandPropertyAssignment(options.properties[0]) &&
+          options.properties[0].name.text === 'locale'
+        ) {
+          edits.push({ start: node.arguments[0].getEnd(), end: options.getEnd(), text: '' })
+        }
+      }
+      ts.forEachChild(node, visitInner)
+    }
+    visitInner(fn)
+  }
   const visit = (node: ts.Node) => {
+    if (ts.isCallExpression(node) && EFFECT_HOOKS.has(hookName(node))) {
+      const fn = node.arguments[0]
+      if (fn && (ts.isArrowFunction(fn) || ts.isFunctionExpression(fn))) {
+        stripEffectLocales(fn)
+        ts.forEachChild(node, visit)
+        return
+      }
+    }
     if (ts.isCallExpression(node)) {
       const callee = node.expression
       const name = ts.isIdentifier(callee) ? callee.text : ts.isPropertyAccessExpression(callee) ? callee.name.text : ''
