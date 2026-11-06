@@ -15,8 +15,10 @@ export const ResponsiveDialog: FC<{
   title?: ReactNode
   /** Id of a heading inside the content that names the dialog, when the content renders its own */
   labelledBy?: string
+  /** The content renders its own close button (e.g. in a header row with other actions), so the shared one is left out */
+  hideCloseButton?: boolean
   children?: () => ReactNode
-}> = ({ open, setOpen, maxWidth = 'md', disableClose, drawerHeight, title, labelledBy, children }) => {
+}> = ({ open, setOpen, maxWidth = 'md', disableClose, drawerHeight, title, labelledBy, hideCloseButton, children }) => {
   const { t } = useTranslation(['global'])
   const isLargeDevice = useIsLargeDevice()
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
@@ -87,7 +89,7 @@ export const ResponsiveDialog: FC<{
           aria-labelledby={titleId}
         >
           <DialogContent>
-            {header(true)}
+            {header(!hideCloseButton)}
             {children?.()}
           </DialogContent>
         </Dialog>
@@ -118,7 +120,7 @@ export const ResponsiveDialog: FC<{
           <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-black/15 my-3" aria-hidden="true" />
           <div className="overflow-auto overscroll-contain h-full p-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
             {/* The drawer closes by swiping down or tapping outside; a titled one also gets a close button */}
-            {header(!!title)}
+            {header(!!title && !hideCloseButton)}
             {children?.()}
           </div>
         </SwipeableDrawer>

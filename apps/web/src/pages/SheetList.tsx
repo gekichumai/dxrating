@@ -381,6 +381,7 @@ const SheetListInnerContent: FC<{
           setOpen={(open) => {
             if (!open) handleSheetDialogChange(null)
           }}
+          hideCloseButton
         >
           {() =>
             activeSheet && <SheetDialogContent sheet={activeSheet} onClose={() => handleSheetDialogChange(null)} />

@@ -6,7 +6,6 @@ import { type FC, type MouseEvent, type SyntheticEvent, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '../../models/difficulties'
 import { DIFFICULTY_ORDER } from '../../models/constants'
-import { getSheetTypeAltTextKey, SHEET_TYPE_TAB_IMAGES } from '../sheet/sheetTypeAssets'
 
 export interface SongSheetTabsProps {
   sheets: Sheet[]
@@ -29,21 +28,13 @@ const keepModifiedClicks = (event: MouseEvent) => {
   if (!isModifiedClick(event)) event.preventDefault()
 }
 
-const renderTypeTabLabel = (type: TypeEnum, label: string, altText: string) => {
-  const image = SHEET_TYPE_TAB_IMAGES[type]
-  if (!image) return <span>{label}</span>
-
-  return (
-    <span className="inline-flex h-6 min-w-18 items-center justify-center px-1">
-      <img
-        src={image}
-        alt={altText}
-        className="h-22px max-w-70px object-contain touch-callout-none"
-        draggable={false}
-      />
-    </span>
-  )
+// DX and STD read as the game's own short codes; the utage kinds have no short code, so they keep their name
+const TYPE_SHORT_LABELS: Partial<Record<TypeEnum, string>> = {
+  [TypeEnum.STD]: 'STD',
+  [TypeEnum.DX]: 'DX',
 }
+
+const typeShortLabel = (type: TypeEnum, label: string) => TYPE_SHORT_LABELS[type] ?? label
 
 export const SongSheetTabs: FC<SongSheetTabsProps> = ({
   sheets,
@@ -67,44 +58,62 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
   const showDifficultyTabs = !(isUtageType && difficultiesForActiveType.length <= 1)
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="glass-inset rounded-[var(--radius-lg)] p-1 self-start max-w-full">
-        <Tabs
-          value={activeType}
-          onChange={(event, v) => {
-            if (isModifiedClick(event)) return
-            onTypeChange(v)
-          }}
-          variant="scrollable"
-          scrollButtons="auto"
-          aria-label={t('song:type-tabs-label')}
-          classes={{
-            root: '!min-h-2.25rem',
-            indicator: '!h-full !rounded-[var(--radius-md)] z-0',
-          }}
-        >
-          {availableTypes.map((type) => {
-            const label = t(`song:type.${type}`)
-            const altText = t(getSheetTypeAltTextKey(type))
-            return (
-              <Tab
-                key={type}
-                value={type}
-                component="a"
-                href={hrefFor(type)}
-                onClick={keepModifiedClicks}
-                label={renderTypeTabLabel(type, label, altText)}
-                classes={{
-                  root: clsx(
-                    '!rounded-[var(--radius-md)] z-1 !py-0 !min-h-2.25rem !h-2.25rem !text-sm',
-                    type === activeType ? '!text-on-accent !font-semibold' : '!text-fg-1',
-                  ),
-                }}
-              />
-            )
-          })}
-        </Tabs>
-      </div>
+    // Type then difficulty in reading order; from sm up they share a row, with the type control at the end
+    <div className="flex flex-col gap-2 sm:flex-row-reverse sm:items-center sm:gap-3 sm:border-b sm:border-solid sm:border-0 sm:border-black/8">
+      {availableTypes.length > 1 ? (
+        // A compact segmented control on a glass track; the selected segment is tinted, not filled
+        <div className="glass-inset !rounded-[var(--radius-md)] p-0.5 self-start sm:self-center shrink-0 max-w-full">
+          <Tabs
+            value={activeType}
+            onChange={(event, v) => {
+              if (isModifiedClick(event)) return
+              onTypeChange(v)
+            }}
+            variant="scrollable"
+            scrollButtons={false}
+            aria-label={t('song:type-tabs-label')}
+            classes={{
+              root: '!min-h-8',
+              indicator:
+                '!h-full !rounded-[var(--radius-sm)] !bg-accent-subtle shadow-[inset_0_0_0_1px_var(--accent)] z-0',
+            }}
+          >
+            {availableTypes.map((type) => {
+              const label = t(`song:type.${type}`)
+              const selected = type === activeType
+              return (
+                <Tab
+                  key={type}
+                  value={type}
+                  component="a"
+                  href={hrefFor(type)}
+                  onClick={keepModifiedClicks}
+                  aria-label={label}
+                  title={label}
+                  label={typeShortLabel(type, label)}
+                  classes={{
+                    root: clsx(
+                      '!rounded-[var(--radius-sm)] z-1 !py-0 !px-3 !min-w-12 !min-h-8 !h-8 !text-xs !tracking-wide !normal-case',
+                      selected ? '!text-accent-strong !font-semibold' : '!text-fg-2 !font-medium',
+                    ),
+                  }}
+                />
+              )
+            })}
+          </Tabs>
+        </div>
+      ) : (
+        availableTypes[0] && (
+          // One chart type: nothing to switch, so a plain badge says which one it is
+          <span
+            className="glass-inset !rounded-[var(--radius-sm)] self-start sm:self-center shrink-0 px-2 py-1 text-xs font-semibold tracking-wide text-fg-2"
+            title={t(`song:type.${availableTypes[0]}`)}
+          >
+            <span aria-hidden="true">{typeShortLabel(availableTypes[0], t(`song:type.${availableTypes[0]}`))}</span>
+            <span className="sr-only">{t(`song:type.${availableTypes[0]}`)}</span>
+          </span>
+        )
+      )}
 
       {showDifficultyTabs && (
         <Tabs
@@ -117,7 +126,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
           scrollButtons="auto"
           aria-label={t('song:difficulty-tabs-label')}
           classes={{
-            root: '!min-h-2.5rem border-b border-solid border-0 border-black/8',
+            root: '!min-h-2.5rem min-w-0 flex-1 border-b border-solid border-0 border-black/8 sm:border-b-0',
           }}
           TabIndicatorProps={{
             style: {
