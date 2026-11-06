@@ -26,6 +26,7 @@ import {
   type CloudSaveImportsApi,
   CloudScoreRepository,
   type CloudScoreRepositoryOptions,
+  type ScoreSyncLocks,
 } from '../CloudScoreRepository'
 import type { ImportProgress } from '../ScoreRepository'
 import { UnsupportedScoreOperationError } from '../ScoreRepository'
@@ -726,6 +727,23 @@ describe('CloudScoreRepository server imports', () => {
     expect(server.mutateCalls).toEqual([])
     expect(routes()).not.toContain('client')
     expect(repository.get(SHEET_A)).toBeUndefined() // no identity resolver: entries() has it
+    expect(repository.entries()).toEqual([expect.objectContaining({ sheetId: SHEET_A, achievementRate: 100.5 })])
+  })
+
+  it('still pulls what an import wrote when another tab holds the sync lock at first', async () => {
+    let held = false
+    const locks = {
+      request: async (_name: string, _options: { ifAvailable: true }, callback: (lock: unknown) => unknown) =>
+        callback(held ? null : { name: 'dxr-scores-sync' }),
+    } as unknown as ScoreSyncLocks
+    const repository = await openRepository({ locks })
+    // Another tab syncs while the job finishes, then lets go of the lock
+    held = true
+    setTimeout(() => (held = false), 50)
+
+    const progress = await collect(repository.runServerImport('lxns', {}))
+
+    expect(progress.at(-1)).toMatchObject({ stage: 'done', job: { status: 'succeeded' } })
     expect(repository.entries()).toEqual([expect.objectContaining({ sheetId: SHEET_A, achievementRate: 100.5 })])
   })
 

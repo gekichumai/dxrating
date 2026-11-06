@@ -194,6 +194,8 @@ export const FLUSH_TIMEOUT_MS = 3_000
 export const CLEAR_BEFORE_IMPORT_TIMEOUT_MS = 15_000
 /** Attempts of one import request (the same idempotency key each time) */
 export const IMPORT_MAX_ATTEMPTS = 3
+/** How long a finished import waits for a pull of what it wrote before leaving it to a scheduled sync */
+export const IMPORT_REFRESH_TIMEOUT_MS = 15_000
 /** How soon "clear first" asks again for a pull another tab was running */
 const PULL_NOW_RETRY_MS = 250
 /** A running job is given up on after this long (the server marks it abandoned after 15 min, §7.1) */
@@ -811,9 +813,15 @@ export class CloudScoreRepository implements WebScoreRepository {
     while (this.running) await this.running
   }
 
-  /** The hook for import jobs: pull what a finished job wrote */
-  notifyImportJobCompleted(): Promise<void> {
-    return this.sync()
+  /**
+   * The hook for import jobs: pull what a finished job wrote. A sync that only reloaded the cache (another tab held
+   * the sync lock and may have pulled before the job committed) or waited out a backoff does not count: this waits
+   * for a cycle of this tab that pulled after the call, up to {@link IMPORT_REFRESH_TIMEOUT_MS}. When none could run
+   * by then, a sync stays scheduled, so the imported records still show up
+   */
+  async notifyImportJobCompleted(): Promise<void> {
+    if (await this.pullNow(Date.now() + IMPORT_REFRESH_TIMEOUT_MS)) return
+    this.scheduleDebouncedSync()
   }
 
   /**
