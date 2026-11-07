@@ -112,9 +112,64 @@ export const adminAnnouncementsContract = {
     ),
 }
 
+const sha256 = z.string().regex(/^[0-9a-f]{64}$/)
+
+export const PublicationSchema = z.object({
+  revision: z.number().int().describe('The channel’s publication number'),
+  fingerprint: sha256.describe('Publication fingerprint, unique within the channel'),
+  publishedAt: z.string(),
+  catalogRunId: z.string().describe('The assembly-line build run whose snapshot this publishes'),
+  legacyGitCommitSha: z.string().nullable().describe('The dxrating commit that carried this dxdata.json, if any'),
+  pipelineVersion: z.string(),
+  apiSchemaVersion: z.number().int(),
+  inputFingerprint: sha256,
+  sourceUpdatedAt: z.string(),
+  generatedAt: z.string(),
+  songCount: z.number().int(),
+  sheetCount: z.number().int(),
+  bodySha256: sha256,
+  byteLength: z.number().int(),
+  hasProvenanceManifest: z.boolean(),
+  current: z.boolean().describe('The publication the channel serves now'),
+})
+
+/** dxdata publications and provenance, read-only (gekichumai/meta#50 Phase 3). Scope catalog:read. */
+export const adminCatalogContract = {
+  publications: oc
+    .meta(
+      openapi({
+        method: 'GET',
+        path: '/catalog/publications',
+        summary: 'dxdata publications of a channel, newest first (scope catalog:read)',
+        tags: ['catalog'],
+      }),
+    )
+    .input(
+      z
+        .object({
+          channel: z
+            .string()
+            .regex(/^[a-z][a-z0-9_-]*$/)
+            .default('production-v1'),
+          limit: z.coerce.number().int().min(1).max(100).default(50),
+          before: z.coerce.number().int().positive().optional().describe('Continue below this revision'),
+        })
+        .strict(),
+    )
+    .output(
+      z.object({
+        channel: z.string(),
+        channels: z.array(z.string()),
+        publications: z.array(PublicationSchema),
+        nextBefore: z.number().int().nullable(),
+      }),
+    ),
+}
+
 export const adminApiContract = {
   me: oc
     .meta(openapi({ method: 'GET', path: '/me', summary: 'The calling principal', tags: ['admin'] }))
     .output(PrincipalSchema),
   announcements: adminAnnouncementsContract,
+  catalog: adminCatalogContract,
 }

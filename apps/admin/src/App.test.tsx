@@ -16,6 +16,7 @@ const mount = (client = new QueryClient()) =>
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  window.location.hash = ''
 })
 
 describe('admin shell', () => {
@@ -78,5 +79,23 @@ describe('admin shell', () => {
     expect((await screen.findByText('No access')).closest('[role=alert]')).toBeTruthy()
     expect(screen.queryByText('human:owner@example.invalid')).toBeNull()
     expect(screen.queryByText('owner@example.invalid')).toBeNull()
+  })
+
+  it('shows only the views the principal has scopes for, and opens the one in the hash', async () => {
+    window.location.hash = '#publications'
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: Request | string) => {
+        const path = new URL(input instanceof Request ? input.url : input, 'http://admin.test').pathname
+        if (path === '/api/catalog/publications')
+          return Response.json({ channel: 'production-v1', channels: [], publications: [], nextBefore: null })
+        return Response.json({ type: 'agent', id: 'reader', actor: 'agent:reader', scopes: ['catalog:read'] })
+      }),
+    )
+    mount()
+    expect(await screen.findByRole('heading', { name: 'Publications' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Publications' }).getAttribute('aria-current')).toBe('page')
+    expect(screen.queryByRole('link', { name: 'Announcements' })).toBeNull()
+    expect(screen.queryByText('Signed in')).toBeNull()
   })
 })
