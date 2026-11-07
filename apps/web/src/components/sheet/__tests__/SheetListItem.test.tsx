@@ -1,8 +1,7 @@
 import type { ServerEnum } from '@gekichumai/dxdata'
 import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { render, screen } from '@testing-library/react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { describe, expect, it, vi } from 'vitest'
 import type { FlattenedSheet } from '@/songs'
 import { SheetListItem, SheetListItemContent } from '../SheetListItem'
 
@@ -57,10 +56,6 @@ const getFocusableElements = (container: HTMLElement) =>
   ).filter((element) => !element.hasAttribute('disabled') && element.getAttribute('aria-hidden') !== 'true')
 
 describe('SheetListItem', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('renders the row as a single focusable link', () => {
     const { container } = render(<SheetListItem sheet={makeSheet(TypeEnum.DX)} />)
 
@@ -73,10 +68,6 @@ describe('SheetListItem', () => {
 })
 
 describe('SheetListItemContent', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('uses the song title for cover art alt text', () => {
     render(<SheetListItemContent sheet={makeSheet(TypeEnum.DX)} />)
 

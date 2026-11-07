@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { describe, expect, it, vi } from 'vitest'
 import { About } from '../About'
 
 vi.mock('posthog-js/react', () => ({
@@ -13,10 +12,6 @@ vi.mock('../../ResponsiveDialog', () => ({
 }))
 
 describe('About', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('passes the displayed version name into the logo alt text', () => {
     render(<About />)
 

@@ -1,0 +1,100 @@
+/*
+ * Feedback while the router loads the next page: the top progress bar (NavigationProgress) and the spinner beside
+ * the link that was clicked (InternalLink). Both are fixed overlays that ignore the pointer, so neither moves the
+ * layout or blocks a second click.
+ */
+
+.navigation-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 2px;
+  z-index: 1600;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+
+.navigation-progress[data-phase='loading'],
+.navigation-progress[data-phase='done'] {
+  opacity: 1;
+}
+
+.navigation-progress[data-phase='done'] {
+  /* Fill, then fade */
+  opacity: 0;
+  transition-delay: 150ms;
+}
+
+.navigation-progress__bar {
+  height: 100%;
+  border-radius: 0 1px 1px 0;
+  background: color-mix(in oklab, var(--accent-strong) 85%, transparent);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--accent) 55%, transparent);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+/* Creeps towards the end without reaching it: most of the way in the first second or two, then slowly */
+.navigation-progress[data-phase='loading'] .navigation-progress__bar {
+  animation: navigation-progress-creep 8s cubic-bezier(0.1, 0.7, 0.2, 1) forwards;
+}
+
+.navigation-progress[data-phase='done'] .navigation-progress__bar {
+  transform: scaleX(1);
+  transition: transform 150ms ease-out;
+}
+
+@keyframes navigation-progress-creep {
+  from {
+    transform: scaleX(0.04);
+  }
+  to {
+    transform: scaleX(0.9);
+  }
+}
+
+/* The spinner next to the clicked link, positioned by InternalLink */
+.navigation-link-spinner {
+  position: fixed;
+  z-index: 1600;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  pointer-events: none;
+  border-radius: 9999px;
+  border: 2px solid color-mix(in oklab, var(--accent-strong) 25%, transparent);
+  border-top-color: var(--accent-strong);
+  animation: navigation-link-spin 700ms linear infinite;
+}
+
+@keyframes navigation-link-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No sliding or spinning: the bar shows full width at low strength, the spinner as a still ring */
+  .navigation-progress[data-phase='loading'] .navigation-progress__bar,
+  .navigation-progress[data-phase='done'] .navigation-progress__bar {
+    animation: none;
+    transform: scaleX(1);
+    transition: none;
+    opacity: 0.6;
+  }
+
+  .navigation-link-spinner {
+    animation: none;
+    border-color: color-mix(in oklab, var(--accent-strong) 60%, transparent);
+  }
+}
+
+/* No room past the link's edge (a full-width row on a phone): inside the edge, on a backing that reads over content */
+.navigation-link-spinner--inset {
+  box-shadow: 0 0 0 3px var(--glass-overlay-bg);
+  background-color: var(--glass-overlay-bg);
+}
+
+a[aria-busy='true'] {
+  cursor: progress;
+}

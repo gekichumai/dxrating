@@ -10,7 +10,6 @@ import {
   type ReactNode,
   useState,
 } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useWebHaptics } from 'web-haptics/react'
 import toast from 'react-hot-toast'
 import { match } from 'ts-pattern'
@@ -18,7 +17,8 @@ import MdiComment from '~icons/mdi/comment'
 import MdiContentCopy from '~icons/mdi/content-copy'
 import MdiLock from '~icons/mdi/lock'
 import MdiTrashCan from '~icons/mdi/trash-can'
-import { DIFFICULTIES } from '../../models/difficulties'
+import { DIFFICULTIES, DIFFICULTY_SHORT_TITLES } from '../../models/difficulties'
+import { FixedWidthText } from '../global/FixedWidthText'
 import { captureAnalyticsEvent, type SheetViewSource } from '../../lib/analytics'
 import type { FlattenedSheet } from '../../songs'
 import { FadedImage } from '../global/FadedImage'
@@ -28,7 +28,10 @@ import { SheetAltNames } from './SheetAltNames'
 import { SheetDialogContent, type SheetDialogContentProps } from './SheetDialogContent'
 import { buildSheetPath } from './sheetLinks'
 import { SHEET_TABLE_ROW_COLUMNS, SheetRowLayoutContext, useSheetRowLayout } from './sheetRowLayout'
-import { getSheetTypeAltTextKey, SHEET_TYPE_IMAGES, SHEET_TYPE_UTAGE_2P_END_ADORNMENT_IMAGE } from './sheetTypeAssets'
+import { getSheetTypeAltText, SHEET_TYPE_IMAGES, SHEET_TYPE_UTAGE_2P_END_ADORNMENT_IMAGE } from './sheetTypeAssets'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
+import { isPlainNavigationClick, LinkBehavior } from '@/components/global/InternalLink'
 
 export interface SheetListItemAnalyticsProps {
   source: SheetViewSource
@@ -36,6 +39,21 @@ export interface SheetListItemAnalyticsProps {
   queryPresent?: boolean
   resultCount?: number
 }
+
+/** Records that a chart was opened from a list row or a grid tile */
+export const captureSheetContentViewed = (sheet: FlattenedSheet, analytics?: SheetListItemAnalyticsProps) =>
+  captureAnalyticsEvent('sheet_content_viewed', {
+    song_id: sheet.songId,
+    sheet_type: sheet.type,
+    sheet_difficulty: sheet.difficulty,
+    source: analytics?.source ?? 'unknown',
+    position: analytics?.position,
+    query_present: analytics?.queryPresent,
+    result_count: analytics?.resultCount,
+    sheet_version: sheet.version,
+    internal_level: sheet.internalLevelValue,
+    is_rating_eligible: sheet.isRatingEligible,
+  })
 
 export const SheetListItem: FC<{
   size?: 'small' | 'medium'
@@ -86,25 +104,14 @@ export const SheetListItem: FC<{
         )}
 
         <ListItemButton
-          component="a"
+          component={LinkBehavior}
           href={buildSheetPath(sheet)}
           onClick={(e) => {
-            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return
+            if (!isPlainNavigationClick(e)) return
             e.preventDefault()
             setOpen(true)
             haptic.trigger('medium')
-            captureAnalyticsEvent('sheet_content_viewed', {
-              song_id: sheet.songId,
-              sheet_type: sheet.type,
-              sheet_difficulty: sheet.difficulty,
-              source: analytics?.source ?? 'unknown',
-              position: analytics?.position,
-              query_present: analytics?.queryPresent,
-              result_count: analytics?.resultCount,
-              sheet_version: sheet.version,
-              internal_level: sheet.internalLevelValue,
-              is_rating_eligible: sheet.isRatingEligible,
-            })
+            captureSheetContentViewed(sheet, analytics)
           }}
           // Horizontal padding comes from CSS classes (!px-4 unless the list passes its own inset). Gutters must not depend
           // on the viewport in JS (a window-width hook renders "mobile" on the server and changed the class during
@@ -171,7 +178,7 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
     return (
       <div
         className={clsx(
-          'flex items-center w-full p-1 gap-2 tabular-nums relative',
+          'flex items-center w-full p-1 gap-2 num relative',
           // From lg a table row is one 56px line of columns. ListItemText and the summary dissolve (display: contents),
           // so the title, artist, version and badges become the grid's cells
           isTable && [SHEET_TABLE_ROW_COLUMNS, 'lg:h-14 lg:py-0'],
@@ -207,7 +214,7 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
           )}
         >
           {isTypeUtage ? (
-            <span className="font-semibold tabular-nums text-lg text-fg-2">{level}</span>
+            <span className="font-semibold num text-lg text-fg-2">{level}</span>
           ) : (
             <SheetInternalLevelValue value={internalLevelValue} />
           )}
@@ -220,7 +227,7 @@ SheetListItemContentView.displayName = 'SheetListItemContentView'
 
 export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
   ({ sheet, size = 'medium', className, enableSheetImage = true, SheetTitleProps, ListItemTextProps, ...rest }) => {
-    const { t } = useTranslation(['sheet'])
+    const locale = useLocale()
     const isTable = useSheetRowLayout() === 'table'
 
     return (
@@ -232,7 +239,7 @@ export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
         className={className}
         enableSheetImage={enableSheetImage}
         imageName={sheet.imageName}
-        imageAlt={t('sheet:cover-art-alt', { title: sheet.title })}
+        imageAlt={m.sheet_coverArtAlt({ title: sheet.title }, { locale })}
         ListItemTextProps={ListItemTextProps}
         {...rest}
       >
@@ -268,77 +275,108 @@ const SheetInternalLevelValue: FC<{ value: number }> = ({ value }) => {
   const decimalPart = value - wholePart
 
   return (
-    <div className="font-semibold tabular-nums">
+    <div className="font-semibold num">
       <span className="text-lg text-fg-2">{wholePart}.</span>
       <span className="text-xl text-fg-1">{decimalPart.toFixed(1).split('.')[1]}</span>
     </div>
   )
 }
 
+/**
+ * The difficulty on its solid colour, one width in every row: the lock or trash icon slot plus the longest short name
+ * (BAS … Re:MAS). A row without an icon centres its name across the whole pill, so locked, unavailable and playable
+ * charts all line up. The full name is in the title and read to screen readers.
+ */
 export const SheetDifficulty: FC<{
   difficulty?: DifficultyEnum
   serverIds?: readonly ServerEnum[]
   isLocked?: boolean
 }> = ({ difficulty, serverIds, isLocked }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const difficultyConfig = difficulty ? DIFFICULTIES[difficulty] : undefined
   const allUnavailable = (serverIds ?? []).length === 0
+  if (!difficultyConfig) return null
+  const Icon = allUnavailable ? MdiTrashCan : isLocked ? MdiLock : null
   // The `solid` role carries white text at 4.5:1 or more; the brand colour itself only passes for MASTER
-  return difficultyConfig ? (
+  return (
     <span
-      className="rounded-[var(--radius-sm)] px-2 text-sm font-semibold shadow-[0_1px_0_0_rgb(0_0_0/0.15)] leading-relaxed text-white inline-flex items-center"
+      className="inline-grid shrink-0 grid-cols-[1rem_auto] items-center gap-x-1 rounded-[var(--radius-sm)] px-1.5 text-sm font-semibold shadow-[0_1px_0_0_rgb(0_0_0/0.15)] leading-relaxed text-white"
       style={{ backgroundColor: difficultyConfig.solid }}
+      title={difficultyConfig.title}
     >
-      {allUnavailable && (
-        <>
-          <MdiTrashCan
-            aria-hidden="true"
-            className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-[#fff] rounded-full"
-            style={{ color: difficultyConfig.solid }}
-          />
-          <span className="sr-only">{t('sheet:badge.unavailable')}</span>
-        </>
+      {Icon && (
+        <Icon
+          aria-hidden="true"
+          className="col-start-1 row-start-1 h-4 w-4 p-0.5 bg-[#fff] rounded-full"
+          style={{ color: difficultyConfig.solid }}
+        />
       )}
-      {isLocked && (
-        <>
-          <MdiLock
-            aria-hidden="true"
-            className="h-4 w-4 mr-1.5 -ml-1 p-0.5 bg-[#fff] rounded-full"
-            style={{ color: difficultyConfig.solid }}
-          />
-          <span className="sr-only">{t('sheet:badge.locked')}</span>
-        </>
+      {/* Sizes the name column in every row; it is the visible name only next to an icon */}
+      <FixedWidthText
+        text={difficultyConfig.shortTitle}
+        sizers={DIFFICULTY_SHORT_TITLES}
+        hidden={!Icon}
+        className="col-start-2 row-start-1 justify-items-center"
+        aria-hidden
+      />
+      {!Icon && (
+        <span aria-hidden className="col-span-2 col-start-1 row-start-1 text-center">
+          {difficultyConfig.shortTitle}
+        </span>
       )}
-      {difficultyConfig.title}
+      <span className="sr-only">
+        {difficultyConfig.title}
+        {allUnavailable && ` ${m.sheet_badge_unavailable({}, { locale })}`}
+        {isLocked && ` ${m.sheet_badge_locked({}, { locale })}`}
+      </span>
     </span>
-  ) : null
+  )
 }
 
-const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({ type, difficulty }) => {
-  const { t } = useTranslation(['sheet'])
+/**
+ * The chart-type badge, with the in-game artwork. `compact` is the size for a grid tile's jacket: 18px tall, and 14px
+ * for a Utage 2P chart, whose two-part artwork would otherwise be wider than a phone's three-column tile.
+ */
+export const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum; compact?: boolean }> = ({
+  type,
+  difficulty,
+  compact = false,
+}) => {
+  const locale = useLocale()
   const isUtage = type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P
-  const altText = t(getSheetTypeAltTextKey(type))
+  const altText = getSheetTypeAltText(type, locale)
 
   if (isUtage) {
     const isUtage2P = type === TypeEnum.UTAGE2P
+    // The artwork is 95.875 × 26 and the 2P end overlaps it by 27px; the compact sizes keep those proportions
+    const artworkSize = !compact ? 'h-26px w-95.875px' : isUtage2P ? 'h-[14px] w-[51.6px]' : 'h-[18px] w-[66.4px]'
 
     return (
       <div className="inline-flex items-center">
-        <div className="relative h-26px w-95.875px flex items-center justify-center text-center select-none">
+        <div className={clsx('relative flex items-center justify-center text-center select-none', artworkSize)}>
           <img
             src={SHEET_TYPE_IMAGES[TypeEnum.UTAGE]}
             alt={altText}
             className="absolute inset-0 h-full w-full object-contain touch-callout-none"
             draggable={false}
           />
-          <span aria-hidden="true" className="relative text-shadow-[0_0_0.5rem_#FFFFFF99] text-white text-xs">
+          <span
+            aria-hidden="true"
+            className={clsx(
+              'relative text-shadow-[0_0_0.5rem_#FFFFFF99] text-white',
+              !compact ? 'text-xs' : isUtage2P ? 'text-[0.5rem] leading-none' : 'text-[0.5625rem] leading-none',
+            )}
+          >
             {difficulty.replace(/[【】]/g, '')}
           </span>
         </div>
         {isUtage2P && (
           <img
             src={SHEET_TYPE_UTAGE_2P_END_ADORNMENT_IMAGE}
-            className="h-26px w-95.875px ml-[-27px] touch-callout-none"
+            className={clsx(
+              'touch-callout-none',
+              compact ? 'h-[14px] w-[51.6px] ml-[-14.5px]' : 'h-26px w-95.875px ml-[-27px]',
+            )}
             alt=""
             aria-hidden="true"
             draggable={false}
@@ -352,7 +390,7 @@ const SheetType: FC<{ type: TypeEnum; difficulty: DifficultyEnum }> = ({ type, d
     <img
       key={type}
       src={SHEET_TYPE_IMAGES[type]}
-      className="h-26px w-70px touch-callout-none"
+      className={clsx('touch-callout-none', compact ? 'h-[18px] w-[48.5px]' : 'h-26px w-70px')}
       alt={altText}
       draggable={false}
     />
@@ -481,6 +519,9 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
 )
 SheetListItemSummary.displayName = 'SheetListItemSummary'
 
+/** A song's cover art by its image name */
+export const sheetCoverSrc = (imageName: string) => `https://shama.dxrating.net/images/cover/v2/${imageName}.jpg`
+
 export const SheetImage: FC<
   Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt'> & {
     name: string
@@ -492,7 +533,7 @@ export const SheetImage: FC<
     return (
       <FadedImage
         key={name}
-        src={`https://shama.dxrating.net/images/cover/v2/${name}.jpg`}
+        src={sheetCoverSrc(name)}
         className={clsx(
           'overflow-hidden outline outline-1 -outline-offset-1 outline-black/10',
           match(size)
@@ -533,7 +574,7 @@ export const SheetTitle: FC<SheetTitleProps> = ({
   headingComponent: Heading = 'h3',
   className,
 }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const { title, searchAcronyms, difficulty, type, version } = sheet
   return (
     <div className="flex flex-col">
@@ -550,12 +591,13 @@ export const SheetTitle: FC<SheetTitleProps> = ({
         {enableClickToCopy && (
           <IconButton
             size="small"
-            className="shrink-0 !-mt-1"
-            aria-label={t('sheet:copy-title.tooltip')}
-            title={t('sheet:copy-title.tooltip')}
+            // Centred on the title's first line: 22.5px tall below md (text-lg, leading-tight), 26px from md, the button 26px
+            className="shrink-0 !-mt-[2px] md:!mt-0"
+            aria-label={m.sheet_copyTitle_tooltip({}, { locale })}
+            title={m.sheet_copyTitle_tooltip({}, { locale })}
             onClick={() => {
               navigator.clipboard.writeText(title)
-              toast.success(t('sheet:copy-title.toast-success'), {
+              toast.success(m.sheet_copyTitle_toastSuccess({}, { locale }), {
                 id: `copy-sheet-title-${title}`,
               })
             }}

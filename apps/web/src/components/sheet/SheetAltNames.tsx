@@ -1,12 +1,25 @@
 import clsx from 'clsx'
 import { type FC, useEffect, useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
+import type { SupportedLocale } from '@/setup/locale'
+import { aliasQuestion } from './aliasQuestion'
+
+/**
+ * What clicking an alias copies. Chinese-speaking players share an alias as "<alias>是什么歌" ("what song is
+ * <alias>?"), so zh-Hans and zh-Hant copy its 是什么歌 link (see aliasQuestion); other locales copy the alias itself.
+ */
+export function aliasCopyContent(altName: string, locale: SupportedLocale) {
+  if (locale === 'zh-Hans' || locale === 'zh-Hant') return aliasQuestion(altName)
+  const alias = altName.trim()
+  return { clipboard: alias, toastContent: alias }
+}
 
 const COLLAPSED_MASK = 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5rem, rgba(0,0,0,0) 100%)'
 
 export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const [expanded, setExpanded] = useState(false)
   // Measured after mount, so the first render is the same on the server and the client
   const [overflowing, setOverflowing] = useState(false)
@@ -42,26 +55,15 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
               type="button"
               // While the list is clipped, Tab skips the aliases (some are hidden); "Show all" reveals them first
               tabIndex={collapsed ? -1 : undefined}
-              className="cursor-pointer rounded-[var(--radius-xs)] border-0 bg-transparent p-0 text-inherit font-inherit text-left"
+              // Copies the alias, so it reads as a control: a dotted underline on hover and focus
+              className="cursor-copy rounded-[var(--radius-xs)] border-0 bg-transparent p-0 text-inherit font-inherit text-left decoration-dotted underline-offset-2 hover:underline focus-visible:underline"
+              title={m.sheet_aliases_copy({}, { locale })}
               onClick={() => {
-                if (altName.length > 50) {
-                  const sanitizedAltName = altName.trim()
-                  navigator.clipboard.writeText(`${sanitizedAltName}是什么歌`)
-                  toast.success(t('sheet:copy-alt-name.toast-success', { content: `${sanitizedAltName}是什么歌` }), {
-                    id: `copy-sheet-alt-name-${altName}`,
-                  })
-                } else {
-                  const sanitizedAltName = altName
-                    .trim()
-                    .replace(/[\s|\n|，|。|！|@|；|《|》|？|：|【|】|（|）|、|·|~|!|#|%|&|*|(|)|{|}|\\[|\\]|\\|]/g, '-')
-                  navigator.clipboard.writeText(`https://${sanitizedAltName}.是什么歌.com`)
-                  toast.success(
-                    t('sheet:copy-alt-name.toast-success', { content: `${sanitizedAltName}.是什么歌.com` }),
-                    {
-                      id: `copy-sheet-alt-name-${altName}`,
-                    },
-                  )
-                }
+                const { clipboard, toastContent } = aliasCopyContent(altName, locale)
+                void navigator.clipboard?.writeText(clipboard)
+                toast.success(m.sheet_copyAltName_toastSuccess({ content: toastContent }, { locale }), {
+                  id: `copy-sheet-alt-name-${altName}`,
+                })
               }}
             >
               {altName}
@@ -83,7 +85,9 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
           onClick={() => setExpanded((value) => !value)}
           className="cursor-pointer rounded-[var(--radius-xs)] border-0 bg-transparent p-0 text-xs font-semibold text-accent-strong hover:underline"
         >
-          {expanded ? t('sheet:aliases.show-less') : t('sheet:aliases.show-all', { count: altNames.length })}
+          {expanded
+            ? m.sheet_aliases_showLess({}, { locale })
+            : m.sheet_aliases_showAll({ count: altNames.length }, { locale })}
         </button>
       )}
     </div>

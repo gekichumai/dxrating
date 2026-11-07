@@ -22,6 +22,9 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    # SIGTERM drains in-flight requests for up to 20s (DRAIN_TIMEOUT_MS), then closes the database pools and flushes
+    # Sentry; Docker's default 10s would SIGKILL in the middle of that.
+    stop_grace_period: 30s
     networks:
       - default
       - coolify

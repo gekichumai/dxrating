@@ -6,8 +6,8 @@ describe('buildRootHeadLinks', () => {
     const links = buildRootHeadLinks({ pathname: '/search', search: { q: '宴' } })
     const stylesheetLinks = links.filter((link) => link.rel === 'stylesheet')
 
-    expect(stylesheetLinks).toHaveLength(1)
-    expect(stylesheetLinks[0]?.href).not.toMatch(/^https?:\/\//)
+    // App CSS ships through the route manifest; any stylesheet linked here must stay same-origin
+    for (const link of stylesheetLinks) expect(link.href).not.toMatch(/^https?:\/\//)
     expect(links).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ href: expect.stringContaining('fonts.googleapis.com') })]),
     )

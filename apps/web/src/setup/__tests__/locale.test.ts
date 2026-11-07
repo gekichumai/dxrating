@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  LOCALE_COOKIE_MAX_AGE_SECONDS,
+  withLocaleQuery,
   LOCALE_COOKIE_NAME,
   LOCALE_STORAGE_KEY,
   detectServerLocale,
-  getClientLanguageDetectionOptions,
   normalizeDetectedLanguage,
   persistClientLocalePreference,
   toSupportedLocale,
@@ -48,7 +47,20 @@ describe('locale detection', () => {
     expect(toSupportedLocale('zh-SG')).toBe('zh-Hans')
     expect(toSupportedLocale('zh-TW')).toBe('zh-Hant')
     expect(toSupportedLocale('zh-HK')).toBe('zh-Hant')
+    expect(toSupportedLocale('ms-MY')).toBe('ms')
+    expect(toSupportedLocale('ms_SG')).toBe('ms')
+    expect(toSupportedLocale('id-ID')).toBe('id')
+    expect(toSupportedLocale('in')).toBe('id')
+    expect(toSupportedLocale('fil-PH')).toBe('fil')
+    expect(toSupportedLocale('tl')).toBe('fil')
+    expect(toSupportedLocale('vi-VN')).toBe('vi')
+    expect(toSupportedLocale('th-TH')).toBe('th')
+    expect(toSupportedLocale('my-MM')).toBe('my')
+    // A region subtag doesn't pick the language: Chinese in Malaysia stays Chinese, English in Malaysia stays English
+    expect(toSupportedLocale('zh-MY')).toBe('zh-Hans')
+    expect(toSupportedLocale('en-MY')).toBe('en')
     expect(toSupportedLocale('fr-FR')).toBeNull()
+    expect(toSupportedLocale('constructor')).toBeNull()
     expect(normalizeDetectedLanguage('fr-FR')).toBe('en')
   })
 
@@ -78,21 +90,12 @@ describe('locale detection', () => {
     expect(detectServerLocale(request)).toBe('zh-Hant')
   })
 
-  it('configures browser detection without automatic persistence side effects', () => {
-    expect(getClientLanguageDetectionOptions()).toMatchObject({
-      order: ['querystring', 'cookie', 'htmlTag', 'localStorage', 'sessionStorage', 'navigator'],
-      lookupQuerystring: 'locale',
-      lookupLocalStorage: LOCALE_STORAGE_KEY,
-      lookupSessionStorage: LOCALE_STORAGE_KEY,
-      lookupCookie: LOCALE_COOKIE_NAME,
-      caches: [],
-      excludeCacheFor: ['cimode'],
-      cookieOptions: {
-        path: '/',
-        sameSite: 'lax',
-        maxAge: LOCALE_COOKIE_MAX_AGE_SECONDS,
-      },
+  it('negotiates the maimai DX International languages from Accept-Language', () => {
+    const request = createServerRequest('https://dxrating.net/search', {
+      'accept-language': 'fr-FR,ms-MY;q=0.9,en;q=0.5',
     })
+
+    expect(detectServerLocale(request)).toBe('ms')
   })
 
   it('persists the client locale preference to localStorage and the SSR cookie', () => {
@@ -100,5 +103,20 @@ describe('locale detection', () => {
 
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith(LOCALE_STORAGE_KEY, 'zh-Hant')
     expect(document.cookie).toContain(`${LOCALE_COOKIE_NAME}=zh-Hant`)
+  })
+})
+
+describe('withLocaleQuery', () => {
+  it('carries a supported ?locale= of the search onto the path', () => {
+    expect(withLocaleQuery('/songs/a/dx/master', { locale: 'ja' })).toBe('/songs/a/dx/master?locale=ja')
+    expect(withLocaleQuery('/songs/a/dx/master', { locale: 'zh-Hant', q: 'x' })).toBe(
+      '/songs/a/dx/master?locale=zh-Hant',
+    )
+  })
+
+  it('leaves the path alone without a usable locale', () => {
+    expect(withLocaleQuery('/songs/a/dx/master', {})).toBe('/songs/a/dx/master')
+    expect(withLocaleQuery('/songs/a/dx/master', { locale: 'fr' })).toBe('/songs/a/dx/master')
+    expect(withLocaleQuery('/songs/a/dx/master', { locale: 123 })).toBe('/songs/a/dx/master')
   })
 })

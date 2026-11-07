@@ -4,13 +4,22 @@ import { DIFFICULTIES } from '../../models/difficulties'
 
 type SheetTypeDisplayNames = Record<TypeEnum, string>
 
+/** The names maimai DX International shows, which is in English in every country it runs in */
+const INTERNATIONAL_SHEET_TYPE_NAMES: SheetTypeDisplayNames = {
+  [TypeEnum.DX]: 'DX',
+  [TypeEnum.STD]: 'Standard',
+  [TypeEnum.UTAGE]: 'Utage',
+  [TypeEnum.UTAGE2P]: 'Buddy',
+}
+
 export const SHEET_TYPE_DISPLAY_NAMES: Record<SupportedLocale, SheetTypeDisplayNames> = {
-  en: {
-    [TypeEnum.DX]: 'DX',
-    [TypeEnum.STD]: 'Standard',
-    [TypeEnum.UTAGE]: 'Utage',
-    [TypeEnum.UTAGE2P]: 'Buddy',
-  },
+  en: INTERNATIONAL_SHEET_TYPE_NAMES,
+  ms: INTERNATIONAL_SHEET_TYPE_NAMES,
+  id: INTERNATIONAL_SHEET_TYPE_NAMES,
+  fil: INTERNATIONAL_SHEET_TYPE_NAMES,
+  vi: INTERNATIONAL_SHEET_TYPE_NAMES,
+  th: INTERNATIONAL_SHEET_TYPE_NAMES,
+  my: INTERNATIONAL_SHEET_TYPE_NAMES,
   ko: {
     [TypeEnum.DX]: 'DX',
     [TypeEnum.STD]: '스탠다드',

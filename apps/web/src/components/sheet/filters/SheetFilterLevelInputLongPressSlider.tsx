@@ -1,6 +1,6 @@
 import { ClickAwayListener } from '@mui/material'
 import MdiGestureSwipeVertical from '~icons/mdi/gesture-swipe-vertical'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'motion/react'
 import { type TouchEvent, type TouchEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLockBodyScroll } from 'react-use'
 import { mapRange } from '../../../utils/mapRange'

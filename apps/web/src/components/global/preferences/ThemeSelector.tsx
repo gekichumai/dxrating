@@ -1,7 +1,6 @@
 import { Divider, IconButton, ListItemIcon, ListItemText, ListSubheader, Menu, MenuItem } from '@mui/material'
 import { useColorScheme } from '@mui/material/styles'
 import { type ComponentType, type ReactElement, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import type { ThemeMode } from '@/setup/theme-script'
 import MdiCheck from '~icons/mdi/check'
@@ -11,11 +10,14 @@ import MdiTune from '~icons/mdi/tune-variant'
 import MdiWeatherNight from '~icons/mdi/weather-night'
 import MdiWhiteBalanceSunny from '~icons/mdi/white-balance-sunny'
 import { useLocaleMenuItems } from './LocaleSelector'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
 
-const MODES: { value: ThemeMode; Icon: ComponentType<{ className?: string }> }[] = [
-  { value: 'light', Icon: MdiWhiteBalanceSunny },
-  { value: 'dark', Icon: MdiWeatherNight },
-  { value: 'system', Icon: MdiMonitor },
+const MODES: { value: ThemeMode; Icon: ComponentType<{ className?: string }>; label: PlainMessage }[] = [
+  { value: 'light', Icon: MdiWhiteBalanceSunny, label: m.settings_theme_light },
+  { value: 'dark', Icon: MdiWeatherNight, label: m.settings_theme_dark },
+  { value: 'system', Icon: MdiMonitor, label: m.settings_theme_system },
 ]
 
 /**
@@ -25,11 +27,11 @@ const MODES: { value: ThemeMode; Icon: ComponentType<{ className?: string }> }[]
  * only when opened, so reading the stored mode here never reaches the server render.
  */
 export const useThemeMenuItems = (onClose: () => void): ReactElement[] => {
-  const { t } = useTranslation(['settings'])
+  const locale = useLocale()
   const { mode, setMode } = useColorScheme()
   const current: ThemeMode = mode ?? 'system'
 
-  return MODES.map(({ value, Icon }) => {
+  return MODES.map(({ value, Icon, label }) => {
     const selected = current === value
     return (
       <MenuItem
@@ -47,7 +49,7 @@ export const useThemeMenuItems = (onClose: () => void): ReactElement[] => {
         <ListItemIcon>
           <Icon className="size-5" />
         </ListItemIcon>
-        <ListItemText>{t(`settings:theme.${value}`)}</ListItemText>
+        <ListItemText>{label({}, { locale })}</ListItemText>
         {selected && <MdiCheck className="ml-3 size-4 text-accent-strong" aria-hidden />}
       </MenuItem>
     )
@@ -56,7 +58,7 @@ export const useThemeMenuItems = (onClose: () => void): ReactElement[] => {
 
 /** The header's appearance button (sm and up). Its icon is the same in every theme so SSR and hydration match. */
 export const ThemeSelector = () => {
-  const { t } = useTranslation(['settings'])
+  const locale = useLocale()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const themeItems = useThemeMenuItems(() => setAnchorEl(null))
 
@@ -64,8 +66,8 @@ export const ThemeSelector = () => {
     <>
       <IconButton
         onClick={(e) => setAnchorEl(e.currentTarget)}
-        aria-label={t('settings:theme.select')}
-        title={t('settings:theme.select')}
+        aria-label={m.settings_theme_select({}, { locale })}
+        title={m.settings_theme_select({}, { locale })}
         aria-haspopup="menu"
       >
         <MdiThemeLightDark />
@@ -83,7 +85,7 @@ export const ThemeSelector = () => {
  * community pill over the logo.
  */
 export const DisplayPreferencesMenu = () => {
-  const { t } = useTranslation(['settings'])
+  const locale = useLocale()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const close = () => setAnchorEl(null)
   const localeItems = useLocaleMenuItems(close)
@@ -93,18 +95,18 @@ export const DisplayPreferencesMenu = () => {
     <>
       <IconButton
         onClick={(e) => setAnchorEl(e.currentTarget)}
-        aria-label={t('settings:display-preferences.select')}
-        title={t('settings:display-preferences.select')}
+        aria-label={m.settings_displayPreferences_select({}, { locale })}
+        title={m.settings_displayPreferences_select({}, { locale })}
         aria-haspopup="menu"
       >
         <MdiTune />
       </IconButton>
 
       <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={close}>
-        <ListSubheader>{t('settings:language.select')}</ListSubheader>
+        <ListSubheader>{m.settings_language_select({}, { locale })}</ListSubheader>
         {localeItems}
         <Divider />
-        <ListSubheader>{t('settings:theme.select')}</ListSubheader>
+        <ListSubheader>{m.settings_theme_select({}, { locale })}</ListSubheader>
         {themeItems}
       </Menu>
     </>
