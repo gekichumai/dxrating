@@ -349,6 +349,56 @@ export const adminCatalogContract = {
         .strict(),
     )
     .output(SongProvenanceSchema),
+  overview: oc
+    .meta(
+      openapi({
+        method: 'GET',
+        path: '/catalog/overview',
+        summary: 'The data overview: current publication, source freshness, latest change (scope catalog:read)',
+        tags: ['catalog'],
+      }),
+    )
+    .input(z.object({ channel: channelInput }).strict())
+    .output(
+      z.object({
+        channel: z.string(),
+        observedAt: z.string().describe('When the API read this; ages are relative to it'),
+        current: z
+          .object({
+            revision: z.number().int(),
+            publishedAt: z.string(),
+            ageSeconds: z.number().int(),
+            pipelineVersion: z.string(),
+            songCount: z.number().int(),
+            sheetCount: z.number().int(),
+            hasProvenanceManifest: z.boolean(),
+            publicationCount: z.number().int(),
+          })
+          .nullable(),
+        latestChange: z
+          .object({
+            from: z.number().int(),
+            to: z.number().int(),
+            summary: CatalogDiffSchema.shape.summary,
+            pathCounts: CatalogDiffSchema.shape.pathCounts,
+          })
+          .nullable(),
+        sources: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            kind: z.string(),
+            authoritative: z.boolean(),
+            scope: z.string().nullable(),
+            lastObservedAt: z.string().nullable().describe('Its latest succeeded observation; null if never observed'),
+            ageSeconds: z.number().int().nullable(),
+            itemCount: z.number().int().nullable(),
+            observations: z.number().int(),
+          }),
+        ),
+        failures: z.object({ recorded: z.literal(false), note: z.string() }),
+      }),
+    ),
   songHistory: oc
     .meta(
       openapi({
