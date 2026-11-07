@@ -48,7 +48,12 @@ describe('edge cache watcher', () => {
 
   it('warms and invalidates the catalog when a new body is published', async () => {
     const { events } = await runWatcher(['a', 'a', 'b', 'b'])
-    expect(events).toEqual(['warm', `purge_cache:${EDGE_CACHE_TAGS.join(',')}`, 'warm', 'invalidate_cache:dxdata'])
+    expect(events).toEqual([
+      'warm',
+      `purge_cache:${EDGE_CACHE_TAGS.join(',')}`,
+      'warm',
+      'invalidate_cache:dxdata,dxdata-v2',
+    ])
   })
 
   it('reports a failed step and tries it again at the next check', async () => {

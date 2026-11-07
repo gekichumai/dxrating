@@ -139,12 +139,12 @@ export const ifNoneMatchMatches = (value: string | undefined, etag: string) =>
     return trimmed === '*' || weakEtagValue(trimmed) === etag
   }) === true
 
-const successHeaders = (metadata: PublishedDxdataMetadata) =>
+const successHeaders = (metadata: PublishedDxdataMetadata, cacheTag: string) =>
   new Headers({
     'Cache-Control': DXDATA_BROWSER_CACHE_CONTROL,
     'CDN-Cache-Control': DXDATA_CDN_CACHE_CONTROL,
     'Cloudflare-CDN-Cache-Control': DXDATA_CDN_CACHE_CONTROL,
-    'Cache-Tag': 'dxdata',
+    'Cache-Tag': cacheTag,
     'Content-Length': metadata.byteLength,
     'Content-Type': metadata.contentType,
     ETag: `"${metadata.bodySha256}"`,
@@ -197,6 +197,8 @@ export const createDxdataEffect = <E, R, H extends Env = Env>(
   },
   reportError: (error: unknown, context: Context<H>) => void = () => {},
   compress: (body: string) => Promise<Buffer> = compressCatalogBody,
+  /** The edge cache tag of the responses, which services/edge-cache.ts purges by */
+  cacheTag = 'dxdata',
 ) => {
   // The Brotli body of the published catalog, one at a time: a new publication replaces it. `encoded` is set once
   // the compression has finished; until then requests get the identity body.
@@ -225,7 +227,7 @@ export const createDxdataEffect = <E, R, H extends Env = Env>(
       const metadata = yield* store.getPublishedMetadata()
       if (!metadata) return uncachedError(c, 'DX data catalog is unavailable', 503)
       const headers = yield* Effect.try({
-        try: () => successHeaders(metadata),
+        try: () => successHeaders(metadata, cacheTag),
         catch: (cause) => new DxdataDecodeError({ operation: 'encode published catalog headers', cause }),
       })
       // The Brotli body is its own representation with its own ETag, so a cache holding the identity body (from before

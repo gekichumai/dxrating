@@ -8,7 +8,7 @@ export class EdgeCacheError extends Data.TaggedError('EdgeCacheError')<{
 }> {}
 
 /** The `Cache-Tag` values of the public responses the Cloudflare edge stores (see app.ts and services/dxdata.ts) */
-export const EDGE_CACHE_TAGS = ['dxdata', 'arcade-venues', 'tags', 'aliases'] as const
+export const EDGE_CACHE_TAGS = ['dxdata', 'dxdata-v2', 'arcade-venues', 'tags', 'aliases'] as const
 
 /** How often the publication pointer is compared with the one the edge was last told about */
 export const EDGE_CACHE_CHECK_INTERVAL = Duration.seconds(60)
@@ -59,7 +59,7 @@ export const requestEdgeCache = Effect.fn('EdgeCache.request')(function* (
  * - At startup (a deploy), it purges every public tag, so header and encoding changes reach the edge at once instead
  *   of after the old objects' TTL. It first warms the catalog, which starts its Brotli compression; the edge refills
  *   with the identity body and picks up the Brotli one at its next revalidation.
- * - When the published catalog changes, it warms the new body and invalidates `dxdata`. The edge keeps serving the
+ * - When the published catalog changes, it warms the new body and invalidates `dxdata` and `dxdata-v2`. The edge keeps serving the
  *   previous catalog while it fetches the new one.
  *
  * A failed step is retried at the next check, without stopping the watcher. The first failure of a streak is reported,
@@ -85,7 +85,7 @@ export const watchEdgeCache = <E1, R1, E2, R2, E3, R3>(options: {
         yield* options.request('purge_cache', EDGE_CACHE_TAGS)
         purgedAtStartup = true
       } else {
-        yield* options.request('invalidate_cache', ['dxdata'])
+        yield* options.request('invalidate_cache', ['dxdata', 'dxdata-v2'])
       }
       announcedSha256 = sha256
     }).pipe(
