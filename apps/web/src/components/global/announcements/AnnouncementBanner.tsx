@@ -1,7 +1,7 @@
 import type { PublicAnnouncement } from '@gekichumai/api-contract'
 import { IconButton } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useId, useState, type ComponentType, type SVGProps } from 'react'
+import { useEffect, useId, useRef, useState, type ComponentType, type SVGProps } from 'react'
 import IconMdiAlertOctagonOutline from '~icons/mdi/alert-octagon-outline'
 import IconMdiAlertOutline from '~icons/mdi/alert-outline'
 import IconMdiArrowRight from '~icons/mdi/arrow-right'
@@ -83,29 +83,68 @@ export function AnnouncementBanners() {
     retry: 1,
   })
   const now = useMinuteClock(enabled)
-  if (!enabled || !data) return null
-
-  const visible = visibleAnnouncements(data.announcements, { platform: 'web', region, now, dismissed })
-  if (visible.length === 0) return null
+  const visible =
+    enabled && data ? visibleAnnouncements(data.announcements, { platform: 'web', region, now, dismissed }) : []
+  const politeText = usePoliteAnnouncement(visible, locale, data?.locales.fallbacks)
+  if (!mounted) return null
 
   const dismiss = (announcement: PublicAnnouncement) =>
     setDismissed((current) =>
-      writeDismissed(safeLocalStorage(), { ...current, [announcement.id]: announcement.revision }, data.announcements),
+      writeDismissed(
+        safeLocalStorage(),
+        { ...current, [announcement.id]: announcement.revision },
+        data?.announcements ?? [],
+      ),
     )
 
   return (
     <>
-      {visible.map((announcement) => (
-        <AnnouncementCard
-          key={`${announcement.id}:${announcement.revision}`}
-          announcement={announcement}
-          locale={locale}
-          fallbacks={data.locales.fallbacks}
-          onDismiss={() => dismiss(announcement)}
-        />
-      ))}
+      {/* Mounted empty before any notice arrives: screen readers announce a change to a live region that already
+          exists, not one inserted with its text (critical cards are role=alert, which is announced on insertion) */}
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {politeText}
+      </div>
+      {data &&
+        visible.map((announcement) => (
+          <AnnouncementCard
+            key={`${announcement.id}:${announcement.revision}`}
+            announcement={announcement}
+            locale={locale}
+            fallbacks={data.locales.fallbacks}
+            onDismiss={() => dismiss(announcement)}
+          />
+        ))}
     </>
   )
+}
+
+/** The text of the info and warning notices that newly appeared (or were revised), for the polite live region */
+function usePoliteAnnouncement(
+  visible: readonly PublicAnnouncement[],
+  locale: SupportedLocale,
+  fallbacks: Record<string, string[]> | undefined,
+) {
+  const [text, setText] = useState('')
+  const announced = useRef(new Set<string>())
+  // The set of announced revisions keeps a re-render or a language switch from repeating a notice
+  useEffect(() => {
+    const fresh = visible.filter(
+      (announcement) =>
+        announcement.severity !== 'critical' && !announced.current.has(`${announcement.id}:${announcement.revision}`),
+    )
+    if (fresh.length === 0) return
+    for (const announcement of fresh) announced.current.add(`${announcement.id}:${announcement.revision}`)
+    setText(
+      fresh
+        .map((announcement) => {
+          const { title } = localizeAnnouncement(announcement, locale, fallbacks)
+          return title ? `${severityLabel(announcement.severity, locale)}: ${title.value}` : null
+        })
+        .filter(Boolean)
+        .join('. '),
+    )
+  }, [visible, locale, fallbacks])
+  return text
 }
 
 function AnnouncementCard({
@@ -130,7 +169,7 @@ function AnnouncementCard({
   return (
     <section
       aria-labelledby={titleId}
-      role={announcement.severity === 'critical' ? 'alert' : 'status'}
+      role={announcement.severity === 'critical' ? 'alert' : undefined}
       data-severity={announcement.severity}
       className={`glass-overlay relative overflow-hidden p-4 pe-2 shadow-[var(--shadow-overlay)] before:absolute before:inset-y-0 before:start-0 before:w-1 before:content-[''] ${edgeClass}`}
     >
