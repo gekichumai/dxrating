@@ -2,13 +2,23 @@ import { difficultyInkStyle } from '@/utils/difficultyInk'
 import { type DifficultyEnum, type Sheet, TypeEnum } from '@gekichumai/dxdata'
 import { Tab, Tabs } from '@mui/material'
 import clsx from 'clsx'
-import { type FC, type KeyboardEvent, type MouseEvent, type SyntheticEvent, useMemo } from 'react'
+import {
+  type FC,
+  type KeyboardEvent,
+  type MouseEvent,
+  type SyntheticEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { DIFFICULTIES } from '../../models/difficulties'
-import { DIFFICULTY_ORDER } from '../../models/constants'
+import { DIFFICULTY_ORDER, getHighestDifficulty } from '../../models/constants'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
 import { LinkBehavior } from '@/components/global/InternalLink'
+import { afterNextPaint } from '@/utils/afterNextPaint'
 
 export interface SongSheetTabsProps {
   sheets: Sheet[]
@@ -16,7 +26,8 @@ export interface SongSheetTabsProps {
   activeType: TypeEnum
   activeDifficulty: DifficultyEnum
   onTypeChange: (type: TypeEnum) => void
-  onDifficultyChange: (difficulty: DifficultyEnum) => void
+  /** With the type a pending type switch is going to, if any */
+  onDifficultyChange: (difficulty: DifficultyEnum, type: TypeEnum) => void
   /** The chart page a tab opens: the tabs are real links so crawlers (and new-tab clicks) reach sibling charts */
   hrefFor: (type: TypeEnum, difficulty?: DifficultyEnum) => string
 }
@@ -53,6 +64,15 @@ const TYPE_LABELS = {
 
 const typeShortLabel = (type: TypeEnum, label: string) => TYPE_SHORT_LABELS[type] ?? label
 
+/** A tab the visitor picked whose page is still on its way, and the chart shown when it was picked */
+interface PendingChart {
+  type: TypeEnum
+  difficulty: DifficultyEnum | false
+  from: string
+  /** The song's charts, which identify the song */
+  sheets: Sheet[]
+}
+
 export const SongSheetTabs: FC<SongSheetTabsProps> = ({
   sheets,
   availableTypes,
@@ -64,13 +84,33 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
 }) => {
   const locale = useLocale()
 
+  // A tap shows its tab as selected at once, and the switch itself (a navigation that re-renders the whole page,
+  // ~200ms at 4x CPU) runs after that paint: the tap's frame carries only the tabs (mobile INP)
+  const shownChart = `${activeType}/${activeDifficulty}`
+  const [pending, setPending] = useState<PendingChart>()
+  // Once the page shows another chart or song (this one or any other), the URL's tabs are right again, and the pick
+  // is done for good: a later navigation back to where it started must not bring it back
+  const pendingCurrent = pending?.from === shownChart && pending.sheets === sheets
+  if (pending && !pendingCurrent) setPending(undefined)
+  const shownPending = pendingCurrent ? pending : undefined
+  const cancelSwitch = useRef<() => void>(undefined)
+  useEffect(() => () => cancelSwitch.current?.(), [])
+  const switchChart = (next: Omit<PendingChart, 'from' | 'sheets'>, commit: () => void) => {
+    setPending({ ...next, from: shownChart, sheets })
+    cancelSwitch.current?.()
+    cancelSwitch.current = afterNextPaint(commit)
+  }
+
+  const tabsType = shownPending?.type ?? activeType
+  const tabsDifficulty = shownPending ? shownPending.difficulty : activeDifficulty
+
   const difficultiesForActiveType = useMemo(() => {
-    const diffSet = new Set(sheets.filter((s) => s.type === activeType).map((s) => s.difficulty))
+    const diffSet = new Set(sheets.filter((s) => s.type === tabsType).map((s) => s.difficulty))
     // Ascending (BASIC → Re:MASTER), as on the game's select screen and the song hub table
     return [...DIFFICULTY_ORDER].reverse().filter((d) => diffSet.has(d))
-  }, [sheets, activeType])
+  }, [sheets, tabsType])
 
-  const isUtageType = activeType === TypeEnum.UTAGE || activeType === TypeEnum.UTAGE2P
+  const isUtageType = tabsType === TypeEnum.UTAGE || tabsType === TypeEnum.UTAGE2P
   // A lone utage chart needs no difficulty switcher: its kind is shown in the chart summary below
   const showDifficultyTabs = !(isUtageType && difficultiesForActiveType.length <= 1)
 
@@ -81,10 +121,13 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
         // A compact segmented control on a glass track; the selected segment is tinted, not filled
         <div className="glass-inset !rounded-[var(--radius-md)] p-0.5 self-start sm:self-center shrink-0 max-w-full">
           <Tabs
-            value={activeType}
-            onChange={(event, v) => {
+            value={tabsType}
+            onChange={(event, v: TypeEnum) => {
               if (isModifiedClick(event)) return
-              onTypeChange(v)
+              // The page opens a type on its highest difficulty; utage kinds have their own, which show once it has
+              const highest = getHighestDifficulty(sheets.filter((sheet) => sheet.type === v))
+              const difficulty = sheets.some((sheet) => sheet.type === v && sheet.difficulty === highest) && highest
+              switchChart({ type: v, difficulty }, () => onTypeChange(v))
             }}
             variant="scrollable"
             scrollButtons={false}
@@ -98,7 +141,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
           >
             {availableTypes.map((type) => {
               const label = TYPE_LABELS[type]({}, { locale })
-              const selected = type === activeType
+              const selected = type === tabsType
               return (
                 <Tab
                   key={type}
@@ -138,10 +181,10 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
 
       {showDifficultyTabs && (
         <Tabs
-          value={activeDifficulty}
-          onChange={(event, v) => {
+          value={tabsDifficulty}
+          onChange={(event, v: DifficultyEnum) => {
             if (isModifiedClick(event)) return
-            onDifficultyChange(v)
+            switchChart({ type: tabsType, difficulty: v }, () => onDifficultyChange(v, tabsType))
           }}
           variant="scrollable"
           scrollButtons="auto"
@@ -152,7 +195,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
           }}
           TabIndicatorProps={{
             style: {
-              backgroundColor: DIFFICULTIES[activeDifficulty as DifficultyEnum]?.color,
+              backgroundColor: tabsDifficulty ? DIFFICULTIES[tabsDifficulty]?.color : undefined,
               height: 3,
               borderRadius: '3px 3px 0 0',
             },
@@ -160,13 +203,13 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
         >
           {difficultiesForActiveType.map((difficulty) => {
             const config = DIFFICULTIES[difficulty]
-            const selected = activeDifficulty === difficulty
+            const selected = tabsDifficulty === difficulty
             return (
               <Tab
                 key={difficulty}
                 value={difficulty}
                 component={LinkBehavior}
-                href={hrefFor(activeType, difficulty)}
+                href={hrefFor(tabsType, difficulty)}
                 onClick={keepModifiedClicks}
                 onKeyDown={activateOnSpace}
                 label={config?.title ?? difficulty}

@@ -1,6 +1,7 @@
 import type { ServerEnum } from '@gekichumai/dxdata'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { fireEvent, render, screen, type RenderResult } from '@testing-library/react'
+import { act } from 'react'
 import type { ReactNode } from 'react'
 import { renderToString } from 'react-dom/server'
 import type { FlattenedSheet } from '@/songs'
@@ -16,9 +17,17 @@ const routeState = vi.hoisted(() => {
     syncSearchOnNavigate: boolean
     onNavigate?: () => void
     navigate: ReturnType<typeof vi.fn>
+    /** Finishes the navigations still loading: the route reports the newest one's search */
+    finishNavigations: () => void
+    settleNavigations: (() => void)[]
   } = {
     search: {},
     syncSearchOnNavigate: true,
+    settleNavigations: [],
+    finishNavigations: () => {
+      state.search = state.pendingSearch ?? state.search
+      for (const settle of state.settleNavigations.splice(0)) settle()
+    },
     navigate: vi.fn((options: { search?: Record<string, unknown> | ((prev: Record<string, unknown>) => unknown) }) => {
       let nextSearch = state.search
       if (typeof options.search === 'function') {
@@ -27,12 +36,13 @@ const routeState = vi.hoisted(() => {
         nextSearch = options.search
       }
 
+      state.onNavigate?.()
       if (state.syncSearchOnNavigate) {
         state.search = nextSearch
-      } else {
-        state.pendingSearch = nextSearch
+        return Promise.resolve()
       }
-      state.onNavigate?.()
+      state.pendingSearch = nextSearch
+      return new Promise<void>((resolve) => state.settleNavigations.push(resolve))
     }),
   }
 
@@ -141,6 +151,7 @@ describe('SheetList', () => {
     window.localStorage.clear()
     routeState.search = {}
     routeState.pendingSearch = undefined
+    routeState.settleNavigations = []
     routeState.syncSearchOnNavigate = true
     routeState.onNavigate = undefined
     routeState.navigate.mockClear()
@@ -205,6 +216,188 @@ describe('SheetList', () => {
     expect(screen.queryByTestId('sheet-list')).toBeNull()
   })
 
+  it('writes the query to the URL once typing pauses, not on every keystroke', () => {
+    vi.useFakeTimers()
+    try {
+      routeState.search = {}
+      render(<SheetList />, { wrapper: Providers })
+      const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+      for (const value of ['s', 'sy', 'sys']) fireEvent.change(input, { target: { value } })
+
+      expect(input.value).toBe('sys')
+      expect(routeState.navigate).not.toHaveBeenCalled()
+
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(routeState.navigate).toHaveBeenCalledTimes(1)
+      expect(routeState.search).toMatchObject({ q: 'sys' })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('follows a query that changes from outside, such as Back', () => {
+    routeState.search = { q: 'first' }
+    const view = render(<SheetList />, { wrapper: Providers })
+    const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+    expect(input.value).toBe('first')
+
+    routeState.search = { q: 'second' }
+    view.rerender(<SheetList />)
+    expect(input.value).toBe('second')
+  })
+
+  it('lets Back or a link replace a draft whose URL write is still waiting', () => {
+    vi.useFakeTimers()
+    try {
+      routeState.search = { q: 'first' }
+      const view = render(<SheetList />, { wrapper: Providers })
+      const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+      fireEvent.change(input, { target: { value: 'typing' } })
+
+      routeState.search = { q: 'back-target' }
+      view.rerender(<SheetList />)
+      expect(input.value).toBe('back-target')
+
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(routeState.navigate).not.toHaveBeenCalled()
+      expect(routeState.search).toMatchObject({ q: 'back-target' })
+      expect(input.value).toBe('back-target')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('keeps newer typing when an older URL write arrives late', () => {
+    vi.useFakeTimers()
+    try {
+      routeState.search = {}
+      routeState.syncSearchOnNavigate = false
+      const view = render(<SheetList />, { wrapper: Providers })
+      const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+
+      fireEvent.change(input, { target: { value: 'a' } })
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(routeState.navigate).toHaveBeenCalledTimes(1)
+
+      // Typing resumes before the 'a' navigation has finished
+      fireEvent.change(input, { target: { value: 'ab' } })
+      routeState.finishNavigations()
+      view.rerender(<SheetList />)
+      expect(input.value).toBe('ab')
+
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(routeState.pendingSearch).toMatchObject({ q: 'ab' })
+      expect(input.value).toBe('ab')
+    } finally {
+      vi.useRealTimers()
+      routeState.syncSearchOnNavigate = true
+    }
+  })
+
+  it('writes a return to the reported query while an older URL write is still loading', () => {
+    vi.useFakeTimers()
+    try {
+      routeState.search = {}
+      routeState.syncSearchOnNavigate = false
+      const view = render(<SheetList />, { wrapper: Providers })
+      const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+
+      fireEvent.change(input, { target: { value: 'a' } })
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      // Cleared before the 'a' navigation has finished: the route still reports no query
+      fireEvent.change(input, { target: { value: '' } })
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      routeState.finishNavigations()
+      view.rerender(<SheetList />)
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+
+      expect(routeState.navigate).toHaveBeenCalledTimes(2)
+      expect(routeState.search.q).toBeUndefined()
+      expect(input.value).toBe('')
+    } finally {
+      vi.useRealTimers()
+      routeState.syncSearchOnNavigate = true
+    }
+  })
+
+  it('follows Back after typing returned to the reported query while a write was loading', async () => {
+    vi.useFakeTimers()
+    try {
+      routeState.search = {}
+      routeState.syncSearchOnNavigate = false
+      const view = render(<SheetList />, { wrapper: Providers })
+      const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+
+      fireEvent.change(input, { target: { value: 'a' } })
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      fireEvent.change(input, { target: { value: '' } })
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      // Both writes settle; the route ends where it started, so it never reports either of them
+      routeState.finishNavigations()
+      view.rerender(<SheetList />)
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500)
+      })
+
+      routeState.search = { q: 'a' }
+      view.rerender(<SheetList />)
+      expect(input.value).toBe('a')
+      expect(sheetMocks.filteredTerms.at(-1)).toBe('a')
+    } finally {
+      vi.useRealTimers()
+      routeState.syncSearchOnNavigate = true
+    }
+  })
+
+  it('follows Back to a query this list wrote before', async () => {
+    vi.useFakeTimers()
+    try {
+      routeState.search = {}
+      const view = render(<SheetList />, { wrapper: Providers })
+      const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+      for (const value of ['a', 'ab']) {
+        fireEvent.change(input, { target: { value } })
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(500)
+        })
+        view.rerender(<SheetList />)
+      }
+      expect(routeState.search).toMatchObject({ q: 'ab' })
+
+      fireEvent.change(input, { target: { value: 'abc' } })
+      routeState.search = { q: 'a' }
+      view.rerender(<SheetList />)
+      expect(input.value).toBe('a')
+      expect(sheetMocks.filteredTerms.at(-1)).toBe('a')
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500)
+      })
+      expect(routeState.search).toMatchObject({ q: 'a' })
+      expect(input.value).toBe('a')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('keeps an in-progress search edit when the route query update is pending', () => {
     routeState.search = { q: 'abcdef' }
     routeState.syncSearchOnNavigate = false
@@ -227,7 +420,7 @@ describe('SheetList', () => {
     expect(input.selectionStart).toBe(5)
     expect(input.selectionEnd).toBe(5)
 
-    routeState.search = routeState.pendingSearch ?? routeState.search
+    routeState.finishNavigations()
     view.rerender(<SheetList />)
 
     expect(input.value).toBe('abcd1ef')

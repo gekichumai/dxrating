@@ -1,7 +1,7 @@
 import type { VersionEnum } from '@gekichumai/dxdata'
 import { normalizeMaimaiNetRecords, type SongCatalog } from '@gekichumai/maimai-domain'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@/lib/telemetry'
 import { WebHaptics } from 'web-haptics'
 import toast from 'react-hot-toast'
 import { reviewAndApplyImport } from '@/models/scores/importReview'

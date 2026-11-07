@@ -62,12 +62,18 @@ const searchString = (value: unknown) => {
   return stringValue
 }
 
-export const loadSearchRouteData = async (search: SearchParams): Promise<SearchLoaderData> => {
+export const loadSearchRouteData = async (
+  search: SearchParams,
+  // Seed rows stand in for results while the complete catalog loads, which only a server render (a shared or
+  // reloaded ?q= link) needs: in the browser this loader runs on each ?q= update and awaits the complete catalog
+  // first, so a second search here only cost input latency (INP) and was never shown
+  { withSeeds = import.meta.env.SSR }: { withSeeds?: boolean } = {},
+): Promise<SearchLoaderData> => {
   const document = await getCatalogDocument()
   const dialogSheet = findDialogSheet(document, search)
   if (search.q)
     return {
-      seedSheets: buildSearchQuerySeedSheets(search.q, document),
+      seedSheets: withSeeds ? buildSearchQuerySeedSheets(search.q, document) : [],
       catalogSongs: [],
       recentSongs: [],
       dialogSheet,

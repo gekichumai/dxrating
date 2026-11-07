@@ -59,12 +59,12 @@ export const SongPage: FC = () => {
     })
   }
 
-  const handleDifficultyChange = (newDifficulty: DifficultyEnum) => {
+  const handleDifficultyChange = (newDifficulty: DifficultyEnum, newType: TypeEnum = activeType) => {
     navigate({
       to: '/songs/$songId/$type/$difficulty',
       params: {
         songId,
-        type: activeType,
+        type: newType,
         difficulty: newDifficulty,
       },
       ...localeSearch,

@@ -1,6 +1,6 @@
 import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import snapshotAssetUrl from '@gekichumai/dxdata/snapshot.json?url'
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@/lib/telemetry'
 
 // The browser never gets the catalog in a JS chunk. It loads the dxdata API document once, keeps it in Cache Storage,
 // and on later visits renders from that copy at once while it revalidates in the background with the stored ETag.

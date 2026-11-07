@@ -48,13 +48,19 @@ html[data-theme='dark'] {
   --focus-ring: #f4f4f5;
   --focus-halo: 0 0 0 4px rgb(0 0 0 / 0.85);
 
-  /* The canvas behind the background art, and the scrim that dims the art so glass and text read on it */
-  --canvas-dark: #0f0f12;
+  /*
+   * The scrim that dims the background art so glass and text read on it, and the document canvas under it all. The
+   * canvas is the version's pastel seen through the scrim (the same sRGB compositing, so keep the two in step): Safari
+   * 26+ tints its status bar and toolbar from this colour and ignores theme-color, so a plain near-black here left
+   * black bars above and below the dimmed teal page.
+   */
   --backdrop-scrim: rgb(12 12 15 / 0.74);
+  --canvas-dark: color-mix(in srgb, rgb(12 12 15) 74%, var(--theme-canvas));
 }
 
 @supports not (color: color-mix(in oklab, red, blue)) {
   html[data-theme='dark'] {
+    --canvas-dark: #0f0f12;
     --accent-subtle: rgb(255 255 255 / 0.1);
     --glass-tint: transparent;
     --glass-bg: rgb(22 22 26 / 0.74);

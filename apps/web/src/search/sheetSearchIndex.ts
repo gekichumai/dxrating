@@ -12,9 +12,9 @@ const Tier = {
   Title: 0,
   /** A whole alias */
   Alias: 1,
-  /** A whole title, alias or reading in another script or romaji spelling */
+  /** A whole title, alias or reading in another script or romaji spelling (for a latin query, the start of the title) */
   Spelling: 2,
-  /** The start of the title */
+  /** The start of the title, as typed (for a latin query, a whole spelling: a romaji reading is a guess) */
   TitlePrefix: 3,
   /** The start of an alias or a reading, as typed */
   NamePrefix: 4,
@@ -46,6 +46,7 @@ interface IndexedSong {
   title: IndexedName
   aliases: IndexedName[]
   readings: IndexedName[]
+  artist: string
   /** Initials of a title of three or more latin words ("Ultra Synergy Matrix" → usm) */
   initials?: string
   /** Normalized title, artist, aliases and readings, plus their skeletons, for word matching */
@@ -74,6 +75,7 @@ export function buildSheetsSearchIndex(
     const aliases = aliasesOf(song).map(indexName)
     const readings = song.reading ? [indexName(song.reading)] : []
     const title = indexName(song.title)
+    const artist = normalizeText(song.artist)
     const named = [title, ...aliases, ...readings]
     return {
       id: song.id,
@@ -81,12 +83,9 @@ export function buildSheetsSearchIndex(
       title,
       aliases,
       readings,
+      artist,
       initials: titleInitials(song.title),
-      fields: [
-        ...named.map((name) => name.normalized),
-        normalizeText(song.artist),
-        ...named.map((name) => name.skeleton),
-      ],
+      fields: [...named.map((name) => name.normalized), artist, ...named.map((name) => name.skeleton)],
     }
   })
 
@@ -143,14 +142,25 @@ function titleInitials(title: string): string | undefined {
 
 export type SheetsSearchIndex = ReturnType<typeof buildSheetsSearchIndex>
 
-function songTier(song: IndexedSong, compact: string, skeleton: string): { tier: number; length: number } | undefined {
+function songTier(
+  song: IndexedSong,
+  compact: string,
+  skeleton: string,
+  latinQuery: boolean,
+): { tier: number; length: number } | undefined {
   const names = [song.title, ...song.aliases, ...song.readings]
   if (compact && song.title.compact === compact) return { tier: Tier.Title, length: 0 }
   if (compact && song.aliases.some((alias) => alias.compact === compact)) return { tier: Tier.Alias, length: 0 }
   const useSkeleton = skeleton.length >= MIN_SKELETON_PREFIX
-  if (useSkeleton && names.some((name) => name.skeleton === skeleton)) return { tier: Tier.Spelling, length: 0 }
-  if (compact && song.title.compact.startsWith(compact)) {
-    return { tier: Tier.TitlePrefix, length: song.title.compact.length }
+  const titlePrefix = compact !== '' && song.title.compact.startsWith(compact)
+  const spelling = useSkeleton && names.some((name) => name.skeleton === skeleton)
+  // For a latin query the two swap places: "shoo" is more likely the start of "Shooting Stars" than 唱 (しょう) in romaji
+  if (latinQuery) {
+    if (titlePrefix) return { tier: Tier.Spelling, length: song.title.compact.length }
+    if (spelling) return { tier: Tier.TitlePrefix, length: 0 }
+  } else {
+    if (spelling) return { tier: Tier.Spelling, length: 0 }
+    if (titlePrefix) return { tier: Tier.TitlePrefix, length: song.title.compact.length }
   }
   let best: { tier: number; length: number } | undefined
   const consider = (tier: number, length: number) => {
@@ -180,6 +190,7 @@ export function searchSheetsIndex(index: SheetsSearchIndex, trimmedTerm: string)
   const skeleton = skeletonKey(trimmedTerm)
   const words = normalized.split(/\s+/u).filter(Boolean)
   const wordSkeletons = words.map(skeletonKey)
+  const latinQuery = /^[a-z0-9]+$/u.test(compact)
 
   const ranked: { sheet: FlattenedSheet; tier: number; length: number; order: number }[] = []
   const matchedSongs = new Set<string>()
@@ -192,29 +203,35 @@ export function searchSheetsIndex(index: SheetsSearchIndex, trimmedTerm: string)
         ((wordSkeletons[i]?.length ?? 0) >= MIN_SKELETON_CONTAINS &&
           fields.some((field) => field.includes(wordSkeletons[i]!))),
     )
-  /** Within Contains, a match in the title beats one in an alias, which beats the artist, designer or a spelling */
-  const containsRank = (song: IndexedSong) => {
+  /**
+   * Within Contains, a match in the title beats one in an alias or reading, which beats the artist or designer, which
+   * beats a match only in another spelling
+   */
+  const containsRank = (song: IndexedSong, designer?: string) => {
     if (words.every((word) => song.title.normalized.includes(word))) return 0
-    const names = [song.title, ...song.aliases, ...song.readings]
-    if (words.every((word) => names.some((name) => name.normalized.includes(word)))) return 1
-    return 2
+    const named = [song.title, ...song.aliases, ...song.readings]
+    const names = named.map((name) => name.normalized)
+    if (words.every((word) => names.some((name) => name.includes(word)))) return 1
+    // The names without spaces count as typed too ("ym" in "My My My")
+    const literal = [...names, ...named.map((name) => name.compact), song.artist, ...(designer ? [designer] : [])]
+    if (words.every((word) => literal.some((field) => field.includes(word)))) return 2
+    return 3
   }
 
   for (const song of indexedSongs) {
     const sheets = sheetsBySong.get(song.id)
     if (!sheets) continue
-    const match = songTier(song, compact, skeleton)
+    const match = songTier(song, compact, skeleton, latinQuery)
     if (match) {
       matchedSongs.add(song.id)
       for (const sheet of sheets) ranked.push({ sheet, tier: match.tier, length: match.length, order: song.order })
       continue
     }
     // Contains is per sheet: a designer's name matches only the charts they made
-    let rank: number | undefined
     for (const sheet of sheets) {
-      if (containsAll(song.fields, designerBySheet.get(sheet.id))) {
-        rank ??= containsRank(song)
-        ranked.push({ sheet, tier: Tier.Contains, length: rank, order: song.order })
+      const designer = designerBySheet.get(sheet.id)
+      if (containsAll(song.fields, designer)) {
+        ranked.push({ sheet, tier: Tier.Contains, length: containsRank(song, designer), order: song.order })
       }
     }
   }
