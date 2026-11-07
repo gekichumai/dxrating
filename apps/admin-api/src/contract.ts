@@ -145,6 +145,22 @@ const DiffSideSchema = z.object({
   bodySha256: sha256,
 })
 
+const SongDiffSchema = z.object({
+  songId: z.string().describe('The song’s public ID (dsng_…), or songId in the legacy shape'),
+  title: z.string(),
+  kind: z.enum(['added', 'removed', 'changed']),
+  fields: z.array(FieldChangeSchema),
+  sheets: z.array(
+    z.object({
+      id: z.string().describe('The sheet’s public ID, or type:difficulty in the legacy shape'),
+      type: z.string(),
+      difficulty: z.string(),
+      kind: z.enum(['added', 'removed', 'changed']),
+      fields: z.array(FieldChangeSchema),
+    }),
+  ),
+})
+
 export const CatalogDiffSchema = z.object({
   channel: z.string(),
   from: DiffSideSchema,
@@ -173,23 +189,7 @@ export const CatalogDiffSchema = z.object({
   updateTime: z.object({ before: z.json().optional(), after: z.json().optional() }),
   path: z.string().nullable(),
   songsTotal: z.number().int(),
-  songs: z.array(
-    z.object({
-      songId: z.string().describe('The song’s public ID (dsng_…), or songId in the legacy shape'),
-      title: z.string(),
-      kind: z.enum(['added', 'removed', 'changed']),
-      fields: z.array(FieldChangeSchema),
-      sheets: z.array(
-        z.object({
-          id: z.string().describe('The sheet’s public ID, or type:difficulty in the legacy shape'),
-          type: z.string(),
-          difficulty: z.string(),
-          kind: z.enum(['added', 'removed', 'changed']),
-          fields: z.array(FieldChangeSchema),
-        }),
-      ),
-    }),
-  ),
+  songs: z.array(SongDiffSchema),
   nextOffset: z.number().int().nullable(),
 })
 
@@ -349,6 +349,44 @@ export const adminCatalogContract = {
         .strict(),
     )
     .output(SongProvenanceSchema),
+  songHistory: oc
+    .meta(
+      openapi({
+        method: 'GET',
+        path: '/catalog/song/history',
+        summary: 'What each recent publication changed in one song (scope catalog:read)',
+        description:
+          'As the publications recorded it, newest first: each entry is a publication, whether the song is in it, and its changes against the publication before it. Not a curated game-version history.',
+        tags: ['catalog'],
+      }),
+    )
+    .input(
+      z
+        .object({
+          channel: channelInput,
+          songId: z.string().min(1).max(300).describe('The public song ID (dsng_…)'),
+          limit: z.coerce.number().int().min(2).max(30).default(10).describe('How many recent publications'),
+        })
+        .strict(),
+    )
+    .output(
+      z.object({
+        channel: z.string(),
+        songId: z.string(),
+        title: z.string().nullable().describe('In the newest publication shown; null if the song is not in it'),
+        entries: z.array(
+          z.object({
+            revision: z.number().int(),
+            publishedAt: z.string(),
+            bodySha256: sha256,
+            present: z.boolean(),
+            change: SongDiffSchema.nullable().describe(
+              'Against the publication before it; null for the oldest shown, or no change',
+            ),
+          }),
+        ),
+      }),
+    ),
 }
 
 export const adminApiContract = {
