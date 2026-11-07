@@ -18,6 +18,7 @@ import { ORPCError } from '@orpc/client'
 import { useQuery } from '@tanstack/react-query'
 import { Announcements } from './Announcements'
 import { adminOrpc } from './api'
+import { DataOverview } from './catalog/DataOverview'
 import { Diff } from './catalog/Diff'
 import { Publications } from './catalog/Publications'
 import { SongProvenance, SongSearch } from './catalog/Songs'
@@ -125,6 +126,7 @@ export function App() {
               </Table>
             </Card>
           )}
+          {principal && route.view === 'overview' && can(principal.scopes, 'catalog:read') && <DataOverview />}
           {principal && route.view === 'announcements' && can(principal.scopes, 'announcements:read') && (
             <Announcements canWrite={can(principal.scopes, 'announcements:write')} />
           )}

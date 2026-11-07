@@ -45,6 +45,25 @@ CREATE TABLE IF NOT EXISTS dxdata.catalog_publication_receipts (
   PRIMARY KEY (channel, publication_fingerprint_sha256),
   UNIQUE (channel, revision)
 );
+CREATE TABLE IF NOT EXISTS dxdata.catalog_sources (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  source_kind TEXT NOT NULL,
+  priority INTEGER NOT NULL DEFAULT 0,
+  authoritative BOOLEAN NOT NULL DEFAULT false
+);
+CREATE TABLE IF NOT EXISTS dxdata.catalog_source_runs (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  source_id TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT 'catalog',
+  payload_sha256 TEXT NOT NULL,
+  observation_key TEXT NOT NULL,
+  started_at TIMESTAMPTZ NOT NULL,
+  finished_at TIMESTAMPTZ,
+  status TEXT NOT NULL,
+  item_count INTEGER,
+  error TEXT
+);
 CREATE TABLE IF NOT EXISTS dxdata.canonical_songs (
   id TEXT PRIMARY KEY,
   legacy_song_id TEXT UNIQUE
@@ -75,9 +94,31 @@ export const createCatalogFixtureSchema = async (pool: pg.Pool) => {
 
 export const clearCatalogFixture = async (pool: pg.Pool) => {
   await pool.query(`
-    TRUNCATE dxdata.catalog_publication_provenance_manifests, dxdata.catalog_publication_receipts, dxdata.canonical_songs, dxdata.song_source_mappings,
+    TRUNCATE dxdata.catalog_publication_provenance_manifests, dxdata.catalog_publication_receipts, dxdata.canonical_songs, dxdata.song_source_mappings, dxdata.catalog_sources, dxdata.catalog_source_runs,
       dxdata.catalog_publications, dxdata.catalog_snapshots, dxdata.catalog_build_runs RESTART IDENTITY
   `)
+}
+
+/** Records a source and its succeeded observations (time, item count), as the assembly line does */
+export const observeSourceFixture = async (
+  pool: pg.Pool,
+  source: { id: string; name: string; kind: string; authoritative?: boolean },
+  observations: { at: string; items: number; status?: string }[],
+) => {
+  await pool.query(
+    `INSERT INTO dxdata.catalog_sources (id, name, source_kind, authoritative) VALUES ($1, $2, $3, $4)
+     ON CONFLICT (id) DO NOTHING`,
+    [source.id, source.name, source.kind, source.authoritative ?? false],
+  )
+  for (const [index, observation] of observations.entries()) {
+    const key = sha(`${source.id}-${observation.at}-${index}`)
+    await pool.query(
+      `INSERT INTO dxdata.catalog_source_runs
+         (source_id, payload_sha256, observation_key, started_at, finished_at, status, item_count)
+       VALUES ($1, $2, $2, $3, $3, $4, $5)`,
+      [source.id, key, observation.at, observation.status ?? 'succeeded', observation.items],
+    )
+  }
 }
 
 /** Maps a public song ID to its legacy songId, as the catalog's canonical_songs does (other columns left out) */
