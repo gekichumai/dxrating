@@ -356,6 +356,55 @@ describe('cloud save merge module (shared vectors, applied to the database)', ()
     expect(saves.rows).toEqual([{ record_count: 3 }])
   })
 
+  it('does not short-circuit an automatic job past a deletion an earlier identical job only skipped by its start time', async () => {
+    await insert('score_saves', { id: 'dsav_during', user_id: USER, name: 'during', region: 'jp' })
+    const first = await importRecords(
+      USER,
+      'dsav_during',
+      'lxns',
+      [{ sheetId: sheetId(1), achievement: 1000000, comboFlag: null, syncFlag: null }],
+      { trigger: 'auto', sourceAccountId: 'friend-1', sha: '1'.repeat(64) },
+    )
+    const better = [{ sheetId: sheetId(1), achievement: 1005000, comboFlag: null, syncFlag: null }]
+    // an automatic job starts, the user deletes the record while it runs, the job completes with a better score:
+    // the deletion is newer than the job, so it stays
+    const { job } = await runDatabase((database) =>
+      startImportJob(database, {
+        userId: USER,
+        saveId: 'dsav_during',
+        source: 'lxns',
+        trigger: 'auto',
+        idempotencyKey: 'during-running',
+        sourceAccountId: 'friend-1',
+        sourceAccountKind: 'lxns_friend_code',
+        fetchedAt: new Date(),
+        rawPayloadSha256: '2'.repeat(64),
+      }),
+    )
+    const deleted = await runDatabase((database) =>
+      applyMutations(database, USER, 'dsav_during', [deleteMutation(sheetId(1), first.revision)]),
+    )
+    expect(deleted.result.results[0]!.status).toBe('applied')
+    const during = await runDatabase((database) =>
+      completeImportJob(database, { userId: USER, saveId: 'dsav_during', jobId: job.id, records: better }),
+    )
+    expect(during.job.counts).toMatchObject({ skippedDeleted: 1 })
+
+    // the same payload again: this job started after the deletion, so the merge restores the strictly better score
+    // instead of reusing the earlier job's decision
+    const next = await importRecords(USER, 'dsav_during', 'lxns', better, {
+      trigger: 'auto',
+      sourceAccountId: 'friend-1',
+      sha: '2'.repeat(64),
+    })
+    expect(next.job.counts).toMatchObject({ inserted: 1, skippedDeleted: 0 })
+    const record = await pool.query(
+      `SELECT achievement, deleted_at FROM score_records WHERE save_id = 'dsav_during' AND sheet_id = $1`,
+      [sheetId(1)],
+    )
+    expect(record.rows).toEqual([{ achievement: 1005000, deleted_at: null }])
+  })
+
   it('does not short-circuit an automatic job past a tombstone the cleanup purged since', async () => {
     await insert('score_saves', { id: 'dsav_purge', user_id: USER, name: 'purge', region: 'jp' })
     const records = [1, 2].map((n) => ({ sheetId: sheetId(n), achievement: 1000000, comboFlag: null, syncFlag: null }))
