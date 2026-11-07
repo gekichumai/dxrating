@@ -1,6 +1,7 @@
 import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { fromV2Community, type CommunityV2Document } from '@gekichumai/dxdata/v2'
-import { loadClientCatalogDocument } from './clientCatalog'
+import { useEffect } from 'react'
+import { loadClientCatalogDocument, subscribeToCatalog } from './clientCatalog'
 
 // The tags and aliases of the catalog (dxdata v2, gekichumai/meta#43). They change within minutes while the catalog
 // changes about daily, so they come from their own small document. Its responses tell the browser to revalidate
@@ -35,24 +36,38 @@ async function fetchCommunity(): Promise<CommunityV2Document> {
   return document
 }
 
-let shared: { at: number; lists: Promise<CommunityLists> } | undefined
+let shared: { at: number; community: Promise<CommunityV2Document> } | undefined
 
 /**
- * The v1 tag and alias lists the app renders from, rebuilt from the overlay against the catalog: an association or
- * alias of a sheet or song the catalog does not have yet is left out
+ * The v1 tag and alias lists the app renders from, rebuilt from the overlay against the current catalog: an
+ * association or alias of a sheet or song the catalog does not have yet is left out. The overlay request is shared
+ * for a few seconds; the lists are resolved on every call, so a call after a catalog refresh sees the new songs.
  */
-export function loadCommunityLists(): Promise<CommunityLists> {
-  if (shared && Date.now() - shared.at < SHARE_MS) return shared.lists
-  const lists = Promise.all([fetchCommunity(), loadClientCatalogDocument()]).then(([community, catalog]) =>
-    fromV2Community(community, catalog),
+export async function loadCommunityLists(): Promise<CommunityLists> {
+  if (!shared || Date.now() - shared.at >= SHARE_MS) {
+    const entry = { at: Date.now(), community: fetchCommunity() }
+    shared = entry
+    // A failure is not shared: the next caller tries again
+    entry.community.catch(() => {
+      if (shared === entry) shared = undefined
+    })
+  }
+  const [community, catalog] = await Promise.all([shared.community, loadClientCatalogDocument()])
+  return fromV2Community(community, catalog)
+}
+
+/**
+ * Re-resolves a hook's community data whenever a newer catalog is published (a background revalidation found one),
+ * so songs and sheets it adds get their tags and aliases without a reload
+ */
+export const useRefreshOnCatalogChange = (revalidate: () => unknown) => {
+  useEffect(
+    () =>
+      subscribeToCatalog(() => {
+        void revalidate()
+      }),
+    [revalidate],
   )
-  const entry = { at: Date.now(), lists }
-  shared = entry
-  // A failure is not shared: the next caller tries again
-  lists.catch(() => {
-    if (shared === entry) shared = undefined
-  })
-  return lists
 }
 
 /** Tests only: forgets the shared load */
