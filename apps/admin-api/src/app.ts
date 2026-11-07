@@ -6,6 +6,7 @@ import type { ManagedRuntime } from 'effect'
 import { Effect } from 'effect'
 import { Hono } from 'hono'
 import { adminApiContract } from './contract'
+import { AdminDatabase } from './db'
 import { requireAdmin } from './require-admin'
 import { adminApiRouter, type AdminApiContext } from './router'
 import type { AdminApiServices } from './runtime'
@@ -20,7 +21,19 @@ export const createAdminApiApp = (runtime: ManagedRuntime.ManagedRuntime<AdminAp
   const generator = new OpenAPIGenerator({ converters: [new ZodToJsonSchemaConverter()] })
   const app = new Hono()
 
-  app.get('/health', (c) => c.json({ ok: true }))
+  // `?db=1` also checks the database (one `select 1`, outcome logged); the reply never says why it failed
+  app.get('/health', async (c) => {
+    if (c.req.query('db') !== '1') return c.json({ ok: true })
+    const reachable = await runtime.runPromise(
+      Effect.flatMap(AdminDatabase, (db) => db.ping).pipe(
+        Effect.as(true),
+        Effect.catch(() => Effect.succeed(false)),
+      ),
+    )
+    return reachable
+      ? c.json({ ok: true, db: 'ok' }, 200, NO_STORE)
+      : c.json({ ok: false, db: 'unreachable' }, 503, NO_STORE)
+  })
 
   // Private: behind Access like everything on this host, and only for an admin principal
   app.get('/api/spec.json', async (c) => {
