@@ -10,13 +10,14 @@ import { SongSheetContent, SongSheetSummary } from '../components/song/SongSheet
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
 import { constantTableLevelOf, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { versionPagePath, versionSlug } from '@/components/chartDiscovery/versionPages'
-import { useTranslation } from 'react-i18next'
 import { keepLocaleSearch, withLocaleQuery } from '@/setup/locale'
 import { buildSheetPath } from '../components/sheet/sheetLinks'
 import { getVisibleSongPageSheets } from './songPageSheets'
 import { useSongSheets } from './useSongSheets'
 import { ToleranceCalculator } from '@/components/tools/ToleranceCalculator'
 import { InternalLink, LinkBehavior } from '@/components/global/InternalLink'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
@@ -26,7 +27,7 @@ export const SongPage: FC = () => {
   const search = routeApi.useSearch()
   const localeSearch = keepLocaleSearch(search)
   const navigate = useNavigate()
-  const { t } = useTranslation(['constants', 'versions', 'song'])
+  const locale = useLocale()
   const { song, flattenedSheets } = useSongSheets(songId)
 
   const availableTypes = useMemo(() => {
@@ -82,7 +83,11 @@ export const SongPage: FC = () => {
 
       {headerSheet && <SongHeader sheet={headerSheet} />}
 
-      <MaterialSurface as="section" className="p-3 flex flex-col gap-3" aria-label={t('song:chart-section-label')}>
+      <MaterialSurface
+        as="section"
+        className="p-3 flex flex-col gap-3"
+        aria-label={m.song_chartSectionLabel({}, { locale })}
+      >
         <SongSheetTabs
           sheets={song.sheets}
           availableTypes={availableTypes}
@@ -108,7 +113,7 @@ export const SongPage: FC = () => {
         ))}
 
         <Link to="/songs/$songId" params={{ songId: song.id }} {...localeSearch} className="link self-start text-sm">
-          {t('song:hub.all-charts-link')}
+          {m.song_hub_allChartsLink({}, { locale })}
           <span aria-hidden> →</span>
         </Link>
       </MaterialSurface>
@@ -120,17 +125,17 @@ export const SongPage: FC = () => {
       {activeSheet && <ToleranceCalculator key={activeSheet.id} sheet={activeSheet} source="chart_page" />}
 
       {(constantTableLevel || (activeSheet && versionSlug(activeSheet.version))) && (
-        <nav className="flex flex-col gap-2 text-sm" aria-label={t('song:related-pages')}>
+        <nav className="flex flex-col gap-2 text-sm" aria-label={m.song_relatedPages({}, { locale })}>
           {constantTableLevel && (
             <InternalLink href={constantTablePath(constantTableLevel)} className="link self-start">
-              {t('constants:chart-link', { level: constantTableLevel })}
+              {m.constants_chartLink({ level: constantTableLevel }, { locale })}
               <span aria-hidden> →</span>
             </InternalLink>
           )}
 
           {activeSheet && versionSlug(activeSheet.version) && (
             <InternalLink href={versionPagePath(activeSheet.version)} className="link self-start">
-              {t('versions:chart-link', { version: activeSheet.version })}
+              {m.versions_chartLink({ version: activeSheet.version }, { locale })}
               <span aria-hidden> →</span>
             </InternalLink>
           )}

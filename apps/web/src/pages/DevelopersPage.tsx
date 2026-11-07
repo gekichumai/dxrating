@@ -1,3 +1,4 @@
+import { Breadcrumb } from '@/components/completion/TableChrome'
 import { Button, IconButton, Tooltip } from '@mui/material'
 import clsx from 'clsx'
 import { type ComponentType, Fragment, type ReactNode, useEffect, useState } from 'react'
@@ -206,6 +207,10 @@ export const DevelopersPage = () => {
       itemScope
       itemType="https://schema.org/WebPage"
     >
+      {/* The page hides the app tabs (it is documentation), so the breadcrumb is its way back to the site */}
+      <div className="mb-3">
+        <Breadcrumb items={[{ label: m.developers_title({}, { locale }) }]} />
+      </div>
       <article className="glass overflow-hidden">
         <header className="px-5 pt-7 pb-6 md:px-8 md:pt-10 md:pb-8 border-b border-solid border-x-0 border-t-0 border-black/8">
           <h1

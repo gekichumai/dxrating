@@ -58,6 +58,11 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ 
               main: versionTheme.accentStrongColor,
               contrastText: '#fff',
             },
+            // --danger (tokens.css): MUI's default red reaches only 4.2:1 as text on glass
+            error: {
+              main: '#b91c1c',
+              contrastText: '#fff',
+            },
             text: {
               primary: '#18181b',
               secondary: '#52525b',
@@ -69,6 +74,16 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ 
             primary: {
               // Lightened for dark glass; fills of it carry dark text (--on-accent), ≥4.5:1 in every version
               main: versionTheme.accentStrongDarkColor,
+              // The hover shade of contained buttons: lighter, not MUI's darkened default, which fell to ~3.5:1 under
+              // the dark text
+              dark: versionTheme.accentStrongDarkHoverColor,
+              contrastText: '#111114',
+            },
+            // --danger (dark.css). Fills carry dark text, so the hover shade (`dark`, contained buttons) is set rather
+            // than derived: MUI's darkened #f87171 is rgb(173 79 79), 3.6:1 under #111114; #ef4444 keeps 5.0:1
+            error: {
+              main: '#f87171',
+              dark: '#ef4444',
               contrastText: '#111114',
             },
             text: {

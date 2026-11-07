@@ -1,7 +1,7 @@
 import { intlFormatDistance } from 'date-fns'
 import { memo, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useRenderedAt } from './renderEnvironment'
+import { useLocale } from '@/i18n/LocaleProvider'
 
 function useMinuteNow() {
   const renderedAt = useRenderedAt()
@@ -17,7 +17,7 @@ function useMinuteNow() {
 }
 
 export const useTime = (time?: string, length: 'short' | 'normal' = 'normal') => {
-  const { i18n } = useTranslation()
+  const locale = useLocale()
   const now = useMinuteNow()
   return useMemo(() => {
     try {
@@ -28,17 +28,17 @@ export const useTime = (time?: string, length: 'short' | 'normal' = 'normal') =>
         throw new Error('Invalid date')
       }
 
-      const dateString = date.toLocaleString(i18n.language)
+      const dateString = date.toLocaleString(locale)
       if (length === 'short') {
         // Abbreviated units ("59 min. ago") so the header's build line fits beside the action pill at 375px.
-        return intlFormatDistance(date, new Date(now), { locale: i18n.language, style: 'short' })
+        return intlFormatDistance(date, new Date(now), { locale: locale, style: 'short' })
       }
-      const relativeTime = intlFormatDistance(date, new Date(now), { locale: i18n.language })
+      const relativeTime = intlFormatDistance(date, new Date(now), { locale: locale })
       return `${dateString} (${relativeTime})`
     } catch {
       return 'unknown'
     }
-  }, [time, i18n.language, now])
+  }, [time, locale, now])
 }
 
 /** Self-refreshing relative time display. Rerenders only itself once per minute. */

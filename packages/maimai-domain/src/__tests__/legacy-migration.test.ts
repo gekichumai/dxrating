@@ -71,6 +71,23 @@ describe('legacy sheet ID migration', () => {
     expect(entries[0]!.sheetId).toBe('君の知らない物語__dxrt__dx__dxrt__master')
   })
 
+  // DXRATING-WEB-7H: a saved entry without a sheetId crashed the whole migration with "reading 'split'"
+  it('keeps entries without a string sheetId as they are and migrates the rest', () => {
+    const malformed = [{ achievementRate: 99 }, { sheetId: null, achievementRate: 98 }, { sheetId: 42 }]
+    const entries = [...malformed, { sheetId: 'Link__dxrt__std__dxrt__basic', achievementRate: 100 }] as unknown as {
+      sheetId: string
+      achievementRate?: number
+    }[]
+
+    const result = migrateLegacySheetRecords(entries, catalog, LEGACY_SONG_IDS)
+
+    expect(result.migrated).toBe(1)
+    expect(result.unresolved).toBe(0)
+    expect(result.records.slice(0, 3)).toEqual(malformed)
+    expect(result.records[3]).toEqual({ sheetId: 'dsht_mpd82wyms9', achievementRate: 100 })
+    expect(isLegacySheetId(undefined as unknown as string)).toBe(false)
+  })
+
   it('is idempotent', () => {
     const once = migrateLegacySheetRecords(
       [{ sheetId: 'Link__dxrt__std__dxrt__basic', achievementRate: 100 }],

@@ -215,7 +215,11 @@
     "comments.safety.block-success": "已封鎖作者，其評論已隱藏。",
     "comments.safety.error": "儲存失敗。請檢查網路連線後再試一次。",
     "dx-score.stars": "DX 分數 {{stars}} 星",
-    "dx-score.to-next-star": "距 ✦{{stars}} 還差 {{remaining}} DX 分"
+    "dx-score.to-next-star": "距 ✦{{stars}} 還差 {{remaining}} DX 分",
+    "layout.label": "版面",
+    "layout.list": "列表",
+    "layout.grid": "網格",
+    "favorite.marked": "已收藏"
   },
   "song": {
     "not-found.title": "未找到歌曲",

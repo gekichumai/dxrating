@@ -2,6 +2,7 @@ import { act, render } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NAVIGATION_FEEDBACK_DELAY_MS, NavigationProgress } from '../NavigationProgress'
+import { beginAppBusy } from '../appBusy'
 
 let pending = false
 
@@ -66,5 +67,23 @@ describe('NavigationProgress', () => {
     })
 
     expect(phase(container)).toBe('idle')
+  })
+
+  it('also runs while other work the visitor waits on is busy (a version switch)', () => {
+    const { container } = render(<NavigationProgress />)
+
+    let end!: () => void
+    act(() => {
+      end = beginAppBusy()
+    })
+    act(() => {
+      vi.advanceTimersByTime(NAVIGATION_FEEDBACK_DELAY_MS)
+    })
+    expect(phase(container)).toBe('loading')
+
+    act(() => {
+      end()
+    })
+    expect(phase(container)).toBe('done')
   })
 })

@@ -1,4 +1,5 @@
 import { type FC, useId } from 'react'
+import { BackToHomeLink } from '@/components/global/BackToHomeLink'
 import type { RecentChartLink } from '@/components/chartDiscovery/recentCharts'
 import { SheetListItemContentView, SheetListItemSummary } from '@/components/sheet/SheetListItem'
 import { SHEET_ROW_INSET, SheetRowLayoutContext } from '@/components/sheet/sheetRowLayout'
@@ -59,6 +60,8 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
     >
       <div className="w-full flex flex-col gap-4">
         <header className="w-full flex flex-col gap-2">
+          {/* Only after arriving from Home, so it renders with the page on that navigation, never on the server */}
+          <BackToHomeLink />
           <h1 className="page-title m-0" itemProp="name">
             {m.sheet_chartDiscovery_recent_title({}, { locale })}
           </h1>

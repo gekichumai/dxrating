@@ -99,9 +99,14 @@ export const InternalLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<H
     useEffect(() => {
       if (!router || !pending || !href) return undefined
       const target = pathnameOf(href)
-      return router.subscribe('onBeforeLoad', ({ toLocation }) => {
+      const unsubscribe = router.subscribe('onBeforeLoad', ({ toLocation }) => {
         if (pathnameOf(toLocation.pathname) !== target) setNavigationId(undefined)
       })
+      // A navigation started in the same task as the click (before this effect ran) emitted its event already: the
+      // router's latest destination tells whether this link's navigation was replaced in the meantime
+      const destination = router.latestLocation?.pathname
+      if (destination !== undefined && pathnameOf(destination) !== target) setNavigationId(undefined)
+      return unsubscribe
     }, [router, pending, href])
 
     const handleClick = useCallback(
@@ -122,7 +127,7 @@ export const InternalLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<H
     return (
       <>
         <a ref={anchorRef} href={href} onClick={handleClick} aria-busy={navigating || undefined} {...rest} />
-        {navigating && <LinkPendingSpinner anchorRef={anchorRef} />}
+        {navigating && <PendingSpinner anchorRef={anchorRef} />}
       </>
     )
   },
@@ -152,8 +157,11 @@ export const placeLinkSpinner = (anchor: HTMLElement, viewportWidth: number): Sp
   return { left: box.right - SPINNER_SIZE - inset, top: box.top + inset + SPINNER_SIZE / 2, inset: true }
 }
 
-/** Mounted after a click; shows after the feedback delay and follows the link if the page scrolls */
-const LinkPendingSpinner: FC<{ anchorRef: RefObject<HTMLAnchorElement | null> }> = ({ anchorRef }) => {
+/**
+ * A small spinner beside an element whose action is loading (a clicked link, the version switcher). Mount it while
+ * the work runs; it shows after the feedback delay and follows the element if the page scrolls.
+ */
+export const PendingSpinner: FC<{ anchorRef: RefObject<HTMLElement | null> }> = ({ anchorRef }) => {
   const [placement, setPlacement] = useState<SpinnerPlacement>()
   const [visible, setVisible] = useState(false)
 

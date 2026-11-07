@@ -2,7 +2,8 @@ import { IconButton, useMediaQuery } from '@mui/material'
 import IconMdiClose from '~icons/mdi/close'
 import { type FC, useEffect, useState } from 'react'
 import toast, { ToastBar, Toaster } from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 /**
  * Whether a dialog is open. MUI portals each dialog to <body> and marks a closed, still-mounted one MuiModal-hidden.
@@ -21,7 +22,7 @@ const useDialogOpen = () => {
 }
 
 export const CustomizedToaster: FC = () => {
-  const { t: translate } = useTranslation(['global'])
+  const locale = useLocale()
   // Same 768px breakpoint as useIsLargeDevice; false on the server and the first client render, so SSR markup matches
   const isLargeDevice = useMediaQuery('(min-width: 768px)')
   // Top-right sits on a dialog's own buttons (copy link, favourite, close), so toasts move to the bottom while one is
@@ -73,8 +74,8 @@ export const CustomizedToaster: FC = () => {
                 <IconButton
                   size="small"
                   onClick={() => toast.dismiss(t.id)}
-                  aria-label={translate('global:toast.dismiss')}
-                  title={translate('global:toast.dismiss')}
+                  aria-label={m.global_toast_dismiss({}, { locale })}
+                  title={m.global_toast_dismiss({}, { locale })}
                   className="!self-start !text-fg-2"
                 >
                   <IconMdiClose aria-hidden="true" />

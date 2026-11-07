@@ -1,6 +1,6 @@
 import { plateName } from '@gekichumai/maimai-domain'
 import { Link } from '@tanstack/react-router'
-import { type FC, useEffect, useState } from 'react'
+import { type FC, useEffect, useId, useState } from 'react'
 import clsx from 'clsx'
 import { SheetImage } from '@/components/sheet/SheetListItem'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
@@ -26,6 +26,7 @@ import IconMdiDiceMultipleOutline from '~icons/mdi/dice-multiple-outline'
 import IconMdiNewBox from '~icons/mdi/new-box'
 import IconMdiFire from '~icons/mdi/fire'
 import IconMdiHistory from '~icons/mdi/history'
+import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import type { PlainMessage } from '@/i18n/message'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
@@ -135,6 +136,10 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
   // Scores live on the client only: the server and cached HTML stay user-agnostic
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
+  // Below sm the new charts start folded, so the search results sit higher on a phone; wider screens always show them
+  const [recentExpanded, setRecentExpanded] = useState(false)
+  const recentContentId = useId()
+  const recentTitle = m.home_recent_title({}, { locale })
 
   return (
     <div className="flex w-full flex-col gap-4" data-testid="home-hub">
@@ -143,7 +148,30 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
       {recentSongs.length > 0 && (
         <section className="flex flex-col gap-2" aria-labelledby="home-recent">
           <div className="flex items-center justify-between gap-2">
-            <SectionTitle id="home-recent">{m.home_recent_title({}, { locale })}</SectionTitle>
+            <SectionTitle id="home-recent">
+              {/* The heading holds a disclosure button below sm and plain text from sm. The hidden one is display:
+                  none, so the heading's name is the title either way. CSS, not matchMedia, so SSR stays deterministic */}
+              <button
+                type="button"
+                aria-expanded={recentExpanded}
+                aria-controls={recentContentId}
+                onClick={() => {
+                  trackClick('recent', recentExpanded ? 'collapse' : 'expand')
+                  setRecentExpanded((expanded) => !expanded)
+                }}
+                className="-mx-1 inline-flex min-h-8 cursor-pointer items-center gap-1 rounded-[var(--radius-sm)] border-0 bg-transparent px-1 text-inherit font-inherit sm:hidden"
+              >
+                {recentTitle}
+                <IconMdiChevronDown
+                  aria-hidden="true"
+                  className={clsx(
+                    'size-5 text-fg-2 transition-transform duration-[var(--duration-fast)] ease-[var(--ease-out)] motion-reduce:transition-none',
+                    recentExpanded && 'rotate-180',
+                  )}
+                />
+              </button>
+              <span className="hidden sm:inline">{recentTitle}</span>
+            </SectionTitle>
             <Link
               to="/charts/recent"
               onClick={() => trackClick('recent', 'see_all')}
@@ -156,7 +184,7 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
               (10 at lg, 13 at xl, as many as fit a row). Hidden by CSS, not matchMedia, so SSR stays deterministic.
               Covers sit 12px in, so they keep their own radius. On phones the row snaps cover by cover, each stopping at
               that 12px inset, and fades at an edge that has more covers past it (scroll-fade-x). */}
-          <MaterialSurface className="w-full">
+          <MaterialSurface id={recentContentId} className={clsx('w-full', !recentExpanded && 'hidden sm:block')}>
             <div className="scroll-fade-x overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-3 lg:scroll-fade-x-none lg:overflow-visible lg:snap-none">
               <ul className="m-0 flex list-none gap-3 p-3 lg:grid lg:grid-cols-[repeat(auto-fill,minmax(5rem,1fr))]">
                 {recentSongs.map((song, index) => (
@@ -194,23 +222,23 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
       <nav className="flex flex-col gap-2" aria-labelledby="home-features">
         <SectionTitle id="home-features">{m.home_features_title({}, { locale })}</SectionTitle>
         {/*
-          On phones two scrolling rows keep the search results near the top; wider screens get the full grid. The phone
-          scroller bleeds to the screen edges (-mx-4 against the page's 16px gutter) and snaps with a 16px scroll padding,
-          so a resting card lines up with the section title and the next column runs off the screen edge, not sliced
-          at the gutter, and the edge with more cards past it fades. A scroller clips on both axes, so 4px of vertical padding (offset by a negative margin) holds
-          the cards' border, shadow and 3px focus outline.
+          Every destination is on screen at every width: phones get a compact two-column grid of names (the hub is
+          not rendered while there is a query, so its height never pushes search results down), wider screens add
+          the descriptions and more columns.
         */}
-        <ul className="scroll-fade-x -mx-4 -my-1 grid list-none grid-flow-col grid-rows-2 auto-cols-[minmax(10.5rem,46%)] gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-4 px-4 py-1 pb-2 sm:scroll-fade-x-none sm:m-0 sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:grid-cols-3 sm:overflow-visible sm:p-0 lg:grid-cols-4 xl:grid-cols-6">
+        <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {HOME_FEATURES.map((feature) => {
             const Icon = FEATURE_ICONS[feature.id]
             return (
-              <li key={feature.id} className="snap-start">
+              <li key={feature.id}>
                 <Link to={feature.to} onClick={() => trackClick('feature', feature.id)} className={CARD_LINK}>
-                  <MaterialSurface className={`flex h-full items-start gap-2.5 px-3 py-2.5 ${CARD_SURFACE}`}>
+                  <MaterialSurface
+                    className={`flex h-full items-center gap-2 px-2.5 py-2 sm:items-start sm:gap-2.5 sm:px-3 sm:py-2.5 ${CARD_SURFACE}`}
+                  >
                     <Icon aria-hidden="true" className="size-5 shrink-0 text-accent-strong" />
                     <span className="flex min-w-0 flex-col">
                       <span className="text-sm font-semibold">{FEATURE_COPY[feature.id].title({}, { locale })}</span>
-                      <span className="text-xs text-fg-2 text-pretty">
+                      <span className="sr-only text-xs text-fg-2 text-pretty sm:not-sr-only">
                         {FEATURE_COPY[feature.id].description({}, { locale })}
                       </span>
                     </span>

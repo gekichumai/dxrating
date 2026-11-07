@@ -28,6 +28,8 @@ import { NetImportAutoImportOptions } from './NetImportAutoImportOptions'
 import { NetMaintenanceNotice } from './NetMaintenanceNotice'
 import { useMaimaiNetStatus } from './useMaimaiNetStatus'
 
+import type { Region } from '@/models/context/AppContext'
+import { useAppContext } from '@/models/context/useAppContext'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { toggleFocusRing } from '../../focusRing'
 import { netImportProgress } from './netImportProgressStore'
@@ -58,8 +60,12 @@ export function NetImportSettingsDialog({
   )
 }
 
-function readSavedCredentials() {
-  const empty = { region: 'intl' as 'intl' | 'jp', username: '', password: '', remember: false }
+/** maimai NET has a Japanese and an international site; the Chinese server has none, so it gets the international one */
+export const netRegionForSiteRegion = (siteRegion: Region): 'intl' | 'jp' => (siteRegion === 'jp' ? 'jp' : 'intl')
+
+/** Saved credentials win; with none, the site's region picks which maimai NET to sign in to */
+function readSavedCredentials(siteRegion: Region) {
+  const empty = { region: netRegionForSiteRegion(siteRegion), username: '', password: '', remember: false }
   try {
     const saved = JSON.parse(localStorage.getItem('import-net-records') ?? 'null')
     if (!saved || typeof saved.username !== 'string' || typeof saved.password !== 'string') return empty
@@ -86,7 +92,8 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const busy = progress?.status === 'running'
 
   const locale = useLocale()
-  const [form, setForm] = useState(readSavedCredentials)
+  const { region: siteRegion } = useAppContext()
+  const [form, setForm] = useState(() => readSavedCredentials(siteRegion))
   const { region, username, password, remember } = form
   const [autoImport, setAutoImport] = useLocalStorage<AutoImportMode>('rating-auto-import-from-net', false)
   const mappedAutoImport = match(autoImport as AutoImportMode | 'false')

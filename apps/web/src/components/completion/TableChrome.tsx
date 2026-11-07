@@ -4,10 +4,11 @@
  */
 import { DifficultyEnum } from '@gekichumai/dxdata'
 import { type CSSProperties, type FC, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { difficultyInkClassName } from '@/utils/difficultyInk'
 import { InternalLink } from '@/components/global/InternalLink'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 /** Short difficulty names shown next to levels, so a level never depends on its colour alone */
 export const DIFFICULTY_SHORT: Record<DifficultyEnum, string> = Object.fromEntries(
@@ -29,10 +30,11 @@ const SELECTED = 'bg-accent-strong text-on-accent'
 
 /** A track of 8px items at a 4px inset: 12px outer radius (8 + 4) */
 export const segmentedTrack = 'glass-thin flex flex-wrap gap-1 p-1'
+/** A segment without its selected or idle colours, for a control that styles those itself */
+export const segmentedItemBase =
+  'inline-flex items-center min-h-8 px-3 rounded-[var(--radius-md)] text-sm no-underline transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)]'
 export const segmentedItem = (current: boolean) =>
-  `inline-flex items-center min-h-8 px-3 rounded-[var(--radius-md)] text-sm no-underline transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] ${
-    current ? SELECTED : 'text-fg-1 hover:bg-surface/60'
-  }`
+  `${segmentedItemBase} ${current ? SELECTED : 'text-fg-1 hover:bg-surface/60'}`
 
 export const SegmentedNav: FC<{
   label?: string
@@ -78,9 +80,9 @@ export const FilterChip: FC<{ active: boolean; onClick: () => void; children: Re
 )
 
 export const Breadcrumb: FC<{ items: { href?: string; label: ReactNode }[] }> = ({ items }) => {
-  const { t } = useTranslation(['constants'])
+  const locale = useLocale()
   return (
-    <nav aria-label={t('constants:breadcrumb-label')} className="text-xs text-fg-2">
+    <nav aria-label={m.constants_breadcrumbLabel({}, { locale })} className="text-xs text-fg-2">
       <ol className="m-0 p-0 list-none flex flex-wrap items-center gap-x-1">
         <li>
           <InternalLink href="/" className="text-inherit no-underline hover:underline underline-offset-2">

@@ -7,6 +7,10 @@ import { NAVIGATION_FEEDBACK_DELAY_MS } from '@/components/layout/NavigationProg
 import { InternalLink, LinkBehavior, isClientRoutableHref, placeLinkSpinner } from '../InternalLink'
 
 const navigate = vi.fn()
+const router: { navigate: typeof navigate; subscribe: typeof subscribe; latestLocation?: { pathname: string } } = {
+  navigate,
+  subscribe: (...args: Parameters<typeof subscribe>) => subscribe(...args),
+}
 const routerListeners = new Map<string, Set<(event: { toLocation: { pathname: string } }) => void>>()
 const subscribe = (type: string, listener: (event: { toLocation: { pathname: string } }) => void) => {
   const set = routerListeners.get(type) ?? new Set()
@@ -19,7 +23,7 @@ const emitRouter = (type: string, pathname: string) => {
 }
 
 vi.mock('@tanstack/react-router', () => ({
-  useRouter: () => ({ navigate, subscribe }),
+  useRouter: () => router,
   useRouterState: () => false,
 }))
 
@@ -202,6 +206,31 @@ describe('InternalLink', () => {
     expect(link.hasAttribute('aria-busy')).toBe(false)
     expect(screen.queryByTestId('link-pending-spinner')).toBeNull()
     navigate.mockReset()
+    vi.useRealTimers()
+  })
+
+  it('clears the feedback when a navigation started in the same task as the click replaced it', async () => {
+    vi.useFakeTimers()
+    // The click's navigation, then at once a programmatic one elsewhere: its event fired before the link listened
+    navigate.mockImplementation(({ href }: { href: string }) => {
+      router.latestLocation = { pathname: href }
+      router.latestLocation = { pathname: '/charts/recent' }
+      return new Promise<void>(() => {})
+    })
+    render(<InternalLink href="/versions/circle">CiRCLE</InternalLink>)
+    const link = screen.getByRole('link', { name: 'CiRCLE' })
+
+    await act(async () => {
+      fireEvent.click(link, { button: 0 })
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(NAVIGATION_FEEDBACK_DELAY_MS)
+    })
+
+    expect(link.hasAttribute('aria-busy')).toBe(false)
+    expect(screen.queryByTestId('link-pending-spinner')).toBeNull()
+    navigate.mockReset()
+    router.latestLocation = undefined
     vi.useRealTimers()
   })
 

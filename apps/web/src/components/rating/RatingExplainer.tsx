@@ -1,5 +1,6 @@
 import { calculateRatingAward, SCORE_COEFFICIENT_TABLE } from '@gekichumai/maimai-domain'
 import { Link } from '@tanstack/react-router'
+import clsx from 'clsx'
 import type { FC } from 'react'
 import type { PlainMessage } from '@/i18n/message'
 import { useLocale } from '@/i18n/LocaleProvider'
@@ -7,6 +8,12 @@ import { m } from '@/paraglide/messages'
 import { InternalLink } from '@/components/global/InternalLink'
 
 const EXAMPLE_CONSTANT = 14.7
+
+// A glass panel of prose, up to a reading width under 1024px; the grid column sets its width on desktop
+const EXPLAINER_CARD_CLASS_NAME = 'glass flex flex-col gap-4 w-full max-w-3xl lg:max-w-none p-4 sm:p-6'
+const PROSE_CLASS_NAME = 'm-0 text-base leading-relaxed max-w-[65ch] text-pretty'
+// More room above than below, so a heading groups with the text it introduces
+const SUBHEADING_CLASS_NAME = 'mt-2 mb-0 first:mt-0 text-lg font-semibold leading-snug'
 
 /** Display labels for the rank ids of the score coefficient table */
 export const RANK_LABELS: Record<string, string> = {
@@ -49,32 +56,49 @@ export const RatingExplainer: FC = () => {
   const rating = (achievement: number) => calculateRatingAward(EXAMPLE_CONSTANT, achievement).ratingAwardValue
 
   return (
-    // One column under 1024px; on desktop the prose runs on the left and the rank table stays in view on the right,
-    // as wide as the calculator above it
+    // The calculator's frame and gutter. Prose sits on glass like the rest of the page, never on the background art.
+    // One column under 1024px (cards up to a reading width, left-aligned with the calculator); on desktop the prose
+    // cards run on the left and the rank table stays in view on the right, out to the calculator's right edge. The
+    // page's last content, so it carries the bottom padding
     <section
-      className="w-full max-w-3xl lg:max-w-7xl mx-auto px-4 py-6 flex flex-col gap-4 text-fg-1 lg:grid lg:grid-cols-[minmax(0,65ch)_minmax(340px,1fr)] lg:gap-x-8 lg:items-start"
+      className="page-gutter pt-4 pb-global flex flex-col gap-4 text-fg-1 lg:grid lg:grid-cols-[minmax(0,65ch)_minmax(340px,1fr)] lg:items-start"
       aria-labelledby="rating-explainer"
     >
-      <h2 id="rating-explainer" className="text-2xl font-bold m-0 lg:col-span-2">
+      <h2 id="rating-explainer" className="text-xl sm:text-2xl font-semibold leading-tight m-0 lg:col-span-2">
         {m.ratingExplainer_title({}, { locale })}
       </h2>
-      <p className="m-0 text-base leading-relaxed max-w-[65ch] text-pretty">
-        {m.ratingExplainer_intro({}, { locale })}
-      </p>
-      <p className="m-0 text-base leading-relaxed max-w-[65ch] text-pretty">
-        {m.ratingExplainer_singleChart_hint({}, { locale })}{' '}
-        <Link to="/tools/rating" className="link">
-          {m.ratingExplainer_singleChart_link({}, { locale })} →
-        </Link>
-      </p>
 
-      <h3 className="text-lg font-bold m-0">{m.ratingExplainer_formula_title({}, { locale })}</h3>
-      <p className="m-0 text-base leading-relaxed max-w-[65ch] text-pretty">
-        {m.ratingExplainer_formula_body({}, { locale })}
-      </p>
+      <div className={EXPLAINER_CARD_CLASS_NAME}>
+        <p className={PROSE_CLASS_NAME}>{m.ratingExplainer_intro({}, { locale })}</p>
+        <p className={PROSE_CLASS_NAME}>
+          {m.ratingExplainer_singleChart_hint({}, { locale })}{' '}
+          <Link to="/tools/rating" className="link">
+            {m.ratingExplainer_singleChart_link({}, { locale })} →
+          </Link>
+        </p>
 
-      <div className="flex flex-col gap-4 lg:col-start-2 lg:[grid-row:2/span_9] lg:sticky lg:top-4 lg:w-full lg:max-w-[420px]">
-        <h3 className="text-lg font-bold m-0">{m.ratingExplainer_table_title({}, { locale })}</h3>
+        <h3 className={SUBHEADING_CLASS_NAME}>{m.ratingExplainer_formula_title({}, { locale })}</h3>
+        <p className={PROSE_CLASS_NAME}>{m.ratingExplainer_formula_body({}, { locale })}</p>
+
+        <h3 className={SUBHEADING_CLASS_NAME}>{m.ratingExplainer_example_title({}, { locale })}</h3>
+        <p className={PROSE_CLASS_NAME}>
+          {m.ratingExplainer_example_body(
+            {
+              constant: EXAMPLE_CONSTANT.toFixed(1),
+              sssp: rating(100.5),
+              sss: rating(100),
+              ssp: rating(99.5),
+            },
+            { locale },
+          )}
+        </p>
+        <InternalLink href="/constants" className="link self-start text-base">
+          {m.ratingExplainer_constants_link({}, { locale })}
+        </InternalLink>
+      </div>
+
+      <div className="flex flex-col gap-3 w-full max-w-3xl lg:max-w-none lg:col-start-2 lg:row-start-2 lg:row-span-2 lg:sticky lg:top-4">
+        <h3 className={SUBHEADING_CLASS_NAME}>{m.ratingExplainer_table_title({}, { locale })}</h3>
         <div className="glass overflow-hidden">
           <table className="w-full text-sm border-collapse">
             <thead className="text-xs text-secondary text-left">
@@ -105,33 +129,17 @@ export const RatingExplainer: FC = () => {
         </div>
       </div>
 
-      <h3 className="text-lg font-bold m-0">{m.ratingExplainer_example_title({}, { locale })}</h3>
-      <p className="m-0 text-base leading-relaxed max-w-[65ch] text-pretty">
-        {m.ratingExplainer_example_body(
-          {
-            constant: EXAMPLE_CONSTANT.toFixed(1),
-            sssp: rating(100.5),
-            sss: rating(100),
-            ssp: rating(99.5),
-          },
-          { locale },
-        )}
-      </p>
-      <InternalLink href="/constants" className="link self-start text-base">
-        {m.ratingExplainer_constants_link({}, { locale })}
-      </InternalLink>
-
-      <h3 className="text-lg font-bold m-0">{m.ratingExplainer_faq_title({}, { locale })}</h3>
-      <dl className="m-0 flex flex-col gap-3">
-        {RATING_FAQ_KEYS.map((key) => (
-          <div key={key}>
-            <dt className="font-bold text-base">{FAQ_MESSAGES[key].question({}, { locale })}</dt>
-            <dd className="m-0 mt-1 text-base leading-relaxed max-w-[65ch] text-pretty">
-              {FAQ_MESSAGES[key].answer({}, { locale })}
-            </dd>
-          </div>
-        ))}
-      </dl>
+      <div className={clsx(EXPLAINER_CARD_CLASS_NAME, 'lg:col-start-1')}>
+        <h3 className={SUBHEADING_CLASS_NAME}>{m.ratingExplainer_faq_title({}, { locale })}</h3>
+        <dl className="m-0 flex flex-col gap-4">
+          {RATING_FAQ_KEYS.map((key) => (
+            <div key={key}>
+              <dt className="font-semibold text-base">{FAQ_MESSAGES[key].question({}, { locale })}</dt>
+              <dd className={clsx(PROSE_CLASS_NAME, 'mt-1')}>{FAQ_MESSAGES[key].answer({}, { locale })}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </section>
   )
 }

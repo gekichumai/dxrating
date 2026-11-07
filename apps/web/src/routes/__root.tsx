@@ -20,6 +20,9 @@ import { AppTabs } from '@/components/layout/AppTabs'
 import { ThemedBody } from '@/components/layout/ThemedBody'
 import { useResolvedPathname } from '@/components/layout/useResolvedPathname'
 import { NavigationProgress } from '@/components/layout/NavigationProgress'
+import { SkipToContentLink } from '@/components/layout/SkipToContentLink'
+import { NavigationOriginTracker } from '@/components/layout/navigationOrigins'
+import { ScrollRestorationKeeper } from '@/components/layout/ScrollRestorationKeeper'
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
@@ -249,11 +252,11 @@ function AppLayout() {
 
   return (
     <div className="h-full w-full relative">
-      <a href="#main-content" className="skip-to-content">
-        {m.root_skipToContent({}, { locale })}
-      </a>
+      <SkipToContentLink>{m.root_skipToContent({}, { locale })}</SkipToContentLink>
       <RouteChangeAnnouncer />
       <NavigationProgress />
+      <NavigationOriginTracker />
+      <ScrollRestorationKeeper />
       <VersionBackground />
 
       <div className="h-full w-full relative">

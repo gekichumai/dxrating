@@ -3,10 +3,11 @@ import { Button, CircularProgress } from '@mui/material'
 import { ORPCError } from '@orpc/client'
 import { type FC, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import IconCheck from '~icons/material-symbols/check-circle-outline'
 import IconError from '~icons/material-symbols/error-outline'
 import { apiClient } from '@/lib/orpc'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 type Outcome =
   | { status: 'pending'; code: string; state: string }
@@ -41,7 +42,7 @@ function completionErrorCode(error: unknown): string {
 const REDIRECT_DELAY_MS = 2000
 
 export const LxnsOauthCallback: FC = () => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const navigate = useNavigate()
   // This route is client-only (ssr: false), so reading the URL in the first render cannot mismatch.
   const [outcome, setOutcome] = useState(() => readOutcome(window.location.search))
@@ -63,11 +64,11 @@ export const LxnsOauthCallback: FC = () => {
     if (outcome.status !== 'success') return
     const timer = setTimeout(() => {
       // The page itself is the feedback while it shows; the toast confirms the connection after the redirect.
-      toast.success(t('rating-calculator:io.import.lxns.callback.success'), { id: 'lxns-connected' })
+      toast.success(m.ratingCalculator_io_import_lxns_callback_success({}), { id: 'lxns-connected' })
       navigate({ to: '/rating' })
     }, REDIRECT_DELAY_MS)
     return () => clearTimeout(timer)
-  }, [t, outcome, navigate])
+  }, [locale, outcome, navigate])
 
   const backButton = (
     <Button
@@ -75,7 +76,7 @@ export const LxnsOauthCallback: FC = () => {
       disabled={outcome.status === 'pending'}
       onClick={() => navigate({ to: '/rating' })}
     >
-      {t('rating-calculator:io.import.lxns.callback.back')}
+      {m.ratingCalculator_io_import_lxns_callback_back({}, { locale })}
     </Button>
   )
 
@@ -89,36 +90,36 @@ export const LxnsOauthCallback: FC = () => {
           <>
             <CircularProgress aria-hidden="true" size={40} />
             <h1 id="lxns-callback-title" className="m-0 text-xl font-semibold leading-snug text-fg-1 text-balance">
-              {t('rating-calculator:io.import.lxns.callback.completing')}
+              {m.ratingCalculator_io_import_lxns_callback_completing({}, { locale })}
             </h1>
           </>
         ) : outcome.status === 'success' ? (
           <>
             <IconCheck aria-hidden="true" className="size-12 text-status-positive" />
             <h1 id="lxns-callback-title" className="m-0 text-xl font-semibold leading-snug text-fg-1 text-balance">
-              {t('rating-calculator:io.import.lxns.callback.success-title')}
+              {m.ratingCalculator_io_import_lxns_callback_successTitle({}, { locale })}
             </h1>
             <p className="m-0 text-base leading-normal text-fg-1 text-pretty">
-              {t('rating-calculator:io.import.lxns.callback.success-body')}
+              {m.ratingCalculator_io_import_lxns_callback_successBody({}, { locale })}
             </p>
             <p className="m-0 text-sm leading-normal text-fg-2">
-              {t('rating-calculator:io.import.lxns.callback.redirecting')}
+              {m.ratingCalculator_io_import_lxns_callback_redirecting({}, { locale })}
             </p>
           </>
         ) : (
           <>
             <IconError aria-hidden="true" className="size-12 text-danger" />
             <h1 id="lxns-callback-title" className="m-0 text-xl font-semibold leading-snug text-fg-1 text-balance">
-              {t('rating-calculator:io.import.lxns.callback.error-title')}
+              {m.ratingCalculator_io_import_lxns_callback_errorTitle({}, { locale })}
             </h1>
             <p className="m-0 text-base leading-normal text-fg-2 text-pretty">
               {outcome.code === 'access_denied'
-                ? t('rating-calculator:io.import.lxns.callback.error-access-denied')
+                ? m.ratingCalculator_io_import_lxns_callback_errorAccessDenied({}, { locale })
                 : outcome.code === 'session_mismatch'
-                  ? t('rating-calculator:io.import.lxns.callback.error-session-mismatch')
+                  ? m.ratingCalculator_io_import_lxns_callback_errorSessionMismatch({}, { locale })
                   : outcome.code === 'not_signed_in'
-                    ? t('rating-calculator:io.import.lxns.callback.error-not-signed-in')
-                    : t('rating-calculator:io.import.lxns.callback.error')}
+                    ? m.ratingCalculator_io_import_lxns_callback_errorNotSignedIn({}, { locale })
+                    : m.ratingCalculator_io_import_lxns_callback_error({}, { locale })}
             </p>
           </>
         )}
