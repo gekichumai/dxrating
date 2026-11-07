@@ -1,5 +1,7 @@
 import {
   DEFAULT_LOCALE,
+  LOCALE_COOKIE_MAX_AGE_SECONDS,
+  LOCALE_COOKIE_NAME,
   LOCALE_PATH_PREFIXES,
   LOCALE_QUERY_PARAM,
   type SupportedLocale,
@@ -36,7 +38,15 @@ export function localeRedirect(request: Request): Response | null {
 
   if (queryLocale) {
     url.searchParams.delete(LOCALE_QUERY_PARAM)
-    return permanentRedirect(localizePath(pathname, queryLocale) + url.search)
+    const response = permanentRedirect(localizePath(pathname, queryLocale) + url.search)
+    if (queryLocale === DEFAULT_LOCALE) {
+      // English has no prefix, so the unprefixed URL alone can't say it was chosen: without a record of the choice the
+      // next request would redirect a Japanese browser on to /ja/…. The link chose English as the picker would, so it
+      // sets the picker's cookie; private, so no shared cache keeps one visitor's cookie
+      response.headers.append('Set-Cookie', localeCookie(DEFAULT_LOCALE))
+      response.headers.set('Cache-Control', 'private, no-store')
+    }
+    return response
   }
 
   if (pathLocale !== undefined) {
@@ -51,7 +61,10 @@ export function localeRedirect(request: Request): Response | null {
 
   const response = new Response(null, {
     status: 302,
-    headers: { Location: localizePath(url.pathname, preferred) + url.search, 'Cache-Control': 'private, no-store' },
+    headers: {
+      Location: sameOriginLocation(localizePath(url.pathname, preferred) + url.search),
+      'Cache-Control': 'private, no-store',
+    },
   })
   appendVaryHeader(response.headers, 'Cookie')
   appendVaryHeader(response.headers, 'Accept-Language')
@@ -87,9 +100,18 @@ function isPagePath(pathname: string) {
   return !NON_PAGE_PATH.test(pathname)
 }
 
+const localeCookie = (locale: SupportedLocale) =>
+  `${LOCALE_COOKIE_NAME}=${encodeURIComponent(locale)}; Max-Age=${LOCALE_COOKIE_MAX_AGE_SECONDS}; Path=/; SameSite=Lax`
+
 // OAuth and import callbacks are registered with their providers as unprefixed URLs: answer them where they land
 const isNegotiationExempt = (pathname: string) => pathname.startsWith('/io/') || pathname.startsWith('/account/')
 
 function permanentRedirect(location: string) {
-  return new Response(null, { status: 301, headers: { Location: location } })
+  return new Response(null, { status: 301, headers: { Location: sameOriginLocation(location) } })
 }
+
+/**
+ * A redirect target that stays on this site. Stripping a prefix from `/en//example.org` leaves `//example.org`, which a
+ * browser reads as another host (as it does `/\example.org`): collapse any run of leading slashes and backslashes.
+ */
+export const sameOriginLocation = (location: string) => `/${location.replace(/^[/\\]+/, '')}`
