@@ -71,13 +71,14 @@ export function cloudRecordToScoreRecord(record: CloudRecord, identity: SheetIde
 }
 
 /**
- * Whether the calculator reads a record's best 50 hint: a Diving-Fish record, or one a client uploaded (it sends only
- * a hint its own calculator honoured: `entriesToImportRecords`), whatever file or backup it came from. A manual edit
- * carries none
+ * Whether the calculator reads a record's best 50 hint. A server import stores one only from Diving-Fish: a
+ * Diving-Fish record's own, or the bucket a Diving-Fish job wrote onto a better score it kept from another provider
+ * (`decideImportMerge`), which keeps that provider's provenance. A record a client uploaded (a backup, a rating file)
+ * carries a hint only where the device's calculator honoured one (`entriesToImportRecords`). A manual entry carries
+ * none
  */
 function honoursBucketHint(record: CloudRecord): boolean {
-  const { source, fetchedBy } = record.provenance
-  return source === 'diving-fish' || (fetchedBy === 'client' && source !== 'manual')
+  return record.provenance.source !== 'manual'
 }
 
 /** The calculator's entry of a record, in the format the local save and JSON exports use */

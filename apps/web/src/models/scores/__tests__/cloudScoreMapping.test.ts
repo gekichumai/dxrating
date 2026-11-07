@@ -44,11 +44,17 @@ describe('cloud score mapping', () => {
     })
   })
 
-  it('keeps best 50 hints of Diving-Fish records only, as the calculator does', () => {
+  it('keeps the best 50 hint a Diving-Fish job stored, whatever provider the kept score came from', () => {
+    // A NET score a Diving-Fish import did not replace, with the bucket that import wrote onto it
     const net = recordFromDTO(dto({ provenance: verifiedProvenance() }))
-    expect(cloudRecordToScoreRecord(net, IDENTITY).best50Bucket).toBeNull()
+    expect(cloudRecordToScoreRecord(net, IDENTITY).best50Bucket).toBe('b15')
     expect(cloudRecordToPlayEntry(net, IDENTITY).source).toEqual({ provider: 'maimai-net', providerId: '12345' })
-    expect(cloudRecordToPlayEntry(net, IDENTITY).providerConfig).toBeUndefined()
+    expect(cloudRecordToPlayEntry(net, IDENTITY).providerConfig).toEqual({ divingFish: { ratingEligibility: 'b15' } })
+    // No hint, or a manual entry: none
+    expect(cloudRecordToPlayEntry(recordFromDTO(dto({ best50Bucket: null })), IDENTITY).providerConfig).toBeUndefined()
+    const manual = recordFromDTO(dto({ provenance: manualProvenance() }))
+    expect(cloudRecordToScoreRecord(manual, IDENTITY).best50Bucket).toBeNull()
+    expect(cloudRecordToPlayEntry(manual, IDENTITY).providerConfig).toBeUndefined()
   })
 
   it('gives the calculator the bucket of a verified Diving-Fish record, where a local import stores it', () => {
