@@ -173,7 +173,12 @@ describe('Diff', () => {
         { status: 404 },
       ),
     )
-    mount({ to: 1 })
+    mount({ from: 1, to: 999 })
     expect((await screen.findByRole('alert')).textContent).toContain('Revision 1 is the first publication')
+    // The revisions asked for stay editable, so a typo can be fixed in place
+    expect((screen.getByLabelText('Newer revision') as HTMLInputElement).value).toBe('999')
+    fireEvent.change(screen.getByLabelText('Newer revision'), { target: { value: '9' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Compare' }))
+    expect(window.location.hash).toBe('#diff?from=1&to=9')
   })
 })

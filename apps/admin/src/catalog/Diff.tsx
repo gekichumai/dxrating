@@ -57,13 +57,13 @@ const has = (change: Change, side: 'before' | 'after') => Object.hasOwn(change, 
  * are offered as suggestions with their dates.
  */
 function RevisionPair(props: {
-  from: number
-  to: number
+  from: number | undefined
+  to: number | undefined
   suggestions: { value: string; label: string }[]
   onCompare: (pair: { from: number; to: number }) => void
 }) {
-  const [from, setFrom] = useState(String(props.from))
-  const [to, setTo] = useState(String(props.to))
+  const [from, setFrom] = useState(props.from === undefined ? '' : String(props.from))
+  const [to, setTo] = useState(props.to === undefined ? '' : String(props.to))
   const valid = (value: string) => /^[1-9]\d*$/.test(value)
   return (
     <form
@@ -133,11 +133,12 @@ export function Diff(params: DiffParams) {
         <Title order={2} size="h5" id="diff-heading">
           Changes between publications
         </Title>
-        {data && (
+        {/* Also after a failed comparison (a revision that does not exist), so it can be corrected in place */}
+        {(data || query.isError) && (
           <RevisionPair
-            key={`${data.from.revision}:${data.to.revision}`}
-            from={data.from.revision}
-            to={data.to.revision}
+            key={`${data?.from.revision ?? from}:${data?.to.revision ?? to}`}
+            from={data?.from.revision ?? from}
+            to={data?.to.revision ?? to}
             suggestions={options}
             onCompare={(next) => (window.location.hash = href({ ...next, path: undefined }))}
           />
