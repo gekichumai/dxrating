@@ -144,10 +144,11 @@ export const replaceRecords = (database: DatabaseService, userId: string, saveId
       }
 
       yield* writer.finish()
+      // No `saveRevision`: a replace keeps duplicates differently from the merge, so its result is no reason for a
+      // later identical import to skip the merge (see shouldShortCircuit)
       const finished = yield* finishImportJob(database, started.job.id, {
         status: 'succeeded',
         counts,
-        saveRevision: save.revision,
       })
       return { job: toImportJobDTO(finished!), revision: save.revision } satisfies ImportResultDTO
     }),
