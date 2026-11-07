@@ -1317,5 +1317,10 @@
   "completion_progress_dx_withScore": "DX score ပါဝင်",
   "completion_progress_dx_average": "ပျမ်းမျှ",
   "completion_progress_dx_star": "✦{star} နှင့်အထက်",
-  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} နှင့်အထက်: {total} ခုအနက် {count} ခု"
+  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} နှင့်အထက်: {total} ခုအနက် {count} ခု",
+  "announcement_severity_info": "အသိပေးချက်",
+  "announcement_severity_warning": "သတိပေးချက်",
+  "announcement_severity_critical": "အရေးကြီး",
+  "announcement_learnMore": "ပိုမိုလေ့လာရန်",
+  "announcement_dismiss": "ကြေညာချက်ကို ပိတ်ရန်"
 }

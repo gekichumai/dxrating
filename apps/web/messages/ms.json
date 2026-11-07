@@ -1317,5 +1317,10 @@
   "completion_progress_dx_withScore": "Dengan DX score",
   "completion_progress_dx_average": "Purata",
   "completion_progress_dx_star": "✦{star} atau lebih",
-  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} atau lebih: {count} daripada {total}"
+  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} atau lebih: {count} daripada {total}",
+  "announcement_severity_info": "Notis",
+  "announcement_severity_warning": "Amaran",
+  "announcement_severity_critical": "Penting",
+  "announcement_learnMore": "Ketahui lebih lanjut",
+  "announcement_dismiss": "Tutup pengumuman"
 }

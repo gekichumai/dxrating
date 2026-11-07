@@ -1317,5 +1317,10 @@
   "completion_progress_dx_withScore": "May DX score",
   "completion_progress_dx_average": "Average",
   "completion_progress_dx_star": "✦{star} o mas mataas",
-  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} o mas mataas: {count} sa {total}"
+  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} o mas mataas: {count} sa {total}",
+  "announcement_severity_info": "Paunawa",
+  "announcement_severity_warning": "Babala",
+  "announcement_severity_critical": "Mahalaga",
+  "announcement_learnMore": "Alamin pa",
+  "announcement_dismiss": "Isara ang anunsyo"
 }

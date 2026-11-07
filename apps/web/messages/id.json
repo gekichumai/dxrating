@@ -1317,5 +1317,10 @@
   "completion_progress_dx_withScore": "Dengan DX Score",
   "completion_progress_dx_average": "Rata-rata",
   "completion_progress_dx_star": "✦{star} ke atas",
-  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} ke atas: {count} dari {total}"
+  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} ke atas: {count} dari {total}",
+  "announcement_severity_info": "Pemberitahuan",
+  "announcement_severity_warning": "Peringatan",
+  "announcement_severity_critical": "Penting",
+  "announcement_learnMore": "Pelajari lebih lanjut",
+  "announcement_dismiss": "Tutup pengumuman"
 }
