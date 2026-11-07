@@ -1317,5 +1317,10 @@
   "completion_progress_dx_withScore": "スコア記録あり",
   "completion_progress_dx_average": "平均",
   "completion_progress_dx_star": "✦{star}以上",
-  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star}以上：{total}譜面中{count}"
+  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star}以上：{total}譜面中{count}",
+  "announcement_severity_info": "お知らせ",
+  "announcement_severity_warning": "注意",
+  "announcement_severity_critical": "重要",
+  "announcement_learnMore": "詳しく見る",
+  "announcement_dismiss": "お知らせを閉じる"
 }

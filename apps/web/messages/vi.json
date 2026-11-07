@@ -1317,5 +1317,10 @@
   "completion_progress_dx_withScore": "Có DX Score",
   "completion_progress_dx_average": "Trung bình",
   "completion_progress_dx_star": "✦{star} trở lên",
-  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} trở lên: {count} / {total}"
+  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} trở lên: {count} / {total}",
+  "announcement_severity_info": "Thông báo",
+  "announcement_severity_warning": "Cảnh báo",
+  "announcement_severity_critical": "Quan trọng",
+  "announcement_learnMore": "Tìm hiểu thêm",
+  "announcement_dismiss": "Đóng thông báo"
 }

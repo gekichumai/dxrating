@@ -1317,5 +1317,10 @@
   "completion_progress_dx_withScore": "มี DX Score",
   "completion_progress_dx_average": "ค่าเฉลี่ย",
   "completion_progress_dx_star": "✦{star} ขึ้นไป",
-  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} ขึ้นไป: {count} จาก {total}"
+  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} ขึ้นไป: {count} จาก {total}",
+  "announcement_severity_info": "ประกาศ",
+  "announcement_severity_warning": "คำเตือน",
+  "announcement_severity_critical": "สำคัญ",
+  "announcement_learnMore": "ดูเพิ่มเติม",
+  "announcement_dismiss": "ปิดประกาศ"
 }

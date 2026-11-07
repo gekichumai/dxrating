@@ -1317,5 +1317,10 @@
   "completion_progress_dx_withScore": "有 DX 分数",
   "completion_progress_dx_average": "平均",
   "completion_progress_dx_star": "✦{star} 及以上",
-  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} 及以上：{count} / {total}"
+  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} 及以上：{count} / {total}",
+  "announcement_severity_info": "公告",
+  "announcement_severity_warning": "注意",
+  "announcement_severity_critical": "重要",
+  "announcement_learnMore": "了解更多",
+  "announcement_dismiss": "关闭公告"
 }

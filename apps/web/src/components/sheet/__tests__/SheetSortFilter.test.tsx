@@ -126,7 +126,6 @@ describe('countActiveSortFilters', () => {
 })
 
 describe('SheetSortFilterTrigger active count', () => {
-
   it('shows how many filters are active and says so in its name', () => {
     render(
       <SheetSortFilterTrigger variant="compact" expanded={false} contentId="x" onToggle={() => {}} activeCount={2} />,
