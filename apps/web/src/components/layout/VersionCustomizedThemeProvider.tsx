@@ -6,6 +6,7 @@ import {
 import { MotionConfig } from 'motion/react'
 import { type FC, type PropsWithChildren, useMemo } from 'react'
 import { useVersionTheme } from '../../utils/useVersionTheme'
+import { LinkBehavior } from '@/components/global/InternalLink'
 import { THEME_ATTRIBUTE, THEME_COLOR_SCHEME_STORAGE_KEY, THEME_MODE_STORAGE_KEY } from '@/setup/theme-script'
 
 // MUI surfaces on the tinted-glass tokens in src/styles/tokens.css, so dialogs, menus, popovers, drawers, tooltips
@@ -94,6 +95,14 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ 
         },
       },
       components: {
+        // An MUI `href` (Link, Button, IconButton, MenuItem, ListItemButton, Tab, ...) navigates through the router,
+        // so internal links stay real anchors without reloading the page
+        MuiLink: {
+          defaultProps: { component: LinkBehavior },
+        },
+        MuiButtonBase: {
+          defaultProps: { LinkComponent: LinkBehavior },
+        },
         MuiPaper: {
           styleOverrides: {
             root: glassOverlay,

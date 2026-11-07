@@ -99,7 +99,7 @@ describe('regional version updates', () => {
   it.each([
     ['magical', 'jp'],
     ['circle-plus', 'intl'],
-    ['prism', 'cn'],
+    ['prism-plus', 'cn'],
     ['magical', 'intl'],
     ['circle', '_generic'],
   ] as const)('does not prompt for %s in %s', (version, region) => {

@@ -1,3 +1,4 @@
+import { Breadcrumb } from '@/components/completion/TableChrome'
 import { InputAdornment, TextField } from '@mui/material'
 import { Link } from '@tanstack/react-router'
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react'
@@ -307,6 +308,8 @@ export const RatingToolPage: FC = () => {
   return (
     <div className="w-full max-w-2xl lg:max-w-6xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
       <header className="flex flex-col gap-2">
+        {/* The tools are not tabs of the main navigation: the breadcrumb is the way back */}
+        <Breadcrumb items={[{ label: t('tools:rating.title') }]} />
         <h1 className="page-title m-0">{t('tools:rating.title')}</h1>
         <p className="page-description m-0">{t('tools:rating.intro')}</p>
         <Link to="/tools/tolerance" className="link self-start text-sm">

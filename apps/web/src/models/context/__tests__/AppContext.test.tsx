@@ -36,7 +36,8 @@ describe('AppContext', () => {
     ['circle-plus', 'jp', 'circle-plus'],
     ['circle', 'intl', 'circle'],
     ['circle-plus', '_generic', 'circle-plus'],
-    ['prism', 'cn', 'prism'],
+    ['prism-plus', 'cn', 'prism-plus'],
+    ['prism', 'cn', 'prism-plus'],
   ])('restores %s in %s as %s', (version, region, expected) => {
     mockLocalStorage.getItem.mockReturnValue(JSON.stringify({ version, region }))
     const { result } = renderHook(() => useAppContext(), { wrapper: AppContextProvider })
@@ -108,5 +109,45 @@ describe('AppContext', () => {
 
     expect(result.current.version).toBe('magical')
     expect(result.current.region).toBe('jp')
+  })
+
+  it('moves a stored CN PRiSM choice to PRiSM PLUS, the CN latest', () => {
+    mockLocalStorage.getItem.mockReturnValue(JSON.stringify({ version: 'prism', region: 'cn' }))
+
+    const { result } = renderHook(() => useAppContext(), {
+      wrapper: AppContextProvider,
+    })
+
+    expect(result.current.version).toBe('prism-plus')
+    expect(result.current.region).toBe('cn')
+    expect(result.current.availableVersionUpdate).toBeNull()
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+      'app-context',
+      JSON.stringify({ version: 'prism-plus', region: 'cn' }),
+    )
+  })
+
+  it('keeps the migrated CN choice when the storage write fails', () => {
+    mockLocalStorage.getItem.mockReturnValue(JSON.stringify({ version: 'prism', region: 'cn' }))
+    mockLocalStorage.setItem.mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+
+    const { result } = renderHook(() => useAppContext(), {
+      wrapper: AppContextProvider,
+    })
+
+    expect(result.current.version).toBe('prism-plus')
+    expect(result.current.region).toBe('cn')
+  })
+
+  it('leaves a generic PRiSM choice alone', () => {
+    mockLocalStorage.getItem.mockReturnValue(JSON.stringify({ version: 'prism', region: '_generic' }))
+
+    const { result } = renderHook(() => useAppContext(), {
+      wrapper: AppContextProvider,
+    })
+
+    expect(result.current.version).toBe('prism')
   })
 })

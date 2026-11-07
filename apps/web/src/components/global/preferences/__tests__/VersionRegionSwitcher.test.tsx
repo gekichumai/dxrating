@@ -45,14 +45,18 @@ describe('VersionRegionSwitcher', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Choose game version and region/ }))
     fireEvent.click(await screen.findByRole('option', { name: /CiRCLE PLUS.*International/i }))
 
-    // Still the old choice while the picker is closing
-    expect(screen.getByRole('button', { name: /MAGiCAL · Japan$/, hidden: true })).toBeTruthy()
+    // Still the old choice while the picker is closing, but marked busy so the wait is announced
+    const trigger = screen.getByRole('button', { name: /MAGiCAL · Japan$/, hidden: true })
+    expect(trigger.getAttribute('aria-busy')).toBe('true')
     await waitFor(
       () => {
         expect(screen.queryByRole('dialog')).toBeNull()
         expect(
           screen.getByRole('button', { name: /^Choose game version and region: CiRCLE PLUS · International$/ }),
         ).toBeTruthy()
+        expect(screen.getByRole('button', { name: /CiRCLE PLUS · International$/ }).hasAttribute('aria-busy')).toBe(
+          false,
+        )
       },
       { timeout: 3000 },
     )

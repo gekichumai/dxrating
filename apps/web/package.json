@@ -14,7 +14,8 @@
     "search:eval:update": "SEARCH_EVAL=1 SEARCH_EVAL_UPDATE=1 SEARCH_EVAL_REPORT=search-eval.txt vitest run src/search-eval",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "i18n:convert": "node scripts/i18n/convert-i18next.ts"
+    "i18n:convert": "node scripts/i18n/convert-i18next.ts",
+    "i18n:codemod": "node scripts/i18n/codemod.ts"
   },
   "dependencies": {
     "@better-auth/passkey": "catalog:",

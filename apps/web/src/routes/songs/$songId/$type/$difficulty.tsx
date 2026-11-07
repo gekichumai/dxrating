@@ -3,7 +3,7 @@ import { getCatalogDocument } from '@/catalog/catalogSource'
 import { resolveSongRouteParam } from '@/catalog/songLookup'
 import { SongPage } from '@/pages/SongPage'
 import { buildSongSheetSeo, buildSongSheetStructuredData, formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
-import { createServerI18n } from '@/setup/init-i18n'
+import { m } from '@/paraglide/messages'
 import { keepLocaleSearch } from '@/setup/locale'
 
 export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
@@ -39,7 +39,7 @@ export const Route = createFileRoute('/songs/$songId/$type/$difficulty')({
     const sheet = loaderData?.sheet
     if (!song || !sheet) {
       return {
-        meta: [{ title: formatSeoTitle(createServerI18n(locale).t('song:not-found.title')) }],
+        meta: [{ title: formatSeoTitle(m.song_notFound_title({}, { locale })) }],
       }
     }
 
