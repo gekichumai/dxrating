@@ -1,5 +1,6 @@
 import { Context, Layer } from 'effect'
 import { z } from 'zod'
+import { AgentTokensSchema } from './agent-tokens'
 
 // An empty value (`NAME=` in an env file) means unset
 const blank = (value: unknown) => (typeof value === 'string' && value.trim() === '' ? undefined : value)
@@ -29,6 +30,10 @@ export const envSchema = z
     /** Emails allowed in, repeating the Access policy inside the app. Empty means nobody. */
     ADMIN_HUMAN_EMAILS: list,
     /** Development only: treat every request as this Access identity. Refused outside development. */
+    /** Agent tokens: a JSON list of hashed, scoped, expiring tokens (see agent-tokens.ts). Blank means none. */
+    ADMIN_AGENT_TOKENS: AgentTokensSchema,
+    /** Requests per minute per agent; destructive scopes get a fifth of it */
+    ADMIN_AGENT_RATE_LIMIT: z.coerce.number().int().positive().default(60),
     ADMIN_DEV_ACCESS_EMAIL: z.preprocess(blank, z.string().email().optional()),
   })
   .superRefine((env, ctx) => {
