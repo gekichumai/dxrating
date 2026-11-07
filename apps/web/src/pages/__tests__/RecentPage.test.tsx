@@ -2,8 +2,7 @@ import type { ServerEnum } from '@gekichumai/dxdata'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { render, screen, within } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { describe, expect, it, vi } from 'vitest'
 import { RecentPage, groupRecentCharts } from '../RecentPage'
 
 // Needs the router's history; covered by its own test
@@ -30,10 +29,6 @@ const charts = [
 ]
 
 describe('RecentPage', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('renders crawlable chart anchors in server HTML', () => {
     const html = renderToString(<RecentPage charts={charts} />)
 

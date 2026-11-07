@@ -1,11 +1,10 @@
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { act, render, screen } from '@testing-library/react'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, describe, expect, it, vi } from 'vitest'
 import { CatalogSliceProvider } from '@/catalog/CatalogContext'
 import { setLoadedCatalogDocumentForTests } from '@/catalog/clientCatalog'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
 import { RatingCalculatorContext } from '@/models/context/RatingCalculatorContext'
-import { initI18n } from '@/setup/init-i18n'
 import { buildDxStarRows, ProgressSummaryPage } from '../ProgressSummaryPage'
 
 vi.mock('@tanstack/react-router', () => ({
@@ -29,9 +28,6 @@ const entries: PlayEntry[] = [
 ]
 
 describe('ProgressSummaryPage', () => {
-  beforeAll(() => {
-    initI18n()
-  })
   afterAll(() => {
     setLoadedCatalogDocumentForTests(catalogSnapshot)
   })

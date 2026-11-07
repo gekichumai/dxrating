@@ -1,14 +1,13 @@
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { buildSongCatalog, calculateBest50 } from '@gekichumai/maimai-domain'
 import { act, render } from '@testing-library/react'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, describe, expect, it, vi } from 'vitest'
 import { buildCatalogSlice, toCatalogMeta } from '@/catalog/catalogSource'
 import { CatalogSliceProvider } from '@/catalog/CatalogContext'
 import { setLoadedCatalogDocumentForTests } from '@/catalog/clientCatalog'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
 import { RatingCalculatorContext } from '@/models/context/RatingCalculatorContext'
 import { toRatingEntries } from '@/models/userRecords'
-import { initI18n } from '@/setup/init-i18n'
 import { computeSongHubRaises } from '../songHubRaise'
 import { SongChartsTable } from '../SongChartsTable'
 
@@ -31,9 +30,6 @@ const version = 'PRiSM' as never
 const catalog = buildSongCatalog(catalogSnapshot, version)
 
 describe('SongChartsTable rating hints', () => {
-  beforeAll(() => {
-    initI18n()
-  })
   afterAll(() => {
     setLoadedCatalogDocumentForTests(catalogSnapshot)
   })

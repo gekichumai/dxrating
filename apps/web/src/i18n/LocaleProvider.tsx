@@ -1,6 +1,5 @@
 import { type FC, type PropsWithChildren, createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { useTranslation } from 'react-i18next'
 import { DEFAULT_LOCALE, type SupportedLocale } from '@/setup/locale'
 import { setClientLocale } from './runtime'
 
@@ -20,21 +19,15 @@ export const LocaleProvider: FC<PropsWithChildren<{ initialLocale: SupportedLoca
   initialLocale,
   children,
 }) => {
-  const { i18n } = useTranslation()
   const [locale, setLocaleState] = useState(() => {
     if (!import.meta.env.SSR) setClientLocale(initialLocale)
     return initialLocale
   })
 
-  const setLocale = useCallback(
-    async (next: SupportedLocale) => {
-      setClientLocale(next)
-      flushSync(() => setLocaleState(next))
-      // i18next keeps rendering the strings not yet moved to Paraglide
-      await i18n.changeLanguage(next)
-    },
-    [i18n],
-  )
+  const setLocale = useCallback(async (next: SupportedLocale) => {
+    setClientLocale(next)
+    flushSync(() => setLocaleState(next))
+  }, [])
 
   const value = useMemo(() => ({ locale, setLocale }), [locale, setLocale])
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>

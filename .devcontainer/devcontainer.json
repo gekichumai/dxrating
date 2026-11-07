@@ -24,8 +24,8 @@
         "terminal.integrated.defaultProfile.linux": "zsh",
         "typescript.tsdk": "node_modules/typescript/lib",
         "unocss.root": "apps/web",
-        "i18n-ally.localesPaths": ["apps/web/src/locales/resources"],
-        "i18n-ally.keystyle": "nested",
+        "i18n-ally.localesPaths": ["apps/web/messages"],
+        "i18n-ally.keystyle": "flat",
         "i18n-ally.sourceLanguage": "en"
       },
       "extensions": [

@@ -86,14 +86,15 @@ Web requires `apps/web/.env` (no `.env.example` — create manually):
 
 ### Web Key Patterns
 - **Styling**: UnoCSS (Tailwind-compatible utility classes) + MUI 5 + shadcn/ui via Radix primitives
-- **i18n**: i18next with 4 languages (en, ja, zh-Hans, zh-Hant)
+- **i18n**: Paraglide JS (inlang) with 5 languages (en, ja, ko, zh-Hans, zh-Hant); messages in `apps/web/messages/<locale>.json`
 - **Local DB**: sql.js (SQLite in browser) for offline song data
 - **Analytics**: PostHog + Sentry
 
 ### Web SSR and Hydration
 - The web app is server-rendered. SSR-visible markup must be deterministic between the server render and the first client render; do not suppress hydration warnings as a substitute for fixing the mismatch.
 - Request-scoped render inputs such as locale and render time belong in TanStack Start middleware/root route context, then in shared providers such as `RenderEnvironmentProvider`. Do not call `Date.now()`, depend on the browser time zone, or read browser-only state for text that appears in the first hydrated render unless the value is seeded from the server.
-- The root route owns the request-scoped `I18nextProvider`. Server code should create an isolated i18n instance with `createServerI18n(locale)`, while the client uses the shared i18n singleton after hydration has the same initial locale.
+- The locale is resolved per request in `apps/web/src/setup/locale.ts` (`?locale=`, then the `dxrating.locale` cookie, then Accept-Language, then `en`) and reaches React through the root route context and `LocaleProvider`. Components read it with `useLocale()` and pass it to every message call: `m.key(inputs, { locale })`. Never call a message without `{ locale }` in code that can run during SSR: a Worker isolate renders requests in different locales at once, and the implicit locale is isolate-wide state. The only exceptions are effect callbacks (they never run on the server and should read the locale when they fire) and browser-only modules listed in `src/i18n/__tests__/locale-args.test.ts`, which enforces this.
+- Language switches happen in place (`useSetLocale()`, no reload). A memoized callback that formats a message must list `locale` in its dependencies (`useMemo`, `useCallback`, `useAsyncFn`), or it keeps the old language. Don't add `locale` to effect dependencies just to refresh text; that makes a language switch re-run the effect.
 - For sheet release dates and other date-only values rendered in SSR, use the date helpers in `apps/web/src/utils/dateFormatting.ts`. Avoid ad hoc `new Date(...)` plus `toLocaleString()` in components, especially without an explicit `timeZone`.
 - For relative times, use the rendered-at timestamp from `apps/web/src/utils/renderEnvironment.tsx` for the first render and update after mount. This preserves SSR/client parity while keeping the live UI behavior.
 - After SSR-visible web changes, validate at least one non-English locale on a production build or preview and check the browser console for React hydration errors such as React #418.
@@ -165,7 +166,14 @@ Sentry then resolves the issue once the release containing the commit ships, and
 
 ## Adding UI Text (i18n)
 
-All user-visible strings must use `useTranslation()` from `react-i18next`. Add translation keys to all 4 locale files under `apps/web/src/locales/`: `en`, `ja`, `zh-Hans`, `zh-Hant`.
+All user-visible strings are Paraglide JS messages. Add each message to all 5 files in `apps/web/messages/` (`en`, `ja`, `ko`, `zh-Hans`, `zh-Hant`); `src/i18n/__tests__/messages.test.ts` fails on a missing or blank translation. The Vite plugin compiles them into `apps/web/src/paraglide` (generated, not committed). Locales are configured in `apps/web/project.inlang/settings.json`.
+
+- **Ids** are identifiers in `namespace_camelCaseKey` form, e.g. `sheet_details_title`, `ratingCalculator_io_import_lxns_success`.
+- **Use**: `import { m } from '@/paraglide/messages'` and `const locale = useLocale()` (`@/i18n/LocaleProvider`), then `m.sheet_details_title({}, { locale })`. Server helpers (SEO, route `head`) take the locale they resolve.
+- **Interpolation** is `{name}`. Inputs must be non-nullable: pass `value ?? ''` where a value can be missing.
+- **Plurals** are variants on `count` (`"declarations": ["input count", "local countPlural = count: plural"]`, `"match": { "countPlural=one": …, "countPlural=*": … }`).
+- **Rich text** uses markup (`{#link}text{/link}`), rendered with `<ParaglideMessage message={m.id} inputs={…} options={{ locale }} markup={{ link: ({ children }) => <a …>{children}</a> }} />` from `@inlang/paraglide-js-react`.
+- **Never build a message id at runtime.** Map each value to its message function explicitly, so unused messages stay out of the bundle: `const LABELS = { dx: m.song_type_dx, std: m.song_type_std } satisfies Record<SheetType, PlainMessage>`, then `LABELS[type]({}, { locale })`.
 
 ## Updating Song Data
 
