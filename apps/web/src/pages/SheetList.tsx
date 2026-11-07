@@ -284,34 +284,28 @@ const computeSortFilteredSheets = (
 
 /**
  * The search field. It owns its text, so a keystroke re-renders only the field; the query goes to the list in a
- * transition. `query` is the list's query: when it changes from outside (Back to another ?q=, a link), the field
- * follows; its own keystrokes coming back late (an older transition committing) are ignored, so they never overwrite
- * newer typing.
+ * transition. When the query changes from outside (Back to another ?q=, a link), the list bumps `externalRevision`
+ * and the field takes that query.
  */
 /** How long typing pauses before the query is written to the URL */
 const URL_QUERY_DELAY_MS = 400
 
-const SheetSearchField: FC<{ query: string; onQueryChange: (query: string) => void; resultCount: number }> = ({
-  query,
-  onQueryChange,
-  resultCount,
-}) => {
+const SheetSearchField: FC<{
+  query: string
+  /** Bumped when the query changes from outside (Back, a link): the field then takes `query` over its own text */
+  externalRevision: number
+  onQueryChange: (query: string) => void
+  resultCount: number
+}> = ({ query, externalRevision, onQueryChange, resultCount }) => {
   const locale = useLocale()
   const [value, setValue] = useState(query)
-  const sent = useRef(new Set<string>())
 
   useUpdateEffect(() => {
-    if (sent.current.has(query)) {
-      if (query === value) sent.current.clear()
-      return
-    }
-    sent.current.clear()
     setValue(query)
-  }, [query])
+  }, [externalRevision])
 
   const change = (next: string) => {
     setValue(next)
-    sent.current.add(next)
     startTransition(() => onQueryChange(next))
   }
 
@@ -386,21 +380,30 @@ const SheetListInnerContent: FC<{
   // re-renders the route) run behind the paint, and a newer keystroke interrupts a stale render. Keystroke INP was
   // ~200-300ms at 4x CPU with all of it in the input event
   const [resultsQuery, setResultsQuery] = useState(query)
+  const [externalRevision, setExternalRevision] = useState(0)
   const { results, elapsed: searchElapsed } = useFilteredSheets(resultsQuery)
-
-  useUpdateEffect(() => {
-    setResultsQuery(query)
-  }, [query])
-
-  useEffectOnce(() => {
-    setHydrated(true)
-  })
 
   // The ?q= update waits until typing pauses. The router's state is an external store, so its update renders
   // synchronously, with the route and this list: done on every keystroke, it pulled the whole re-render back into
   // the input event, and a keystroke cost 300-400ms at 6x CPU
   const urlQueryTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  // The ?q= values this list wrote: when the route reports one of them, it is that write arriving (possibly after
+  // newer typing), not a navigation, and the draft stays. Any other value is an outside change (Back, a link): it
+  // cancels a pending write and replaces both the results and the field's text
+  const writtenQueries = useRef(new Set<string>())
   useEffect(() => () => clearTimeout(urlQueryTimer.current), [])
+
+  useUpdateEffect(() => {
+    if (writtenQueries.current.has(query)) return
+    clearTimeout(urlQueryTimer.current)
+    writtenQueries.current.clear()
+    setResultsQuery(query)
+    setExternalRevision((revision) => revision + 1)
+  }, [query])
+
+  useEffectOnce(() => {
+    setHydrated(true)
+  })
 
   /** Called in a transition by the search field */
   const updateQuery = useCallback(
@@ -408,6 +411,7 @@ const SheetListInnerContent: FC<{
       setResultsQuery(nextQuery)
       clearTimeout(urlQueryTimer.current)
       urlQueryTimer.current = setTimeout(() => {
+        writtenQueries.current.add(nextQuery)
         void navigate({
           to: '/',
           search: (prev: Record<string, unknown>) => ({
@@ -551,7 +555,12 @@ const SheetListInnerContent: FC<{
             className="self-stretch"
           />
 
-          <SheetSearchField query={resultsQuery} onQueryChange={updateQuery} resultCount={filteredResults.length} />
+          <SheetSearchField
+            query={resultsQuery}
+            externalRevision={externalRevision}
+            onQueryChange={updateQuery}
+            resultCount={filteredResults.length}
+          />
         </div>
 
         <SheetSortFilter

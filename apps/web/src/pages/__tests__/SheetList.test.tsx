@@ -238,6 +238,60 @@ describe('SheetList', () => {
     expect(input.value).toBe('second')
   })
 
+  it('lets Back or a link replace a draft whose URL write is still waiting', () => {
+    vi.useFakeTimers()
+    try {
+      routeState.search = { q: 'first' }
+      const view = render(<SheetList />, { wrapper: Providers })
+      const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+      fireEvent.change(input, { target: { value: 'typing' } })
+
+      routeState.search = { q: 'back-target' }
+      view.rerender(<SheetList />)
+      expect(input.value).toBe('back-target')
+
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(routeState.navigate).not.toHaveBeenCalled()
+      expect(routeState.search).toMatchObject({ q: 'back-target' })
+      expect(input.value).toBe('back-target')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('keeps newer typing when an older URL write arrives late', () => {
+    vi.useFakeTimers()
+    try {
+      routeState.search = {}
+      routeState.syncSearchOnNavigate = false
+      const view = render(<SheetList />, { wrapper: Providers })
+      const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+
+      fireEvent.change(input, { target: { value: 'a' } })
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(routeState.navigate).toHaveBeenCalledTimes(1)
+
+      // Typing resumes before the 'a' navigation has finished
+      fireEvent.change(input, { target: { value: 'ab' } })
+      routeState.search = routeState.pendingSearch ?? routeState.search
+      view.rerender(<SheetList />)
+      expect(input.value).toBe('ab')
+
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(routeState.pendingSearch).toMatchObject({ q: 'ab' })
+      expect(input.value).toBe('ab')
+    } finally {
+      vi.useRealTimers()
+      routeState.syncSearchOnNavigate = true
+    }
+  })
+
   it('keeps an in-progress search edit when the route query update is pending', () => {
     routeState.search = { q: 'abcdef' }
     routeState.syncSearchOnNavigate = false
