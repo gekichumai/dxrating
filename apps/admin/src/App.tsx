@@ -1,53 +1,106 @@
+import {
+  AppShell,
+  Alert,
+  Badge,
+  Burger,
+  Card,
+  Code,
+  Group,
+  NavLink,
+  Skeleton,
+  Stack,
+  Table,
+  Text,
+  Title,
+} from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import { ORPCError } from '@orpc/client'
 import { useQuery } from '@tanstack/react-query'
 import { adminOrpc } from './api'
 
-/** The admin shell (gekichumai/meta#50 L2). English only (meta#50 Q6). Tools are added here layer by layer. */
+/** The admin shell (gekichumai/meta#50; Mantine per the owner). English only (meta#50 Q6). */
 export function App() {
+  const [navOpen, { toggle }] = useDisclosure()
   const me = useQuery(adminOrpc.me.queryOptions({ retry: false }))
   // A failed refetch keeps the old data in the cache, so show the principal only while the latest request succeeded
   const principal = me.isError ? undefined : me.data
-  const denied = me.isError && me.error instanceof ORPCError && (me.error.code === 'UNAUTHORIZED' || me.error.code === 'FORBIDDEN')
+  const denied =
+    me.isError && me.error instanceof ORPCError && (me.error.code === 'UNAUTHORIZED' || me.error.code === 'FORBIDDEN')
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-sky-100 text-zinc-900 dark:from-zinc-950 dark:to-slate-900 dark:text-zinc-100">
-      <header className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
-        <h1 className="m-0 text-lg font-semibold">DXRating Admin</h1>
-        {principal && (
-          <p className="m-0 truncate text-sm text-muted" title={principal.actor}>
-            {principal.id}
-          </p>
-        )}
-      </header>
-      <main className="mx-auto max-w-5xl px-4 pb-12">
-        {me.isPending && <div className="surface h-24 animate-pulse" aria-busy="true" aria-label="Loading" />}
-        {denied && (
-          <section className="surface p-5" role="alert">
-            <h2 className="m-0 text-base font-semibold">No access</h2>
-            <p className="mb-0 mt-2 text-sm text-muted">
+    <AppShell
+      className="admin-shell"
+      header={{ height: 56 }}
+      navbar={{ width: 220, breakpoint: 'sm', collapsed: { mobile: !navOpen } }}
+      padding="md"
+    >
+      <AppShell.Header className="admin-glass">
+        <Group h="100%" px="md" justify="space-between" wrap="nowrap">
+          <Group gap="sm" wrap="nowrap">
+            <Burger opened={navOpen} onClick={toggle} hiddenFrom="sm" size="sm" aria-label="Toggle navigation" />
+            <Title order={1} size="h4" style={{ whiteSpace: 'nowrap' }}>
+              DXRating Admin
+            </Title>
+          </Group>
+          {principal && (
+            <Text size="sm" c="dimmed" truncate="end" maw={260} title={principal.actor} visibleFrom="xs">
+              {principal.id}
+            </Text>
+          )}
+        </Group>
+      </AppShell.Header>
+
+      <AppShell.Navbar p="xs" className="admin-glass">
+        <NavLink label="Overview" active />
+      </AppShell.Navbar>
+
+      <AppShell.Main>
+        <Stack maw={960}>
+          {me.isPending && <Skeleton h={120} radius="md" aria-busy="true" aria-label="Loading" />}
+          {denied && (
+            <Alert color="orange" title="No access" role="alert">
               This account is not an administrator, or the sign-in has expired. Reload to sign in again.
-            </p>
-          </section>
-        )}
-        {me.isError && !denied && (
-          <section className="surface p-5" role="alert">
-            <h2 className="m-0 text-base font-semibold">Admin API unavailable</h2>
-            <p className="mb-0 mt-2 text-sm text-muted">The request failed. Try again in a moment.</p>
-          </section>
-        )}
-        {principal && (
-          <section className="surface p-5">
-            <h2 className="m-0 text-base font-semibold">Signed in</h2>
-            <dl className="mb-0 mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-              <dt className="text-muted">Principal</dt>
-              <dd className="m-0 font-mono">{principal.actor}</dd>
-              <dt className="text-muted">Scopes</dt>
-              <dd className="m-0 font-mono">{principal.scopes.join(', ')}</dd>
-            </dl>
-            <p className="mb-0 mt-4 text-sm text-muted">Admin tools appear here as they ship.</p>
-          </section>
-        )}
-      </main>
-    </div>
+            </Alert>
+          )}
+          {me.isError && !denied && (
+            <Alert color="red" title="Admin API unavailable" role="alert">
+              The request failed. Try again in a moment.
+            </Alert>
+          )}
+          {principal && (
+            <Card className="admin-glass" padding="lg">
+              <Group justify="space-between" mb="sm">
+                <Title order={2} size="h5">
+                  Signed in
+                </Title>
+                <Badge variant="light">{principal.type}</Badge>
+              </Group>
+              <Table variant="vertical" layout="fixed" withRowBorders={false}>
+                <Table.Tbody>
+                  <Table.Tr>
+                    <Table.Th w={120}>Principal</Table.Th>
+                    <Table.Td>
+                      <Code>{principal.actor}</Code>
+                    </Table.Td>
+                  </Table.Tr>
+                  <Table.Tr>
+                    <Table.Th>Scopes</Table.Th>
+                    <Table.Td>
+                      <Group gap={6}>
+                        {principal.scopes.map((scope) => (
+                          <Badge key={scope} variant="outline" tt="none">
+                            {scope}
+                          </Badge>
+                        ))}
+                      </Group>
+                    </Table.Td>
+                  </Table.Tr>
+                </Table.Tbody>
+              </Table>
+            </Card>
+          )}
+        </Stack>
+      </AppShell.Main>
+    </AppShell>
   )
 }
