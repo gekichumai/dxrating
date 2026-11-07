@@ -66,6 +66,7 @@ import type { Rating } from '../utils/rating'
 import type { NextRatingTarget } from '@gekichumai/maimai-domain'
 import { DIFFICULTIES } from '../models/difficulties'
 import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
+import { COMPLETION_TARGET_LABELS } from '@/components/completion/completion'
 import { switchFocusRing } from '../components/rating/focusRing'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
@@ -200,7 +201,8 @@ export const RatingCalculator = () => {
   // delete and view controls, which need records. Everything comes back with the first record.
   if (entries.length === 0 && allEntries.length === 0) {
     return (
-      <div className="rating-calculator rating-calculator--empty page-gutter py-4 pb-global">
+      // No bottom padding of its own: the explainer below is the page's last content and carries pb-global
+      <div className="rating-calculator rating-calculator--empty page-gutter py-4">
         <RatingOnboarding />
         <ImportUndoBanner />
         <div id={RATING_ADD_ENTRY_ID} className="glass rating-records w-full">
@@ -211,7 +213,8 @@ export const RatingCalculator = () => {
   }
 
   return (
-    <div className="rating-calculator flex-container w-full pb-global">
+    // No bottom padding of its own: the explainer below is the page's last content and carries pb-global
+    <div className="rating-calculator flex-container w-full">
       <div className="rating-overview">
         <section className="glass rating-summary px-4 py-3" aria-labelledby="rating-breakdown-title">
           <RatingCalculatorStatistics titleId="rating-breakdown-title" />
@@ -306,45 +309,59 @@ export const RatingCalculator = () => {
 const RatingCalculatorIncludedInCell: FC<{
   row: Row<Entry>
 }> = memo(({ row }) => {
-  const includedIn = row.original.includedIn
-  if (!includedIn) return null
+  const { includedIn, comboFlag, syncFlag } = row.original
+  if (!includedIn && !comboFlag && !syncFlag) return null
 
   return (
-    <span
-      className={clsx(
-        'inline-block num w-12 leading-none py-1.5 rounded-full text-center text-xs font-semibold select-none',
-        // A pale fill with a deep label of the same hue (>=4.5:1); both ends mirror on the dark theme
-        includedIn === 'b15' && 'bg-amber-100 text-amber-900',
-        includedIn === 'b35' && 'bg-cyan-100 text-cyan-900',
+    <span className="rating-bucket-stack">
+      {includedIn && (
+        <span
+          className={clsx(
+            'rating-bucket-badge inline-block num w-12 leading-none py-1.5 rounded-[var(--radius-sm)] text-center text-xs font-semibold select-none',
+            // A pale fill with a deep label of the same hue (>=4.5:1); both ends mirror on the dark theme
+            includedIn === 'b15' && 'bg-amber-100 text-amber-900',
+            includedIn === 'b35' && 'bg-cyan-100 text-cyan-900',
+          )}
+        >
+          {includedIn.toUpperCase()}
+        </span>
       )}
-    >
-      {includedIn.toUpperCase()}
+      {/* Phones have no combo and sync columns: the lamps stack under the bucket, which says how the record counts,
+          and the chart cell keeps its room for a two-line title */}
+      {(comboFlag || syncFlag) && (
+        <span className="rating-mobile-flags">
+          <RatingCalculatorComboFlagCell row={row} />
+          <RatingCalculatorSyncFlagCell row={row} />
+        </span>
+      )}
     </span>
   )
 })
 RatingCalculatorIncludedInCell.displayName = 'memo(RatingCalculatorIncludedInCell)'
 
-// Pale fills with deep labels of the same hue (>=4.5:1 at 12px); the adaptive palette mirrors both on the dark theme
+// Pale fills with deep labels of the same hue (>=4.5:1 at 12px); the adaptive palette mirrors both on the dark theme.
+// Labels are the shared ones (completion.ts), so a sync lamp reads FDX here as everywhere else
 const COMBO_FLAG_CONFIG: Record<NonNullable<ComboFlag>, { label: string; className: string; rank: number }> = {
-  fc: { label: 'FC', className: 'bg-green-100 text-green-800', rank: 1 },
-  fcp: { label: 'FC+', className: 'bg-green-200 text-green-900', rank: 2 },
-  ap: { label: 'AP', className: 'bg-amber-100 text-amber-800', rank: 3 },
-  app: { label: 'AP+', className: 'bg-amber-200 text-amber-900', rank: 4 },
+  fc: { label: COMPLETION_TARGET_LABELS.fc, className: 'bg-green-100 text-green-800', rank: 1 },
+  fcp: { label: COMPLETION_TARGET_LABELS.fcp, className: 'bg-green-200 text-green-900', rank: 2 },
+  ap: { label: COMPLETION_TARGET_LABELS.ap, className: 'bg-amber-100 text-amber-800', rank: 3 },
+  app: { label: COMPLETION_TARGET_LABELS.app, className: 'bg-amber-200 text-amber-900', rank: 4 },
 }
 
 const SYNC_FLAG_CONFIG: Record<NonNullable<SyncFlag>, { label: string; className: string; rank: number }> = {
   sync: { label: 'SYNC', className: 'bg-sky-100 text-sky-800', rank: 1 },
-  fs: { label: 'FS', className: 'bg-blue-100 text-blue-800', rank: 2 },
+  fs: { label: COMPLETION_TARGET_LABELS.fs, className: 'bg-blue-100 text-blue-800', rank: 2 },
   fsp: { label: 'FS+', className: 'bg-blue-200 text-blue-900', rank: 3 },
-  fsd: { label: 'FSD', className: 'bg-fuchsia-100 text-fuchsia-800', rank: 4 },
-  fsdp: { label: 'FSD+', className: 'bg-fuchsia-200 text-fuchsia-900', rank: 5 },
+  fsd: { label: COMPLETION_TARGET_LABELS.fsd, className: 'bg-fuchsia-100 text-fuchsia-800', rank: 4 },
+  fsdp: { label: COMPLETION_TARGET_LABELS.fsdp, className: 'bg-fuchsia-200 text-fuchsia-900', rank: 5 },
 }
 
-// The same 24px box as the B15/B35 pill, so the chips in a row share a height and a centre line
+// The same 24px box as the B15/B35 badge, so the badges in a row share a height and a centre line. Badges take the
+// --radius-sm token (tokens.css), not a pill
 const FlagPill: FC<{ label: string; className: string }> = ({ label, className }) => (
   <span
     className={clsx(
-      'inline-flex items-center justify-center h-6 min-w-12 px-2 rounded-full text-xs font-semibold leading-none select-none',
+      'inline-flex items-center justify-center h-6 min-w-12 px-2 rounded-[var(--radius-sm)] text-xs font-semibold leading-none select-none',
       className,
     )}
   >
@@ -401,10 +418,6 @@ const RatingChartCell: FC<{ row: Row<Entry> }> = ({ row }) => {
             {/* Desktop has a column of its own for the level */}
             <span className="rating-chart-meta-level"> · {sheetLevelLabel(sheet)}</span>
           </span>
-        </span>
-        <span className="rating-mobile-flags">
-          <RatingCalculatorComboFlagCell row={row} />
-          <RatingCalculatorSyncFlagCell row={row} />
         </span>
       </span>
     </SheetListItem>

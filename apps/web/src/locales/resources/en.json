@@ -553,7 +553,7 @@
     "table.headers.sync": "Sync",
     "table.headers.internal-level": "Const.",
     "table.headers.dx-score": "DX score",
-    "table.headers.achievement-rate": "Achievement rate",
+    "table.headers.achievement-rate": "Achievement",
     "table.headers.rating": "Rating",
     "table.headers.actions": "Actions",
     "table.sort-priority": "sort priority {{n}}",

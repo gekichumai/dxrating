@@ -567,7 +567,7 @@
   "ratingCalculator_table_headers_sync": "Sync",
   "ratingCalculator_table_headers_internalLevel": "Const.",
   "ratingCalculator_table_headers_dxScore": "DX score",
-  "ratingCalculator_table_headers_achievementRate": "Achievement rate",
+  "ratingCalculator_table_headers_achievementRate": "Achievement",
   "ratingCalculator_table_headers_rating": "Rating",
   "ratingCalculator_table_headers_actions": "Actions",
   "ratingCalculator_table_sortPriority": "sort priority {n}",

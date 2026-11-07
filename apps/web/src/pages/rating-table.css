@@ -233,6 +233,14 @@
 .rating-mobile-action {
   display: none;
 }
+/* The bucket badge, and on phones the combo and sync lamps stacked under it */
+.rating-bucket-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
+}
 .rating-value-cell {
   font-size: 1.125rem;
   font-weight: 600;
@@ -285,13 +293,13 @@
     width: 58px;
     text-align: center;
   }
-  .rating-table td.rating-col--includedIn > span {
+  .rating-table td.rating-col--includedIn .rating-bucket-badge {
     width: 2.5rem;
     font-size: 0.75rem;
   }
 
   .rating-table .rating-col--achievementRate {
-    width: 86px;
+    width: 80px;
     text-align: end;
   }
   .rating-table .rating-col--rating {
@@ -322,15 +330,15 @@
     gap: 2px;
   }
   .rating-chart-meta {
-    column-gap: 4px;
+    gap: 2px 4px;
     font-size: 0.75rem;
     line-height: 1.33;
   }
   .rating-mobile-flags {
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 3px;
-    height: 16px;
   }
   .rating-table .rating-mobile-flags > * {
     width: auto;
@@ -500,12 +508,15 @@
 .rating-tools .MuiButton-root {
   max-width: 100%;
 }
-/* The OneShot label is too long for one line on the narrowest cards: break between phrases (文節), not mid-word */
+/* The primary action spans the card like the rows of buttons under it. Its label is too long for one line on the
+   narrowest cards: break between phrases (文節), not mid-word */
 .rating-oneshot .MuiButton-root {
+  width: 100%;
   word-break: auto-phrase;
 }
-/* Import, maimai NET settings, export and clear: whole buttons wrap, never their labels. Two equal columns by default;
-   a label wider than half the card takes the whole line. When the card has room for all four, they share one row */
+/* Import and maimai NET settings, then export and clear: whole buttons wrap, never their labels. Each takes its label's
+   width and the row shares out the rest, so pairs share a line instead of a short label stretching across one alone.
+   When the card has room for all four, they share one row in equal widths */
 .rating-tools > section {
   container-type: inline-size;
 }
@@ -515,7 +526,7 @@
   gap: 8px;
 }
 .rating-io-actions > .MuiButton-root {
-  flex: 1 1 calc(50% - 4px);
+  flex: 1 1 auto;
   min-width: max-content;
   white-space: nowrap;
 }
@@ -601,6 +612,10 @@
 }
 .rating-table-controls .MuiFormControlLabel-label {
   font-size: 0.875rem;
+}
+/* The view switches lead; the link to another page sits apart at the end of the row */
+.rating-table-controls > .MuiButton-root {
+  margin-inline-start: auto;
 }
 .rating-add-form {
   /* No rule under the form: the table header's hairline is the one separator between the form and the rows */
