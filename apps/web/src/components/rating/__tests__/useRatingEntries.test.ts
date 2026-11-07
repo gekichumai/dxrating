@@ -4,6 +4,8 @@ import type { SongCatalog } from '@gekichumai/maimai-domain'
 import { describe, expect, it } from 'vitest'
 import type { PlayEntry } from '../RatingCalculatorAddEntryForm'
 import { calculateWebRatingEntries } from '../useRatingEntries'
+import { cloudRecordToPlayEntry, recordFromDTO } from '@/models/scores/cloudScoreMapping'
+import { verifiedProvenance } from '@/models/scores/__tests__/fakeCloudSaveServer'
 import type { FlattenedSheet } from '../../../songs'
 
 const makeSheet = (
@@ -138,5 +140,32 @@ describe('calculateWebRatingEntries', () => {
     expect(b50.b35Entries).toHaveLength(1)
     expect(ap50.b15Entries).toHaveLength(0)
     expect(ap50.b35Entries.map((entry) => entry.comboFlag)).toEqual(['ap'])
+  })
+
+  it('keeps the CN bucket of a Diving-Fish record read back from a cloud save, as a local import does', () => {
+    const sheet = makeSheet('hinted')
+    const cloud = recordFromDTO({
+      sheetId: 'hinted',
+      achievement: 1005000,
+      comboFlag: 'ap',
+      syncFlag: null,
+      dxScore: 2400,
+      best50Bucket: 'b35',
+      providerRecordId: null,
+      provenance: verifiedProvenance({ source: 'diving-fish', importJobId: 'dimp_df' }),
+      revision: 1,
+      valueChangedAt: '2026-11-03T00:00:00.000Z',
+      clientEditedAt: null,
+      deletedAt: null,
+    })
+    const args = {
+      entries: [cloudRecordToPlayEntry(cloud, null)],
+      sheets: [sheet],
+      catalog: makeCatalog([sheet]),
+      appVersion: VersionEnum.CiRCLEPLUS,
+      region: 'cn' as const,
+    }
+    expect(calculateWebRatingEntries(args).b35Entries).toHaveLength(1)
+    expect(calculateWebRatingEntries({ ...args, apOnly: true }).b35Entries).toHaveLength(1)
   })
 })
