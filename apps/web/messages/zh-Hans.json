@@ -248,6 +248,7 @@
   "sheet_layout_list": "列表",
   "sheet_layout_grid": "网格",
   "sheet_favorite_marked": "已收藏",
+  "sheet_chartPageLink": "打开谱面页面",
   "sheet_sortAndFilter_active": "{n} 项已启用",
   "song_notFound_title": "未找到歌曲",
   "song_notFound_description": "您要查找的歌曲不存在。",
