@@ -34,9 +34,12 @@ describe('aliasHostLabel', () => {
     expect(aliasHostLabel(alias)).toBe(label)
   })
 
-  it.each(['', '   ', '!!!', '...', '（）', '⚔️🍎', '(ﾟ∀ﾟ)'])('makes no label from %j', (alias) => {
-    expect(aliasHostLabel(alias)).toBeNull()
-  })
+  it.each(['', '   ', '!!!', '...', '（）', '⚔️🍎', '(ﾟ∀ﾟ)', 'abcאב', 'אב', 'مرحبا 1'])(
+    'makes no label from %j',
+    (alias) => {
+      expect(aliasHostLabel(alias)).toBeNull()
+    },
+  )
 
   it('makes only labels the URL parser accepts as one label, for every alias shape above', () => {
     for (const alias of [
