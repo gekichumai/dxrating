@@ -1,4 +1,8 @@
-import { sentryGlobalFunctionMiddleware, sentryGlobalRequestMiddleware } from '@sentry/tanstackstart-react'
+import {
+  sentryGlobalFunctionMiddleware,
+  sentryGlobalRequestMiddleware,
+  wrapMiddlewaresWithSentry,
+} from '@sentry/tanstackstart-react'
 import { createMiddleware, createStart } from '@tanstack/react-start'
 import { applyAgentDiscoveryHeaders } from './setup/agent-discovery'
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
@@ -35,16 +39,26 @@ const agentDiscoveryHeadersMiddleware = createMiddleware().server(async ({ next 
 })
 
 export function buildStartOptions() {
+  // Sentry is server-only here. In the browser its middleware are empty stubs, and importing them would put the SDK on
+  // the hydration path, where an ad blocker that blocks it stops the page from hydrating.
+  if (!import.meta.env.SSR) {
+    return {
+      requestMiddleware: [localeMiddleware, securityHeadersMiddleware, agentDiscoveryHeadersMiddleware],
+      functionMiddleware: [],
+    }
+  }
+
+  // Wrapped by hand, as Sentry's Vite plugin would (it skips files that already call wrapMiddlewaresWithSentry, and it
+  // can't wrap a conditional list): each local middleware gets its own span. The global Sentry middleware come back
+  // unwrapped and first.
   return {
-    // Server only. In the browser these are empty stubs, and importing them would put the Sentry SDK on the
-    // hydration path, where an ad blocker that blocks it stops the page from hydrating.
-    requestMiddleware: [
-      ...(import.meta.env.SSR ? [sentryGlobalRequestMiddleware] : []),
+    requestMiddleware: wrapMiddlewaresWithSentry({
+      sentryGlobalRequestMiddleware,
       localeMiddleware,
       securityHeadersMiddleware,
       agentDiscoveryHeadersMiddleware,
-    ],
-    functionMiddleware: import.meta.env.SSR ? [sentryGlobalFunctionMiddleware] : [],
+    }),
+    functionMiddleware: wrapMiddlewaresWithSentry({ sentryGlobalFunctionMiddleware }),
   }
 }
 

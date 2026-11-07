@@ -113,3 +113,42 @@ test('reports errors, the pageload with web vitals, and INP spans', async ({ pag
       )
   await expect.poll(interactionOps, { timeout: 20_000 }).toContainEqual(expect.stringMatching(/^ui\.interaction/))
 })
+test('names the pageload after the document when the visitor navigates before the SDK loads', async ({ page }) => {
+  await page.addInitScript(() => {
+    Math.random = () => 0.01
+  })
+  const items = await stubTunnel(page)
+
+  // Hold the SDK until the visitor has navigated in the app
+  let release!: () => void
+  const released = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  await page.route('**/assets/error-reporting-*.js', async (route) => {
+    await released
+    await route.continue()
+  })
+
+  await page.goto('/')
+  await page.locator('a[href="/charts/recent"]').first().click()
+  await expect(page).toHaveURL(/\/charts\/recent/)
+  release()
+
+  await expect
+    .poll(() => page.evaluate(() => Boolean((window as { __SENTRY__?: unknown }).__SENTRY__)), { timeout: 15_000 })
+    .toBe(true)
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+    Object.defineProperty(document, 'hidden', { value: true, configurable: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+  })
+
+  const pageload = () =>
+    items.find(
+      (item) =>
+        item.header.type === 'transaction' &&
+        (item.payload.contexts as { trace?: { op?: string } } | undefined)?.trace?.op === 'pageload',
+    )
+  await expect.poll(() => Boolean(pageload()), { timeout: 20_000 }).toBe(true)
+  expect(pageload()?.payload.transaction).toBe('/')
+})

@@ -39,12 +39,14 @@ export function scheduleErrorReporting(router: AnyRouter) {
 
   startEarlyErrorBuffer()
   const buffer = earlyErrors
+  // The router is created before any client-side navigation, so this is the document's own URL
+  const documentLocation = { pathname: window.location.pathname, search: window.location.search }
 
   const load = () => {
     import('./error-reporting')
       .then(({ initErrorReporting }) => {
         const pending = buffer?.stop() ?? []
-        const sdk = initErrorReporting(router)
+        const sdk = initErrorReporting(router, documentLocation)
         attachTelemetrySdk(sdk)
         for (const error of pending) {
           sdk.captureException(error, { mechanism: { type: 'auto.browser.early_error_buffer', handled: false } })

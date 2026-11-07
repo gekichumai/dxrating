@@ -3,11 +3,19 @@ import type { AnyRouter } from '@tanstack/react-router'
 import { sentryScrubOptions } from '@/lib/sentryScrub'
 import type { TelemetrySdk } from '@/lib/telemetry'
 
+/** Where the document was loaded, before any client-side navigation */
+export type DocumentLocation = { pathname: string; search: string }
+
 /**
  * Starts the browser SDK. Loaded with import() after hydration (see error-reporting-loader.ts), so nothing the first
  * render needs depends on this module or on the SDK's chunk.
  */
-export function initErrorReporting(router: AnyRouter): TelemetrySdk {
+export function initErrorReporting(router: AnyRouter, documentLocation: DocumentLocation): TelemetrySdk {
+  // The integration names the pageload after the current URL. If the visitor has already navigated in the app, that is
+  // another route, so the pageload (and the document's web vitals) is started here under the document's own route.
+  const navigatedBeforeInit =
+    window.location.pathname !== documentLocation.pathname || window.location.search !== documentLocation.search
+
   Sentry.init({
     dsn: 'https://9346c04036724f129e00a750c8ab9415@o4506648698683392.ingest.us.sentry.io/4511398317064192',
     tunnel: `${import.meta.env.VITE_BACKEND_URL}/api/v1/monitoring/tunnel`,
@@ -17,6 +25,7 @@ export function initErrorReporting(router: AnyRouter): TelemetrySdk {
     integrations: [
       Sentry.tanstackRouterBrowserTracingIntegration(router, {
         shouldCreateSpanForRequest: () => true,
+        instrumentPageLoad: !navigatedBeforeInit,
       }),
     ],
     // Not the song catalog: trace headers would make its revalidation fail the API's CORS preflight
@@ -65,6 +74,30 @@ export function initErrorReporting(router: AnyRouter): TelemetrySdk {
       /metrics\.itunes\.apple\.com\.edgesuite\.net\//i,
     ],
   })
+  if (navigatedBeforeInit) startDocumentPageload(router, documentLocation)
+
   // Only what the app calls: returning the whole namespace would keep the entire SDK in the bundle
   return { metrics: Sentry.metrics, logger: Sentry.logger, captureException: Sentry.captureException }
+}
+/** The pageload span the router integration would have started, named after the document's route */
+function startDocumentPageload(router: AnyRouter, { pathname, search }: DocumentLocation) {
+  const client = Sentry.getClient()
+  if (!client) return
+
+  const matches = router.matchRoutes(pathname, router.options.parseSearch(search), {
+    preload: false,
+    throwOnError: false,
+  })
+  const routeId = matches.at(-1)?.routeId
+  const route = routeId && routeId !== '__root__' ? routeId : undefined
+
+  Sentry.startBrowserTracingPageLoadSpan(client, {
+    name: route ?? pathname,
+    attributes: {
+      [Sentry.SEMANTIC_ATTRIBUTE_SENTRY_OP]: 'pageload',
+      [Sentry.SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN]: 'auto.pageload.react.tanstack_router',
+      [Sentry.SEMANTIC_ATTRIBUTE_SENTRY_SOURCE]: route ? 'route' : 'url',
+      'url.path': pathname,
+    },
+  })
 }
