@@ -10,6 +10,7 @@ import {
   type PropsWithChildren,
   type ReactElement,
   useCallback,
+  useDeferredValue,
   useMemo,
   useState,
 } from 'react'
@@ -254,6 +255,15 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
   const locale = useLocale()
 
   const search = useSheetsSearchEngine()
+  // What the visitor typed (none after a pick, as MUI shows every chart again then). The search runs on a deferred
+  // copy: a keystroke paints the field first, and the results follow in a render after it (the search took
+  // ~100-200ms of each keystroke at 4x CPU)
+  const [query, setQuery] = useState('')
+  const deferredQuery = useDeferredValue(query)
+  const results = useMemo(
+    () => (deferredQuery ? search(deferredQuery) : (sheets ?? [])),
+    [deferredQuery, search, sheets],
+  )
 
   const renderOption = useCallback(
     (attributes: HTMLAttributes<HTMLLIElement>, option: FlattenedSheet) => (
@@ -274,10 +284,8 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
       renderInput={(params) => (
         <TextField {...params} label={m.ratingCalculator_addEntry_chart({}, { locale })} variant="outlined" />
       )}
-      filterOptions={(_, { inputValue }) => {
-        if (!inputValue) return sheets
-        return search(inputValue)
-      }}
+      onInputChange={(_, inputValue, reason) => setQuery(reason === 'input' ? inputValue : '')}
+      filterOptions={() => results}
       renderOption={renderOption}
       ListboxComponent={ListboxComponent}
       value={value}

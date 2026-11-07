@@ -1,11 +1,17 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 const sheet = { id: 'dsht_test', title: 'System “Z”', type: 'std', difficulty: 'master', internalLevelValue: 14.4 }
 
+const other = { id: 'dsht_other', title: 'Other Song', type: 'dx', difficulty: 'expert', internalLevelValue: 12 }
+const searchMock = vi.hoisted(() => ({ terms: [] as string[] }))
+
 vi.mock('../../../songs', () => ({
-  useSheets: () => ({ data: [sheet] }),
-  useSheetsSearchEngine: () => () => [sheet],
+  useSheets: () => ({ data: [sheet, other] }),
+  useSheetsSearchEngine: () => (term: string) => {
+    searchMock.terms.push(term)
+    return term.toLowerCase().startsWith('sys') ? [sheet] : []
+  },
   formatSheetToString: (s: typeof sheet) => `${s.title} ${s.difficulty}`,
 }))
 vi.mock('../../sheet/SheetListItem', () => ({
@@ -20,7 +26,8 @@ vi.mock('react-virtuoso', () => ({
   ),
 }))
 
-const { RatingCalculatorAddEntryForm } = await import('../RatingCalculatorAddEntryForm')
+const { RatingCalculatorAddEntryForm, RatingCalculatorAddEntryFormAutoComplete } =
+  await import('../RatingCalculatorAddEntryForm')
 
 const achievement = () => screen.getByLabelText(/Achievement/i) as HTMLInputElement
 const errorText = () => document.querySelector('.rating-add-achievement .MuiFormHelperText-root')?.textContent ?? null
@@ -57,5 +64,27 @@ describe('RatingCalculatorAddEntryForm achievement validation', () => {
     fireEvent.click(screen.getByText('System “Z”'))
     fireEvent.submit(achievement().closest('form')!)
     expect(errorText()).toBeTruthy()
+  })
+})
+
+describe('RatingCalculatorAddEntryFormAutoComplete', () => {
+  it('lists what the typing finds, and every chart again once one is picked', async () => {
+    searchMock.terms = []
+    const onChange = vi.fn()
+    const view = render(<RatingCalculatorAddEntryFormAutoComplete value={null} onChange={onChange} />)
+    const combobox = screen.getByRole('combobox')
+
+    combobox.focus()
+    fireEvent.change(combobox, { target: { value: 'sys' } })
+    await waitFor(() => expect(searchMock.terms).toContain('sys'))
+    await waitFor(() => expect(screen.queryByText('Other Song')).toBeNull())
+    expect(screen.getByText('System “Z”')).toBeTruthy()
+    expect(searchMock.terms).toContain('sys')
+
+    fireEvent.click(screen.getByText('System “Z”'))
+    expect(onChange).toHaveBeenCalledWith(sheet)
+    view.rerender(<RatingCalculatorAddEntryFormAutoComplete value={sheet as never} onChange={onChange} />)
+    fireEvent.mouseDown(combobox)
+    await waitFor(() => expect(screen.getByText('Other Song')).toBeTruthy())
   })
 })
