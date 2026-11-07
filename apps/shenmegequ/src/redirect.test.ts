@@ -117,3 +117,35 @@ describe('Host header', () => {
     expect(worker.fetch(request).headers.get('Location')).toBe(search('一号店'))
   })
 })
+/**
+ * The label builder web (#587) and iOS use for `<label>.是什么歌.com`, copied here so the decode side is tested against
+ * its real output: NFKC, trim, lowercase; whitespace and dot runs → `-`; keep letters, numbers, marks and `-`;
+ * collapse and trim `-`; give up when empty or over 63 bytes once punycoded.
+ */
+function encodeLabel(alias: string): string | null {
+  const label = alias
+    .normalize('NFKC')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s.。．｡]+/gu, '-')
+    .replace(/[^\p{L}\p{N}\p{M}-]/gu, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+  if (label === '' || punycodeLabel(label).length > 63) return null
+  return label
+}
+
+describe('labels built by web and iOS', () => {
+  it.each([
+    ['Mr. Wonderland', 'mr-wonderland', 'mr wonderland'],
+    ['我的 歌（DX）', '我的-歌dx', '我的 歌dx'],
+    ['what?! song...', 'what-song', 'what song'],
+    ['一号店', '一号店', '一号店'],
+    ['ヒバナ', 'ヒバナ', 'ヒバナ'],
+    ['Ｂｉｇ　Ｄａｄｄｙ', 'big-daddy', 'big daddy'],
+  ])('%s → %s → %s', (alias, label, query) => {
+    expect(encodeLabel(alias)).toBe(label)
+    const host = `${punycodeLabel(label)}.${ZONE}`
+    expect(get(`https://${host}/`).location).toBe(search(query))
+  })
+})
