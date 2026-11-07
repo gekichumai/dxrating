@@ -1,7 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NetImportProgress } from './NetImportProgress'
 import { NetImportSettingsProvider } from './NetImportSettingsContext'
 import { NetImportSettingsButton } from './NetImportSettingsButton'
@@ -16,8 +15,6 @@ vi.mock('@/models/context/useAppContext', () => ({
   useAppContextDXDataVersion: () => 'circle-plus',
   useAppContext: () => ({ region: site.region }),
 }))
-
-beforeAll(() => initI18n())
 beforeEach(() => {
   vi.clearAllMocks()
   const storage = new Map<string, string>()

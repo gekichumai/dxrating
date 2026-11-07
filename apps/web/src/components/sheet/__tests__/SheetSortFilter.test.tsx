@@ -1,8 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { act, useState } from 'react'
 import { renderToString } from 'react-dom/server'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { VERSION_SORT_ORDER } from '@gekichumai/dxdata'
 import { SheetSortFilter, SheetSortFilterTrigger } from '../SheetSortFilter'
 
@@ -11,10 +10,6 @@ vi.mock('@hookform/devtools', () => ({
 }))
 
 describe('SheetSortFilter', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   beforeEach(() => {
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
@@ -131,9 +126,6 @@ describe('countActiveSortFilters', () => {
 })
 
 describe('SheetSortFilterTrigger active count', () => {
-  beforeAll(() => {
-    initI18n()
-  })
 
   it('shows how many filters are active and says so in its name', () => {
     render(

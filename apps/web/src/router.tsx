@@ -2,10 +2,7 @@ import * as Sentry from '@sentry/tanstackstart-react'
 import { createRouter } from '@tanstack/react-router'
 import { getGlobalStartContext } from '@tanstack/react-start'
 import { routeTree } from './routeTree.gen'
-import { initI18n } from './setup/init-i18n'
 import { sentryScrubOptions } from './lib/sentryScrub'
-
-initI18n()
 
 export function getRouter() {
   const router = createRouter({

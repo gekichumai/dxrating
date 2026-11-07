@@ -1,8 +1,7 @@
 import { ORPCError } from '@orpc/client'
 import { render, screen } from '@testing-library/react'
 import { StrictMode } from 'react'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({ complete: vi.fn(), navigate: vi.fn() }))
 
@@ -25,10 +24,6 @@ const open = (search: string) => {
 }
 
 describe('LxnsOauthCallback', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   beforeEach(() => {
     mocks.complete.mockReset()
     mocks.navigate.mockReset()

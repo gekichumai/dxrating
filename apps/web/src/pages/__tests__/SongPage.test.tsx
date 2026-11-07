@@ -1,7 +1,6 @@
 import { DifficultyEnum, VersionEnum } from '@gekichumai/dxdata'
 import { render, screen } from '@testing-library/react'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SongPage } from '../SongPage'
 
 // WWW, by its public song ID
@@ -75,10 +74,6 @@ vi.mock('@/components/tools/ToleranceCalculator', () => ({
 }))
 
 describe('SongPage', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   beforeEach(() => {
     document.head.innerHTML = '<title>Route-owned title</title>'
     routeState.search = {}

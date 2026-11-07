@@ -4,10 +4,9 @@ import { fireEvent, render, screen, type RenderResult } from '@testing-library/r
 import type { ReactNode } from 'react'
 import { renderToString } from 'react-dom/server'
 import type { FlattenedSheet } from '@/songs'
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
-import { initI18n } from '@/setup/init-i18n'
 import { SheetList } from '../SheetList'
 
 const routeState = vi.hoisted(() => {
@@ -133,10 +132,6 @@ const renderPage = () =>
   )
 
 describe('SheetList', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   afterEach(() => {
     vi.unstubAllGlobals()
   })

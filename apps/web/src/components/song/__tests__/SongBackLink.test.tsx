@@ -1,6 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SongBackLink, canReturnWithinSite } from '../SongBackLink'
 
 const router = vi.hoisted(() => ({
@@ -58,10 +57,6 @@ describe('canReturnWithinSite', () => {
 })
 
 describe('SongBackLink', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   beforeEach(() => {
     router.canGoBack = false
     router.back.mockReset()

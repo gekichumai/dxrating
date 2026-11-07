@@ -6,9 +6,6 @@ settings:
 
 catalogs:
   default:
-    '@better-auth/expo':
-      specifier: 1.7.6
-      version: 1.7.6
     '@better-auth/passkey':
       specifier: 1.7.6
       version: 1.7.6
@@ -21,21 +18,12 @@ catalogs:
     '@orpc/openapi':
       specifier: 2.0.0-beta.40
       version: 2.0.0-beta.40
-    '@orpc/server':
-      specifier: 2.0.0-beta.40
-      version: 2.0.0-beta.40
     '@orpc/tanstack-query':
-      specifier: 2.0.0-beta.40
-      version: 2.0.0-beta.40
-    '@orpc/zod':
       specifier: 2.0.0-beta.40
       version: 2.0.0-beta.40
     '@types/node':
       specifier: 25.9.0
       version: 25.9.0
-    '@types/pg':
-      specifier: ^8.20.0
-      version: 8.20.0
     '@types/react':
       specifier: ^19.2.14
       version: 19.2.14
@@ -45,21 +33,12 @@ catalogs:
     clsx:
       specifier: ^2.1.1
       version: 2.1.1
-    dotenv:
-      specifier: ^16.6.1
-      version: 16.6.1
     esno:
       specifier: ^4.8.0
       version: 4.8.0
     fuse.js:
       specifier: ^7.5.0
       version: 7.5.0
-    hono:
-      specifier: ^4.13.14
-      version: 4.13.16
-    pg:
-      specifier: ^8.23.1
-      version: 8.23.1
     react:
       specifier: ^19.2.6
       version: 19.2.6
@@ -339,7 +318,7 @@ importers:
         version: 10.70.0(@cloudflare/workers-types@4.20260702.1)(wrangler@4.156.0(@cloudflare/workers-types@4.20260702.1)(@types/node@25.9.0))
       '@sentry/tanstackstart-react':
         specifier: ^10.70.0
-        version: 10.70.0(react@19.2.6)(rollup@4.58.0)
+        version: 10.70.0(@opentelemetry/core@2.12.0(@opentelemetry/api@1.10.0))(react@19.2.6)(rollup@4.58.0)
       '@tanstack/react-query':
         specifier: ^5.100.11
         version: 5.100.11(react@19.2.6)
@@ -394,12 +373,6 @@ importers:
       happy-dom:
         specifier: '>=20.9.0'
         version: 20.9.0
-      i18next:
-        specifier: ^23.16.8
-        version: 23.16.8
-      i18next-browser-languagedetector:
-        specifier: ^7.2.2
-        version: 7.2.2
       lodash-es:
         specifier: ^4.18.1
         version: 4.18.1
@@ -430,9 +403,6 @@ importers:
       react-hot-toast:
         specifier: ^2.6.1
         version: 2.6.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      react-i18next:
-        specifier: ^15.7.4
-        version: 15.7.4(i18next@23.16.8)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       react-use:
         specifier: ^17.6.1
         version: 17.6.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -530,9 +500,6 @@ importers:
       esno:
         specifier: 'catalog:'
         version: 4.8.0
-      i18next-pseudo:
-        specifier: ^2.2.1
-        version: 2.2.1
       react-grab:
         specifier: ^0.1.32
         version: 0.1.37(react@19.2.6)
@@ -5412,9 +5379,6 @@ packages:
     resolution: {integrity: sha512-AOLOEhvrV+iH92xXCnFr/5+3KjPKcI3xP63XJtX5spAnkznPdHijlIsUTpi7/9EhWqrTCekw5c5zh1K+YsVw7A==}
     engines: {node: '>=16.9.0'}
 
-  html-parse-stringify@3.0.1:
-    resolution: {integrity: sha512-KknJ50kTInJ7qIScF3jeaFRpMpE8/lfiTdzf/twXyPBLAGrLRTmkz3AdTnKeh40X8k9L2fdYwEp/42WGXIRGcg==}
-
   http-errors@2.0.1:
     resolution: {integrity: sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ==}
     engines: {node: '>= 0.8'}
@@ -5432,18 +5396,6 @@ packages:
 
   hyphenate-style-name@1.1.0:
     resolution: {integrity: sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw==}
-
-  i18next-browser-languagedetector@7.2.2:
-    resolution: {integrity: sha512-6b7r75uIJDWCcCflmbof+sJ94k9UQO4X0YR62oUfqGI/GjCLVzlCwu8TFdRZIqVLzWbzNcmkmhfqKEr4TLz4HQ==}
-
-  i18next-pseudo@2.2.1:
-    resolution: {integrity: sha512-wGybHZl+D7GXZLxLAWN5AhyrmVBxPd5kPpHgcgPw1yOoJcEEvxRk5+ZpbaAc8R59JHeyXLl99rWIXdg/zCvKFQ==}
-
-  i18next@19.9.2:
-    resolution: {integrity: sha512-0i6cuo6ER6usEOtKajUUDj92zlG+KArFia0857xxiEHAQcUwh/RtOQocui1LPJwunSYT574Pk64aNva1kwtxZg==}
-
-  i18next@23.16.8:
-    resolution: {integrity: sha512-06r/TitrM88Mg5FdUXAKL96dJMzgqLE5dv3ryBAra4KCwD9mJ4ndOTS95ZuymIGoE+2hzfdaMak2X11/es7ZWg==}
 
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
@@ -6137,9 +6089,6 @@ packages:
     peerDependencies:
       pg: '>=8.0'
 
-  pg-protocol@1.13.0:
-    resolution: {integrity: sha512-zzdvXfS6v89r6v7OcFCHfHlyG/wvry1ALxZo4LqgUoy7W9xhBDMaqOuMiF3qEV45VqsN6rdlcehHrfDtlCPc8w==}
-
   pg-protocol@1.16.1:
     resolution: {integrity: sha512-p9VOFMiHB/ZbJATetbg+99PxssTVSQRnyuPSQ67mN1+1KBOjZaZ83ZQzltnxPhJwSsC3nwVjJ10DVJlerbFzLg==}
 
@@ -6346,22 +6295,6 @@ packages:
       '@types/react':
         optional: true
       '@types/react-dom':
-        optional: true
-
-  react-i18next@15.7.4:
-    resolution: {integrity: sha512-nyU8iKNrI5uDJch0z9+Y5XEr34b0wkyYj3Rp+tfbahxtlswxSCjcUL9H0nqXo9IR3/t5Y5PKIA3fx3MfUyR9Xw==}
-    peerDependencies:
-      i18next: '>= 23.4.0'
-      react: '>= 16.8.0'
-      react-dom: '*'
-      react-native: '*'
-      typescript: ^5
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
-      react-native:
-        optional: true
-      typescript:
         optional: true
 
   react-is@16.13.1:
@@ -7037,10 +6970,6 @@ packages:
         optional: true
       jsdom:
         optional: true
-
-  void-elements@3.1.0:
-    resolution: {integrity: sha512-Dhxzh5HZuiHQhbvTW9AMetFfBHDMYpo23Uo9btPXgdYP+3T5S+p+jgNy7spra+veYhBP2dCSgxR/i2Y02h5/6w==}
-    engines: {node: '>=0.10.0'}
 
   vue@3.5.28:
     resolution: {integrity: sha512-BRdrNfeoccSoIZeIhyPBfvWSLFP4q8J3u8Ju8Ug5vu3LdD+yTM13Sg4sKtljxozbnuMu1NB1X5HBHRYUzFocKg==}
@@ -9535,7 +9464,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sentry/tanstackstart-react@10.70.0(react@19.2.6)(rollup@4.58.0)':
+  '@sentry/tanstackstart-react@10.70.0(@opentelemetry/core@2.12.0(@opentelemetry/api@1.10.0))(react@19.2.6)(rollup@4.58.0)':
     dependencies:
       '@opentelemetry/api': 1.10.0
       '@sentry/browser-utils': 10.70.0
@@ -10164,7 +10093,7 @@ snapshots:
   '@types/pg@8.20.0':
     dependencies:
       '@types/node': 25.9.0
-      pg-protocol: 1.13.0
+      pg-protocol: 1.16.1
       pg-types: 2.2.0
 
   '@types/prop-types@15.7.15': {}
@@ -11545,10 +11474,6 @@ snapshots:
 
   hono@4.13.16: {}
 
-  html-parse-stringify@3.0.1:
-    dependencies:
-      void-elements: 3.1.0
-
   http-errors@2.0.1:
     dependencies:
       depd: 2.0.0
@@ -11571,22 +11496,6 @@ snapshots:
   human-signals@2.1.0: {}
 
   hyphenate-style-name@1.1.0: {}
-
-  i18next-browser-languagedetector@7.2.2:
-    dependencies:
-      '@babel/runtime': 7.28.6
-
-  i18next-pseudo@2.2.1:
-    dependencies:
-      i18next: 19.9.2
-
-  i18next@19.9.2:
-    dependencies:
-      '@babel/runtime': 7.28.6
-
-  i18next@23.16.8:
-    dependencies:
-      '@babel/runtime': 7.28.6
 
   iconv-lite@0.6.3:
     dependencies:
@@ -12253,8 +12162,6 @@ snapshots:
     dependencies:
       pg: 8.23.1
 
-  pg-protocol@1.13.0: {}
-
   pg-protocol@1.16.1: {}
 
   pg-types@2.2.0:
@@ -12504,16 +12411,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
       '@types/react-dom': 19.2.3(@types/react@19.2.14)
-
-  react-i18next@15.7.4(i18next@23.16.8)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3):
-    dependencies:
-      '@babel/runtime': 7.28.6
-      html-parse-stringify: 3.0.1
-      i18next: 23.16.8
-      react: 19.2.6
-    optionalDependencies:
-      react-dom: 19.2.6(react@19.2.6)
-      typescript: 5.9.3
 
   react-is@16.13.1: {}
 
@@ -13232,8 +13129,6 @@ snapshots:
       happy-dom: 20.9.0
     transitivePeerDependencies:
       - msw
-
-  void-elements@3.1.0: {}
 
   vue@3.5.28(typescript@5.9.3):
     dependencies:

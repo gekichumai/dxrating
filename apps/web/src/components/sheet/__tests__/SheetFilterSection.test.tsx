@@ -1,11 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { describe, expect, it, vi } from 'vitest'
 import { SheetFilterSection } from '../filters/SheetFilterSection'
 
 describe('SheetFilterSection accessibility', () => {
-  beforeAll(() => initI18n())
-
   it('exposes distinct native reset buttons without requiring hover', () => {
     const resetCategory = vi.fn()
     const resetDifficulty = vi.fn()

@@ -1,7 +1,6 @@
 import { VersionEnum } from '@gekichumai/dxdata'
 import { render, screen, within } from '@testing-library/react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { describe, expect, it, vi } from 'vitest'
 import { SongHubPage } from '../SongHubPage'
 
 // WWW, by its public song ID
@@ -28,10 +27,6 @@ vi.mock('@/components/song/hub/SongChartsTable', () => ({
 }))
 
 describe('SongHubPage', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('shows the title, artist, BPM, version and aliases above the all-charts table', () => {
     const { container } = render(<SongHubPage />)
 

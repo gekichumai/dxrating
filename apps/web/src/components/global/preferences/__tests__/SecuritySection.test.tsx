@@ -1,11 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import toast from 'react-hot-toast'
 import { LocaleProvider, useSetLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
-import { initI18n } from '@/setup/init-i18n'
 import { SecuritySection } from '../SecuritySection'
 
 const { addPasskey, changePassword, listUserPasskeys, listSessions } = vi.hoisted(() => ({
@@ -41,10 +40,6 @@ function TestProviders({ children }: { children: ReactNode }) {
 }
 
 describe('SecuritySection', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   beforeEach(() => {
     vi.clearAllMocks()
     changePassword.mockResolvedValue({ error: null })

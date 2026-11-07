@@ -12,12 +12,11 @@ import {
   useRef,
   useState,
 } from 'react'
-import { useTranslation } from 'react-i18next'
 import MdiCheck from '~icons/mdi/check'
 import MdiChevronDown from '~icons/mdi/chevron-down'
 import { ResponsiveDialog } from '../global/ResponsiveDialog'
 import { VersionLogo } from './VersionLogo'
-import { VersionEraPager, VersionPairGrid } from './VersionPairList'
+import { ERA_LABELS, VersionEraPager, VersionPairGrid } from './VersionPairList'
 import { VERSION_ERAS, type VersionEra, pairVersions, pairVersionsByEra, versionEraOf } from './versionEras'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
@@ -211,7 +210,7 @@ const VersionPickerContent: FC<{
   pagesTitle?: string
   footnote?: ReactNode
 }> = ({ options, onPick, onClose, multiple = false, onSelectAll, onClear, featured, pagesTitle, footnote }) => {
-  const { t } = useTranslation(['versions'])
+  const locale = useLocale()
   const root = useRef<HTMLDivElement>(null)
   const pagesTitleId = useId()
 
@@ -245,7 +244,7 @@ const VersionPickerContent: FC<{
 
   const page = (era: VersionEra) => (
     <VersionTileList
-      label={t(`versions:era.${era}`)}
+      label={ERA_LABELS[era]({}, { locale })}
       multiple={multiple}
       options={options.filter((option) => versionEraOf(option.version) === era)}
       onPick={onPick}
@@ -276,7 +275,7 @@ const VersionPickerContent: FC<{
           </h3>
         )}
         {eras.length > 1 ? (
-          <VersionEraPager label={t('versions:era.label')} defaultEra={defaultEra} badges={badges}>
+          <VersionEraPager label={m.versions_era_label({}, { locale })} defaultEra={defaultEra} badges={badges}>
             {page}
           </VersionEraPager>
         ) : (
@@ -289,20 +288,20 @@ const VersionPickerContent: FC<{
       {multiple && (
         <div className="sticky bottom-0 -mx-1 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-[var(--radius-md)] bg-surface/80 p-1 backdrop-blur-md">
           <output className="w-full px-1 text-xs text-fg-2 num" aria-live="polite">
-            {t('versions:picker.selected-count', { count: selectedCount, total: options.length })}
+            {m.versions_picker_selectedCount({ count: selectedCount, total: options.length }, { locale })}
           </output>
           <button type="button" className={PICKER_TEXT_BUTTON} onClick={onSelectAll}>
-            {t('versions:picker.select-all')}
+            {m.versions_picker_selectAll({}, { locale })}
           </button>
           <button type="button" className={PICKER_TEXT_BUTTON} onClick={onClear} disabled={selectedCount === 0}>
-            {t('versions:picker.clear')}
+            {m.versions_picker_clear({}, { locale })}
           </button>
           <button
             type="button"
             className="ms-auto min-h-10 cursor-pointer rounded-[var(--radius-md)] border-0 bg-accent-strong px-4 font-inherit text-sm font-semibold text-on-accent"
             onClick={onClose}
           >
-            {t('versions:picker.done')}
+            {m.versions_picker_done({}, { locale })}
           </button>
         </div>
       )}

@@ -1,8 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { renderToString } from 'react-dom/server'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { describe, expect, it, vi } from 'vitest'
 import { HomeHub } from '../HomeHub'
 
 vi.mock('@tanstack/react-router', () => ({
@@ -21,10 +20,6 @@ const recentSongs = [
 ]
 
 describe('HomeHub', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('folds the new charts below sm, by CSS, so the server render suits every width', () => {
     const html = renderToString(<HomeHub recentSongs={recentSongs} />)
 

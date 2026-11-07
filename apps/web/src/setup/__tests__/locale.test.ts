@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   withLocaleQuery,
-  LOCALE_COOKIE_MAX_AGE_SECONDS,
   LOCALE_COOKIE_NAME,
   LOCALE_STORAGE_KEY,
   detectServerLocale,
-  getClientLanguageDetectionOptions,
   normalizeDetectedLanguage,
   persistClientLocalePreference,
   toSupportedLocale,
@@ -77,23 +75,6 @@ describe('locale detection', () => {
     })
 
     expect(detectServerLocale(request)).toBe('zh-Hant')
-  })
-
-  it('configures browser detection without automatic persistence side effects', () => {
-    expect(getClientLanguageDetectionOptions()).toMatchObject({
-      order: ['querystring', 'cookie', 'htmlTag', 'localStorage', 'sessionStorage', 'navigator'],
-      lookupQuerystring: 'locale',
-      lookupLocalStorage: LOCALE_STORAGE_KEY,
-      lookupSessionStorage: LOCALE_STORAGE_KEY,
-      lookupCookie: LOCALE_COOKIE_NAME,
-      caches: [],
-      excludeCacheFor: ['cimode'],
-      cookieOptions: {
-        path: '/',
-        sameSite: 'lax',
-        maxAge: LOCALE_COOKIE_MAX_AGE_SECONDS,
-      },
-    })
   })
 
   it('persists the client locale preference to localStorage and the SSR cookie', () => {
