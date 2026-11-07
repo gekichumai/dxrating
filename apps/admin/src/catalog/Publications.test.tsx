@@ -112,6 +112,8 @@ describe('Publications', () => {
     rerender(view('staging-v1'))
     await waitFor(() => expect(screen.queryByText('Older')).toBeNull())
     expect(screen.getByText('r3')).toBeTruthy()
+    // The old rows' links still point at the channel they belong to
+    expect(screen.getByText('vs previous').closest('a')?.getAttribute('href')).toBe('#diff?to=3')
     release()
     expect((await screen.findByText('Older')).closest('a')?.getAttribute('href')).toBe(
       '#publications?channel=staging-v1&before=4',

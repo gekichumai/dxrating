@@ -133,6 +133,66 @@ export const PublicationSchema = z.object({
   current: z.boolean().describe('The publication the channel serves now'),
 })
 
+const FieldChangeSchema = z.object({
+  path: z.string(),
+  before: z.json().optional().describe('Absent when the field is absent on the older side'),
+  after: z.json().optional().describe('Absent when the field is absent on the newer side'),
+})
+const DiffSideSchema = z.object({
+  revision: z.number().int(),
+  fingerprint: sha256,
+  publishedAt: z.string(),
+  bodySha256: sha256,
+})
+
+export const CatalogDiffSchema = z.object({
+  channel: z.string(),
+  from: DiffSideSchema,
+  to: DiffSideSchema,
+  summary: z.object({
+    songsAdded: z.number().int(),
+    songsRemoved: z.number().int(),
+    songsChanged: z.number().int(),
+    sheetsAdded: z.number().int(),
+    sheetsRemoved: z.number().int(),
+    sheetsChanged: z.number().int(),
+    fieldChanges: z.number().int(),
+  }),
+  pathCounts: z
+    .array(z.object({ path: z.string(), count: z.number().int() }))
+    .describe('Changes per path pattern, most first; a pattern is a valid `path` filter'),
+  lists: z.array(
+    z.object({
+      key: z.string(),
+      beforeCount: z.number().int(),
+      afterCount: z.number().int(),
+      added: z.array(z.json()),
+      removed: z.array(z.json()),
+    }),
+  ),
+  updateTime: z.object({ before: z.json().optional(), after: z.json().optional() }),
+  path: z.string().nullable(),
+  songsTotal: z.number().int(),
+  songs: z.array(
+    z.object({
+      songId: z.string().describe('The song’s public ID (dsng_…), or songId in the legacy shape'),
+      title: z.string(),
+      kind: z.enum(['added', 'removed', 'changed']),
+      fields: z.array(FieldChangeSchema),
+      sheets: z.array(
+        z.object({
+          id: z.string().describe('The sheet’s public ID, or type:difficulty in the legacy shape'),
+          type: z.string(),
+          difficulty: z.string(),
+          kind: z.enum(['added', 'removed', 'changed']),
+          fields: z.array(FieldChangeSchema),
+        }),
+      ),
+    }),
+  ),
+  nextOffset: z.number().int().nullable(),
+})
+
 /** dxdata publications and provenance, read-only (gekichumai/meta#50 Phase 3). Scope catalog:read. */
 export const adminCatalogContract = {
   publications: oc
@@ -164,6 +224,33 @@ export const adminCatalogContract = {
         nextBefore: z.number().int().nullable(),
       }),
     ),
+  diff: oc
+    .meta(
+      openapi({
+        method: 'GET',
+        path: '/catalog/diff',
+        summary: 'Field-level changes between two publications of a channel (scope catalog:read)',
+        description:
+          'Published snapshots (song-catalog v1) match songs and sheets by public `id`, so a changed type or difficulty is a field change, not a removal plus an addition. Legacy dxdata.json bodies fall back to songId, and type + difficulty for sheets. Without `to`, the latest publication; without `from`, the one before `to`. Paged by song.',
+        tags: ['catalog'],
+      }),
+    )
+    .input(
+      z
+        .object({
+          channel: z
+            .string()
+            .regex(/^[a-z][a-z0-9_-]*$/)
+            .default('production-v1'),
+          from: z.coerce.number().int().positive().optional(),
+          to: z.coerce.number().int().positive().optional(),
+          path: z.string().max(200).optional().describe('Only changes of this path pattern, from `pathCounts`'),
+          offset: z.coerce.number().int().min(0).default(0),
+          limit: z.coerce.number().int().min(1).max(200).default(50),
+        })
+        .strict(),
+    )
+    .output(CatalogDiffSchema),
 }
 
 export const adminApiContract = {
