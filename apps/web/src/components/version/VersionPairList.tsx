@@ -7,7 +7,10 @@ import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
 import { VERSION_ERAS, type VersionEra, type VersionPair } from './versionEras'
 
-const ERA_LABELS = { dx: m.versions_era_dx, classic: m.versions_era_classic } satisfies Record<VersionEra, PlainMessage>
+export const ERA_LABELS = { dx: m.versions_era_dx, classic: m.versions_era_classic } satisfies Record<
+  VersionEra,
+  PlainMessage
+>
 const ERA_RANGES = {
   dx: m.versions_era_dxRange,
   classic: m.versions_era_classicRange,

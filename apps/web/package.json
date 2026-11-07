@@ -13,9 +13,7 @@
     "search:eval": "SEARCH_EVAL=1 SEARCH_EVAL_REPORT=search-eval.txt vitest run src/search-eval",
     "search:eval:update": "SEARCH_EVAL=1 SEARCH_EVAL_UPDATE=1 SEARCH_EVAL_REPORT=search-eval.txt vitest run src/search-eval",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
-    "i18n:convert": "node scripts/i18n/convert-i18next.ts",
-    "i18n:codemod": "node scripts/i18n/codemod.ts"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@better-auth/passkey": "catalog:",
@@ -53,8 +51,6 @@
     "dayjs": "^1.11.23",
     "fuse.js": "catalog:",
     "happy-dom": "^20.9.0",
-    "i18next": "^23.16.8",
-    "i18next-browser-languagedetector": "^7.2.2",
     "lodash-es": "^4.18.1",
     "lucide-react": "^0.577.0",
     "marked": "^14.1.4",
@@ -65,7 +61,6 @@
     "react-geiger": "^1.2.3",
     "react-hook-form": "^7.91.0",
     "react-hot-toast": "^2.6.1",
-    "react-i18next": "^15.7.4",
     "react-use": "^17.6.1",
     "react-virtuoso": "^4.18.20",
     "sql.js": "^1.15.2",
@@ -100,7 +95,6 @@
     "@vitejs/plugin-react": "^6.1.2",
     "@vitest/ui": "5.0.2",
     "esno": "catalog:",
-    "i18next-pseudo": "^2.2.1",
     "react-grab": "^0.1.32",
     "typescript": "catalog:",
     "unocss": "^66.6.8",

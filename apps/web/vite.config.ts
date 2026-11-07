@@ -102,10 +102,6 @@ const VENDOR_GROUPS: [name: string, pkgs: string[]][] = [
   ['vendor-posthog', ['posthog-js']],
   ['vendor-motion', ['framer-motion', 'motion-dom', 'motion-utils']],
   [
-    'vendor-i18n',
-    ['i18next', 'react-i18next', 'i18next-browser-languagedetector', 'html-parse-stringify', 'void-elements'],
-  ],
-  [
     'vendor-api',
     [
       '@orpc/client',

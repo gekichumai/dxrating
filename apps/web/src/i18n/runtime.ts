@@ -6,7 +6,8 @@ import { DEFAULT_LOCALE, type SupportedLocale, toSupportedLocale } from '@/setup
  *
  * Components pass the locale explicitly (`m.key(inputs, { locale })`, with `locale` from useLocale()), so the server
  * render never depends on module state: a Worker isolate serves concurrent requests in different locales. This
- * fallback is for browser-only code outside React (toasts, import jobs) and follows the locale the app shows.
+ * fallback is for browser-only code: effect callbacks and modules outside React (toasts, import jobs). It follows the
+ * locale the app shows, read when the message fires.
  */
 let clientLocale: SupportedLocale | undefined
 

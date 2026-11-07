@@ -1,12 +1,10 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SheetAltNames } from '../SheetAltNames'
 
 const { success } = vi.hoisted(() => ({ success: vi.fn() }))
 vi.mock('react-hot-toast', () => ({ default: { success } }))
 
-beforeAll(() => initI18n())
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
