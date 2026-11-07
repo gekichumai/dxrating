@@ -13,6 +13,7 @@
  *   6. the label must be non-empty, at most 63 bytes once punycoded (xn--…), free of right-to-left scripts (IDNA's bidi
  *      rule rejects most labels that mix them with anything else, e.g. "abcאב") and kept as is by the platform's URL
  *      parser (a last guard for IDNA rules the steps above do not model); otherwise use the question form
+ *   7. the label must not be "www": the 是什么歌.com Worker serves www as its home page, so that link never searches
  */
 
 const SEPARATORS = /[\s.。．｡]+/gu
@@ -22,7 +23,10 @@ const STRANDED_MARKS = /(^|-)\p{M}+/gu
 const RIGHT_TO_LEFT =
   /[\p{Script=Hebrew}\p{Script=Arabic}\p{Script=Syriac}\p{Script=Thaana}\p{Script=Nko}\p{Script=Samaritan}\p{Script=Mandaic}\p{Script=Adlam}\p{Script=Hanifi_Rohingya}\p{Script=Yezidi}]/u
 
-/** The hostname label for an alias, or null when it makes none (empty, or longer than 63 bytes as punycode) */
+/** Labels the 是什么歌.com Worker keeps for itself: www serves the home page */
+const RESERVED_LABELS = new Set(['www'])
+
+/** The hostname label for an alias, or null when it makes none (empty, reserved, or over 63 bytes as punycode) */
 export function aliasHostLabel(alias: string): string | null {
   const label = alias
     .normalize('NFKC')
@@ -34,7 +38,7 @@ export function aliasHostLabel(alias: string): string | null {
     .replace(STRANDED_MARKS, '$1')
     .replace(/-{2,}/g, '-')
     .replace(/^-+|-+$/g, '')
-  if (!label || RIGHT_TO_LEFT.test(label)) return null
+  if (!label || RESERVED_LABELS.has(label) || RIGHT_TO_LEFT.test(label)) return null
   const ascii = toAsciiLabel(label)
   if (ascii.length > 63) return null
   try {
