@@ -7,7 +7,7 @@ import {
 } from '@gekichumai/api-contract'
 import { ORPCError } from '@orpc/client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { adminClient, adminOrpc } from './api'
 
 /**
@@ -111,7 +111,14 @@ const primary =
 export function Announcements({ canWrite }: { canWrite: boolean }) {
   const queryClient = useQueryClient()
   const list = useQuery(adminOrpc.announcements.list.queryOptions({ retry: false }))
-  const [draft, setDraft] = useState<Draft | null>(null)
+  const [draft, setDraftState] = useState<Draft | null>(null)
+  // The editor's current draft, readable from a mutation callback that finishes after later edits
+  const draftRef = useRef<Draft | null>(null)
+  const setDraft = (next: Draft | null | ((current: Draft | null) => Draft | null)) => {
+    const value = typeof next === 'function' ? next(draftRef.current) : next
+    draftRef.current = value
+    setDraftState(value)
+  }
   const [result, setResult] = useState<WriteResult | null>(null)
   const refresh = () => queryClient.invalidateQueries({ queryKey: adminOrpc.announcements.list.key() })
 
@@ -124,12 +131,17 @@ export function Announcements({ canWrite }: { canWrite: boolean }) {
             dryRun,
             ifUpdatedAt: draft.updatedAt,
           }),
-    onSuccess: (out, { dryRun }) => {
-      setResult(out)
-      if (!dryRun) {
-        setDraft(null)
-        void refresh()
+    onSuccess: (out, { draft: submitted, dryRun }) => {
+      const unchanged = draftRef.current === submitted
+      if (dryRun) {
+        // A preview belongs to the draft it was asked for; ignore it if the editor has moved on
+        if (unchanged) setResult(out)
+        return
       }
+      // Close the editor only if it still holds the draft that was saved, never a newer one
+      if (unchanged) setDraft(null)
+      setResult(out)
+      void refresh()
     },
   })
   const end = useMutation({
@@ -160,7 +172,7 @@ export function Announcements({ canWrite }: { canWrite: boolean }) {
         )}
       </div>
 
-      {end.isSuccess && !draft && (
+      {end.isSuccess && (
         <p className="mb-0 mt-3 text-sm text-muted" role="status">
           Ended “{endedTitle}”. Edge cache: {end.data.edgeCache}.
         </p>

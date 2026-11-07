@@ -134,6 +134,35 @@ describe('announcements page', () => {
     })
   })
 
+  it('shows the End outcome even with the editor open', async () => {
+    stub()
+    vi.stubGlobal('confirm', () => true)
+    mount()
+    fireEvent.click(await screen.findByRole('button', { name: 'New announcement' }))
+    fireEvent.click(screen.getByRole('button', { name: 'End' }))
+    expect((await screen.findByRole('status')).textContent).toContain('Edge cache: invalidated')
+  })
+
+  it('keeps a newer draft when an earlier save finishes', async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    stub()
+    const base = globalThis.fetch
+    vi.stubGlobal('fetch', async (input: Request | string, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(new URL(input, 'http://admin.test'), init)
+      if (request.method === 'POST' && new URL(request.url).pathname === '/api/announcements/update') await gate
+      return base(request)
+    })
+    mount()
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.change(screen.getByLabelText('Title (ja)'), { target: { value: 'まだ編集中' } })
+    release()
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/announcements/update')).toBe(true))
+    await new Promise((r) => setTimeout(r, 50))
+    expect((screen.getByLabelText('Title (ja)') as HTMLInputElement).value).toBe('まだ編集中')
+  })
+
   it('offers no writes to a read-only principal', async () => {
     stub()
     mount(false)
