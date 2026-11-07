@@ -165,7 +165,7 @@ describe('sort and filter persistence', () => {
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
       value: {
-        getItem: vi.fn((k: string) => (k === 'dxrating-known-latest-game-version' ? latestVersion() : null)),
+        getItem: vi.fn(() => null),
         setItem: vi.fn(),
         removeItem: removeLocal,
       },
@@ -173,7 +173,10 @@ describe('sort and filter persistence', () => {
     const { getDefaultSheetSortFilterForm } = await import('../SheetSortFilter')
     const saved = getDefaultSheetSortFilterForm()
     saved.filters.favoritesOnly = true
-    session.set('dxrating-sheet-sort-filter', JSON.stringify({ version: 1, payload: saved }))
+    session.set(
+      'dxrating-sheet-sort-filter',
+      JSON.stringify({ version: 1, payload: saved, latestVersion: latestVersion() }),
+    )
 
     const onChange = vi.fn()
     render(<SheetSortFilter onChange={onChange} />)
@@ -181,6 +184,36 @@ describe('sort and filter persistence', () => {
       expect.objectContaining({ filters: expect.objectContaining({ favoritesOnly: true }) }),
     )
     expect(removeLocal).toHaveBeenCalledWith('dxrating-sheet-sort-filter')
+  })
+})
+
+describe('sort and filter persistence across game versions', () => {
+  it("drops a tab's saved filters from a build that knew an older latest version", async () => {
+    const session = new Map<string, string>()
+    Object.defineProperty(window, 'sessionStorage', {
+      configurable: true,
+      value: {
+        getItem: (k: string) => session.get(k) ?? null,
+        setItem: (k: string, v: string) => session.set(k, v),
+        removeItem: (k: string) => session.delete(k),
+      },
+    })
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: { getItem: vi.fn(() => null), setItem: vi.fn(), removeItem: vi.fn() },
+    })
+    const { getDefaultSheetSortFilterForm } = await import('../SheetSortFilter')
+    const saved = getDefaultSheetSortFilterForm()
+    saved.filters.favoritesOnly = true
+    const older = VERSION_SORT_ORDER[VERSION_SORT_ORDER.length - 2]
+    session.set('dxrating-sheet-sort-filter', JSON.stringify({ version: 1, payload: saved, latestVersion: older }))
+
+    const onChange = vi.fn()
+    render(<SheetSortFilter onChange={onChange} />)
+    expect(onChange).not.toHaveBeenCalledWith(
+      expect.objectContaining({ filters: expect.objectContaining({ favoritesOnly: true }) }),
+    )
+    expect(session.has('dxrating-sheet-sort-filter')).toBe(false)
   })
 })
 

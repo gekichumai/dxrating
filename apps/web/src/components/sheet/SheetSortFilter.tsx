@@ -74,7 +74,9 @@ export const getDefaultSheetSortFilterForm = (): SheetSortFilterForm => ({
 
 const CURRENT_SCHEMA_VERSION = 1
 const SHEET_SORT_FILTER_STORAGE_KEY = 'dxrating-sheet-sort-filter'
-const LATEST_VERSION_KEY = 'dxrating-known-latest-game-version'
+/** The newest game version this build knows: saved filters from a build that knew an older one are dropped, since
+ * their version list would leave the new version's charts out */
+const latestKnownVersion = () => VERSION_SORT_ORDER[VERSION_SORT_ORDER.length - 1]
 
 /**
  * The sort and filters last until the tab is closed (sessionStorage): they survive opening a chart and coming back,
@@ -218,15 +220,6 @@ const loadSavedSheetSortFilterForm = (): SheetSortFilterForm | null => {
     return null
   }
 
-  const currentLatest = VERSION_SORT_ORDER[VERSION_SORT_ORDER.length - 1]
-  const storedLatest = window.localStorage.getItem(LATEST_VERSION_KEY)
-
-  if (storedLatest !== currentLatest) {
-    clearPersistedSheetSortFilter()
-    window.localStorage.setItem(LATEST_VERSION_KEY, currentLatest)
-    return null
-  }
-
   let alreadySaved: string | null = null
   try {
     alreadySaved = sortFilterStorage()?.getItem(SHEET_SORT_FILTER_STORAGE_KEY) ?? null
@@ -241,6 +234,11 @@ const loadSavedSheetSortFilterForm = (): SheetSortFilterForm | null => {
 
   try {
     const parsed = JSON.parse(alreadySaved)
+    // Checked per tab, next to the payload: a shared marker would let one tab's update skip another tab's reset
+    if (parsed?.latestVersion !== latestKnownVersion()) {
+      clearPersistedSheetSortFilter()
+      return null
+    }
     return validateAndMigrate(parsed)
   } catch (e) {
     console.warn('Failed to parse saved sort filter', e)
@@ -298,7 +296,7 @@ const SheetSortFilterFormListener: FC<{
         try {
           sortFilterStorage()?.setItem(
             SHEET_SORT_FILTER_STORAGE_KEY,
-            JSON.stringify({ version: CURRENT_SCHEMA_VERSION, payload: data }),
+            JSON.stringify({ version: CURRENT_SCHEMA_VERSION, payload: data, latestVersion: latestKnownVersion() }),
           )
         } catch {
           // Storage full or blocked: the choice still applies to this page
