@@ -1,0 +1,19 @@
+# Coolify service `dxrating-admin-api` (gekichumai/meta#50 L3). admin.dxrating.net's Worker forwards /api/* here.
+services:
+  admin-api:
+    image: ghcr.io/gekichumai/dxrating/admin-api:${ADMIN_API_IMAGE_TAG:-latest}
+    expose:
+      - '3100'
+    # Coolify shows every ${VAR} below in the service's Environment Variables; set them there (names in the L3 PR).
+    environment:
+      NODE_ENV: production
+      PORT: '3100'
+      ADMIN_ORIGIN: ${ADMIN_ORIGIN:-https://admin.dxrating.net}
+      ADMIN_ACCESS_TEAM_DOMAIN: ${ADMIN_ACCESS_TEAM_DOMAIN}
+      ADMIN_ACCESS_AUD: ${ADMIN_ACCESS_AUD}
+      ADMIN_HUMAN_EMAILS: ${ADMIN_HUMAN_EMAILS}
+    restart: unless-stopped
+    stop_grace_period: 15s
+    # No hand-written Traefik labels: set the service's Domain in Coolify to https://admin-api.dxrating.net:3100 and
+    # Coolify generates the HTTPS router and its certificate (Cloudflare SSL mode Full (strict) then works end to end).
+
