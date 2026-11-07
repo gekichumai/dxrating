@@ -84,6 +84,8 @@ interface PendingChart {
   type: TypeEnum
   difficulty: DifficultyEnum | false
   from: string
+  /** The song's charts, which identify the song */
+  sheets: Sheet[]
 }
 
 export const SongSheetTabs: FC<SongSheetTabsProps> = ({
@@ -101,12 +103,15 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
   // ~200ms at 4x CPU) runs after that paint: the tap's frame carries only the tabs (mobile INP)
   const shownChart = `${activeType}/${activeDifficulty}`
   const [pending, setPending] = useState<PendingChart>()
-  // Once the page shows another chart (this one or any other), the URL's tabs are right again
-  const shownPending = pending?.from === shownChart ? pending : undefined
+  // Once the page shows another chart or song (this one or any other), the URL's tabs are right again, and the pick
+  // is done for good: a later navigation back to where it started must not bring it back
+  const pendingCurrent = pending?.from === shownChart && pending.sheets === sheets
+  if (pending && !pendingCurrent) setPending(undefined)
+  const shownPending = pendingCurrent ? pending : undefined
   const cancelSwitch = useRef<() => void>(undefined)
   useEffect(() => () => cancelSwitch.current?.(), [])
-  const switchChart = (next: Omit<PendingChart, 'from'>, commit: () => void) => {
-    setPending({ ...next, from: shownChart })
+  const switchChart = (next: Omit<PendingChart, 'from' | 'sheets'>, commit: () => void) => {
+    setPending({ ...next, from: shownChart, sheets })
     cancelSwitch.current?.()
     cancelSwitch.current = afterNextPaint(commit)
   }

@@ -149,4 +149,39 @@ describe('SongSheetTabs', () => {
     // The later tap replaces the type switch still waiting for its paint
     expect(onTypeChange).not.toHaveBeenCalled()
   })
+
+  it('forgets a finished switch, so navigating back to where it started selects that tab', async () => {
+    const sheets = [
+      makeSheet(TypeEnum.DX),
+      { ...makeSheet(TypeEnum.DX), id: 'expert', difficulty: DifficultyEnum.Expert },
+    ]
+    const onDifficultyChange = vi.fn()
+    const tabs = (activeDifficulty: DifficultyEnum, songSheets = sheets) => (
+      <SongSheetTabs
+        sheets={songSheets}
+        availableTypes={[TypeEnum.DX]}
+        activeType={TypeEnum.DX}
+        activeDifficulty={activeDifficulty}
+        onTypeChange={vi.fn()}
+        onDifficultyChange={onDifficultyChange}
+        hrefFor={(type, difficulty) => `/songs/s/${type}/${difficulty}`}
+      />
+    )
+    const view = render(tabs(DifficultyEnum.Master), { wrapper: EnglishLocale })
+
+    fireEvent.click(screen.getByRole('tab', { name: 'EXPERT' }))
+    await waitFor(() => expect(onDifficultyChange).toHaveBeenCalledTimes(1))
+    view.rerender(tabs(DifficultyEnum.Expert))
+    // Back, or a link to the chart the switch started from
+    view.rerender(tabs(DifficultyEnum.Master))
+    expect(screen.getByRole('tab', { name: 'MASTER' }).getAttribute('aria-selected')).toBe('true')
+    fireEvent.click(screen.getByRole('tab', { name: 'EXPERT' }))
+    await waitFor(() => expect(onDifficultyChange).toHaveBeenCalledTimes(2))
+
+    // A switch that another song's page interrupts is forgotten too
+    const otherSong = sheets.map((sheet) => ({ ...sheet }))
+    view.rerender(tabs(DifficultyEnum.Master, otherSong))
+    view.rerender(tabs(DifficultyEnum.Master, otherSong))
+    expect(screen.getByRole('tab', { name: 'MASTER' }).getAttribute('aria-selected')).toBe('true')
+  })
 })
