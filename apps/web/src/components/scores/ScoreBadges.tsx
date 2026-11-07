@@ -118,11 +118,13 @@ const LEVEL_WIDTH_SAMPLE = '00.0'
  * list the level and whatever follows the pill line up on every row. Short names (BAS … Re:MAS) keep it compact; the
  * full name is in the title and read out to screen readers.
  */
-export const DifficultyLevelBadge: FC<{ difficulty: string; level: string; className?: string }> = ({
-  difficulty,
-  level,
-  className,
-}) => {
+export const DifficultyLevelBadge: FC<{
+  difficulty: string
+  level: string
+  className?: string
+  /** On the level half, e.g. to hide it where the level has a column of its own */
+  levelClassName?: string
+}> = ({ difficulty, level, className, levelClassName }) => {
   const entry = DIFFICULTIES[difficulty as keyof typeof DIFFICULTIES]
   const solid = entry?.solid ?? '#6B7280'
   const fullTitle = entry?.title ?? difficulty
@@ -146,7 +148,10 @@ export const DifficultyLevelBadge: FC<{ difficulty: string; level: string; class
       </span>
       <span
         aria-hidden
-        className="flex items-center px-1.5 text-fg-1 num bg-[color-mix(in_oklab,var(--difficulty-solid)_14%,transparent)] dark:bg-[color-mix(in_oklab,var(--difficulty-solid)_30%,transparent)]"
+        className={clsx(
+          'flex items-center px-1.5 text-fg-1 num bg-[color-mix(in_oklab,var(--difficulty-solid)_14%,transparent)] dark:bg-[color-mix(in_oklab,var(--difficulty-solid)_30%,transparent)]',
+          levelClassName,
+        )}
       >
         <FixedWidthText text={level} sizers={[LEVEL_WIDTH_SAMPLE]} className="justify-items-end" />
       </span>

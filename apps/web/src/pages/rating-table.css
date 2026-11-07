@@ -221,6 +221,7 @@
 .rating-chart-meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   column-gap: 5px;
   font-size: 0.75rem;
   line-height: 1.33;
@@ -392,9 +393,21 @@
   }
 }
 
+/* The level as text after the type badge: only where the two-tone difficulty pill is too wide for the column */
+.rating-chart-meta-narrow-level {
+  display: none;
+}
+
 @media (max-width: 359px) {
   .rating-chart-cover {
     display: none;
+  }
+  /* About 76px for the chart's details: the pill keeps its difficulty half and the level moves next to the type */
+  .rating-chart-meta .rating-chart-meta-level {
+    display: none;
+  }
+  .rating-chart-meta .rating-chart-meta-narrow-level {
+    display: inline;
   }
 }
 
@@ -453,7 +466,8 @@
   .rating-chart-meta {
     flex-wrap: nowrap;
   }
-  .rating-chart-meta-level {
+  /* The level half of the difficulty pill: two classes, to win over its utility `flex` */
+  .rating-chart-meta .rating-chart-meta-level {
     display: none;
   }
   .rating-table .rating-row-remove {
