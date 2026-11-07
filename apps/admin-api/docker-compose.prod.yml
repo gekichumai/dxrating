@@ -14,15 +14,6 @@ services:
       ADMIN_HUMAN_EMAILS: ${ADMIN_HUMAN_EMAILS}
     restart: unless-stopped
     stop_grace_period: 15s
-    networks:
-      - coolify
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.dxrating-admin-api.rule=Host(`admin-api.dxrating.net`)
-      - traefik.http.routers.dxrating-admin-api.entrypoints=http
-      - traefik.http.services.dxrating-admin-api.loadbalancer.server.port=3100
-      - traefik.docker.network=coolify
+    # No hand-written Traefik labels: set the service's Domain in Coolify to https://admin-api.dxrating.net:3100 and
+    # Coolify generates the HTTPS router and its certificate (Cloudflare SSL mode Full (strict) then works end to end).
 
-networks:
-  coolify:
-    external: true
