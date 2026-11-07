@@ -25,10 +25,13 @@ export const DESTRUCTIVE_SCOPES: readonly AgentScope[] = ['comments:moderate', '
 
 export const TOKEN_PREFIX = 'dxa_'
 
+/** An agent's name: lowercase letters, digits and hyphens, 2–48 characters, starting with a letter or digit */
+export const AGENT_PRINCIPAL_PATTERN = /^[a-z0-9][a-z0-9-]{1,47}$/
+
 const AgentTokenEntrySchema = z
   .object({
     /** The agent's name; its actor is `agent:<principal>` */
-    principal: z.string().regex(/^[a-z0-9][a-z0-9-]{1,47}$/),
+    principal: z.string().regex(AGENT_PRINCIPAL_PATTERN),
     sha256: z.string().regex(/^[0-9a-f]{64}$/),
     scopes: z.array(z.enum(AGENT_SCOPES)).min(1),
     expiresAt: z.iso.datetime({ offset: true }),

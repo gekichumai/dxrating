@@ -12,6 +12,8 @@ services:
       ADMIN_ACCESS_TEAM_DOMAIN: ${ADMIN_ACCESS_TEAM_DOMAIN}
       ADMIN_ACCESS_AUD: ${ADMIN_ACCESS_AUD}
       ADMIN_HUMAN_EMAILS: ${ADMIN_HUMAN_EMAILS}
+      ADMIN_AGENT_TOKENS: ${ADMIN_AGENT_TOKENS:-}
+      ADMIN_AGENT_RATE_LIMIT: ${ADMIN_AGENT_RATE_LIMIT:-60}
     restart: unless-stopped
     stop_grace_period: 15s
     # No hand-written Traefik labels: set the service's Domain in Coolify to https://admin-api.dxrating.net:3100 and
