@@ -75,22 +75,24 @@ export const lockSave = (database: DatabaseService, userId: string, saveId: stri
         user_id: string
         revision: bigint
         record_count: number
-        now: Date
       }>(
         'CloudSave.lockSave',
-        `SELECT id, user_id, revision, record_count, now() AS now FROM score_saves
+        `SELECT id, user_id, revision, record_count FROM score_saves
        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL FOR UPDATE`,
         [saveId, userId],
       ),
     )
     const row = rows[0]
     if (!row) return yield* new CloudSaveNotFound()
+    // The time of the writes, read once the lock is held: `now()` is when the transaction began, which can be before
+    // an import job that started while this transaction waited, and a deletion must read as made after that job
+    const { rows: clock } = yield* database.raw<{ now: Date }>('CloudSave.lockedAt', 'SELECT clock_timestamp() AS now')
     return {
       id: row.id,
       userId: row.user_id,
       revision: Number(row.revision),
       recordCount: row.record_count,
-      now: row.now,
+      now: clock[0]!.now,
     } satisfies LockedSave
   })
 
