@@ -3,6 +3,11 @@
   "version": "1.6.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./db-schema": "./src/db/schema.ts",
+    "./edge-cache": "./src/services/edge-cache.ts",
+    "./http-client": "./src/services/http-client.ts"
+  },
   "scripts": {
     "dev": "pnpm --filter @gekichumai/oneshot-renderer build && tsx watch src/index.ts",
     "build": "pnpm lint:effect && tsc && pnpm build:bundle",

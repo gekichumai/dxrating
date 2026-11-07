@@ -34,11 +34,19 @@ export const envSchema = z
     ADMIN_AGENT_TOKENS: AgentTokensSchema,
     /** Requests per minute per agent; destructive scopes get a fifth of it */
     ADMIN_AGENT_RATE_LIMIT: z.coerce.number().int().positive().default(60),
+    /** Postgres as the restricted role `dxrating_admin` (grants in the L3 setup). Required in production. */
+    DATABASE_URL: optionalString,
+    /** Edge cache purge for the public announcements list; both unset skips it (local development, tests) */
+    CLOUDFLARE_ZONE_ID: optionalString,
+    CLOUDFLARE_CACHE_PURGE_TOKEN: optionalString,
     ADMIN_DEV_ACCESS_EMAIL: z.preprocess(blank, z.string().email().optional()),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== 'development' && env.ADMIN_DEV_ACCESS_EMAIL) {
       ctx.addIssue({ code: 'custom', message: 'ADMIN_DEV_ACCESS_EMAIL is allowed in development only' })
+    }
+    if (env.NODE_ENV === 'production' && !env.DATABASE_URL) {
+      ctx.addIssue({ code: 'custom', message: 'DATABASE_URL is required' })
     }
     if (env.NODE_ENV === 'production' && (!env.ADMIN_ACCESS_TEAM_DOMAIN || !env.ADMIN_ACCESS_AUD)) {
       ctx.addIssue({ code: 'custom', message: 'ADMIN_ACCESS_TEAM_DOMAIN and ADMIN_ACCESS_AUD are required' })

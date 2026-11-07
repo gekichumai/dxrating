@@ -4,7 +4,14 @@ import { AGENT_PRINCIPAL_PATTERN, AGENT_SCOPES, AgentTokensSchema, generateAgent
 
 const [principal, days, ...scopes] = process.argv.slice(2)
 const unknown = scopes.filter((scope) => !(AGENT_SCOPES as readonly string[]).includes(scope))
-if (!principal || !AGENT_PRINCIPAL_PATTERN.test(principal) || !days || scopes.length === 0 || unknown.length > 0 || !(Number(days) > 0 && Number(days) <= 365)) {
+if (
+  !principal ||
+  !AGENT_PRINCIPAL_PATTERN.test(principal) ||
+  !days ||
+  scopes.length === 0 ||
+  unknown.length > 0 ||
+  !(Number(days) > 0 && Number(days) <= 365)
+) {
   console.error(
     `usage: token:new <principal: a-z, 0-9, -; 2-48 chars> <days 1-365> <scope…>; scopes: ${AGENT_SCOPES.join(', ')}`,
   )
