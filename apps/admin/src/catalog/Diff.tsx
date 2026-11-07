@@ -112,7 +112,7 @@ export function Diff(params: DiffParams) {
         <Stack gap="md">
           <Text size="sm" c="dimmed">
             r{data.from.revision} ({formatUtc(data.from.publishedAt)}) → r{data.to.revision} (
-            {formatUtc(data.to.publishedAt)}) on {data.channel}. Songs match by ID, sheets by type and difficulty.
+            {formatUtc(data.to.publishedAt)}) on {data.channel}. Songs and sheets match by their public IDs.
           </Text>
 
           <Group gap={6} aria-label="Summary">
