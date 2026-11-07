@@ -6,11 +6,13 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   createSave: vi.fn(),
   clientImport: vi.fn(),
+  optInCloudSave: vi.fn(),
 }))
 
 vi.mock('../../../lib/auth-client', () => ({ authClient: { getSession: mocks.getSession } }))
 vi.mock('../../../lib/privateApi', () => ({
   privateApiClient: {
+    features: { optInCloudSave: mocks.optInCloudSave },
     cloudSave: {
       saves: { create: mocks.createSave },
       imports: { client: mocks.clientImport },
@@ -67,5 +69,17 @@ describe('defaultCloudSaveActions.migration', () => {
     expect(mocks.createSave).toHaveBeenCalledWith(expect.objectContaining({ name: 'Main' }), {
       signal: controller.signal,
     })
+  })
+
+  it('sends no opt-in when the guard stops it once the private client loaded', async () => {
+    const controller = new AbortController()
+    const beforeSend = vi.fn(async () => {
+      throw new MigrationCancelledError()
+    })
+    await expect(defaultCloudSaveActions.optIn('v', { signal: controller.signal, beforeSend })).rejects.toBeInstanceOf(
+      MigrationCancelledError,
+    )
+    expect(beforeSend).toHaveBeenCalledTimes(1)
+    expect(mocks.optInCloudSave).not.toHaveBeenCalled()
   })
 })

@@ -1,7 +1,7 @@
 import type { ImportJobDTO, ImportResultDTO, SaveDTO, UserFeatures } from '@gekichumai/api-contract'
 import { createContext, useContext } from 'react'
 import { authClient } from '../../lib/auth-client'
-import type { CloudMigrationApi } from './cloudMigration'
+import type { CloudMigrationApi, MigrationWriteGuard } from './cloudMigration'
 
 /**
  * The account-level cloud save requests of the web: the first sign-in migration (§10), the beta opt-in (§11.2,
@@ -19,8 +19,11 @@ export interface CloudSaveExportFile {
 
 export interface CloudSaveActions {
   migration: CloudMigrationApi
-  /** `POST /me/features/cloud-save/opt-in`; resolves the features after opting in */
-  optIn(consentVersion: string): Promise<UserFeatures>
+  /**
+   * `POST /me/features/cloud-save/opt-in`; resolves the features after opting in. The guard is checked once the
+   * private client is ready, right before the request leaves: consent is the account's that gave it
+   */
+  optIn(consentVersion: string, guard?: MigrationWriteGuard): Promise<UserFeatures>
   /** `GET /me/export` as a file */
   exportData(): Promise<CloudSaveExportFile>
 }
@@ -78,9 +81,10 @@ export const defaultCloudSaveActions: CloudSaveActions = {
       return data?.user.id ?? null
     },
   },
-  async optIn(consentVersion) {
+  async optIn(consentVersion, guard) {
     const client = await loadPrivateApi()
-    return (await client.features.optInCloudSave({ consentVersion })) as UserFeatures
+    await guard?.beforeSend()
+    return (await client.features.optInCloudSave({ consentVersion }, { signal: guard?.signal })) as UserFeatures
   },
   async exportData() {
     const client = await loadPrivateApi()

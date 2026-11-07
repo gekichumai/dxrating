@@ -565,9 +565,60 @@ describe('CloudSaveOptIn', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Agree and turn on' }))
 
     await waitFor(() => expect(save.refreshFeatures).toHaveBeenCalledTimes(1))
-    expect(cloudActions.optIn).toHaveBeenCalledWith(CLOUD_SAVE_CONSENT_VERSION)
+    expect(cloudActions.optIn).toHaveBeenCalledWith(
+      CLOUD_SAVE_CONSENT_VERSION,
+      expect.objectContaining({ beforeSend: expect.any(Function) }),
+    )
     expect(CLOUD_SAVE_CONSENT_VERSION).toBe('2026-11-cloud-save-v2')
     expect(captured()).toEqual([{ name: 'cloudsave_enabled', properties: { via: 'opt_in' } }])
+  })
+
+  it('sends no consent once the session is another account than the one that agreed', async () => {
+    const save = activeSave({ features: FEATURES_OPT_IN, userId: 'user-a' })
+    const sent = vi.fn()
+    const cloudActions = actions({
+      migration: { ...migrationApi(), currentUserId: async () => 'user-b' },
+      // As the private API client does: the guard runs right before the request leaves
+      optIn: vi.fn(async (_version: string, guard?: { beforeSend(): Promise<void> }) => {
+        await guard?.beforeSend()
+        sent()
+        return FEATURES_ON
+      }),
+    })
+    render(<CloudSaveOptIn />, { wrapper: withAccount(save, cloudActions) })
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Cloud save (beta)' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Agree and turn on' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(sent).not.toHaveBeenCalled()
+    expect(save.refreshFeatures).not.toHaveBeenCalled()
+    expect(captured()).toEqual([])
+  })
+
+  it('sends no consent once the switch is gone while the request was still being prepared', async () => {
+    const save = activeSave({ features: FEATURES_OPT_IN })
+    const sent = vi.fn()
+    let ready!: () => void
+    const loading = new Promise<void>((resolve) => (ready = resolve))
+    const cloudActions = actions({
+      migration: { ...migrationApi(), currentUserId: async () => 'user-1' },
+      optIn: vi.fn(async (_version: string, guard?: { beforeSend(): Promise<void> }) => {
+        // The private client loads; meanwhile the user signs out and the switch unmounts
+        await loading
+        await guard?.beforeSend()
+        sent()
+        return FEATURES_ON
+      }),
+    })
+    const { unmount } = render(<CloudSaveOptIn />, { wrapper: withAccount(save, cloudActions) })
+    fireEvent.click(screen.getByRole('switch', { name: 'Cloud save (beta)' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Agree and turn on' }))
+    await waitFor(() => expect(cloudActions.optIn).toHaveBeenCalled())
+    unmount()
+    ready()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(sent).not.toHaveBeenCalled()
   })
 
   it('cancelling sends nothing', async () => {

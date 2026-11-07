@@ -6,6 +6,7 @@ import type { PlainMessage } from '@/i18n/message'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useActiveSave } from '@/models/scores/ActiveSaveContext'
 import { focusMigrationReturnTarget } from '@/models/scores/CloudMigrationContext'
+import { MigrationCancelledError } from '@/models/scores/cloudMigration'
 import { CLOUD_SAVE_CONSENT_VERSION, useCloudSaveActions } from '@/models/scores/cloudSaveActions'
 import { m } from '@/paraglide/messages'
 import { useLocale } from '@/i18n/LocaleProvider'
@@ -109,6 +110,18 @@ export const CloudSaveOptIn: FC = () => {
   // Set by a successful opt-in: where the switch was, for the focus once the switch goes
   const focusScopeAfterOptIn = useRef<Element | null | undefined>(undefined)
   const optInAvailable = activeSave.features?.optInAvailable === true
+  const userId = activeSave.userId
+  // The consent being sent, for the account that gave it: stopped when that account goes or the switch unmounts
+  const pending = useRef<AbortController | null>(null)
+
+  // Another account (or none) now: the consent given so far was not theirs
+  useEffect(() => {
+    setConsentOpen(false)
+    return () => {
+      pending.current?.abort()
+      pending.current = null
+    }
+  }, [userId])
 
   // The features read again after the opt-in no longer offer it, and the switch (which had the focus back from the
   // consent dialog) goes with it: the focus moves to the section's heading, which stays, instead of the page
@@ -125,9 +138,20 @@ export const CloudSaveOptIn: FC = () => {
   if (!optInAvailable) return null
 
   const agree = async () => {
+    if (!userId) return
+    const controller = new AbortController()
+    pending.current?.abort()
+    pending.current = controller
+    const { signal } = controller
+    const beforeSend = async () => {
+      if (signal.aborted) throw new MigrationCancelledError()
+      // Asked of the server: another tab may have signed another account in on this browser
+      const current = await actions.migration.currentUserId?.()
+      if (signal.aborted || (current !== undefined && current !== userId)) throw new MigrationCancelledError()
+    }
     setBusy(true)
     try {
-      await actions.optIn(CLOUD_SAVE_CONSENT_VERSION)
+      await actions.optIn(CLOUD_SAVE_CONSENT_VERSION, { signal, beforeSend })
       captureAnalyticsEvent('cloudsave_enabled', { via: 'opt_in' })
       setConsentOpen(false)
       focusScopeAfterOptIn.current = rootRef.current?.parentElement ?? null
@@ -136,11 +160,17 @@ export const CloudSaveOptIn: FC = () => {
       })
       // The cached features say "off": read them again, which shows the cloud save surfaces
       activeSave.refreshFeatures()
-    } catch {
+    } catch (error) {
+      // The account that agreed is gone: nothing was sent, and nothing to say to the one here now
+      if (error instanceof MigrationCancelledError || signal.aborted) {
+        setConsentOpen(false)
+        return
+      }
       toast.error(m.ratingCalculator_cloudSave_optIn_error({}, { locale }), {
         id: 'cloud-save-opt-in',
       })
     } finally {
+      if (pending.current === controller) pending.current = null
       setBusy(false)
     }
   }
