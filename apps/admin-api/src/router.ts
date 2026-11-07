@@ -3,13 +3,28 @@ import { Effect } from 'effect'
 import { handlerGen, type WithEffectContext } from '@orpc/experimental-effect'
 import type { RequestHeadersHandlerPluginContext } from '@orpc/server/plugins'
 import { adminApiContract } from './contract'
-import { createAnnouncement, endAnnouncement, listAnnouncements, updateAnnouncement } from './announcements'
+import {
+  AnnouncementRejected,
+  createAnnouncement,
+  endAnnouncement,
+  listAnnouncements,
+  updateAnnouncement,
+} from './announcements'
 import { requireAdmin, requireScope } from './require-admin'
+import type { DatabaseError } from './db'
 import type { AdminApiServices } from './runtime'
 
 export interface AdminApiContext extends WithEffectContext<AdminApiServices>, RequestHeadersHandlerPluginContext {}
 
 const os = implement(adminApiContract).$context<AdminApiContext>()
+/** A rejected write is the caller's 400/409; a database failure is a defect (500) */
+const rejections = <A, R>(effect: Effect.Effect<A, AnnouncementRejected | DatabaseError, R>) =>
+  effect.pipe(
+    Effect.catchTag('AnnouncementRejected', (error) =>
+      Effect.fail(new ORPCError(error.code, { message: error.message })),
+    ),
+    Effect.catchTag('DatabaseError', (error) => Effect.die(error)),
+  )
 const headersOf = (context: AdminApiContext) => context.reqHeaders ?? new Headers()
 
 export const adminApiRouter = os.router({
@@ -31,14 +46,16 @@ export const adminApiRouter = os.router({
       handlerGen(function* ({ context, input }) {
         const principal = yield* requireAdmin(headersOf(context))
         yield* requireScope(principal, 'announcements:write')
-        return yield* createAnnouncement(principal, input.announcement, input.dryRun).pipe(Effect.orDie)
+        return yield* createAnnouncement(principal, input.announcement, input.dryRun).pipe(rejections)
       }),
     ),
     update: os.announcements.update.handler(
       handlerGen(function* ({ context, input }) {
         const principal = yield* requireAdmin(headersOf(context))
         yield* requireScope(principal, 'announcements:write')
-        const result = yield* updateAnnouncement(principal, input.announcement, input.dryRun).pipe(Effect.orDie)
+        const result = yield* updateAnnouncement(principal, input.announcement, input.dryRun, input.ifUpdatedAt).pipe(
+          rejections,
+        )
         return result ?? (yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'No such announcement' })))
       }),
     ),

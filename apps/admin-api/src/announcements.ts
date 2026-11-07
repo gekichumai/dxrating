@@ -10,7 +10,7 @@ import { announcements } from '@gekichumai/backend/db-schema'
 import { requestEdgeCache } from '@gekichumai/backend/edge-cache'
 import { HttpClient } from '@gekichumai/backend/http-client'
 import { desc, eq } from 'drizzle-orm'
-import { Clock, Effect } from 'effect'
+import { Clock, Data, Effect } from 'effect'
 import { AdminApiConfigService } from './config'
 import { AdminDatabase } from './db'
 import type { Principal } from './require-admin'
@@ -115,6 +115,23 @@ const invalidateEdge = Effect.gen(function* () {
   )
 })
 
+/** A write the API refuses as the caller's mistake (400) or because the row changed since they read it (409) */
+export class AnnouncementRejected extends Data.TaggedError('AnnouncementRejected')<{
+  readonly code: 'BAD_REQUEST' | 'CONFLICT'
+  readonly message: string
+}> {}
+
+/** The schema checks the window as sent; this checks it as it will be stored (an empty start means now) */
+const checkWindow = (columns: { starts_at: Date; ends_at: Date | null }) =>
+  columns.ends_at && columns.ends_at <= columns.starts_at
+    ? Effect.fail(
+        new AnnouncementRejected({
+          code: 'BAD_REQUEST',
+          message: 'endsAt must be after the start (an empty start is now)',
+        }),
+      )
+    : Effect.void
+
 const now = Effect.map(Clock.currentTimeMillis, (ms) => new Date(ms))
 
 export const listAnnouncements = Effect.gen(function* () {
@@ -128,6 +145,7 @@ export const listAnnouncements = Effect.gen(function* () {
 export const createAnnouncement = (principal: Principal, input: AnnouncementCreateInput, dryRun: boolean) =>
   Effect.gen(function* () {
     const columns = columnsFrom(input, yield* now)
+    yield* checkWindow(columns)
     if (dryRun)
       return { dryRun: true as const, preview: preview(columns), announcement: null, edgeCache: 'skipped' as const }
     const db = yield* AdminDatabase
@@ -141,7 +159,13 @@ export const createAnnouncement = (principal: Principal, input: AnnouncementCrea
     return { dryRun: false as const, preview: preview(columns), announcement: toAdminAnnouncement(row!), edgeCache }
   })
 
-export const updateAnnouncement = (principal: Principal, input: AnnouncementUpdateInput, dryRun: boolean) =>
+export const updateAnnouncement = (
+  principal: Principal,
+  input: AnnouncementUpdateInput,
+  dryRun: boolean,
+  /** The `updatedAt` the caller last read; a different stored value means someone else saved since (409) */
+  ifUpdatedAt?: string,
+) =>
   Effect.gen(function* () {
     const db = yield* AdminDatabase
     const at = yield* now
@@ -150,7 +174,12 @@ export const updateAnnouncement = (principal: Principal, input: AnnouncementUpda
       d.transaction(async (tx) => {
         const [current] = await tx.select().from(announcements).where(eq(announcements.id, input.id)).for('update')
         if (!current) return null
-        const columns = columnsFrom(input, input.startsAt ? at : current.starts_at)
+        if (ifUpdatedAt !== undefined && current.updated_at.toISOString() !== new Date(ifUpdatedAt).toISOString()) {
+          return { conflict: true as const }
+        }
+        // An empty start means now: a live notice keeps its start, a scheduled one goes live now
+        const columns = columnsFrom(input, current.starts_at < at ? current.starts_at : at)
+        if (columns.ends_at && columns.ends_at <= columns.starts_at) return { invalidWindow: true as const }
         const revision = needsNewRevision(columns, current) ? current.revision + 1 : current.revision
         if (dryRun) return { columns, revision, row: null }
         const [row] = await tx
@@ -162,6 +191,13 @@ export const updateAnnouncement = (principal: Principal, input: AnnouncementUpda
       }),
     )
     if (!outcome) return null
+    if ('conflict' in outcome) {
+      return yield* new AnnouncementRejected({
+        code: 'CONFLICT',
+        message: 'Someone saved this announcement since you opened it; reload it',
+      })
+    }
+    if ('invalidWindow' in outcome) return yield* checkWindow({ starts_at: new Date(1), ends_at: new Date(0) })
     const { columns, revision, row } = outcome
     if (!row) {
       return {

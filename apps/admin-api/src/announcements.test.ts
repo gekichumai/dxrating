@@ -172,6 +172,52 @@ suite('announcements (admin API)', () => {
     expect(out.preview.title['zh-Hans']).toEqual({ text: 'Maintenance', from: 'en' })
   })
 
+  it('refuses a window that ends before its effective start, in a dry run too', async () => {
+    const bad = { announcement: fields({ startsAt: null, endsAt: '2020-01-01T00:00:00Z' }) }
+    expect((await post('/announcements', { ...bad, dryRun: true })).status).toBe(400)
+    expect((await post('/announcements', bad)).status).toBe(400)
+    const created = (await (await post('/announcements', { announcement: fields() })).json()) as any
+    const update = { announcement: { ...fields({ endsAt: '2020-01-01T00:00:00Z' }), id: created.announcement.id } }
+    expect((await post('/announcements/update', { ...update, dryRun: true })).status).toBe(400)
+  })
+
+  it('treats an empty start on update as now: scheduled goes live, live keeps its start', async () => {
+    const future = new Date(Date.now() + 86_400_000).toISOString()
+    const scheduled = (await (
+      await post('/announcements', { announcement: fields({ startsAt: future }) })
+    ).json()) as any
+    const live = (await (
+      await post('/announcements/update', { announcement: { ...fields(), id: scheduled.announcement.id } })
+    ).json()) as any
+    expect(Date.parse(live.announcement.startsAt)).toBeLessThanOrEqual(Date.now())
+    const again = (await (
+      await post('/announcements/update', { announcement: { ...fields(), id: scheduled.announcement.id } })
+    ).json()) as any
+    expect(again.announcement.startsAt).toBe(live.announcement.startsAt)
+  })
+
+  it('refuses a save based on a stale read with 409', async () => {
+    const created = (await (await post('/announcements', { announcement: fields() })).json()) as any
+    const id = created.announcement.id
+    const read = created.announcement.updatedAt
+    expect(
+      (
+        await post('/announcements/update', {
+          announcement: { ...fields({ body: { en: 'x' } }), id },
+          ifUpdatedAt: read,
+        })
+      ).status,
+    ).toBe(200)
+    expect(
+      (
+        await post('/announcements/update', {
+          announcement: { ...fields({ body: { en: 'y' } }), id },
+          ifUpdatedAt: read,
+        })
+      ).status,
+    ).toBe(409)
+  })
+
   it('ends a scheduled announcement by moving its start just before now', async () => {
     const future = new Date(Date.now() + 86_400_000).toISOString()
     const created = (await (await post('/announcements', { announcement: fields({ startsAt: future }) })).json()) as any

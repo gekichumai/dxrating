@@ -84,7 +84,18 @@ export const adminAnnouncementsContract = {
         tags: ['announcements'],
       }),
     )
-    .input(z.object({ announcement: AnnouncementUpdateInputSchema, dryRun }).strict())
+    .input(
+      z
+        .object({
+          announcement: AnnouncementUpdateInputSchema,
+          dryRun,
+          ifUpdatedAt: z.iso
+            .datetime({ offset: true })
+            .optional()
+            .describe('Refuse with CONFLICT if the stored updatedAt differs'),
+        })
+        .strict(),
+    )
     .output(WriteResultSchema),
   end: oc
     .meta(
