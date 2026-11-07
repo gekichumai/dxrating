@@ -248,6 +248,7 @@
   "sheet_layout_list": "List",
   "sheet_layout_grid": "Grid",
   "sheet_favorite_marked": "Favorite",
+  "sheet_sortAndFilter_active": "{n} active",
   "song_notFound_title": "Song not found",
   "song_notFound_description": "The song you're looking for doesn't exist.",
   "song_notFound_backToSearch": "Back to search",
