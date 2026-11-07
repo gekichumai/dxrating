@@ -24,7 +24,7 @@ const live = {
 }
 
 const calls: { path: string; body: unknown }[] = []
-const stub = () =>
+const stub = (override?: (path: string, body: unknown) => Response | undefined) =>
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: Request | string, init?: RequestInit) => {
@@ -32,6 +32,8 @@ const stub = () =>
       const path = new URL(request.url).pathname
       const body = request.method === 'POST' ? await request.json() : undefined
       calls.push({ path, body })
+      const overridden = override?.(path, body)
+      if (overridden) return overridden
       if (path === '/api/announcements' && request.method === 'GET') return Response.json({ announcements: [live] })
       if (path === '/api/announcements/end')
         return Response.json({ announcement: { ...live, endsAt: live.startsAt }, edgeCache: 'invalidated' })
@@ -39,8 +41,8 @@ const stub = () =>
         dryRun: (body as { dryRun?: boolean }).dryRun ?? false,
         preview: {
           title: { en: { text: 'Hello', from: 'en' }, ja: { text: 'Hello', from: 'en' } },
-          body: {},
-          linkLabel: null,
+          body: { en: { text: 'World', from: 'en' }, ja: { text: 'World', from: 'en' } },
+          linkLabel: { en: { text: 'More', from: 'en' }, ja: { text: 'More', from: 'en' } },
         },
         announcement: null,
         edgeCache: 'skipped',
@@ -77,7 +79,10 @@ describe('announcements page', () => {
     fireEvent.change(screen.getByLabelText('Title (en)'), { target: { value: 'Hello' } })
     fireEvent.change(screen.getByLabelText('Body (en)'), { target: { value: 'World' } })
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }))
-    expect((await screen.findByLabelText('Preview')).textContent).toContain('(from en)')
+    const preview = (await screen.findByLabelText('Preview')).textContent
+    expect(preview).toContain('(title from en)')
+    expect(preview).toContain('(body from en)')
+    expect(preview).toContain('Link: More (from en)')
     expect(calls.at(-1)).toMatchObject({
       path: '/api/announcements',
       body: { dryRun: true, announcement: { title: { en: 'Hello' } } },
@@ -101,6 +106,32 @@ describe('announcements page', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'End' }))
     await waitFor(() => expect(calls.some((c) => c.path === '/api/announcements/end')).toBe(true))
     expect(calls.find((c) => c.path === '/api/announcements/end')?.body).toEqual({ id: 7 })
+    expect((await screen.findByRole('status')).textContent).toContain(
+      'Ended “Maintenance tonight”. Edge cache: invalidated.',
+    )
+  })
+
+  it('saves an edit with the updatedAt it was read at, and shows a conflict', async () => {
+    stub((path) =>
+      path === '/api/announcements/update'
+        ? Response.json(
+            {
+              defined: false,
+              code: 'CONFLICT',
+              message: 'Someone saved this announcement since you opened it; reload it',
+            },
+            { status: 409 },
+          )
+        : undefined,
+    )
+    mount()
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('CONFLICT')
+    expect(calls.find((c) => c.path === '/api/announcements/update')?.body).toMatchObject({
+      ifUpdatedAt: live.updatedAt,
+      announcement: { id: 7 },
+    })
   })
 
   it('offers no writes to a read-only principal', async () => {

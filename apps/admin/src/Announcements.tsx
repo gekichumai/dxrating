@@ -20,6 +20,8 @@ type Text = Record<string, string>
 
 interface Draft {
   id?: number
+  /** The updatedAt this draft was read at; Save is refused (409) if someone saved since */
+  updatedAt?: string
   severity: (typeof ANNOUNCEMENT_SEVERITIES)[number]
   title: Text
   body: Text
@@ -59,6 +61,7 @@ const fromLocalInput = (value: string) => (value ? new Date(value).toISOString()
 
 const draftFrom = (a: Announcement): Draft => ({
   id: a.id,
+  updatedAt: a.updatedAt,
   severity: a.severity as Draft['severity'],
   title: a.title,
   body: a.body,
@@ -116,7 +119,11 @@ export function Announcements({ canWrite }: { canWrite: boolean }) {
     mutationFn: ({ draft, dryRun }: { draft: Draft; dryRun: boolean }) =>
       draft.id === undefined
         ? adminClient.announcements.create({ announcement: toInput(draft), dryRun })
-        : adminClient.announcements.update({ announcement: { ...toInput(draft), id: draft.id }, dryRun }),
+        : adminClient.announcements.update({
+            announcement: { ...toInput(draft), id: draft.id },
+            dryRun,
+            ifUpdatedAt: draft.updatedAt,
+          }),
     onSuccess: (out, { dryRun }) => {
       setResult(out)
       if (!dryRun) {
@@ -129,6 +136,7 @@ export function Announcements({ canWrite }: { canWrite: boolean }) {
     mutationFn: (id: number) => adminClient.announcements.end({ id }),
     onSuccess: () => void refresh(),
   })
+  const endedTitle = end.data?.announcement.title.en
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => {
     setResult(null)
@@ -152,6 +160,16 @@ export function Announcements({ canWrite }: { canWrite: boolean }) {
         )}
       </div>
 
+      {end.isSuccess && !draft && (
+        <p className="mb-0 mt-3 text-sm text-muted" role="status">
+          Ended “{endedTitle}”. Edge cache: {end.data.edgeCache}.
+        </p>
+      )}
+      {end.isError && (
+        <p className="mb-0 mt-3 text-sm text-red-700 dark:text-red-400" role="alert">
+          Could not end it: {errorText(end.error)}
+        </p>
+      )}
       {result && !draft && (
         <p className="mb-0 mt-3 text-sm text-muted" role="status">
           Saved. Edge cache: {result.edgeCache}.
@@ -315,13 +333,29 @@ export function Announcements({ canWrite }: { canWrite: boolean }) {
               <p className="m-0 text-sm font-medium">
                 Preview{result.revision !== undefined ? ` (revision ${result.revision})` : ''}
               </p>
-              <ul className="mb-0 mt-2 flex list-none flex-col gap-1 p-0 text-sm">
-                {Object.entries(result.preview.title).map(([locale, title]) => (
-                  <li key={locale}>
-                    <span className="font-mono text-xs text-muted">{locale}</span> {title.text}
-                    {title.from !== locale && <span className="text-muted"> (from {title.from})</span>}
-                  </li>
-                ))}
+              <ul className="mb-0 mt-2 flex list-none flex-col gap-2 p-0 text-sm">
+                {Object.entries(result.preview.title).map(([locale, title]) => {
+                  const body = result.preview.body[locale]
+                  const label = result.preview.linkLabel?.[locale]
+                  return (
+                    <li key={locale}>
+                      <span className="font-mono text-xs text-muted">{locale}</span> <strong>{title.text}</strong>
+                      {title.from !== locale && <span className="text-muted"> (title from {title.from})</span>}
+                      {body && (
+                        <span className="block whitespace-pre-line">
+                          {body.text}
+                          {body.from !== locale && <span className="text-muted"> (body from {body.from})</span>}
+                        </span>
+                      )}
+                      {label && (
+                        <span className="block text-muted">
+                          Link: {label.text}
+                          {label.from !== locale && ` (from ${label.from})`}
+                        </span>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           )}
