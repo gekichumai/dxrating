@@ -196,6 +196,31 @@ describe('entriesToImportRecords', () => {
     }
   })
 
+  it('ranks bucket hints by rating with the internal level known, AP bonus included, and takes b15 on a tie', () => {
+    const apB35: PlayEntry = {
+      sheetId: 'dsht_e5nsvt8k2a',
+      achievementRate: 100,
+      comboFlag: 'ap',
+      providerConfig: { divingFish: { ratingEligibility: 'b35' } },
+    }
+    const higherB15: PlayEntry = {
+      sheetId: 'dsht_e5nsvt8k2a',
+      achievementRate: 100.0001,
+      providerConfig: { divingFish: { ratingEligibility: 'b15' } },
+    }
+    const plan = { source: 'dxrating-json', claimedSource: null } as const
+    const bucket = (entries: PlayEntry[], level?: number) =>
+      entriesToImportRecords(entries, plan, level === undefined ? null : () => level).records[0]?.best50Bucket
+    expect(bucket([apB35, higherB15], 13)).toBe('b35')
+    expect(bucket([higherB15, apB35], 13)).toBe('b35')
+    // Without the level, as the device without its catalog: the higher achievement
+    expect(bucket([apB35, higherB15])).toBe('b15')
+    const tieB35: PlayEntry = { ...higherB15, achievementRate: 100, providerConfig: apB35.providerConfig }
+    const tieB15: PlayEntry = { ...higherB15, achievementRate: 100 }
+    expect(bucket([tieB35, tieB15], 13)).toBe('b15')
+    expect(bucket([tieB15, tieB35])).toBe('b15')
+  })
+
   it('never keeps an entry the server would reject, and counts it apart from the skipped ones', () => {
     const { records, skipped, rejected } = entriesToImportRecords(
       [
