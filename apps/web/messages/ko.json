@@ -1317,5 +1317,10 @@
   "completion_progress_dx_withScore": "DX 스코어 있음",
   "completion_progress_dx_average": "평균",
   "completion_progress_dx_star": "✦{star} 이상",
-  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} 이상: {total}개 중 {count}개"
+  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} 이상: {total}개 중 {count}개",
+  "announcement_severity_info": "공지",
+  "announcement_severity_warning": "주의",
+  "announcement_severity_critical": "중요",
+  "announcement_learnMore": "자세히 보기",
+  "announcement_dismiss": "공지 닫기"
 }

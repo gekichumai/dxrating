@@ -1317,5 +1317,10 @@
   "completion_progress_dx_withScore": "With DX score",
   "completion_progress_dx_average": "Average",
   "completion_progress_dx_star": "✦{star} or above",
-  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} or above: {count} of {total}"
+  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} or above: {count} of {total}",
+  "announcement_severity_info": "Notice",
+  "announcement_severity_warning": "Warning",
+  "announcement_severity_critical": "Important",
+  "announcement_learnMore": "Learn more",
+  "announcement_dismiss": "Dismiss announcement"
 }

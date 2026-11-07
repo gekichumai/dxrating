@@ -24,6 +24,8 @@ import { ScrollRestorationKeeper } from '@/components/layout/ScrollRestorationKe
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
+import { AnnouncementBanners } from '@/components/global/announcements/AnnouncementBanner'
+import { NoticeStack } from '@/components/global/NoticeStack'
 import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { CatalogProvider } from '@/catalog/CatalogContext'
@@ -224,7 +226,10 @@ function RootComponent() {
                         <NetImportProgress />
                         <ImportReviewHost />
                         <OAuthErrorHandler />
-                        <RegionVersionUpdatePrompt />
+                        <NoticeStack>
+                          <AnnouncementBanners />
+                          <RegionVersionUpdatePrompt />
+                        </NoticeStack>
                         <AppLayout />
                       </NetImportSettingsProvider>
                     </PostHogProvider>
