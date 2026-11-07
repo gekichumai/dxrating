@@ -1,7 +1,6 @@
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import MdiJson from '~icons/mdi/code-json'
 import { useWebHaptics } from 'web-haptics/react'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
@@ -9,11 +8,13 @@ import { createRatingImportTracker } from '@/lib/analytics'
 import { parseRatingFile } from '@/models/scores/ratingEntriesFile'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { reviewAndApplyImport } from '@/models/scores/importReview'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const ImportFromJSONButtonListItem: FC<{
   onClose: () => void
 }> = ({ onClose }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const repository = useScoreRepository()
   const haptic = useWebHaptics()
 
@@ -44,7 +45,7 @@ export const ImportFromJSONButtonListItem: FC<{
               // Not a DXRating rating file: nothing of it is imported
               console.error('[ImportFromJSONButtonListItem] Invalid rating file', parsed.error)
               analytics.failed('invalid_file')
-              toast.error(t('rating-calculator:io.import.json.invalid-file'))
+              toast.error(m.ratingCalculator_io_import_json_invalidFile({}, { locale }))
               return
             }
             try {
@@ -58,15 +59,15 @@ export const ImportFromJSONButtonListItem: FC<{
               )
               if (!applied) {
                 analytics.failed('cancelled_by_user')
-                toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
+                toast(m.ratingCalculator_io_import_review_cancelled({}, { locale }), { id: 'import-review-cancelled' })
                 return
               }
               analytics.succeeded(entries.length)
               haptic.trigger('success')
-              toast.success(t('rating-calculator:io.import.json.success', { count: entries.length }))
+              toast.success(m.ratingCalculator_io_import_json_success({ count: entries.length }, { locale }))
             } catch (error) {
               analytics.failed('invalid_file')
-              toast.error(t('rating-calculator:io.import.json.error', { error: formatErrorMessage(error) }))
+              toast.error(m.ratingCalculator_io_import_json_error({ error: formatErrorMessage(error) }, { locale }))
             }
           }
           reader.readAsText(file)
@@ -77,7 +78,7 @@ export const ImportFromJSONButtonListItem: FC<{
       <ListItemIcon>
         <MdiJson />
       </ListItemIcon>
-      <ListItemText>{t('rating-calculator:io.import.json.title')}</ListItemText>
+      <ListItemText>{m.ratingCalculator_io_import_json_title({}, { locale })}</ListItemText>
     </MenuItem>
   )
 }

@@ -4,7 +4,7 @@ import { getCatalogDocument } from '@/catalog/catalogSource'
 import { findSongById, resolveSongRouteParam } from '@/catalog/songLookup'
 import { type SupportedLocale, keepLocaleSearch, toSupportedLocale } from '@/setup/locale'
 import { SongHubPage } from '@/pages/SongHubPage'
-import { createServerI18n } from '@/setup/init-i18n'
+import { m } from '@/paraglide/messages'
 import { getSearchAcronymsWithServerAliases } from '@/songs'
 import { buildSongHubSeo, formatSeoTitle, resolveSeoLocale } from '@/utils/seo'
 
@@ -121,7 +121,7 @@ export const Route = createFileRoute('/songs_/$songId')({
     const locale = resolveSeoLocale([match, ...matches])
     const song = loaderData?.song
     if (!song) {
-      return { meta: [{ title: formatSeoTitle(createServerI18n(locale).t('song:not-found.title')) }] }
+      return { meta: [{ title: formatSeoTitle(m.song_notFound_title({}, { locale })) }] }
     }
     const seo = buildSongHubSeo(
       {

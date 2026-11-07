@@ -10,7 +10,6 @@ import type { DifficultyEnum, VersionEnum } from '@gekichumai/dxdata'
 import { CircularProgress } from '@mui/material'
 import { Link } from '@tanstack/react-router'
 import { type FC, useEffect, useMemo, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import {
@@ -28,8 +27,9 @@ import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useA
 import { DIFFICULTIES } from '@/models/difficulties'
 import type { Region } from '@/models/context/AppContext'
 import { type UserRecords, useUserRecords } from '@/models/useUserRecords'
-import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { difficultyInkClassName } from '@/utils/difficultyInk'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const PER_BUCKET = 20
 
@@ -79,7 +79,7 @@ export function computeRecommendations({
 }
 
 export const RecommendPage: FC = () => {
-  const { t } = useTranslation(['recommend'])
+  const locale = useLocale()
   const { region } = useAppContext()
   const version = useAppContextDXDataVersion()
   const catalog = useCompleteSongCatalog()
@@ -101,20 +101,20 @@ export const RecommendPage: FC = () => {
   }, [result])
 
   return (
-    <ScorePageFrame width="6xl">
-      <ScorePageHeader title={t('recommend:title')} description={t('recommend:description')}>
-        {isDemo && <DemoScoresNotice className="mt-3">{t('recommend:demo')}</DemoScoresNotice>}
+    <ScorePageFrame width="me">
+      <ScorePageHeader title={m.recommend_title({}, { locale })} description={m.recommend_description({}, { locale })}>
+        {isDemo && <DemoScoresNotice className="mt-3">{m.recommend_demo({}, { locale })}</DemoScoresNotice>}
       </ScorePageHeader>
 
       {!result ? (
         <div className="flex justify-center py-12" aria-busy="true">
-          <CircularProgress size="2rem" aria-label={t('recommend:loading')} />
+          <CircularProgress size="2rem" aria-label={m.recommend_loading({}, { locale })} />
         </div>
       ) : !result.hasRecords ? (
         <NoScoresState
-          title={t('recommend:empty-title')}
-          description={t('recommend:empty')}
-          action={<ImportScoresLink>{t('recommend:go-to-rating')}</ImportScoresLink>}
+          title={m.recommend_emptyTitle({}, { locale })}
+          description={m.recommend_empty({}, { locale })}
+          action={<ImportScoresLink>{m.recommend_goToRating({}, { locale })}</ImportScoresLink>}
         />
       ) : (
         <>
@@ -122,14 +122,14 @@ export const RecommendPage: FC = () => {
             as="dl"
             className="m-0 grid grid-cols-3 items-end gap-2 p-4 text-center lg:items-baseline lg:gap-4 lg:p-3 lg:text-start"
           >
-            <Stat label={t('recommend:stats.total')} value={result.total} />
-            <Stat label={t('recommend:stats.b15-floor')} value={result.b15Floor} />
-            <Stat label={t('recommend:stats.b35-floor')} value={result.b35Floor} />
+            <Stat label={m.recommend_stats_total({}, { locale })} value={result.total} />
+            <Stat label={m.recommend_stats_b15Floor({}, { locale })} value={result.b15Floor} />
+            <Stat label={m.recommend_stats_b35Floor({}, { locale })} value={result.b35Floor} />
           </MaterialSurface>
           {/* B15 and B35 side by side on desktop, so both lists start above the fold */}
           <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start">
-            <RecommendSection title={t('recommend:new')} items={result.b15} />
-            <RecommendSection title={t('recommend:old')} items={result.b35} />
+            <RecommendSection title={m.recommend_new({}, { locale })} items={result.b15} />
+            <RecommendSection title={m.recommend_old({}, { locale })} items={result.b35} />
           </div>
         </>
       )}
@@ -142,7 +142,7 @@ export const RecommendPage: FC = () => {
 const Stat: FC<{ label: string; value: number }> = ({ label, value }) => (
   <div className="flex flex-col gap-0.5 lg:flex-row lg:items-baseline lg:gap-2">
     <dt className="text-xs leading-tight text-fg-2 text-balance">{label}</dt>
-    <dd className="m-0 text-xl font-semibold num text-fg-1 lg:text-lg">{value}</dd>
+    <dd className="m-0 text-xl font-semibold display-num text-fg-1 lg:text-lg">{value}</dd>
   </div>
 )
 
@@ -150,14 +150,13 @@ const RecommendSection: FC<{
   title: string
   items: RatingRecommendation[]
 }> = ({ title, items }) => {
-  const { t, i18n } = useTranslation(['recommend'])
-  const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
+  const locale = useLocale()
   return (
     <section className="flex flex-col gap-2">
       <h2 className="section-title m-0 text-lg">{title}</h2>
       <MaterialSurface>
         {items.length === 0 ? (
-          <p className="m-0 p-4 text-sm text-fg-2">{t('recommend:none')}</p>
+          <p className="m-0 p-4 text-sm text-fg-2">{m.recommend_none({}, { locale })}</p>
         ) : (
           <ol className="m-0 list-none p-1 flex flex-col">
             {items.map((item) => {
@@ -195,13 +194,13 @@ const RecommendSection: FC<{
                       <span className="flex flex-row flex-wrap items-baseline gap-x-2 text-sm num sm:flex-col sm:items-end">
                         <span className="whitespace-nowrap">
                           {item.currentAchievement === null
-                            ? t('recommend:unplayed')
+                            ? m.recommend_unplayed({}, { locale })
                             : `${item.currentAchievement.toFixed(4)}%`}
                           {' → '}
                           <strong className="font-semibold">{item.targetAchievement}%</strong>
                         </span>
                         <span className="whitespace-nowrap text-xs font-semibold text-status-positive">
-                          {t('recommend:gain', { gain: item.gain })}
+                          {m.recommend_gain({ gain: item.gain }, { locale })}
                         </span>
                       </span>
                     </span>

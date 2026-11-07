@@ -1,5 +1,6 @@
 import { DifficultyEnum, TypeEnum, VERSION_SORT_ORDER, type VersionEnum } from '@gekichumai/dxdata'
 import type { Region, VersionedSheet } from '@gekichumai/maimai-domain'
+import { DEFAULT_LEVEL_RANGE, type LevelRange, RANGE_CEILING, RANGE_FLOOR_EXTENDED, toTenths } from './levelRange'
 
 export const RANDOM_TYPES = [TypeEnum.DX, TypeEnum.STD] as const
 export const RANDOM_DIFFICULTIES = [
@@ -10,16 +11,13 @@ export const RANDOM_DIFFICULTIES = [
   DifficultyEnum.ReMaster,
 ] as const
 
-export const RANDOM_LEVEL_MIN = 1
-export const RANDOM_LEVEL_MAX = 15
-
 export interface RandomChartFilters {
   /** Empty means every type */
   types: readonly TypeEnum[]
   /** Empty means every difficulty */
   difficulties: readonly DifficultyEnum[]
-  minLevel: number
-  maxLevel: number
+  /** Internal levels, inclusive, in tenths */
+  range: LevelRange
   /** Empty means every version */
   versions: readonly VersionEnum[]
 }
@@ -27,8 +25,7 @@ export interface RandomChartFilters {
 export const DEFAULT_RANDOM_FILTERS: RandomChartFilters = {
   types: [],
   difficulties: [],
-  minLevel: 12,
-  maxLevel: 15,
+  range: DEFAULT_LEVEL_RANGE,
   versions: [],
 }
 
@@ -37,7 +34,7 @@ export const countActiveFilters = (filters: RandomChartFilters): number =>
   (filters.types.length > 0 ? 1 : 0) +
   (filters.difficulties.length > 0 ? 1 : 0) +
   (filters.versions.length > 0 ? 1 : 0) +
-  (filters.minLevel > RANDOM_LEVEL_MIN || filters.maxLevel < RANDOM_LEVEL_MAX ? 1 : 0)
+  (filters.range.min > RANGE_FLOOR_EXTENDED || filters.range.max < RANGE_CEILING ? 1 : 0)
 
 export function filterRandomPool(
   sheets: readonly VersionedSheet[],
@@ -50,6 +47,7 @@ export function filterRandomPool(
   const types = new Set<string>(filters.types)
   const difficulties = new Set<string>(filters.difficulties)
   const versions = new Set<string>(filters.versions)
+  const { min, max } = filters.range
   return sheets.filter(
     (sheet) =>
       !sheet.isTypeUtage &&
@@ -58,9 +56,9 @@ export function filterRandomPool(
       (difficulties.size === 0 || difficulties.has(sheet.difficulty)) &&
       (versions.size === 0 || versions.has(sheet.version)) &&
       (maxVersionIndex < 0 || VERSION_SORT_ORDER.indexOf(sheet.version) <= maxVersionIndex) &&
-      sheet.internalLevelValue >= filters.minLevel &&
-      // A level of 14+ is 14.6..14.9, so the upper bound covers the whole integer level
-      sheet.internalLevelValue < filters.maxLevel + 1,
+      // Compared in tenths, so 13.7 is never lost to floating point
+      toTenths(sheet.internalLevelValue) >= min &&
+      toTenths(sheet.internalLevelValue) <= max,
   )
 }
 
@@ -68,3 +66,10 @@ export function pickRandom<T>(pool: readonly T[], random: () => number = Math.ra
   if (pool.length === 0) return null
   return pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))] ?? null
 }
+/** A public sheet ID (dsht_…) from `?chart=`, or undefined */
+export const parseRolledChartParam = (value: unknown): string | undefined =>
+  typeof value === 'string' && /^dsht_[A-Za-z0-9]{1,32}$/.test(value) ? value : undefined
+
+/** The chart a `?chart=` link names, or null when the catalog has no such sheet */
+export const findRolledChart = <S extends { id: string }>(sheets: readonly S[], id: string | undefined): S | null =>
+  (id && sheets.find((sheet) => sheet.id === id)) || null

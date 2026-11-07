@@ -3,6 +3,7 @@ import snapshotAssetUrl from '@gekichumai/dxdata/snapshot.json?url'
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  CATALOG_REQUEST_URL,
   CATALOG_URL,
   getLoadedCatalogDocument,
   loadClientCatalogDocument,
@@ -77,12 +78,40 @@ describe('client catalog loading', () => {
     setLoadedCatalogDocumentForTests(catalogSnapshot)
   })
 
+  it('requests the API under the build snapshot, so a stale edge copy of the plain URL is not served', async () => {
+    const url = new URL(CATALOG_REQUEST_URL, 'https://dxrating.test')
+    expect(url.pathname).toBe(new URL(CATALOG_URL, 'https://dxrating.test').pathname)
+    expect(url.searchParams.get('build')).toBe(catalogSnapshot.updatedAt)
+
+    cacheCatalog(cacheStorage.entries, OLD, 'W/"old"')
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 304 }))
+    await expect(loadClientCatalogDocument()).resolves.toEqual(OLD)
+    // Revalidation uses the same URL; the copy stays under the plain URL, so one from an earlier build is still found
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    expect(String(fetchMock.mock.calls[0]![0])).toBe(CATALOG_REQUEST_URL)
+    expect(cacheStorage.entries.has(CATALOG_URL)).toBe(true)
+  })
+
+  it('does not fetch the snapshot when the API serves a catalog as new as the build', async () => {
+    fetchMock.mockImplementation(async (input) => {
+      if (String(input) === CATALOG_REQUEST_URL) return jsonResponse(BUILD, { headers: { etag: 'W/"build"' } })
+      throw new Error(`unexpected request ${String(input)}`)
+    })
+
+    await expect(loadClientCatalogDocument()).resolves.toEqual(BUILD)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).not.toHaveBeenCalledWith(snapshotAssetUrl)
+    await vi.waitFor(() =>
+      expect(cacheStorage.entries.get(CATALOG_URL)!.headers.get('x-dxrating-catalog-etag')).toBe('W/"build"'),
+    )
+  })
+
   it('loads the API document on a first visit and keeps it with its ETag', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(NEW, { headers: { etag: 'W/"new"' } }))
 
     await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
 
-    expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL)
+    expect(fetchMock).toHaveBeenCalledWith(CATALOG_REQUEST_URL)
     expect(getLoadedCatalogDocument()).toEqual(NEW)
     await vi.waitFor(() => expect(cacheStorage.entries.has(CATALOG_URL)).toBe(true))
     const cached = cacheStorage.entries.get(CATALOG_URL)!
@@ -97,7 +126,7 @@ describe('client catalog loading', () => {
     await expect(loadClientCatalogDocument()).resolves.toEqual(OLD)
 
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
-    expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL, {
+    expect(fetchMock).toHaveBeenCalledWith(CATALOG_REQUEST_URL, {
       cache: 'no-store',
       headers: { 'If-None-Match': 'W/"old"' },
     })
@@ -131,7 +160,7 @@ describe('client catalog loading', () => {
 
   it('falls back to the snapshot of the build when the API is down', async () => {
     fetchMock.mockImplementation(async (input) => {
-      if (String(input) === CATALOG_URL) throw new TypeError('Failed to fetch')
+      if (String(input) === CATALOG_REQUEST_URL) throw new TypeError('Failed to fetch')
       if (String(input) === snapshotAssetUrl) return jsonResponse(OLD)
       throw new Error(`unexpected request ${String(input)}`)
     })
@@ -148,7 +177,7 @@ describe('client catalog loading', () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(NEW, { headers: { etag: 'W/"new"' } }))
 
     await expect(loadClientCatalogDocument()).resolves.toEqual(NEW)
-    expect(fetchMock).toHaveBeenCalledWith(CATALOG_URL)
+    expect(fetchMock).toHaveBeenCalledWith(CATALOG_REQUEST_URL)
   })
 
   it('does not render from a copy older than the build, and loads the API document instead', async () => {
@@ -170,7 +199,7 @@ describe('client catalog loading', () => {
   it('replaces a copy older than the build with the build snapshot when the API is down', async () => {
     cacheCatalog(cacheStorage.entries, PRE_BUILD, 'W/"pre-build"')
     fetchMock.mockImplementation(async (input) => {
-      if (String(input) === CATALOG_URL) throw new TypeError('Failed to fetch')
+      if (String(input) === CATALOG_REQUEST_URL) throw new TypeError('Failed to fetch')
       if (String(input) === snapshotAssetUrl) return jsonResponse(BUILD)
       throw new Error(`unexpected request ${String(input)}`)
     })
@@ -188,7 +217,7 @@ describe('client catalog loading', () => {
 
   it('uses the build snapshot when the API serves a catalog older than the build', async () => {
     fetchMock.mockImplementation(async (input) => {
-      if (String(input) === CATALOG_URL) return jsonResponse(PRE_BUILD, { headers: { etag: 'W/"pre-build"' } })
+      if (String(input) === CATALOG_REQUEST_URL) return jsonResponse(PRE_BUILD, { headers: { etag: 'W/"pre-build"' } })
       if (String(input) === snapshotAssetUrl) return jsonResponse(BUILD)
       throw new Error(`unexpected request ${String(input)}`)
     })
@@ -217,7 +246,7 @@ describe('client catalog loading', () => {
     try {
       vi.stubGlobal('caches', undefined)
       fetchMock.mockImplementation(async (input) => {
-        if (String(input) === CATALOG_URL) return stalledFetch(stall)()
+        if (String(input) === CATALOG_REQUEST_URL) return stalledFetch(stall)()
         if (String(input) === snapshotAssetUrl) return jsonResponse(BUILD)
         throw new Error(`unexpected request ${String(input)}`)
       })

@@ -1,11 +1,12 @@
 import { Button, type ButtonProps, CircularProgress } from '@mui/material'
 import { type FC, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import MdiImage from '~icons/mdi/image-outline'
 import type { ShareImageOutcome } from '@/lib/analytics'
 import { renderShareImage, type ShareImageSpec } from '@/utils/shareImage/shareImage'
 import { ShareImageViewer } from './ShareImageViewer'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export interface ShareImageButtonProps extends Omit<ButtonProps, 'onClick'> {
   /** Builds the image spec when clicked, so heavy drawing data is only gathered on demand */
@@ -28,7 +29,7 @@ export const ShareImageButton: FC<ShareImageButtonProps> = ({
   disabled,
   ...buttonProps
 }) => {
-  const { t } = useTranslation(['share'])
+  const locale = useLocale()
   const [busy, setBusy] = useState(false)
   const [blob, setBlob] = useState<Blob | null>(null)
   const [open, setOpen] = useState(false)
@@ -41,7 +42,7 @@ export const ShareImageButton: FC<ShareImageButtonProps> = ({
       onExported?.('viewed')
     } catch (error) {
       console.error(error)
-      toast.error(t('share:image.failed'))
+      toast.error(m.share_image_failed({}, { locale }))
       onExported?.('failed')
     } finally {
       setBusy(false)
@@ -61,7 +62,7 @@ export const ShareImageButton: FC<ShareImageButtonProps> = ({
         onClick={() => void handleClick()}
         {...buttonProps}
       >
-        {children ?? t('share:image.button')}
+        {children ?? m.share_image_button({}, { locale })}
       </Button>
       {blob && (
         <ShareImageViewer
@@ -71,7 +72,7 @@ export const ShareImageButton: FC<ShareImageButtonProps> = ({
           filename={filename}
           shareTitle={shareTitle}
           title={shareTitle}
-          alt={imageAlt ?? shareTitle ?? t('share:image.viewer-title')}
+          alt={imageAlt ?? shareTitle ?? m.share_image_viewerTitle({}, { locale })}
           onOutcome={onExported}
         />
       )}

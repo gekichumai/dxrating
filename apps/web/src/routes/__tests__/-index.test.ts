@@ -15,10 +15,16 @@ describe('home route (chart search)', () => {
   })
 
   it('loads seed sheets for a prefilled query parameter', async () => {
-    const { seedSheets } = await loadSearchRouteData({ q: '螺旋' })
+    const { seedSheets } = await loadSearchRouteData({ q: '螺旋' }, { withSeeds: true })
 
     expect(seedSheets.map((sheet) => sheet.title)).toContain('ガラテアの螺旋')
     expect(seedSheets[0]?.path).toMatch(/^\/songs\//)
+  })
+
+  it('skips seed sheets in the browser, where the complete catalog shows the results', async () => {
+    const { seedSheets } = await loadSearchRouteData({ q: '螺旋' }, { withSeeds: false })
+
+    expect(seedSheets).toEqual([])
   })
 
   it('rejects oversized queries before loading search results', async () => {
@@ -26,7 +32,7 @@ describe('home route (chart search)', () => {
 
     expect(Route.options.validateSearch).toBe(validateSearchParams)
     expect(() => validateSearchParams({ q: oversizedQuery })).toThrow(RangeError)
-    await expect(loadSearchRouteData({ q: oversizedQuery })).rejects.toThrow(RangeError)
+    await expect(loadSearchRouteData({ q: oversizedQuery }, { withSeeds: true })).rejects.toThrow(RangeError)
   })
 
   it('loads the hub modules (recently added songs) when no query is entered', async () => {
@@ -42,5 +48,36 @@ describe('home route (chart search)', () => {
     const { recentSongs } = await loadSearchRouteData({ q: '螺旋' })
 
     expect(recentSongs).toEqual([])
+  })
+
+  it('names the chart in the tab title while its dialog is open', async () => {
+    // 君の知らない物語, DX MASTER
+    const search = { songId: 'dsng_kkx38yfx4t', type: 'dx', difficulty: 'master' }
+    const loaderData = await loadSearchRouteData(search)
+    expect(loaderData.dialogSheet?.song.title).toBe('君の知らない物語')
+
+    const head = (data: unknown, locale: string) =>
+      Route.options.head!({ loaderData: data, match: { search: { locale } }, matches: [] } as never) as {
+        meta: Array<{ title?: string }>
+      }
+    const titles = (data: unknown, locale: string) => head(data, locale).meta.filter((entry) => 'title' in entry)
+
+    const [dialogTitle] = titles(loaderData, 'en')
+    expect(titles(loaderData, 'en')).toHaveLength(1)
+    expect(dialogTitle?.title).toContain('君の知らない物語')
+    expect(titles(loaderData, 'ja')[0]?.title).toContain('君の知らない物語')
+    // The level and the constant depend on the visitor's game version, which the server does not know
+    expect(loaderData.dialogSheet?.sheet).not.toHaveProperty('level')
+    expect(dialogTitle?.title).not.toMatch(/Lv\.|\(\d+\.\d\)|譜面定数/)
+    expect(titles(loaderData, 'ja')[0]?.title).not.toMatch(/Lv\.|譜面定数/)
+    expect(dialogTitle?.title).toMatch(/MASTER/)
+
+    const [searchTitle] = titles(await loadSearchRouteData({}), 'en')
+    expect(searchTitle?.title).not.toContain('君の知らない物語')
+  })
+
+  it('keeps the search title for a dialog link the catalog does not have', async () => {
+    const loaderData = await loadSearchRouteData({ songId: 'dsng_missing', type: 'dx', difficulty: 'master' })
+    expect(loaderData.dialogSheet).toBeUndefined()
   })
 })

@@ -37,6 +37,9 @@ const jsonRpcError = (status: number, code: number, message: string, headers: Re
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers },
   })
 
+/** What the SDK's stateless transport answers a 2025-era POST that does not accept both of its response types */
+export const NOT_ACCEPTABLE = 'Not Acceptable: Client must accept both application/json and text/event-stream'
+
 /** The MCP server of a request, wrapped for Sentry tracing when there is a Sentry client */
 function serverFor(catalog: McpCatalog | undefined) {
   // a span per MCP message with the OpenTelemetry MCP attributes (mcp.method.name, gen_ai.tool.name, ...), the
@@ -84,6 +87,12 @@ export async function handleMcpRequest(request: Request, catalog: McpCatalog | u
 
 /** A 2025-era request: initialize or a request after it, answered by a server and transport of its own */
 async function handleLegacyRequest(request: Request, catalog: McpCatalog | undefined): Promise<Response> {
+  // The transport answers this 406 too, but reports it through onerror first, which the Sentry wrapper captures as a
+  // server error. It is the client's mistake, so it is answered here, the same way, before the transport sees it.
+  const accept = request.headers.get('accept') ?? ''
+  if (!accept.includes('application/json') || !accept.includes('text/event-stream')) {
+    return jsonRpcError(406, -32000, NOT_ACCEPTABLE)
+  }
   const server = serverFor(catalog)
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,

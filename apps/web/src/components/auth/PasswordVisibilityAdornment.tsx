@@ -1,5 +1,6 @@
 import { IconButton, InputAdornment } from '@mui/material'
-import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 import IconVisibility from '~icons/material-symbols/visibility-outline'
 import IconVisibilityOff from '~icons/material-symbols/visibility-off-outline'
 
@@ -14,8 +15,10 @@ export function PasswordVisibilityAdornment({
   inputId: string
   onToggle: () => void
 }) {
-  const { t } = useTranslation(['auth'])
-  const label = t(visible ? 'auth:password.hide-field' : 'auth:password.show-field', { field: fieldLabel })
+  const locale = useLocale()
+  const label = visible
+    ? m.auth_password_hideField({ field: fieldLabel }, { locale })
+    : m.auth_password_showField({ field: fieldLabel }, { locale })
 
   return (
     <InputAdornment position="end">

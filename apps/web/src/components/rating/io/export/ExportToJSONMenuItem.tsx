@@ -1,13 +1,15 @@
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import IconMdiFile from '~icons/mdi/file'
+import { useLocale } from '@/i18n/LocaleProvider'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { type RatingCalculatorEntry, useRatingEntries } from '../../useRatingEntries'
 import { useScoreEntries } from '@/models/scores/useScoreRepository'
+import { m } from '@/paraglide/messages'
+import type { SupportedLocale } from '@/setup/locale'
 
-const saveAsJsonFile = (data: string, t: (key: string, opts?: Record<string, string>) => string) => {
+const saveAsJsonFile = (data: string, locale: SupportedLocale) => {
   const blob = new Blob([data], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const name = `dxrating.export-${new Date().toISOString()}.json`
@@ -17,19 +19,19 @@ const saveAsJsonFile = (data: string, t: (key: string, opts?: Record<string, str
   a.click()
   URL.revokeObjectURL(url)
 
-  toast.success(t('rating-calculator:io.export.toast-success', { name }))
+  toast.success(m.ratingCalculator_io_export_toastSuccess({ name }, { locale }))
 }
 
 export const ExportToJSONMenuItem: FC = () => {
   const entries = useScoreEntries()
   const { isLoading, b15Entries, b35Entries } = useRatingEntries()
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
 
   return (
     <>
       <MenuItem
         onClick={() => {
-          saveAsJsonFile(JSON.stringify(entries), t)
+          saveAsJsonFile(JSON.stringify(entries), locale)
           captureAnalyticsEvent('rating_exported', {
             format: 'json',
             scope: 'all',
@@ -40,7 +42,7 @@ export const ExportToJSONMenuItem: FC = () => {
         <ListItemIcon>
           <IconMdiFile />
         </ListItemIcon>
-        <ListItemText>{t('rating-calculator:io.export.to-json.all-records')}</ListItemText>
+        <ListItemText>{m.ratingCalculator_io_export_toJson_allRecords({}, { locale })}</ListItemText>
       </MenuItem>
 
       <MenuItem
@@ -52,7 +54,7 @@ export const ExportToJSONMenuItem: FC = () => {
           })
 
           const data = JSON.stringify([...b35Entries.map(preprocess), ...b15Entries.map(preprocess)])
-          saveAsJsonFile(data, t)
+          saveAsJsonFile(data, locale)
           captureAnalyticsEvent('rating_exported', {
             format: 'json',
             scope: 'best_50',
@@ -63,7 +65,7 @@ export const ExportToJSONMenuItem: FC = () => {
         <ListItemIcon>
           <IconMdiFile />
         </ListItemIcon>
-        <ListItemText>{t('rating-calculator:io.export.to-json.b50-records')}</ListItemText>
+        <ListItemText>{m.ratingCalculator_io_export_toJson_b50Records({}, { locale })}</ListItemText>
       </MenuItem>
     </>
   )
