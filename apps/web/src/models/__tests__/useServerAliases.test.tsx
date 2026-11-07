@@ -44,4 +44,24 @@ describe('useServerAliases', () => {
     })
     await waitFor(() => expect(result.current.data).toEqual([{ song_id: newSong.id, name: 'new alias' }]))
   })
+
+  it('picks them up when it mounts again after a catalog was published while nothing was mounted', async () => {
+    // One SWR cache for both mounts, as navigating between pages keeps it
+    const cache = new Map()
+    const persistent = ({ children }: { children: ReactNode }) => (
+      <SWRConfig value={{ provider: () => cache, dedupingInterval: 0 }}>{children}</SWRConfig>
+    )
+    const firstMount = renderHook(() => useServerAliases(), { wrapper: persistent })
+    await waitFor(() => expect(firstMount.result.current.data).toEqual([]))
+    firstMount.unmount()
+
+    setLoadedCatalogDocumentForTests({
+      ...catalogSnapshot,
+      updatedAt: '2099-01-02T00:00:00Z',
+      songs: [first!, newSong, ...rest],
+    })
+
+    const secondMount = renderHook(() => useServerAliases(), { wrapper: persistent })
+    await waitFor(() => expect(secondMount.result.current.data).toEqual([{ song_id: newSong.id, name: 'new alias' }]))
+  })
 })

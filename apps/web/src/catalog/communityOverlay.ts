@@ -1,7 +1,7 @@
 import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { fromV2Community, type CommunityV2Document } from '@gekichumai/dxdata/v2'
 import { useEffect } from 'react'
-import { loadClientCatalogDocument, subscribeToCatalog } from './clientCatalog'
+import { getLoadedCatalogDocument, loadClientCatalogDocument, subscribeToCatalog } from './clientCatalog'
 
 // The tags and aliases of the catalog (dxdata v2, gekichumai/meta#43). They change within minutes while the catalog
 // changes about daily, so they come from their own small document. Its responses tell the browser to revalidate
@@ -43,7 +43,10 @@ let shared: { at: number; community: Promise<CommunityV2Document> } | undefined
  * association or alias of a sheet or song the catalog does not have yet is left out. The overlay request is shared
  * for a few seconds; the lists are resolved on every call, so a call after a catalog refresh sees the new songs.
  */
-export async function loadCommunityLists(): Promise<CommunityLists> {
+/** The catalog (`updatedAt`) each consumer's lists were last resolved against, by consumer */
+const resolvedAgainst = new Map<string, string>()
+
+export async function loadCommunityLists(consumer?: string): Promise<CommunityLists> {
   if (!shared || Date.now() - shared.at >= SHARE_MS) {
     const entry = { at: Date.now(), community: fetchCommunity() }
     shared = entry
@@ -53,24 +56,29 @@ export async function loadCommunityLists(): Promise<CommunityLists> {
     })
   }
   const [community, catalog] = await Promise.all([shared.community, loadClientCatalogDocument()])
+  if (consumer) resolvedAgainst.set(consumer, catalog.updatedAt)
   return fromV2Community(community, catalog)
 }
 
 /**
- * Re-resolves a hook's community data whenever a newer catalog is published (a background revalidation found one),
- * so songs and sheets it adds get their tags and aliases without a reload
+ * Re-resolves a hook's community data against a newer catalog: one published while it is mounted (a background
+ * revalidation found it), or one published while no consumer was mounted, which it finds when it mounts again. Songs
+ * and sheets the newer catalog adds get their tags and aliases without a reload.
  */
-export const useRefreshOnCatalogChange = (revalidate: () => unknown) => {
-  useEffect(
-    () =>
-      subscribeToCatalog(() => {
-        void revalidate()
-      }),
-    [revalidate],
-  )
+export const useRefreshOnCatalogChange = (consumer: string, revalidate: () => unknown) => {
+  useEffect(() => {
+    const refreshIfStale = () => {
+      const current = getLoadedCatalogDocument()?.updatedAt
+      const resolved = resolvedAgainst.get(consumer)
+      if (current !== undefined && resolved !== undefined && current !== resolved) void revalidate()
+    }
+    refreshIfStale()
+    return subscribeToCatalog(refreshIfStale)
+  }, [consumer, revalidate])
 }
 
 /** Tests only: forgets the shared load */
 export function resetCommunityListsForTests() {
   shared = undefined
+  resolvedAgainst.clear()
 }

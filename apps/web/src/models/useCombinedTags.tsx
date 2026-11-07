@@ -13,7 +13,7 @@ export const useCombinedTags = () => {
     'tags.list',
     async () => {
       // From the v2 community overlay: the tag-sheet associations it keeps visible, resolved against the catalog
-      const { tags, tagGroups, tagSongs } = await loadCommunityLists()
+      const { tags, tagGroups, tagSongs } = await loadCommunityLists('tags.list')
       return { tags, tagGroups, tagSongs } as CombinedTags
     },
     {
@@ -26,7 +26,7 @@ export const useCombinedTags = () => {
     },
   )
   // The dedupe window above does not hold back this revalidation
-  useRefreshOnCatalogChange(combinedTags.mutate)
+  useRefreshOnCatalogChange('tags.list', combinedTags.mutate)
   return combinedTags
 }
 

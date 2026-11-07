@@ -6,12 +6,12 @@ export const useServerAliases = () => {
   const aliases = useSWR(
     'aliases.list',
     async () => {
-      return (await loadCommunityLists()).aliases
+      return (await loadCommunityLists('aliases.list')).aliases
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,
     },
   )
-  useRefreshOnCatalogChange(aliases.mutate)
+  useRefreshOnCatalogChange('aliases.list', aliases.mutate)
   return aliases
 }
