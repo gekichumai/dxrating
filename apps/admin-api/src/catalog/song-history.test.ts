@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { clearSongHistoryCache } from './song-history'
+import { clearSongHistoryCache, fillSongHistoryCache } from './song-history'
 import { clearCatalogFixture, createCatalogFixtureSchema, publishFixture } from './test-fixture'
 import { ANNOUNCEMENT_READER, CATALOG_READER, makeCatalogTestApp } from './test-harness'
 
@@ -70,6 +70,16 @@ suite('song history (admin API)', () => {
     ])
     const again = await json('/catalog/song/history?songId=dsng_synthetic1&limit=2')
     expect(again.body).toEqual(first.body)
+  })
+
+  it('never reads an eviction as absence when the cache is full and partly warm', async () => {
+    const full = await json('/catalog/song/history?songId=dsng_synthetic1')
+    clearSongHistoryCache()
+    // Warm only the newest two (now the oldest cache entries), then fill the cache to the brim: storing the other
+    // three evicts those two hits mid-request
+    await json('/catalog/song/history?songId=dsng_synthetic1&limit=2')
+    fillSongHistoryCache(0)
+    expect((await json('/catalog/song/history?songId=dsng_synthetic1')).body).toEqual(full.body)
   })
 
   it('reports an unknown song as absent everywhere, and needs catalog:read', async () => {

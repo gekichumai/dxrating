@@ -22,6 +22,11 @@ const remember = (key: string, song: Json | null) => {
 /** Test-only */
 export const clearSongHistoryCache = () => cache.clear()
 
+/** Test-only: add unrelated entries until the cache has `free` places left */
+export const fillSongHistoryCache = (free: number) => {
+  for (let i = 0; cache.size < CACHE_SIZE - free; i++) remember(`filler-${i}`, null)
+}
+
 export interface HistoryEntry {
   revision: number
   publishedAt: string
@@ -54,7 +59,12 @@ export const songHistory = (input: { channel: string; songId: string; limit: num
     }))
 
     const key = (sha: string) => `${sha}:${input.songId}`
-    const missing = [...new Set(receipts.map((r) => r.bodySha256))].filter((sha) => !cache.has(key(sha)))
+    // This request's songs, held apart from the shared cache: storing the misses may evict a hit, which must not
+    // read as the song being absent from that publication
+    const songs = new Map<string, Json | null>()
+    for (const sha of new Set(receipts.map((r) => r.bodySha256)))
+      if (cache.has(key(sha))) songs.set(sha, cache.get(key(sha))!)
+    const missing = [...new Set(receipts.map((r) => r.bodySha256))].filter((sha) => !songs.has(sha))
     if (missing.length > 0) {
       const extracted = yield* db.use('extract song from snapshots', (d) =>
         d.execute(sql`
@@ -71,10 +81,14 @@ export const songHistory = (input: { channel: string; songId: string; limit: num
           )})
         `),
       )
-      for (const row of extracted.rows) remember(key(String(row.body_sha256)), (row.song as Json | null) ?? null)
+      for (const row of extracted.rows) {
+        const song = (row.song as Json | null) ?? null
+        songs.set(String(row.body_sha256), song)
+        remember(key(String(row.body_sha256)), song)
+      }
     }
 
-    const songAt = (sha: string) => cache.get(key(sha)) ?? null
+    const songAt = (sha: string) => songs.get(sha) ?? null
     const oldestFirst = [...receipts].reverse()
     const entries: HistoryEntry[] = oldestFirst.map((receipt, index) => {
       const song = songAt(receipt.bodySha256)
