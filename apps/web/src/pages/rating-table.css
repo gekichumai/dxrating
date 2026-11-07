@@ -202,9 +202,12 @@
 
 .rating-chart-copy {
   display: flex;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  /* Sized by the cell, not its text: the difficulty pill below switches to its compact form by this width */
+  container: rating-chart-copy / inline-size;
 }
 
 .rating-chart-title {
@@ -402,7 +405,11 @@
   .rating-chart-cover {
     display: none;
   }
-  /* About 76px for the chart's details: the pill keeps its difficulty half and the level moves next to the type */
+}
+
+/* Too narrow for the whole two-tone pill (Re:MAS | 14.9 is about 86px): phones from 320 to 375px, and tablets once
+   the extra columns return. The pill keeps its difficulty half and the level moves next to the type badge */
+@container rating-chart-copy (max-width: 5.75rem) {
   .rating-chart-meta .rating-chart-meta-level {
     display: none;
   }
