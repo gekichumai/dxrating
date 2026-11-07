@@ -231,7 +231,7 @@ export const adminCatalogContract = {
         path: '/catalog/diff',
         summary: 'Field-level changes between two publications of a channel (scope catalog:read)',
         description:
-          'Songs match by songId, sheets by type + difficulty. Without `to`, the latest publication; without `from`, the one before `to`. Paged by song.',
+          'Published snapshots (song-catalog v1) match songs and sheets by public `id`, so a changed type or difficulty is a field change, not a removal plus an addition. Legacy dxdata.json bodies fall back to songId, and type + difficulty for sheets. Without `to`, the latest publication; without `from`, the one before `to`. Paged by song.',
         tags: ['catalog'],
       }),
     )
