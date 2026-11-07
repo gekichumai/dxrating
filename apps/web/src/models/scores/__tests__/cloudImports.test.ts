@@ -151,6 +151,40 @@ describe('entriesToImportRecords', () => {
     expect(dx([withDx, bare])).toEqual([2400])
   })
 
+  it('keeps each field of duplicates at its best, as the device shows them, in either order', () => {
+    const lower: PlayEntry = {
+      sheetId: 'dsht_e5nsvt8k2a',
+      achievementRate: 99,
+      comboFlag: 'ap',
+      syncFlag: 'fsd',
+      dxScore: 2400,
+    }
+    const higher: PlayEntry = {
+      sheetId: 'dsht_e5nsvt8k2a',
+      achievementRate: 100,
+      comboFlag: 'fc',
+      dxScore: 2000,
+      source: { provider: 'diving-fish', providerId: 7, best50Bucket: 'b15' },
+    }
+    for (const entries of [
+      [lower, higher],
+      [higher, lower],
+    ]) {
+      expect(entriesToImportRecords(entries, { source: 'dxrating-json', claimedSource: null }).records).toEqual([
+        {
+          sheetId: 'dsht_e5nsvt8k2a',
+          achievement: 1000000,
+          comboFlag: 'ap',
+          syncFlag: 'fsd',
+          dxScore: 2400,
+          best50Bucket: 'b15',
+          providerRecordId: '7',
+          claimedSource: 'diving-fish',
+        },
+      ])
+    }
+  })
+
   it('never keeps an entry the server would reject, and counts it apart from the skipped ones', () => {
     const { records, skipped, rejected } = entriesToImportRecords(
       [
