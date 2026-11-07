@@ -808,6 +808,16 @@ describe('cloud save API (design §5)', () => {
         ...setMutation(sheetId(n), 1005000),
         clientEditedAt: '2026-11-01T00:00:00.000Z',
       }))
+      // an edit time PostgreSQL cannot store rejects that item only; its valid sibling commits
+      const yearZero = { ...setMutation(sheetId(3), 1000000), clientEditedAt: '0000-01-01T00:00:00.000Z' }
+      const sibling = setMutation(sheetId(4), 1000000)
+      const mixed = await mutate(user.cookie, save.id, [yearZero, sibling])
+      expect(mixed.status).toBe(200)
+      expect(mixed.body.results.map((r: { status: string; reason: string | null }) => [r.status, r.reason])).toEqual([
+        ['rejected', 'invalid-client-edited-at'],
+        ['applied', null],
+      ])
+      expect(await clientFields(sheetId(4))).toMatchObject({ deleted: false })
       expect((await mutate(user.cookie, save.id, edits)).body.results.map((r: { status: string }) => r.status)).toEqual(
         ['applied', 'applied'],
       )
