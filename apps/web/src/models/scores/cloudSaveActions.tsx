@@ -53,17 +53,20 @@ export const defaultCloudSaveActions: CloudSaveActions = {
       const client = await loadPrivateApi()
       return (await client.cloudSave.saves.list()).saves as SaveDTO[]
     },
-    async createSave(input) {
+    async createSave(input, guard) {
       const client = await loadPrivateApi()
-      return (await client.cloudSave.saves.create(input)) as SaveDTO
+      await guard?.beforeSend()
+      return (await client.cloudSave.saves.create(input, { signal: guard?.signal })) as SaveDTO
     },
-    async clientImport(input) {
+    async clientImport(input, guard) {
       const client = await loadPrivateApi()
-      return (await client.cloudSave.imports.client(input)) as ImportResultDTO
+      await guard?.beforeSend()
+      return (await client.cloudSave.imports.client(input, { signal: guard?.signal })) as ImportResultDTO
     },
-    async replace(input) {
+    async replace(input, guard) {
       const client = await loadPrivateApi()
-      return (await client.cloudSave.records.replace(input)) as ImportResultDTO
+      await guard?.beforeSend()
+      return (await client.cloudSave.records.replace(input, { signal: guard?.signal })) as ImportResultDTO
     },
     async getImportJob(jobId) {
       const client = await loadPrivateApi()

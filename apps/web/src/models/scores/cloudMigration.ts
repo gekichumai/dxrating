@@ -44,27 +44,48 @@ export const DEVICE_ID_STORAGE_KEY = 'dxr-device-id'
 
 export type MigrationMode = 'fresh' | 'merge' | 'cloud-only' | 'replace'
 
+/**
+ * What a write hands the route that sends it. The migration checks the account before each write, but sending can
+ * still wait (the private client loads on first use): the route calls {@link beforeSend} as the last step before the
+ * request leaves, and gives {@link signal} to the request, so a cancelled migration or a session switched to another
+ * account in the meantime sends nothing.
+ */
+export interface MigrationWriteGuard {
+  signal?: AbortSignal
+  /** Throws {@link MigrationCancelledError} when the migration was cancelled or the session is another account now */
+  beforeSend(): Promise<void>
+}
+
 /** The routes the migration uses; the private API client, or a fake in tests and the demo */
 export interface CloudMigrationApi {
   listSaves(): Promise<readonly SaveDTO[]>
-  createSave(input: { name: string; region: SaveDTO['region']; clientProfileKey: string }): Promise<SaveDTO>
-  clientImport(input: {
-    id: string
-    idempotencyKey: string
-    source: 'legacy-local'
-    trigger: 'migration'
-    rawPayloadSha256: string | null
-    chunkIndex: number
-    chunkCount: number
-    records: ImportRecord[]
-  }): Promise<ImportResultDTO>
-  replace(input: {
-    id: string
-    ifRevision: number
-    idempotencyKey: string
-    source: 'legacy-local'
-    records: ImportRecord[]
-  }): Promise<ImportResultDTO>
+  createSave(
+    input: { name: string; region: SaveDTO['region']; clientProfileKey: string },
+    guard?: MigrationWriteGuard,
+  ): Promise<SaveDTO>
+  clientImport(
+    input: {
+      id: string
+      idempotencyKey: string
+      source: 'legacy-local'
+      trigger: 'migration'
+      rawPayloadSha256: string | null
+      chunkIndex: number
+      chunkCount: number
+      records: ImportRecord[]
+    },
+    guard?: MigrationWriteGuard,
+  ): Promise<ImportResultDTO>
+  replace(
+    input: {
+      id: string
+      ifRevision: number
+      idempotencyKey: string
+      source: 'legacy-local'
+      records: ImportRecord[]
+    },
+    guard?: MigrationWriteGuard,
+  ): Promise<ImportResultDTO>
   getImportJob(jobId: string): Promise<ImportJobDTO>
   /**
    * The account the browser's session belongs to now, asked of the server (not a cached session): every write
@@ -460,12 +481,17 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
     if (current !== options.userId) throw new MigrationCancelledError()
   }
 
-  const withRetries = async <T>(request: () => Promise<T>, { write = false } = {}): Promise<T> => {
+  const guard: MigrationWriteGuard = { signal, beforeSend: ensureSameAccount }
+
+  const withRetries = async <T>(
+    request: (guard: MigrationWriteGuard) => Promise<T>,
+    { write = false } = {},
+  ): Promise<T> => {
     for (let attempt = 1; ; attempt++) {
       if (write) await ensureSameAccount()
       else ensureActive()
       try {
-        return await request()
+        return await request(guard)
       } catch (error) {
         const retry = isRetryableImportError(error)
         if (!retry.retry || attempt >= ATTEMPTS) throw error
@@ -508,14 +534,17 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
     const replaceTag = await migrationKeyTag(`${target.id}\n${canonicalJson(bySheetId)}`)
     try {
       const result = await withRetries(
-        () =>
-          api.replace({
-            id: target.id,
-            ifRevision: target.revision,
-            idempotencyKey: migrationReplaceKey(options.deviceId, replaceTag, target.revision),
-            source: 'legacy-local',
-            records: bySheetId,
-          }),
+        (guard) =>
+          api.replace(
+            {
+              id: target.id,
+              ifRevision: target.revision,
+              idempotencyKey: migrationReplaceKey(options.deviceId, replaceTag, target.revision),
+              source: 'legacy-local',
+              records: bySheetId,
+            },
+            guard,
+          ),
         { write: true },
       )
       if (result.job.status === 'failed')
@@ -543,12 +572,11 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
     try {
       // Idempotent: a retry, or another tab doing the same, gets the save the first request made
       const save = await withRetries(
-        () =>
-          api.createSave({
-            name: options.name,
-            region: options.region,
-            clientProfileKey: WEB_LOCAL_PROFILE_KEY,
-          }),
+        (guard) =>
+          api.createSave(
+            { name: options.name, region: options.region, clientProfileKey: WEB_LOCAL_PROFILE_KEY },
+            guard,
+          ),
         { write: true },
       )
       saveId = save.id
@@ -571,17 +599,20 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
       for (let tries = 1; ; tries++) {
         try {
           const result = await withRetries(
-            () =>
-              api.clientImport({
-                id: saveId,
-                idempotencyKey,
-                source: 'legacy-local',
-                trigger: 'migration',
-                rawPayloadSha256: hashes[chunkIndex] ?? null,
-                chunkIndex,
-                chunkCount: chunks.length,
-                records: chunk,
-              }),
+            (guard) =>
+              api.clientImport(
+                {
+                  id: saveId,
+                  idempotencyKey,
+                  source: 'legacy-local',
+                  trigger: 'migration',
+                  rawPayloadSha256: hashes[chunkIndex] ?? null,
+                  chunkIndex,
+                  chunkCount: chunks.length,
+                  records: chunk,
+                },
+                guard,
+              ),
             { write: true },
           )
           job = result.job

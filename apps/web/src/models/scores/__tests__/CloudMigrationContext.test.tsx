@@ -263,6 +263,7 @@ describe('the first sign-in migration offer', () => {
         source: 'legacy-local',
         trigger: 'migration',
       }),
+      expect.objectContaining({ beforeSend: expect.any(Function) }),
     )
     await waitFor(() =>
       expect(deps.openCloudRepository).toHaveBeenCalledWith(expect.objectContaining({ saveId: 'dsav_new' })),

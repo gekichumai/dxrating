@@ -195,11 +195,14 @@ describe('CloudMigrationDialog: no cloud save yet', () => {
     fireEvent.click(backUp)
 
     await screen.findByText('2 records are now in your cloud save.')
-    expect(api.createSave).toHaveBeenCalledWith({
-      name: 'My scores',
-      region: 'intl',
-      clientProfileKey: 'web-local',
-    })
+    expect(api.createSave).toHaveBeenCalledWith(
+      {
+        name: 'My scores',
+        region: 'intl',
+        clientProfileKey: 'web-local',
+      },
+      expect.objectContaining({ beforeSend: expect.any(Function) }),
+    )
     expect(api.clientImport).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'dsav_new',
@@ -207,6 +210,7 @@ describe('CloudMigrationDialog: no cloud save yet', () => {
         trigger: 'migration',
         idempotencyKey: expect.stringMatching(/^migrate-[\w-]+-web-local-[0-9a-f]{16}-\w{8}$/),
       }),
+      expect.objectContaining({ beforeSend: expect.any(Function) }),
     )
     expect(onActivate).toHaveBeenCalledWith('dsav_new')
     expect(window.localStorage.getItem(CLOUD_BACKUP_STORAGE_KEY)).not.toBeNull()
@@ -388,7 +392,10 @@ describe('CloudMigrationDialog: a cloud save from another device', () => {
 
     await screen.findByText('Backed up')
     expect(api.createSave).not.toHaveBeenCalled()
-    expect(api.clientImport).toHaveBeenCalledWith(expect.objectContaining({ id: 'dsav_other', trigger: 'migration' }))
+    expect(api.clientImport).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'dsav_other', trigger: 'migration' }),
+      expect.objectContaining({ beforeSend: expect.any(Function) }),
+    )
     expect(onActivate).toHaveBeenCalledWith('dsav_other')
     expect(captured()[0]!.properties).toEqual({
       mode: 'merge',
@@ -441,7 +448,10 @@ describe('CloudMigrationDialog: a cloud save from another device', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Replace cloud save' }))
 
     expect(await screen.findByText(/changed on another device/)).toBeTruthy()
-    expect(api.replace).toHaveBeenCalledWith(expect.objectContaining({ ifRevision: 7 }))
+    expect(api.replace).toHaveBeenCalledWith(
+      expect.objectContaining({ ifRevision: 7 }),
+      expect.objectContaining({ beforeSend: expect.any(Function) }),
+    )
     expect(onActivate).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Advanced' }))
@@ -458,6 +468,7 @@ describe('CloudMigrationDialog: a cloud save from another device', () => {
         ifRevision: 9,
         idempotencyKey: expect.stringMatching(/-r9$/),
       }),
+      expect.objectContaining({ beforeSend: expect.any(Function) }),
     )
     expect(onActivate).toHaveBeenCalledWith('dsav_other')
     expect(captured().filter((event) => event.name === 'cloudsave_migration_failed')[0]!.properties).toMatchObject({
