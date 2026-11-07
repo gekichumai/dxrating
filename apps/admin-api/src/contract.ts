@@ -175,12 +175,13 @@ export const CatalogDiffSchema = z.object({
   songsTotal: z.number().int(),
   songs: z.array(
     z.object({
-      songId: z.string(),
+      songId: z.string().describe('The song’s public ID (dsng_…), or songId in the legacy shape'),
       title: z.string(),
       kind: z.enum(['added', 'removed', 'changed']),
       fields: z.array(FieldChangeSchema),
       sheets: z.array(
         z.object({
+          id: z.string().describe('The sheet’s public ID, or type:difficulty in the legacy shape'),
           type: z.string(),
           difficulty: z.string(),
           kind: z.enum(['added', 'removed', 'changed']),

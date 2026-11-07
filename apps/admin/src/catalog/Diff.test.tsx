@@ -1,6 +1,6 @@
 import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Diff, type DiffParams } from './Diff'
 
@@ -40,6 +40,7 @@ const diff = {
       fields: [],
       sheets: [
         {
+          id: 'dsht_syntheticm',
           type: 'dx',
           difficulty: 'master',
           kind: 'changed',
@@ -55,7 +56,7 @@ const diff = {
       title: 'Synthetic New',
       kind: 'added',
       fields: [],
-      sheets: [{ type: 'dx', difficulty: 'basic', kind: 'added', fields: [] }],
+      sheets: [{ id: 'dsht_syntheticb', type: 'dx', difficulty: 'basic', kind: 'added', fields: [] }],
     },
   ],
   nextOffset: 50,
@@ -85,6 +86,7 @@ const mount = (props: DiffParams = {}) =>
 
 afterEach(() => {
   cleanup()
+  window.location.hash = ''
   vi.unstubAllGlobals()
   requests.length = 0
 })
@@ -97,7 +99,7 @@ describe('Diff', () => {
     expect(screen.getByText('+1 songs')).toBeTruthy()
     expect(screen.queryByText(/−0/)).toBeNull()
     expect(screen.getByText('sheets[].internalLevelValue · 1').closest('a')?.getAttribute('href')).toBe(
-      `#diff?path=${encodeURIComponent('sheets[].internalLevelValue')}`,
+      `#diff?from=2&to=3&path=${encodeURIComponent('sheets[].internalLevelValue')}`,
     )
     const level = screen.getByText('internalLevelValue').closest('tr')!
     expect(level.textContent).toContain('dx master')
@@ -107,11 +109,17 @@ describe('Diff', () => {
     expect(screen.getByText('comment').closest('tr')!.textContent).toContain('absent')
     expect(screen.getByText('sheet added').closest('tr')!.textContent).toContain('dx basic')
     expect(screen.getByText('versions').closest('p')?.textContent).toContain('CiRCLE')
-    expect(screen.getByText('Next 50').closest('a')?.getAttribute('href')).toBe('#diff?offset=50')
+    // Opened without revisions, links keep the pair the API resolved, so a new publication can't switch the comparison
+    expect(screen.getByText('Next 50').closest('a')?.getAttribute('href')).toBe('#diff?from=2&to=3&offset=50')
+    // Both revisions on screen are selectable even when the publication list does not include them
+    expect((screen.getByLabelText('Older publication') as HTMLSelectElement).value).toBe('2')
+    expect((screen.getByLabelText('Newer publication') as HTMLSelectElement).value).toBe('3')
+    fireEvent.change(screen.getByLabelText('Newer publication'), { target: { value: '2' } })
+    expect(window.location.hash).toBe('#diff?from=2&to=2')
   })
 
   it('sends the revisions, path and page it was opened with, and offers to clear the filter', async () => {
-    stub(() => Response.json({ ...diff, path: 'sheets[].comment', nextOffset: null }))
+    stub(() => Response.json({ ...diff, from: side(1), path: 'sheets[].comment', nextOffset: null }))
     mount({ from: 1, to: 3, path: 'sheets[].comment', offset: 50 })
     expect(await screen.findByText('All changes')).toBeTruthy()
     const call = requests.find((url) => url.pathname === '/api/catalog/diff')!

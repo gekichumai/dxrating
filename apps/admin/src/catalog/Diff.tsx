@@ -53,7 +53,6 @@ const has = (change: Change, side: 'before' | 'after') => Object.hasOwn(change, 
 
 export function Diff(params: DiffParams) {
   const { channel, from, to, path, offset = 0 } = params
-  const href = (next: Partial<DiffParams>) => routeHref('diff', { channel, from, to, path, offset: undefined, ...next })
   const revisions = useQuery(adminOrpc.catalog.publications.queryOptions({ input: { channel, limit: 100 } }))
   const query = useQuery({
     ...adminOrpc.catalog.diff.queryOptions({ input: { channel, from, to, path, offset, limit: PAGE } }),
@@ -61,10 +60,16 @@ export function Diff(params: DiffParams) {
     retry: false,
   })
   const data = query.data
-  const options = (revisions.data?.publications ?? []).map((p) => ({
-    value: String(p.revision),
-    label: `r${p.revision} · ${formatUtc(p.publishedAt)}`,
-  }))
+  // Links continue the comparison on screen: the pair the API resolved, never the omitted defaults, which would move
+  // to a different pair as soon as a new publication lands
+  const pair = data && !query.isPlaceholderData ? { from: data.from.revision, to: data.to.revision } : { from, to }
+  const href = (next: Partial<DiffParams>) => routeHref('diff', { channel, ...pair, path, offset: undefined, ...next })
+  // The newest 100, plus the two on screen when they are older than that
+  const listed = (revisions.data?.publications ?? []).map((p) => ({ revision: p.revision, publishedAt: p.publishedAt }))
+  const shown = data ? [data.from, data.to].filter((side) => !listed.some((p) => p.revision === side.revision)) : []
+  const options = [...listed, ...shown]
+    .sort((a, b) => b.revision - a.revision)
+    .map((p) => ({ value: String(p.revision), label: `r${p.revision} · ${formatUtc(p.publishedAt)}` }))
   const missing = query.error instanceof ORPCError && query.error.code === 'NOT_FOUND'
 
   return (
@@ -207,7 +212,7 @@ export function Diff(params: DiffParams) {
                   {song.sheets.flatMap((sheet) =>
                     sheet.kind === 'changed' ? (
                       sheet.fields.map((change) => (
-                        <Table.Tr key={`${sheet.type}:${sheet.difficulty}:${change.path}`}>
+                        <Table.Tr key={`${sheet.id}:${change.path}`}>
                           <Table.Td>
                             {sheet.type} {sheet.difficulty}
                           </Table.Td>
@@ -219,7 +224,7 @@ export function Diff(params: DiffParams) {
                         </Table.Tr>
                       ))
                     ) : (
-                      <Table.Tr key={`${sheet.type}:${sheet.difficulty}`}>
+                      <Table.Tr key={sheet.id}>
                         <Table.Td>
                           {sheet.type} {sheet.difficulty}
                         </Table.Td>

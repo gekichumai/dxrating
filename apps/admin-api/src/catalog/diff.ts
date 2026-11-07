@@ -1,8 +1,10 @@
 /**
  * The field-level difference between two published dxdata catalogs (gekichumai/meta#50 Phase 3, slice 2). Pure: it
- * takes two parsed v1 catalog bodies. Songs match by `songId`, sheets within a song by `type` + `difficulty` (unique
- * in every catalog the assembly line publishes). Every other top-level list (versions, categories, …) is compared as a
- * set of entries.
+ * takes two parsed catalog bodies. Published snapshots are song-catalog v1 documents (assembly-line
+ * `contracts/song-catalog/v1`): songs and sheets carry stable public IDs (`dsng_…`, `dsht_…`), so they match by `id`.
+ * The legacy dxdata.json shape has none, so there songs match by `songId` and sheets by `type` + `difficulty`. Every
+ * other top-level list (versions, tags, aliases, …) is compared as a set of entries; `updatedAt` (`updateTime` in the
+ * legacy shape) is reported apart, never as a change.
  *
  * Paths are relative to the song or sheet, e.g. `internalLevelValue`, `noteCounts.tap`, `regions.cn`. A list of
  * plain values (`searchAcronyms`) is one value; a list of objects is indexed (`foo[2].bar`).
@@ -17,6 +19,8 @@ export interface FieldChange {
 }
 
 export interface SheetDiff {
+  /** The sheet's public ID, or `type:difficulty` in the legacy shape */
+  id: string
   type: string
   difficulty: string
   kind: 'added' | 'removed' | 'changed'
@@ -25,6 +29,7 @@ export interface SheetDiff {
 }
 
 export interface SongDiff {
+  /** The song's public ID (`dsng_…`), or `songId` in the legacy shape */
   songId: string
   title: string
   kind: 'added' | 'removed' | 'changed'
@@ -104,7 +109,15 @@ export const diffFields = (before: Record<string, Json>, after: Record<string, J
 /** `foo[3].bar` → `foo[].bar`, so counts group by field rather than by index */
 const pattern = (path: string) => path.replace(/\[\d+\]/g, '[]')
 
-const sheetKey = (sheet: Record<string, Json>) => `${String(sheet.type)}\u0000${String(sheet.difficulty)}`
+const TIMESTAMP_KEYS = ['updatedAt', 'updateTime']
+const songKey = (song: Record<string, Json>) => String(song.id ?? song.songId)
+const sheetKey = (sheet: Record<string, Json>) =>
+  sheet.id == null ? `${String(sheet.type)}:${String(sheet.difficulty)}` : String(sheet.id)
+const sheetIdent = (sheet: Record<string, Json>) => ({
+  id: sheetKey(sheet),
+  type: String(sheet.type),
+  difficulty: String(sheet.difficulty),
+})
 const songsOf = (catalog: Record<string, Json>) => (Array.isArray(catalog.songs) ? catalog.songs : []).filter(isObject)
 const sheetsOf = (song: Record<string, Json>) => (Array.isArray(song.sheets) ? song.sheets : []).filter(isObject)
 
@@ -121,12 +134,12 @@ export const diffCatalogs = (before: Record<string, Json>, after: Record<string,
     fieldChanges: 0,
   }
 
-  const oldSongs = new Map(songsOf(before).map((song) => [String(song.songId), song]))
+  const oldSongs = new Map(songsOf(before).map((song) => [songKey(song), song]))
   const newIds = new Set<string>()
   const songs: SongDiff[] = []
 
   for (const song of songsOf(after)) {
-    const songId = String(song.songId)
+    const songId = songKey(song)
     newIds.add(songId)
     const old = oldSongs.get(songId)
     if (!old) {
@@ -137,12 +150,7 @@ export const diffCatalogs = (before: Record<string, Json>, after: Record<string,
         title: String(song.title ?? songId),
         kind: 'added',
         fields: [],
-        sheets: sheetsOf(song).map((sheet) => ({
-          type: String(sheet.type),
-          difficulty: String(sheet.difficulty),
-          kind: 'added',
-          fields: [],
-        })),
+        sheets: sheetsOf(song).map((sheet) => ({ ...sheetIdent(sheet), kind: 'added', fields: [] })),
       })
       continue
     }
@@ -156,7 +164,7 @@ export const diffCatalogs = (before: Record<string, Json>, after: Record<string,
       const key = sheetKey(sheet)
       newKeys.add(key)
       const was = oldSheets.get(key)
-      const ident = { type: String(sheet.type), difficulty: String(sheet.difficulty) }
+      const ident = sheetIdent(sheet)
       if (!was) {
         sheets.push({ ...ident, kind: 'added', fields: [] })
         summary.sheetsAdded++
@@ -172,7 +180,7 @@ export const diffCatalogs = (before: Record<string, Json>, after: Record<string,
     }
     for (const [key, sheet] of oldSheets) {
       if (newKeys.has(key)) continue
-      sheets.push({ type: String(sheet.type), difficulty: String(sheet.difficulty), kind: 'removed', fields: [] })
+      sheets.push({ ...sheetIdent(sheet), kind: 'removed', fields: [] })
       summary.sheetsRemoved++
       count('sheets[]')
     }
@@ -192,12 +200,7 @@ export const diffCatalogs = (before: Record<string, Json>, after: Record<string,
       title: String(song.title ?? songId),
       kind: 'removed',
       fields: [],
-      sheets: sheetsOf(song).map((sheet) => ({
-        type: String(sheet.type),
-        difficulty: String(sheet.difficulty),
-        kind: 'removed',
-        fields: [],
-      })),
+      sheets: sheetsOf(song).map((sheet) => ({ ...sheetIdent(sheet), kind: 'removed', fields: [] })),
     })
   }
   if (summary.songsAdded) counts.set('songs (added)', summary.songsAdded)
@@ -205,7 +208,7 @@ export const diffCatalogs = (before: Record<string, Json>, after: Record<string,
 
   const lists: ListDiff[] = []
   for (const key of [...new Set([...Object.keys(before), ...Object.keys(after)])].sort()) {
-    if (key === 'songs' || key === 'updateTime') continue
+    if (key === 'songs' || TIMESTAMP_KEYS.includes(key)) continue
     const was = Array.isArray(before[key]) ? (before[key] as Json[]) : before[key] === undefined ? [] : [before[key]!]
     const now = Array.isArray(after[key]) ? (after[key] as Json[]) : after[key] === undefined ? [] : [after[key]!]
     const wasSet = new Set(was.map(canonical))
@@ -229,7 +232,7 @@ export const diffCatalogs = (before: Record<string, Json>, after: Record<string,
       .sort((a, b) => b.count - a.count || (a.path < b.path ? -1 : 1)),
     songs,
     lists,
-    updateTime: { before: before.updateTime, after: after.updateTime },
+    updateTime: { before: before.updatedAt ?? before.updateTime, after: after.updatedAt ?? after.updateTime },
   }
 }
 

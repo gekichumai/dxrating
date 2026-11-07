@@ -93,6 +93,7 @@ describe('diffCatalogs', () => {
     expect(kept.fields).toEqual([{ path: 'artist', before: 'Synthetic', after: 'Renamed' }])
     expect(kept.sheets).toEqual([
       {
+        id: 'dx:master',
         type: 'dx',
         difficulty: 'master',
         kind: 'changed',
@@ -101,8 +102,8 @@ describe('diffCatalogs', () => {
           { path: 'regions.cn', before: false, after: true },
         ],
       },
-      { type: 'dx', difficulty: 'remaster', kind: 'added', fields: [] },
-      { type: 'dx', difficulty: 'expert', kind: 'removed', fields: [] },
+      { id: 'dx:remaster', type: 'dx', difficulty: 'remaster', kind: 'added', fields: [] },
+      { id: 'dx:expert', type: 'dx', difficulty: 'expert', kind: 'removed', fields: [] },
     ])
   })
 
@@ -120,6 +121,7 @@ describe('diffCatalogs', () => {
     expect(levels[0]!.fields).toEqual([])
     expect(levels[0]!.sheets).toEqual([
       {
+        id: 'dx:master',
         type: 'dx',
         difficulty: 'master',
         kind: 'changed',
@@ -137,14 +139,60 @@ describe('diffCatalogs', () => {
     expect(diff.updateTime).toEqual({ before: '2026-11-01', after: '2026-11-02' })
   })
 
-  it('finds nothing between a catalog and itself, including the real one, quickly', () => {
-    const file = path.resolve(import.meta.dirname, '../../../../packages/dxdata/dxdata.json')
-    const text = readFileSync(file, 'utf8')
-    const started = performance.now()
+  it('finds nothing between the legacy dxdata.json and itself', () => {
+    const text = readFileSync(path.resolve(import.meta.dirname, '../../../../packages/dxdata/dxdata.json'), 'utf8')
     const real = diffCatalogs(JSON.parse(text), JSON.parse(text))
-    const elapsed = performance.now() - started
-    expect(real.songs).toEqual([])
-    expect(real.lists).toEqual([])
-    expect(elapsed).toBeLessThan(5000)
+    expect([real.songs, real.lists]).toEqual([[], []])
+  })
+})
+
+// The published shape: what dxdata.catalog_snapshots holds (song-catalog v1, the same document as the SSR snapshot)
+describe('diffCatalogs on a published song-catalog v1 document', () => {
+  const text = readFileSync(path.resolve(import.meta.dirname, '../../../../packages/dxdata/snapshot.json'), 'utf8')
+  const published = () => JSON.parse(text) as Record<string, any>
+
+  it('finds nothing between a published catalog and itself, quickly', () => {
+    const started = performance.now()
+    const real = diffCatalogs(published(), published())
+    expect(performance.now() - started).toBeLessThan(5000)
+    expect([real.songs, real.lists, real.summary.fieldChanges]).toEqual([[], [], 0])
+  })
+
+  it('matches songs and sheets by public ID, so a re-ordered or re-typed sheet is a change, not a swap', () => {
+    const before = published()
+    const after = published()
+    const [first, second, third] = after.songs
+    first.sheets[0].internalLevelValue += 0.1
+    first.sheets.reverse()
+    after.songs.splice(after.songs.indexOf(second), 1)
+    third.sheets[0].difficulty = 'remaster'
+    after.songs.reverse()
+    after.tags.push({ id: 999999, localizedName: { en: 'Synthetic' } })
+    after.updatedAt = 'later'
+    const diff = diffCatalogs(before, after)
+    expect(diff.summary).toEqual({
+      songsAdded: 0,
+      songsRemoved: 1,
+      songsChanged: 2,
+      sheetsAdded: 0,
+      sheetsRemoved: second.sheets.length,
+      sheetsChanged: 2,
+      fieldChanges: 2,
+    })
+    const changed = diff.songs.find((song) => song.songId === first.id)!
+    expect(changed.title).toBe(first.title)
+    expect(changed.sheets).toEqual([
+      expect.objectContaining({
+        id: before.songs[0].sheets[0].id,
+        kind: 'changed',
+        fields: [expect.objectContaining({ path: 'internalLevelValue' })],
+      }),
+    ])
+    expect(diff.songs.find((song) => song.songId === third.id)!.sheets[0]!.fields).toEqual([
+      { path: 'difficulty', before: before.songs[2].sheets[0].difficulty, after: 'remaster' },
+    ])
+    expect(diff.songs.find((song) => song.kind === 'removed')!.songId).toBe(second.id)
+    expect(diff.lists).toEqual([expect.objectContaining({ key: 'tags', added: [after.tags.at(-1)], removed: [] })])
+    expect(diff.updateTime.after).toBe('later')
   })
 })

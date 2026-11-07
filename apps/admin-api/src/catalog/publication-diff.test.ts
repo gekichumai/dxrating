@@ -7,14 +7,18 @@ import { ANNOUNCEMENT_READER, CATALOG_READER, makeCatalogTestApp } from './test-
 const url = process.env.ADMIN_API_TEST_DATABASE_URL
 const suite = url ? describe : describe.skip
 
+// The published song-catalog v1 shape, with public IDs
 const catalog = (level: number, songs = 3) => ({
+  schemaVersion: 1,
+  updatedAt: `t${level}`,
   songs: Array.from({ length: songs }, (_, i) => ({
-    songId: `song-${i}`,
+    id: `dsng_synthetic${i}`,
     title: `Synthetic ${i}`,
-    sheets: [{ type: 'dx', difficulty: 'master', level: '13', internalLevelValue: level + i / 10 }],
+    sheets: [
+      { id: `dsht_synthetic${i}`, type: 'dx', difficulty: 'master', level: '13', internalLevelValue: level + i / 10 },
+    ],
   })),
   versions: [{ version: 'PRiSM' }],
-  updateTime: `t${level}`,
 })
 
 suite('catalog diff (admin API)', () => {
@@ -41,12 +45,13 @@ suite('catalog diff (admin API)', () => {
     expect(body.summary).toMatchObject({ songsChanged: 3, sheetsChanged: 3, fieldChanges: 3 })
     expect(body.pathCounts).toEqual([{ path: 'sheets[].internalLevelValue', count: 3 }])
     expect(body.songs[0]).toEqual({
-      songId: 'song-0',
+      songId: 'dsng_synthetic0',
       title: 'Synthetic 0',
       kind: 'changed',
       fields: [],
       sheets: [
         {
+          id: 'dsht_synthetic0',
           type: 'dx',
           difficulty: 'master',
           kind: 'changed',
@@ -61,13 +66,13 @@ suite('catalog diff (admin API)', () => {
     const all = await json('/catalog/diff?from=1&to=3&limit=2')
     expect(all.body.summary).toMatchObject({ songsAdded: 1, songsChanged: 2 })
     expect(all.body.songsTotal).toBe(3)
-    expect(all.body.songs.map((s: any) => s.songId)).toEqual(['song-0', 'song-1'])
+    expect(all.body.songs.map((s: any) => s.songId)).toEqual(['dsng_synthetic0', 'dsng_synthetic1'])
     expect(all.body.nextOffset).toBe(2)
     const rest = await json('/catalog/diff?from=1&to=3&limit=2&offset=2')
-    expect(rest.body.songs.map((s: any) => [s.songId, s.kind])).toEqual([['song-2', 'added']])
+    expect(rest.body.songs.map((s: any) => [s.songId, s.kind])).toEqual([['dsng_synthetic2', 'added']])
     expect(rest.body.nextOffset).toBeNull()
     const added = await json(`/catalog/diff?from=1&to=3&path=${encodeURIComponent('songs (added)')}`)
-    expect(added.body.songs.map((s: any) => s.songId)).toEqual(['song-2'])
+    expect(added.body.songs.map((s: any) => s.songId)).toEqual(['dsng_synthetic2'])
     expect(added.body.path).toBe('songs (added)')
   })
 
