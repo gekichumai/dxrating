@@ -19,7 +19,11 @@ const SESSION_KEY_PREFIX = 'dxr-features:'
 const memoryCache = new Map<string, Promise<UserFeatures>>()
 
 /** Fetches the features; resolves `null` for a 404, rejects on other failures */
-export type FetchUserFeatures = () => Promise<UserFeatures | null>
+/**
+ * Reads the features of `userId`, the account the caller asks for. The request carries whatever session the browser
+ * has when it leaves: an implementation rejects instead of answering for another account
+ */
+export type FetchUserFeatures = (userId: string) => Promise<UserFeatures | null>
 
 function sessionStorageOrNull(): Storage | null {
   try {
@@ -54,7 +58,7 @@ export function getUserFeatures(
   const pending = memoryCache.get(userId)
   if (pending) return pending
 
-  const request = fetchFeatures().then(
+  const request = fetchFeatures(userId).then(
     (features) => {
       const resolved = features ?? FEATURES_OFF
       try {
