@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 // With nothing blocked, the lazily loaded SDK still reports errors (including ones thrown before it loaded), the
 // pageload transaction with web vitals, and INP interaction spans. Needs a build with a Sentry release:
-// `CI=true SENTRY_RELEASE=dxrating@pr-0+0000000 pnpm build`, then E2E_EXPECT_SENTRY=1. The tunnel is stubbed, so nothing
+// `CI=true SENTRY_RELEASE=dxrating@pr-0+0000000 VITE_E2E_BUILD=1 pnpm build`, then E2E_EXPECT_SENTRY=1. The tunnel is stubbed, so nothing
 // reaches Sentry.
 test.skip(!process.env.E2E_EXPECT_SENTRY, 'Needs a build with a Sentry release (E2E_EXPECT_SENTRY=1)')
 
@@ -37,20 +37,32 @@ test('reports errors, the pageload with web vitals, and INP spans', async ({ pag
   })
   const items = await stubTunnel(page)
 
-  page.on('domcontentloaded', () => {
-    // Thrown before the SDK loads: the early-error buffer must still report it
-    void page.evaluate(() =>
+  // Thrown after the app's entry has run but before the SDK has loaded, i.e. during hydration: the early-error buffer
+  // must keep it and the SDK must report it once loaded. The entry is an async module script, so the probe fires when
+  // the buffer installs its window listener.
+  await page.addInitScript(() => {
+    const probeWindow = window as { __SENTRY__?: unknown; e2eEarlyProbeBeforeSdk?: boolean }
+    const addEventListener = EventTarget.prototype.addEventListener
+    let fired = false
+    EventTarget.prototype.addEventListener = function (
+      this: EventTarget,
+      ...args: Parameters<typeof addEventListener>
+    ) {
+      addEventListener.apply(this, args)
+      if (fired || this !== window || args[0] !== 'unhandledrejection' || probeWindow.__SENTRY__) return
+      fired = true
       setTimeout(() => {
+        probeWindow.e2eEarlyProbeBeforeSdk = !probeWindow.__SENTRY__
         throw new Error('e2e-early-probe')
-      }),
-    )
+      })
+    }
   })
   await page.goto('/')
 
   // A slow interaction, so INP has something to report (the observer ignores interactions under 40 ms)
   const cdp = await page.context().newCDPSession(page)
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 20 })
-  const versionButton = page.getByRole('button', { name: /game version and region/i })
+  const versionButton = page.locator('button.version-switcher')
   await versionButton.click()
   await expect(versionButton).toHaveAttribute('aria-expanded', 'true', { timeout: 15_000 })
   await page.keyboard.press('Escape')
@@ -80,6 +92,7 @@ test('reports errors, the pageload with web vitals, and INP spans', async ({ pag
       .map((item) => JSON.stringify((item.payload.exception as { values?: unknown[] } | undefined)?.values ?? ''))
       .join('\n')
   await expect.poll(errorMessages, { timeout: 20_000 }).toContain('e2e-early-probe')
+  expect(await page.evaluate(() => (window as { e2eEarlyProbeBeforeSdk?: boolean }).e2eEarlyProbeBeforeSdk)).toBe(true)
   await expect.poll(errorMessages, { timeout: 20_000 }).toContain('e2e-late-probe')
 
   const pageload = () =>

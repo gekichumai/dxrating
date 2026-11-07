@@ -92,7 +92,8 @@ export default Sentry.withSentry(
     release: import.meta.env.VITE_SENTRY_RELEASE || undefined,
     environment: import.meta.env.VITE_SENTRY_ENVIRONMENT ?? 'development',
     // Off unless this is a CI release or preview build (see src/setup/sentry-release.ts), so local runs send nothing
-    enabled: Boolean(import.meta.env.VITE_SENTRY_RELEASE),
+    // and e2e builds (VITE_E2E_BUILD) keep the Worker from sending their test traffic to the production project
+    enabled: Boolean(import.meta.env.VITE_SENTRY_RELEASE) && !import.meta.env.VITE_E2E_BUILD,
     tracesSampleRate: 0.2,
     // OAuth callbacks carry one-time code and state in the query
     ...sentryScrubOptions,

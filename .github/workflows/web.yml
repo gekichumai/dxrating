@@ -75,11 +75,12 @@ jobs:
         run: pnpm --filter @gekichumai/dxrating-web exec playwright install --with-deps chromium
 
       # A placeholder release turns the browser SDK on, as in deployed builds. There is no SENTRY_AUTH_TOKEN, so nothing
-      # is uploaded, and the tests stub the tunnel, so nothing is sent.
+      # is uploaded; VITE_E2E_BUILD turns the Worker's Sentry off, and the tests stub the tunnel, so nothing is sent.
       - name: Build
         run: pnpm --filter @gekichumai/dxrating-web exec vite build
         env:
           SENTRY_RELEASE: dxrating@pr-0+0000000
+          VITE_E2E_BUILD: '1'
 
       - name: Run Playwright
         run: pnpm --filter @gekichumai/dxrating-web exec playwright test

@@ -15,8 +15,8 @@ function collectPageErrors(page: Page) {
 }
 
 async function expectHydrated(page: Page) {
-  // The version picker opens only once React has attached its handlers
-  const versionButton = page.getByRole('button', { name: /game version and region/i })
+  // The version picker opens only once React has attached its handlers (its label is localized)
+  const versionButton = page.locator('button.version-switcher')
   await expect(versionButton).toHaveAttribute('aria-expanded', 'false')
   await versionButton.click()
   await expect(versionButton).toHaveAttribute('aria-expanded', 'true', { timeout: 15_000 })
@@ -37,7 +37,7 @@ for (const locale of ['en', 'ja']) {
     await expectHydrated(page)
 
     // The search field works too
-    const search = page.getByRole('searchbox').or(page.getByRole('combobox')).first()
+    const search = page.locator('main input[type="text"]').first()
     await search.fill('Oshama')
     await expect(page.getByText(/OSHAMA SCRAMBLE/i).first()).toBeVisible({ timeout: 15_000 })
 

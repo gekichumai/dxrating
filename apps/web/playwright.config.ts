@@ -13,6 +13,8 @@ export default defineConfig({
   use: {
     baseURL,
     trace: 'retain-on-failure',
+    // Local runs can point at an installed Chromium instead of downloading Playwright's
+    launchOptions: { executablePath: process.env.E2E_CHROMIUM_PATH || undefined },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: process.env.E2E_BASE_URL

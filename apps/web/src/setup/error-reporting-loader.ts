@@ -16,6 +16,16 @@ const IDLE_TIMEOUT_MS = 3000
 const NO_IDLE_CALLBACK_DELAY_MS = 1000
 
 let scheduled = false
+let earlyErrors: ReturnType<typeof bufferEarlyErrors> | undefined
+
+/**
+ * Starts keeping uncaught errors for Sentry. Called first thing in the client entry (src/client.tsx): the router, which
+ * schedules the SDK, is created later, after hydration has started.
+ */
+export function startEarlyErrorBuffer() {
+  if (earlyErrors || typeof window === 'undefined' || !import.meta.env.VITE_SENTRY_RELEASE) return
+  earlyErrors = bufferEarlyErrors()
+}
 
 export function scheduleErrorReporting(router: AnyRouter) {
   if (scheduled || typeof window === 'undefined') return
@@ -27,12 +37,13 @@ export function scheduleErrorReporting(router: AnyRouter) {
     return
   }
 
-  const earlyErrors = bufferEarlyErrors()
+  startEarlyErrorBuffer()
+  const buffer = earlyErrors
 
   const load = () => {
     import('./error-reporting')
       .then(({ initErrorReporting }) => {
-        const pending = earlyErrors.stop()
+        const pending = buffer?.stop() ?? []
         const sdk = initErrorReporting(router)
         attachTelemetrySdk(sdk)
         for (const error of pending) {
@@ -41,7 +52,7 @@ export function scheduleErrorReporting(router: AnyRouter) {
       })
       .catch(() => {
         // Blocked or offline: keep working without Sentry
-        earlyErrors.stop()
+        buffer?.stop()
         discardTelemetryQueue()
       })
   }
