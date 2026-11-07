@@ -18,6 +18,7 @@ import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
 import { LinkBehavior } from '@/components/global/InternalLink'
+import { afterNextPaint } from '@/utils/afterNextPaint'
 
 export interface SongSheetTabsProps {
   sheets: Sheet[]
@@ -62,22 +63,6 @@ const TYPE_LABELS = {
 } satisfies Record<TypeEnum, PlainMessage>
 
 const typeShortLabel = (type: TypeEnum, label: string) => TYPE_SHORT_LABELS[type] ?? label
-
-/** Runs a task in the task after the next paint */
-const afterNextPaint = (task: () => void): (() => void) => {
-  let timer: ReturnType<typeof setTimeout> | undefined
-  if (typeof requestAnimationFrame !== 'function') {
-    timer = setTimeout(task)
-    return () => clearTimeout(timer)
-  }
-  const frame = requestAnimationFrame(() => {
-    timer = setTimeout(task)
-  })
-  return () => {
-    cancelAnimationFrame(frame)
-    clearTimeout(timer)
-  }
-}
 
 /** A tab the visitor picked whose page is still on its way, and the chart shown when it was picked */
 interface PendingChart {
