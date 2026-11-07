@@ -152,6 +152,42 @@ describe('dxdata v2 endpoint', () => {
     expect(calls.filter((call) => call === 'body')).toHaveLength(1)
   })
 
+  it('shares one build between requests that arrive while it runs, and builds again after a failure', async () => {
+    let reads = 0
+    let release!: () => void
+    let gate = new Promise<void>((resolve) => (release = resolve))
+    let body = v1Body
+    const store = createDxdataV2Store({
+      getPublishedMetadata: () => Effect.succeed(v1Metadata),
+      getSnapshotBody: () =>
+        Effect.promise(async () => {
+          reads++
+          await gate
+          return body
+        }),
+    })
+    const handler = createDxdataEffect(store, () => {}, undefined, DXDATA_V2_CACHE_TAG)
+    const app = new Hono()
+    app.on(['GET', 'HEAD'], DXDATA_V2_PATH, (context) => Effect.runPromise(handler(context)))
+
+    body = '{not json'
+    const failing = Array.from({ length: 5 }, () => app.request(DXDATA_V2_PATH))
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    release()
+    expect((await Promise.all(failing)).map((response) => response.status)).toEqual([500, 500, 500, 500, 500])
+    expect(reads).toBe(1)
+
+    body = v1Body
+    gate = new Promise<void>((resolve) => (release = resolve))
+    const requests = Array.from({ length: 10 }, () => app.request(DXDATA_V2_PATH))
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    release()
+    const responses = await Promise.all(requests)
+    expect(responses.every((response) => response.status === 200)).toBe(true)
+    expect(new Set(responses.map((response) => response.headers.get('etag'))).size).toBe(1)
+    expect(reads).toBe(2)
+  })
+
   it('builds again when a new catalog is published', async () => {
     const { app, publish } = createApp()
     const before = (await app.request(DXDATA_V2_PATH)).headers.get('etag')
