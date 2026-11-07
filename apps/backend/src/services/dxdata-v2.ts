@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { toV2Catalog } from '@gekichumai/dxdata/v2'
-import { Effect } from 'effect'
+import { Deferred, Effect } from 'effect'
 import { DxdataDecodeError, type PublishedDxdataMetadata } from './dxdata'
 
 /** The v2 catalog (gekichumai/meta#43): the published catalog without its community data and repeated defaults */
@@ -20,18 +20,21 @@ interface DxdataStore<E, R> {
  * `createDxdataEffect` to serve it with the v1 endpoint's validators, Brotli body and cache headers.
  */
 export const createDxdataV2Store = <E, R>(v1: DxdataStore<E, R>) => {
-  let built: { v1Sha256: string; metadata: PublishedDxdataMetadata; body: string } | undefined
+  type Built = { v1Sha256: string; metadata: PublishedDxdataMetadata; body: string }
+  let built: Built | undefined
+  // The build in progress, shared by every request that arrives meanwhile (a restart, a new publication): one read
+  // and one transform of the snapshot, not one per request
+  let building: { v1Sha256: string; result: Deferred.Deferred<Built | undefined, E | DxdataDecodeError> } | undefined
 
-  const build = (v1Metadata: PublishedDxdataMetadata) =>
+  const buildOnce = (v1Metadata: PublishedDxdataMetadata) =>
     Effect.gen(function* () {
-      if (built?.v1Sha256 === v1Metadata.bodySha256) return built
       const v1Body = yield* v1.getSnapshotBody(v1Metadata.catalogRunId, v1Metadata.bodySha256)
       if (v1Body === undefined) return undefined
       const body = yield* Effect.try({
         try: () => JSON.stringify(toV2Catalog(JSON.parse(v1Body) as SongCatalogDocument)),
         catch: (cause) => new DxdataDecodeError({ operation: 'build the v2 catalog', cause }),
       })
-      const entry = {
+      const entry: Built = {
         v1Sha256: v1Metadata.bodySha256,
         body,
         metadata: {
@@ -43,6 +46,26 @@ export const createDxdataV2Store = <E, R>(v1: DxdataStore<E, R>) => {
       }
       built = entry
       return entry
+    })
+
+  const build = (v1Metadata: PublishedDxdataMetadata) =>
+    Effect.gen(function* () {
+      if (built?.v1Sha256 === v1Metadata.bodySha256) return built
+      if (building?.v1Sha256 === v1Metadata.bodySha256) return yield* Deferred.await(building.result)
+      const result = yield* Deferred.make<Built | undefined, E | DxdataDecodeError>()
+      const entry = { v1Sha256: v1Metadata.bodySha256, result }
+      building = entry
+      // Finishes even if the request that started it goes away, so the others waiting on it are answered; a failure
+      // reaches them all, and the next request builds again
+      return yield* buildOnce(v1Metadata).pipe(
+        Effect.onExit((exit) =>
+          Effect.gen(function* () {
+            yield* Deferred.done(result, exit)
+            if (building === entry) building = undefined
+          }),
+        ),
+        Effect.uninterruptible,
+      )
     })
 
   return {
