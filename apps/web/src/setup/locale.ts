@@ -11,6 +11,18 @@ export const LOCALE_COOKIE_NAME = 'dxrating.locale'
 export const LOCALE_STORAGE_KEY = 'dxrating-locale'
 export const LOCALE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
 
+/** A Map, not an object literal: `?locale=constructor` must not find Object.prototype */
+const PRIMARY_LANGUAGE_LOCALES = new Map<string, SupportedLocale>([
+  ['ms', 'ms'],
+  ['id', 'id'],
+  ['in', 'id'],
+  ['fil', 'fil'],
+  ['tl', 'fil'],
+  ['vi', 'vi'],
+  ['th', 'th'],
+  ['my', 'my'],
+])
+
 export function toSupportedLocale(lng: string | null | undefined): SupportedLocale | null {
   if (!lng) return null
 
@@ -24,7 +36,9 @@ export function toSupportedLocale(lng: string | null | undefined): SupportedLoca
   if (lower === 'zh-hant' || lower === 'zh-tw' || lower === 'zh-hk' || lower === 'zh-mo') return 'zh-Hant'
   if (lower === 'zh' || lower.startsWith('zh-')) return 'zh-Hans'
 
-  return null
+  // Languages of the maimai DX International countries (meta#51), matched on the primary language subtag so any
+  // region (ms-MY, ms-SG, en-MY…) resolves by language. `in` and `tl` are the legacy / ISO 639-1 tags browsers still send
+  return PRIMARY_LANGUAGE_LOCALES.get(lower.split('-')[0]) ?? null
 }
 
 /**

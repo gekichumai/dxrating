@@ -56,7 +56,13 @@ export const LOCALES = [
   { value: 'ko', label: '한국어' },
   { value: 'zh-Hans', label: '简体中文' },
   { value: 'zh-Hant', label: '繁體中文' },
-] as const
+  { value: 'ms', label: 'Bahasa Melayu' },
+  { value: 'id', label: 'Bahasa Indonesia' },
+  { value: 'fil', label: 'Filipino' },
+  { value: 'vi', label: 'Tiếng Việt' },
+  { value: 'th', label: 'ไทย' },
+  { value: 'my', label: 'မြန်မာ' },
+] as const satisfies readonly { value: SupportedLocale; label: string }[]
 
 /**
  * The language choices as menu item elements, for LocaleSelector and the combined phone menu (DisplayPreferencesMenu).

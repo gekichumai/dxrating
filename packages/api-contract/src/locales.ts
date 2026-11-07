@@ -6,7 +6,7 @@
  */
 export const BASE_LOCALE = 'en'
 
-export const SUPPORTED_LOCALES = ['en', 'ja', 'ko', 'zh-Hans', 'zh-Hant'] as const
+export const SUPPORTED_LOCALES = ['en', 'ja', 'ko', 'zh-Hans', 'zh-Hant', 'ms', 'id', 'fil', 'vi', 'th', 'my'] as const
 
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 
