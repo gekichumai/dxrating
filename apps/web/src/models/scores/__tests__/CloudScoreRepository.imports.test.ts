@@ -1023,6 +1023,61 @@ describe('CloudScoreRepository server imports', () => {
   })
 })
 
+describe('CloudScoreRepository import job reports (analytics, §12.3)', () => {
+  it('reports each finished job with its source and who fetched it, nothing else', async () => {
+    const reports: unknown[] = []
+    const repository = await openRepository({ onImportJobFinished: (report) => reports.push(report) })
+
+    await collect(repository.runServerImport('lxns', {}))
+    await repository.applyImport([{ sheetId: SHEET_B, achievementRate: 99 }], { source: 'aqua-dx', mode: 'merge' })
+
+    expect(reports).toEqual([
+      { status: 'succeeded', source: 'lxns', fetchedBy: 'server' },
+      { status: 'succeeded', source: 'aqua-dx', fetchedBy: 'client' },
+    ])
+  })
+
+  it('reports a failed server job, and a failed maimai NET stream by its region', async () => {
+    const reports: unknown[] = []
+    const net = imports.netTransport(() => [{ type: 'error', code: 'INVALID_CREDENTIALS', message: 'no', jobId: null }])
+    const repository = await openRepository({
+      onImportJobFinished: (report) => reports.push(report),
+      netImport: net.transport,
+    })
+    // The same Diving-Fish account's job is the user's import: it is adopted, and its failure reported
+    const running = imports.startRunning('diving-fish', {
+      trigger: 'user',
+      sourceAccountKind: 'df_username',
+      sourceAccountId: 'demo',
+    })
+    imports.failures.push({ status: 409, code: 'CONFLICT', data: { reason: 'IMPORT_IN_PROGRESS', jobId: running.id } })
+    imports.api.get = async () => ({ ...running, status: 'failed', errorCode: 'upstream_unavailable' })
+
+    await expect(collect(repository.runServerImport('diving-fish', { username: 'demo' }))).rejects.toThrow()
+    await expect(
+      collect(repository.runServerImport('maimai-net', { region: 'intl', id: 'sega-id', password: 'secret' })),
+    ).rejects.toThrow()
+
+    expect(reports).toEqual([
+      { status: 'failed', source: 'diving-fish', fetchedBy: 'server' },
+      { status: 'failed', source: 'maimai-net-intl', fetchedBy: 'server' },
+    ])
+    // Never an account, a credential or a job ID
+    expect(JSON.stringify(reports)).not.toMatch(/sega-id|secret|demo|dimp_/)
+  })
+
+  it('reports nothing for an upload that never left the device', async () => {
+    const reports: unknown[] = []
+    const repository = await openRepository({ onImportJobFinished: (report) => reports.push(report) })
+
+    await expect(
+      repository.applyImport([{ sheetId: 'not-a-sheet', achievementRate: 99 }], { source: 'aqua-dx', mode: 'merge' }),
+    ).rejects.toBeInstanceOf(NothingToImportError)
+
+    expect(reports).toEqual([])
+  })
+})
+
 describe('autoNetImportKey', () => {
   it('is one key per save and 15-minute window', () => {
     const start = Date.UTC(2026, 10, 3, 9, 0)

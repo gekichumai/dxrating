@@ -7,6 +7,7 @@ const SECTIONS = [
   'collect',
   'use',
   'storage',
+  'cloud',
   'analytics',
   'mcp',
   'cookies',
@@ -54,6 +55,11 @@ export const PrivacyPolicy = () => {
 
       <h2 id="privacy-storage">{t('privacy.storage.heading')}</h2>
       <p>{t('privacy.storage.body')}</p>
+
+      <h2 id="privacy-cloud">{t('privacy.cloud.heading')}</h2>
+      <p>{t('privacy.cloud.p1')}</p>
+      <p>{t('privacy.cloud.p2')}</p>
+      <p>{t('privacy.cloud.p3')}</p>
 
       <h2 id="privacy-analytics">{t('privacy.analytics.heading')}</h2>
       <p>{t('privacy.analytics.body')}</p>

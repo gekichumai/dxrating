@@ -33,6 +33,9 @@ const activeSave = (overrides: Partial<ActiveSave>): ActiveSave => ({
   setActiveSaveId: () => {},
   flushBeforeSignOut: async () => {},
   listSaves: async () => [],
+  userId: 'user-1',
+  features: null,
+  refreshFeatures: () => {},
   ...overrides,
 })
 

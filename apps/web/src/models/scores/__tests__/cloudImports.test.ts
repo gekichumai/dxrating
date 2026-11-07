@@ -23,7 +23,7 @@ const serverCanonicalSha256 = (value: unknown) => createHash('sha256').update(ca
  * Hashes the backend test pins for the same values (apps/backend/src/test/cloud-save-canonical-hash.test.ts), so a
  * change on either side that alters the bytes fails both
  */
-const GOLDEN_CHUNK_SHA256 = 'd9e30a9e44e80eab99c2b4a2a8bcd50e4c49a1c33fa44f02d7327dd3b1773a88'
+const GOLDEN_CHUNK_SHA256 = '96ed5203f93af775e5355b41ac92f295508c208e8ed1e1474c276b06d20ad939'
 const GOLDEN_NESTED_SHA256 = '2502e387e95e547fab446a7b2147d589ba621f0994994daf5ca9c692b7df22ce'
 
 describe('clientImportPlan', () => {
@@ -78,6 +78,20 @@ describe('entriesToImportRecords', () => {
         providerRecordId: '42',
         claimedSource: 'diving-fish',
       },
+    ])
+  })
+
+  it('sends a best 50 hint only where the calculator honours it (Diving-Fish)', () => {
+    const { records } = entriesToImportRecords(
+      [
+        { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 99, source: { provider: 'lxns', best50Bucket: 'b15' } },
+        { sheetId: 'dsht_5mk3yr8gme', achievementRate: 98, source: { provider: 'diving-fish', best50Bucket: 'b35' } },
+      ],
+      { source: 'dxrating-json', claimedSource: null },
+    )
+    expect(records.map((record) => [record.sheetId, record.best50Bucket])).toEqual([
+      ['dsht_e5nsvt8k2a', null],
+      ['dsht_5mk3yr8gme', 'b35'],
     ])
   })
 
@@ -207,7 +221,7 @@ describe('rawPayloadSha256 (cross-check with the server)', () => {
       achievementRate: 100.5,
       comboFlag: 'ap',
       dxScore: 2400,
-      source: { provider: 'lxns', providerId: '譜面-🎵-ß', best50Bucket: 'b15' },
+      source: { provider: 'diving-fish', providerId: '譜面-🎵-ß', best50Bucket: 'b15' },
     },
     { sheetId: 'dsht_5mk3yr8gme', achievementRate: 98 },
   ]
@@ -221,7 +235,7 @@ describe('rawPayloadSha256 (cross-check with the server)', () => {
     expect(hash).toBe(GOLDEN_CHUNK_SHA256)
     // Nulls stay, keys are sorted, unicode is hashed as UTF-8
     expect(canonicalJson(records)).toBe(
-      '[{"achievement":1005000,"best50Bucket":"b15","claimedSource":"lxns","comboFlag":"ap","dxScore":2400,' +
+      '[{"achievement":1005000,"best50Bucket":"b15","claimedSource":"diving-fish","comboFlag":"ap","dxScore":2400,' +
         '"providerRecordId":"譜面-🎵-ß","sheetId":"dsht_e5nsvt8k2a","syncFlag":null},{"achievement":980000,' +
         '"best50Bucket":null,"claimedSource":null,"comboFlag":null,"dxScore":null,"providerRecordId":null,' +
         '"sheetId":"dsht_5mk3yr8gme","syncFlag":null}]',

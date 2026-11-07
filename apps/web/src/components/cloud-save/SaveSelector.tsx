@@ -23,12 +23,11 @@ type LoadState = { kind: 'loading' } | { kind: 'error' } | { kind: 'loaded'; sav
  * the latest snapshot. Choosing one switches the active save. Creating saves comes with the first sign-in migration.
  */
 export const SaveSelector: FC = () => {
-  const { t, i18n } = useTranslation(['rating-calculator'])
+  const { t } = useTranslation(['rating-calculator'])
   const cloud = useCloudSaveUi()
   // Re-render when the active save changes under the same controller (the demo)
   useCloudSaveStatus()
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
-  const numberFormat = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language])
 
   // Bumped by "Try again" after a failed load
   const [attempt, setAttempt] = useState(0)
@@ -67,11 +66,30 @@ export const SaveSelector: FC = () => {
     return <p className="m-0 text-sm text-fg-2">{t('rating-calculator:cloud-save.saves.empty')}</p>
   }
 
-  const activeId = cloud.controller.saveId
+  return (
+    <SaveOptionList
+      saves={state.saves}
+      activeId={cloud.controller.saveId}
+      onChoose={(id) => cloud.setActiveSaveId(id)}
+    />
+  )
+}
+
+/**
+ * The saves as a list of buttons: name, region, record count, the B50 of the latest snapshot and the last sync.
+ * `activeId`: the save in use, marked and not chosen again; `null` when none is (the local save is active).
+ */
+export const SaveOptionList: FC<{
+  saves: readonly SaveDTO[]
+  activeId: string | null
+  onChoose(saveId: string): void
+}> = ({ saves, activeId, onChoose }) => {
+  const { t, i18n } = useTranslation(['rating-calculator'])
+  const numberFormat = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language])
   const separator = labelSeparator(i18n.language)
   return (
     <ul className="m-0 flex list-none flex-col gap-1 p-0" aria-label={t('rating-calculator:cloud-save.saves.title')}>
-      {state.saves.map((save) => {
+      {saves.map((save) => {
         const active = save.id === activeId
         const region = REGION_LABELS[save.region] || t('rating-calculator:cloud-save.saves.region-any')
         const details = [
@@ -93,7 +111,7 @@ export const SaveSelector: FC = () => {
               )}
               aria-current={active ? 'true' : undefined}
               onClick={() => {
-                if (!active) cloud.setActiveSaveId(save.id)
+                if (!active) onChoose(save.id)
               }}
             >
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">

@@ -174,11 +174,23 @@ export interface CloudScoreRepositoryOptions {
   serverImports?: boolean
   /** How often a running import job is polled; 2 s by default */
   importPollIntervalMs?: number
+  /**
+   * Called once an import of this save has ended, with its source and who fetched it only (analytics, §12.3).
+   * Not called for imports that never reached the server (nothing to upload, server imports off)
+   */
+  onImportJobFinished?: (report: ImportJobReport) => void
   /** The first wait before an import request is sent again; doubles each time, 1 s by default */
   importRetryDelayMs?: number
 }
 
 export type CloudSyncStopReason = 'not-found' | 'unauthorized'
+
+export interface ImportJobReport {
+  status: 'succeeded' | 'failed'
+  /** The job's source (`maimai-net-jp`, `lxns`, `dxrating-json`…) */
+  source: string
+  fetchedBy: 'server' | 'client'
+}
 
 export const SCORE_SYNC_LOCK_NAME = 'dxr-scores-sync'
 export const SCORE_BROADCAST_CHANNEL_NAME = 'dxr-scores'
@@ -429,6 +441,28 @@ export class CloudScoreRepository implements WebScoreRepository {
    * those itself ({@link runServerImport}).
    */
   async applyImport(entries: PlayEntry[], meta: ImportMeta): Promise<ImportResult> {
+    const source = clientImportPlan(meta.source, this.serverImportsEnabled, meta.claimedSource)?.source
+    try {
+      const result = await this.applyClientImport(entries, meta)
+      if (source && result.job) this.reportImportJob('succeeded', result.job.source ?? source, 'client')
+      return result
+    } catch (error) {
+      if (source && !(error instanceof NothingToImportError) && !(error instanceof CloudClearNotSentError)) {
+        this.reportImportJob('failed', source, 'client')
+      }
+      throw error
+    }
+  }
+
+  private reportImportJob(status: ImportJobReport['status'], source: string, fetchedBy: ImportJobReport['fetchedBy']) {
+    try {
+      this.options.onImportJobFinished?.({ status, source, fetchedBy })
+    } catch {
+      // Analytics never breaks an import
+    }
+  }
+
+  private async applyClientImport(entries: PlayEntry[], meta: ImportMeta): Promise<ImportResult> {
     const plan = clientImportPlan(meta.source, this.serverImportsEnabled, meta.claimedSource)
     if (!plan) throw new UnsupportedScoreOperationError(`Uploading records from ${meta.source}`, this.kind)
     const imports = this.requireImports()
@@ -508,6 +542,31 @@ export class CloudScoreRepository implements WebScoreRepository {
     args: ServerImportArgs[K],
   ): AsyncGenerator<ImportProgress> {
     if (!this.serverImportsEnabled) throw new ServerImportsDisabledError()
+    const fallbackSource =
+      kind === 'maimai-net' ? `maimai-net-${(args as ServerImportArgs['maimai-net']).region}` : (kind as string)
+    let finished = false
+    try {
+      for await (const progress of this.runServerImportJob(kind, args)) {
+        if (progress.stage === 'done' && progress.job && !finished) {
+          finished = true
+          this.reportImportJob('succeeded', progress.job.source ?? fallbackSource, 'server')
+        }
+        yield progress
+      }
+    } catch (error) {
+      if (!finished) {
+        finished = true
+        const job = error instanceof ServerImportFailedError ? error.job : null
+        this.reportImportJob('failed', job?.source ?? fallbackSource, 'server')
+      }
+      throw error
+    }
+  }
+
+  private async *runServerImportJob<K extends ServerImportKind>(
+    kind: K,
+    args: ServerImportArgs[K],
+  ): AsyncGenerator<ImportProgress> {
     const imports = this.requireImports()
     const idempotencyKey = args.idempotencyKey ?? newIdempotencyKey()
     const trigger = args.trigger ?? 'user'

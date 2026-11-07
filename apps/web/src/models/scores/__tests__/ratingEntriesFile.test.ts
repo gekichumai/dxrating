@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { parseRatingFile } from '../ratingEntriesFile'
+import { entriesToImportRecords } from '../cloudImports'
+import { cloudRecordToPlayEntry, recordFromDTO } from '../cloudScoreMapping'
+import { manualProvenance } from './fakeCloudSaveServer'
 
 describe('parseRatingFile', () => {
   it('accepts an "all records" export as it was written, extra fields included', () => {
@@ -82,5 +85,134 @@ describe('parseRatingFile', () => {
     ['an entry that is not an object', [{ sheetId: 'dsht_5mk3yr8gme', achievementRate: 99 }, 42]],
   ])('rejects %s, importing nothing', (_, value) => {
     expect(parseRatingFile(JSON.stringify(value))).toMatchObject({ success: false, reason: 'invalid-structure' })
+  })
+
+  it('reads a "Download my data" file as its saves, and an export with no records as not a rating file', () => {
+    const file = {
+      format: 'dxrating-cloud-save-export',
+      version: 1,
+      saves: [
+        {
+          id: 'dsav_a',
+          name: 'Main',
+          region: 'intl',
+          records: [
+            {
+              sheetId: 'dsht_5mk3yr8gme',
+              achievement: 1005432,
+              achievementRate: 100.5432,
+              comboFlag: 'fcp',
+              syncFlag: 'fs',
+              dxScore: 2100,
+              best50Bucket: 'b15',
+              providerRecordId: '42',
+              provenance: { source: 'diving-fish', claimedSource: null, verification: 'verified' },
+            },
+            { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 'broken' },
+          ],
+        },
+      ],
+    }
+    expect(parseRatingFile(JSON.stringify(file))).toEqual({
+      success: true,
+      cloudExport: [
+        {
+          id: 'dsav_a',
+          name: 'Main',
+          region: 'intl',
+          entries: [
+            {
+              sheetId: 'dsht_5mk3yr8gme',
+              achievementRate: 100.5432,
+              comboFlag: 'fcp',
+              syncFlag: 'fs',
+              dxScore: 2100,
+              source: { provider: 'diving-fish', providerId: '42', best50Bucket: 'b15' },
+              // Where the calculator reads the hint
+              providerConfig: { divingFish: { ratingEligibility: 'b15' } },
+            },
+          ],
+        },
+      ],
+    })
+    // A backed-up record keeps its device's hint without claiming a provider; re-imported into a cloud save, both
+    // keep it
+    const backedUp = parseRatingFile(
+      JSON.stringify({
+        ...file,
+        saves: [
+          {
+            id: 'dsav_b',
+            name: 'Main',
+            region: 'cn',
+            records: [
+              {
+                sheetId: 'dsht_e5nsvt8k2a',
+                achievementRate: 99,
+                best50Bucket: 'b35',
+                provenance: { source: 'legacy-local', claimedSource: null, verification: 'client_reported' },
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    const entries = backedUp.success && 'cloudExport' in backedUp ? backedUp.cloudExport![0]!.entries : []
+    expect(entries).toEqual([
+      {
+        sheetId: 'dsht_e5nsvt8k2a',
+        achievementRate: 99,
+        comboFlag: null,
+        syncFlag: null,
+        providerConfig: { divingFish: { ratingEligibility: 'b35' } },
+      },
+    ])
+    expect(entriesToImportRecords(entries, { source: 'dxrating-json', claimedSource: null }).records[0]).toMatchObject({
+      best50Bucket: 'b35',
+      claimedSource: null,
+    })
+    // Stored by that import as a client `dxrating-json` record, it reads back with the hint, and a later export of it
+    // restores the hint again
+    const stored = recordFromDTO({
+      sheetId: 'dsht_e5nsvt8k2a',
+      achievement: 990000,
+      comboFlag: null,
+      syncFlag: null,
+      dxScore: null,
+      best50Bucket: 'b35',
+      providerRecordId: null,
+      provenance: manualProvenance({ source: 'dxrating-json', entryMethod: 'import', importJobId: 'dimp_f' }),
+      revision: 1,
+      valueChangedAt: '2026-11-03T00:00:00.000Z',
+      clientEditedAt: null,
+      deletedAt: null,
+    })
+    expect(cloudRecordToPlayEntry(stored, null).providerConfig).toEqual({ divingFish: { ratingEligibility: 'b35' } })
+    const again = parseRatingFile(
+      JSON.stringify({
+        ...file,
+        saves: [
+          {
+            id: 'dsav_c',
+            name: 'Main',
+            region: 'cn',
+            records: [
+              {
+                sheetId: 'dsht_e5nsvt8k2a',
+                achievementRate: 99,
+                best50Bucket: 'b35',
+                provenance: { source: 'dxrating-json', fetchedBy: 'client', verification: 'client_reported' },
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    const againEntries = again.success && 'cloudExport' in again ? again.cloudExport![0]!.entries : []
+    expect(againEntries[0]?.providerConfig).toEqual({ divingFish: { ratingEligibility: 'b35' } })
+    expect(parseRatingFile(JSON.stringify({ ...file, saves: [] }))).toMatchObject({
+      success: false,
+      reason: 'invalid-structure',
+    })
   })
 })
