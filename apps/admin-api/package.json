@@ -13,7 +13,8 @@
     "start": "node --enable-source-maps dist/index.js",
     "lint": "oxlint . && pnpm lint:effect",
     "lint:effect": "effect-tsgo diagnostics --project tsconfig.json --strict --severity error,warning",
-    "test": "vitest run"
+    "test": "vitest run",
+    "token:new": "tsx scripts/new-agent-token.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.17",

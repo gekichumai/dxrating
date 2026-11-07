@@ -74,5 +74,5 @@
       }
     ]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "scripts/**/*"]
 }

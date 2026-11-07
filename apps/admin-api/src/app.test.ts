@@ -1,18 +1,53 @@
 import { Effect, Layer } from 'effect'
 import { afterAll, describe, expect, it } from 'vitest'
 import { accessVerifierTestLayer, identityFromClaims } from './access'
+import { hashToken } from './agent-tokens'
+import { RateLimiterLive } from './rate-limit'
 import { createAdminApiApp } from './app'
 import { adminApiConfigLayer, envSchema } from './config'
 import { makeAdminApiRuntime } from './runtime'
 
 const ORIGIN = 'https://admin.dxrating.net'
+const READ_TOKEN = 'dxa_synthetic-read-token'
+const EXPIRED_TOKEN = 'dxa_synthetic-expired-token'
+const BOUND_TOKEN = 'dxa_synthetic-bound-token'
+const MOD_TOKEN = 'dxa_synthetic-moderation-token'
 const config = envSchema.parse({
   NODE_ENV: 'test',
   ADMIN_ORIGIN: ORIGIN,
   ADMIN_HUMAN_EMAILS: ' Owner@Example.invalid , ',
+  ADMIN_AGENT_RATE_LIMIT: '10',
+  ADMIN_AGENT_TOKENS: JSON.stringify([
+    {
+      principal: 'coordinator',
+      sha256: hashToken(READ_TOKEN),
+      scopes: ['announcements:read'],
+      expiresAt: '2999-01-01T00:00:00Z',
+    },
+    {
+      principal: 'old-agent',
+      sha256: hashToken(EXPIRED_TOKEN),
+      scopes: ['announcements:read'],
+      expiresAt: '2001-01-01T00:00:00Z',
+    },
+    {
+      principal: 'bound-agent',
+      sha256: hashToken(BOUND_TOKEN),
+      scopes: ['comments:read'],
+      expiresAt: '2999-01-01T00:00:00Z',
+      accessCommonName: 'other.access',
+    },
+    {
+      principal: 'moderator',
+      sha256: hashToken(MOD_TOKEN),
+      scopes: ['comments:moderate'],
+      expiresAt: '2999-01-01T00:00:00Z',
+    },
+  ]),
 })
 const runtime = makeAdminApiRuntime(
-  Layer.merge(
+  Layer.mergeAll(
+    RateLimiterLive,
     adminApiConfigLayer(config),
     accessVerifierTestLayer({
       owner: { kind: 'user', email: 'owner@example.invalid' },
@@ -44,7 +79,20 @@ describe('admin API guard', () => {
     ['no Access assertion', {}, 401],
     ['an assertion the verifier rejects', { 'cf-access-jwt-assertion': 'forged' }, 401],
     ['an Access user off the allowlist', { 'cf-access-jwt-assertion': 'stranger' }, 403],
-    ['an Access service token before agent tokens ship', { 'cf-access-jwt-assertion': 'robot' }, 403],
+    ['an Access service token without a bearer', { 'cf-access-jwt-assertion': 'robot' }, 401],
+    ['an unknown bearer', { 'cf-access-jwt-assertion': 'robot', authorization: 'Bearer dxa_nope' }, 403],
+    ['an expired token', { 'cf-access-jwt-assertion': 'robot', authorization: `Bearer ${EXPIRED_TOKEN}` }, 403],
+    [
+      'a token bound to another service token',
+      { 'cf-access-jwt-assertion': 'robot', authorization: `Bearer ${BOUND_TOKEN}` },
+      403,
+    ],
+    ['a valid bearer without Access', { authorization: `Bearer ${READ_TOKEN}` }, 401],
+    [
+      'a valid bearer from a human Access session',
+      { 'cf-access-jwt-assertion': 'stranger', authorization: `Bearer ${READ_TOKEN}` },
+      403,
+    ],
     [
       'a browser request from another origin',
       { 'cf-access-jwt-assertion': 'owner', origin: 'https://evil.example' },
@@ -52,6 +100,24 @@ describe('admin API guard', () => {
     ],
   ])('fails closed for %s', async (_, headers, status) => {
     expect((await call('/api/me', headers)).status).toBe(status)
+  })
+
+  it('lets an agent in with its token scopes, never all scopes', async () => {
+    const res = await call('/api/me', { 'cf-access-jwt-assertion': 'robot', authorization: `Bearer ${READ_TOKEN}` })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({
+      type: 'agent',
+      id: 'coordinator',
+      actor: 'agent:coordinator',
+      scopes: ['announcements:read'],
+    })
+  })
+
+  it('rate limits destructive agents harder (a fifth of the limit)', async () => {
+    const headers = { 'cf-access-jwt-assertion': 'robot', authorization: `Bearer ${MOD_TOKEN}` }
+    expect((await call('/api/me', headers)).status).toBe(200)
+    expect((await call('/api/me', headers)).status).toBe(200)
+    expect((await call('/api/me', headers)).status).toBe(429)
   })
 
   it('serves the private OpenAPI document to admins only', async () => {
