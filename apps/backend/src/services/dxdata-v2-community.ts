@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import type { CatalogAlias, CatalogTag, CatalogTagGroup, CatalogTagSong } from '@gekichumai/dxdata'
 import { toV2Community } from '@gekichumai/dxdata/v2'
-import { Data, Effect } from 'effect'
+import { Data, Deferred, Effect } from 'effect'
 import type { Context, Env } from 'hono'
 import { ifNoneMatchMatches } from './dxdata'
 
@@ -41,10 +41,12 @@ export const createCommunityOverlayHandler = <E, R, H extends Env = Env>(
   reportError: (error: unknown, context: Context<H>) => void,
   now: () => number = Date.now,
 ) => {
-  let built: { at: number; body: string; etag: string } | undefined
+  type Built = { at: number; body: string; etag: string }
+  let built: Built | undefined
+  // The rebuild in progress, shared by every request that arrives meanwhile: one pair of list reads, not one per request
+  let building: Deferred.Deferred<Built, E | CommunityOverlayError> | undefined
 
-  const overlay = Effect.gen(function* () {
-    if (built && now() - built.at < COMMUNITY_REUSE_MS) return built
+  const rebuild = Effect.gen(function* () {
     const lists = yield* readLists
     const body = yield* Effect.try({
       try: () => JSON.stringify(toV2Community(lists.tags, lists.aliases)),
@@ -52,6 +54,24 @@ export const createCommunityOverlayHandler = <E, R, H extends Env = Env>(
     })
     built = { at: now(), body, etag: `"${createHash('sha256').update(body).digest('hex')}"` }
     return built
+  })
+
+  const overlay = Effect.gen(function* () {
+    if (built && now() - built.at < COMMUNITY_REUSE_MS) return built
+    if (building) return yield* Deferred.await(building)
+    const result = yield* Deferred.make<Built, E | CommunityOverlayError>()
+    building = result
+    // Finishes even if the request that started it goes away, so the others waiting on it are answered; a failure
+    // reaches them all, and the next request rebuilds
+    return yield* rebuild.pipe(
+      Effect.onExit((exit) =>
+        Effect.gen(function* () {
+          yield* Deferred.done(result, exit)
+          if (building === result) building = undefined
+        }),
+      ),
+      Effect.uninterruptible,
+    )
   })
 
   return (c: Context<H>) =>

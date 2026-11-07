@@ -103,6 +103,40 @@ describe('v2 community overlay endpoint', () => {
     expect(reads()).toBe(2)
   })
 
+  it('shares one rebuild between requests that arrive while it runs, cold and after the reuse window', async () => {
+    let clock = 0
+    let reads = 0
+    let release!: () => void
+    let gate = new Promise<void>((resolve) => (release = resolve))
+    const readLists = Effect.promise(async () => {
+      reads++
+      await gate
+      return lists
+    })
+    const handler = createCommunityOverlayHandler(
+      readLists,
+      () => {},
+      () => clock,
+    )
+    const app = new Hono()
+    app.on(['GET', 'HEAD'], DXDATA_V2_COMMUNITY_PATH, (context) => Effect.runPromise(handler(context)))
+    const burst = async () => {
+      const requests = Array.from({ length: 10 }, () => app.request(DXDATA_V2_COMMUNITY_PATH))
+      await new Promise((resolve) => setTimeout(resolve, 10))
+      release()
+      const responses = await Promise.all(requests)
+      expect(responses.every((response) => response.status === 200)).toBe(true)
+    }
+
+    await burst()
+    expect(reads).toBe(1)
+
+    clock += COMMUNITY_REUSE_MS
+    gate = new Promise<void>((resolve) => (release = resolve))
+    await burst()
+    expect(reads).toBe(2)
+  })
+
   it('answers an uncached 503 when the lists cannot be read, and tries again on the next request', async () => {
     let failing = true
     const { app, errors, reads } = createApp({ fail: () => failing })
