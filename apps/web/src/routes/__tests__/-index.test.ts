@@ -15,10 +15,16 @@ describe('home route (chart search)', () => {
   })
 
   it('loads seed sheets for a prefilled query parameter', async () => {
-    const { seedSheets } = await loadSearchRouteData({ q: '螺旋' })
+    const { seedSheets } = await loadSearchRouteData({ q: '螺旋' }, { withSeeds: true })
 
     expect(seedSheets.map((sheet) => sheet.title)).toContain('ガラテアの螺旋')
     expect(seedSheets[0]?.path).toMatch(/^\/songs\//)
+  })
+
+  it('skips seed sheets in the browser, where the complete catalog shows the results', async () => {
+    const { seedSheets } = await loadSearchRouteData({ q: '螺旋' }, { withSeeds: false })
+
+    expect(seedSheets).toEqual([])
   })
 
   it('rejects oversized queries before loading search results', async () => {
@@ -26,7 +32,7 @@ describe('home route (chart search)', () => {
 
     expect(Route.options.validateSearch).toBe(validateSearchParams)
     expect(() => validateSearchParams({ q: oversizedQuery })).toThrow(RangeError)
-    await expect(loadSearchRouteData({ q: oversizedQuery })).rejects.toThrow(RangeError)
+    await expect(loadSearchRouteData({ q: oversizedQuery }, { withSeeds: true })).rejects.toThrow(RangeError)
   })
 
   it('loads the hub modules (recently added songs) when no query is entered', async () => {

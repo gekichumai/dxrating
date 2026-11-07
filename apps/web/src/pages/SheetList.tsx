@@ -12,7 +12,18 @@ import { IconButton, TextField } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import clsx from 'clsx'
-import { type FC, type ReactNode, useCallback, useId, useMemo, useState, useTransition } from 'react'
+import {
+  type FC,
+  type ReactNode,
+  startTransition,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from 'react'
 import { useEffectOnce, useUpdateEffect } from 'react-use'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information-outline'
@@ -271,6 +282,74 @@ const computeSortFilteredSheets = (
   return sortFilteredResults
 }
 
+/**
+ * The search field. It owns its text, so a keystroke re-renders only the field; the query goes to the list in a
+ * transition. When the query changes from outside (Back to another ?q=, a link), the list bumps `externalRevision`
+ * and the field takes that query.
+ */
+/** How long typing pauses before the query is written to the URL */
+const URL_QUERY_DELAY_MS = 400
+
+const SheetSearchField: FC<{
+  query: string
+  /** Bumped when the query changes from outside (Back, a link): the field then takes `query` over its own text */
+  externalRevision: number
+  onQueryChange: (query: string) => void
+  resultCount: number
+}> = ({ query, externalRevision, onQueryChange, resultCount }) => {
+  const locale = useLocale()
+  const [value, setValue] = useState(query)
+
+  useUpdateEffect(() => {
+    setValue(query)
+  }, [externalRevision])
+
+  const change = (next: string) => {
+    setValue(next)
+    startTransition(() => onQueryChange(next))
+  }
+
+  return (
+    <TextField
+      className="min-w-0 flex-1"
+      label={m.sheet_search({}, { locale })}
+      placeholder={m.sheet_searchPlaceholder({}, { locale })}
+      variant="outlined"
+      value={value}
+      fullWidth
+      // Over the background art the field needs the blurred material, not just the inset tint
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          backgroundColor: 'var(--glass-thin-bg)',
+          backdropFilter: 'var(--glass-blur-thin)',
+          WebkitBackdropFilter: 'var(--glass-blur-thin)',
+        },
+      }}
+      onChange={(e) => {
+        change(e.target.value)
+      }}
+      InputProps={{
+        endAdornment: value && (
+          <IconButton
+            onClick={() => {
+              change('')
+              captureAnalyticsEvent('sheet_search_clear_button_clicked', {
+                previous_query_length: value.length,
+                result_count: resultCount,
+              })
+            }}
+            size="small"
+            aria-label={m.sheet_searchClear({}, { locale })}
+          >
+            <IconMdiClose aria-hidden="true" />
+          </IconButton>
+        ),
+      }}
+      data-attr="sheet-search"
+    />
+  )
+}
+
 const SheetListInnerContent: FC<{
   search: SearchParams
   seedSheets: readonly SearchQuerySeedSheet[]
@@ -296,29 +375,68 @@ const SheetListInnerContent: FC<{
   )
 
   const query = search.q ?? ''
-  const [inputQuery, setInputQuery] = useState(query)
-  const { results, elapsed: searchElapsed } = useFilteredSheets(inputQuery)
+  // The query the results follow. The field (SheetSearchField) keeps its own text and hands each keystroke over in a
+  // transition, so typing repaints only the field; the search, filtering, list and the ?q= navigation (which
+  // re-renders the route) run behind the paint, and a newer keystroke interrupts a stale render. Keystroke INP was
+  // ~200-300ms at 4x CPU with all of it in the input event
+  const [resultsQuery, setResultsQuery] = useState(query)
+  const [externalRevision, setExternalRevision] = useState(0)
+  const { results, elapsed: searchElapsed } = useFilteredSheets(resultsQuery)
+
+  // The ?q= update waits until typing pauses. The router's state is an external store, so its update renders
+  // synchronously, with the route and this list: done on every keystroke, it pulled the whole re-render back into
+  // the input event, and a keystroke cost 300-400ms at 6x CPU
+  const urlQueryTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  // The ?q= writes this list has under way. While one is, the route reporting its query is that write arriving
+  // (possibly after newer typing), not a navigation, and the draft stays. Any other value is an outside change (Back,
+  // a link): it cancels a pending write and replaces both the results and the field's text. A write retires when its
+  // navigation settles, whether or not the route ever reports it
+  const pendingWrites = useRef<{ query: string }[]>([])
+  const routeQuery = useRef(query)
+  routeQuery.current = query
+  useEffect(() => () => clearTimeout(urlQueryTimer.current), [])
 
   useUpdateEffect(() => {
-    setInputQuery(query)
+    if (pendingWrites.current.some((write) => write.query === query)) return
+    clearTimeout(urlQueryTimer.current)
+    pendingWrites.current = []
+    setResultsQuery(query)
+    setExternalRevision((revision) => revision + 1)
   }, [query])
 
   useEffectOnce(() => {
     setHydrated(true)
   })
 
+  /** Called in a transition by the search field */
   const updateQuery = useCallback(
     (nextQuery: string) => {
-      setInputQuery(nextQuery)
-      navigate({
-        to: '/',
-        search: (prev: Record<string, unknown>) => ({
-          ...prev,
-          q: nextQuery || undefined,
-        }),
-        replace: true,
-        resetScroll: false,
-      })
+      setResultsQuery(nextQuery)
+      clearTimeout(urlQueryTimer.current)
+      urlQueryTimer.current = setTimeout(() => {
+        // The URL will already have it (typing returned to it): no write, and nothing would report one. That is
+        // the newest outstanding write's query, or with none, the route's: while an older write waits for the
+        // loader, the route still reports the query before it
+        if (nextQuery === (pendingWrites.current.at(-1)?.query ?? routeQuery.current)) return
+        const write = { query: nextQuery }
+        pendingWrites.current.push(write)
+        void Promise.resolve(
+          navigate({
+            to: '/',
+            search: (prev: Record<string, unknown>) => ({
+              ...prev,
+              q: nextQuery || undefined,
+            }),
+            replace: true,
+            resetScroll: false,
+          }),
+        ).finally(() => {
+          // After the route's render of it (and its effect above) has run
+          setTimeout(() => {
+            pendingWrites.current = pendingWrites.current.filter((pending) => pending !== write)
+          })
+        })
+      }, URL_QUERY_DELAY_MS)
     },
     [navigate],
   )
@@ -386,26 +504,26 @@ const SheetListInnerContent: FC<{
     const sortFilteredResults = getSortFilteredSheets(
       results,
       sortFilterOptions,
-      inputQuery,
+      resultsQuery,
       version,
       songCatalogPositions,
     )
     const elapsed = performance.now() - startTime
     Sentry.metrics.distribution('sheet_filter.duration', elapsed, {
       unit: 'millisecond',
-      attributes: { has_query: String(!!inputQuery), has_filters: String(!!sortFilterOptions) },
+      attributes: { has_query: String(!!resultsQuery), has_filters: String(!!sortFilterOptions) },
     })
 
     return {
       filteredResults: sortFilteredResults,
       elapsed,
     }
-  }, [results, sortFilterOptions, inputQuery, version, songCatalogPositions])
-  const showSeedResults = isLoading && inputQuery && seedSheets.length > 0
+  }, [results, sortFilterOptions, resultsQuery, version, songCatalogPositions])
+  const showSeedResults = isLoading && resultsQuery && seedSheets.length > 0
   // Until the complete catalog loads (and during SSR), the default list shows its first rows from the page's slice
   const firstScreenSheets = useMemo(
-    () => (isLoading && !inputQuery ? getSheetListFirstScreen(catalogDocument, version, sortFilterOptions) : null),
-    [isLoading, inputQuery, catalogDocument, version, sortFilterOptions],
+    () => (isLoading && !resultsQuery ? getSheetListFirstScreen(catalogDocument, version, sortFilterOptions) : null),
+    [isLoading, resultsQuery, catalogDocument, version, sortFilterOptions],
   )
   const listSheets = isLoading ? (firstScreenSheets?.length ? firstScreenSheets : null) : filteredResults
   const summaryTotal = sheets?.length ?? filteredResults.length
@@ -416,11 +534,11 @@ const SheetListInnerContent: FC<{
   const summaryCount = isLoading ? '…' : numberFormat.format(sheets?.length ?? 0)
 
   return (
-    <SheetDetailsContextProvider queryActive={!!inputQuery}>
+    <SheetDetailsContextProvider queryActive={!!resultsQuery}>
       {sortFilterOptions && !isLoading && (
         <SheetSearchAnalytics
-          key={`${inputQuery}:${filteredResults.length}:${JSON.stringify(sortFilterOptions)}`}
-          query={inputQuery}
+          key={`${resultsQuery}:${filteredResults.length}:${JSON.stringify(sortFilterOptions)}`}
+          query={resultsQuery}
           resultCount={filteredResults.length}
           durationMs={searchElapsed + filteringElapsed}
           sortFilter={sortFilterOptions}
@@ -452,42 +570,11 @@ const SheetListInnerContent: FC<{
             className="self-stretch"
           />
 
-          <TextField
-            className="min-w-0 flex-1"
-            label={m.sheet_search({}, { locale })}
-            placeholder={m.sheet_searchPlaceholder({}, { locale })}
-            variant="outlined"
-            value={inputQuery}
-            fullWidth
-            // Over the background art the field needs the blurred material, not just the inset tint
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'var(--glass-thin-bg)',
-                backdropFilter: 'var(--glass-blur-thin)',
-                WebkitBackdropFilter: 'var(--glass-blur-thin)',
-              },
-            }}
-            onChange={(e) => {
-              updateQuery(e.target.value)
-            }}
-            InputProps={{
-              endAdornment: inputQuery && (
-                <IconButton
-                  onClick={() => {
-                    updateQuery('')
-                    captureAnalyticsEvent('sheet_search_clear_button_clicked', {
-                      previous_query_length: inputQuery.length,
-                      result_count: filteredResults.length,
-                    })
-                  }}
-                  size="small"
-                  aria-label={m.sheet_searchClear({}, { locale })}
-                >
-                  <IconMdiClose aria-hidden="true" />
-                </IconButton>
-              ),
-            }}
-            data-attr="sheet-search"
+          <SheetSearchField
+            query={resultsQuery}
+            externalRevision={externalRevision}
+            onQueryChange={updateQuery}
+            resultCount={filteredResults.length}
           />
         </div>
 
@@ -500,11 +587,11 @@ const SheetListInnerContent: FC<{
           }}
         />
 
-        {!inputQuery && hub}
+        {!resultsQuery && hub}
 
         {/* What the page is, in words: the hub above is links and covers, which say little to a first-time visitor
             or a crawler. Hidden while a query runs, like the hub; the query comes from the URL, so SSR matches. */}
-        {!inputQuery && (
+        {!resultsQuery && (
           <p className="m-0 max-w-[72ch] self-start px-1 text-sm leading-relaxed text-fg-2 text-pretty">
             {m.root_pages_search_introduction({}, { locale })}
           </p>
@@ -580,7 +667,7 @@ const SheetListInnerContent: FC<{
                   activeSheetId={activeSheetId}
                   onSheetDialogChange={handleSheetDialogChange}
                   analyticsSource="search_results"
-                  analyticsQueryPresent={!!inputQuery}
+                  analyticsQueryPresent={!!resultsQuery}
                   analyticsResultCount={listSheets.length}
                 />
               </div>
@@ -592,7 +679,7 @@ const SheetListInnerContent: FC<{
                   activeSheetId={activeSheetId}
                   onSheetDialogChange={handleSheetDialogChange}
                   analyticsSource="search_results"
-                  analyticsQueryPresent={!!inputQuery}
+                  analyticsQueryPresent={!!resultsQuery}
                   analyticsResultCount={listSheets.length}
                 />
               </div>
