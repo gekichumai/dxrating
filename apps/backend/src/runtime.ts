@@ -15,6 +15,7 @@ import { McpUsageLive, type McpUsage } from './services/mcp/telemetry'
 import { McpAnalyticsLive, type McpAnalyticsService } from './services/mcp/analytics'
 import { ApplicationCacheLive, type ApplicationCache } from './services/cache'
 import { HttpClientLive, type HttpClient } from './services/http-client'
+import { AdminAuthorizer, AdminAuthorizerLive } from './admin/require-admin'
 import { TracingLive, withActiveRequestSpan } from './tracing'
 
 export const ApplicationLive = Layer.mergeAll(
@@ -29,6 +30,7 @@ export const ApplicationLive = Layer.mergeAll(
   CatalogIdentitiesLive.pipe(Layer.provide(DatabaseLive)),
   McpCatalogSourceLive.pipe(Layer.provide(DatabaseLive)),
   BuildInformationLive.pipe(Layer.provide(HttpClientLive)),
+  AdminAuthorizerLive.pipe(Layer.provide(AppConfigLive)),
 ).pipe(Layer.provideMerge(TracingLive))
 export type ApplicationServices =
   | AppConfig
@@ -42,6 +44,7 @@ export type ApplicationServices =
   | CatalogIdentities
   | McpCatalogSource
   | BuildInformation
+  | AdminAuthorizer
 export const appRuntime = ManagedRuntime.make(ApplicationLive)
 
 const requests = createRequestRunner(appRuntime)

@@ -27,6 +27,7 @@ import {
 import { eq, and, desc, asc, exists, gte, ilike, inArray, isNull, lte, notExists, or, sql, type SQL } from 'drizzle-orm'
 import type { BackendAuth } from './auth'
 import { AppConfig } from './config'
+import { requireAdmin } from './admin/require-admin'
 import { renderChartOgImageOutputEffect } from './services/functions/chart-og-image/index'
 import { CatalogIdentityError } from './services/catalog-identities'
 import { CatalogIdentities, McpCatalogSource } from './services/application'
@@ -1028,7 +1029,17 @@ const lxnsHandler = {
   ),
 }
 
+const adminHandler = {
+  me: os.admin.me.handler(
+    handlerGen(function* ({ context }) {
+      const admin = yield* requireAdmin(context)
+      return { userId: admin.id }
+    }),
+  ),
+}
+
 export const appRouter = os.router({
+  admin: adminHandler,
   tags: tagsHandler,
   comments: commentsHandler,
   aliases: aliasesHandler,

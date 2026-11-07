@@ -1,6 +1,7 @@
 import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
+import { adminContract } from './private/admin.ts'
 
 const oc = contractBuilder.errors({})
 
@@ -479,6 +480,7 @@ export const publicContractRoutes = {
       )
       .output(z.object({ success: z.boolean() })),
   },
+  admin: adminContract,
 }
 
 export const publicAppContract = oc.router(publicContractRoutes)

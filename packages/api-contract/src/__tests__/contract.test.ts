@@ -17,6 +17,7 @@ describe('publicAppContract', () => {
       'arcades',
       'maimaiNet',
       'lxns',
+      'admin',
     ])
     expect('maimai' in publicAppContract).toBe(false)
     expect('chartOgImage' in publicAppContract).toBe(false)
