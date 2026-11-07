@@ -729,8 +729,6 @@ export const announcements = pgTable(
     check('announcements_title_has_en', sql`${table.title} ? 'en'`),
     check('announcements_body_has_en', sql`${table.body} ? 'en'`),
     check('announcements_window_check', sql`${table.ends_at} IS NULL OR ${table.ends_at} > ${table.starts_at}`),
-    check('announcements_platforms_check', sql`${table.platforms} <@ ARRAY['web', 'ios']::text[]`),
-    check('announcements_regions_check', sql`${table.regions} <@ ARRAY['jp', 'intl', 'cn']::text[]`),
     check('announcements_created_by_check', sql`${table.created_by} ~ '^(human|agent):.+$'`),
     check('announcements_updated_by_check', sql`${table.updated_by} ~ '^(human|agent):.+$'`),
     index('announcements_ends_at').on(table.ends_at),

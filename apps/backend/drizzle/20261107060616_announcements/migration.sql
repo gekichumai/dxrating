@@ -21,8 +21,6 @@ CREATE TABLE "announcements" (
 	CONSTRAINT "announcements_title_has_en" CHECK ("title" ? 'en'),
 	CONSTRAINT "announcements_body_has_en" CHECK ("body" ? 'en'),
 	CONSTRAINT "announcements_window_check" CHECK ("ends_at" IS NULL OR "ends_at" > "starts_at"),
-	CONSTRAINT "announcements_platforms_check" CHECK ("platforms" <@ ARRAY['web', 'ios']::text[]),
-	CONSTRAINT "announcements_regions_check" CHECK ("regions" <@ ARRAY['jp', 'intl', 'cn']::text[]),
 	CONSTRAINT "announcements_created_by_check" CHECK ("created_by" ~ '^(human|agent):.+$'),
 	CONSTRAINT "announcements_updated_by_check" CHECK ("updated_by" ~ '^(human|agent):.+$')
 );

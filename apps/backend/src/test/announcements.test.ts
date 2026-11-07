@@ -151,11 +151,17 @@ describe('Announcements', () => {
 
   it.each([
     ['without English', { title: { ja: 'お知らせ' } }],
-    ['with an unknown platform', { platforms: ['android'] }],
     ['ending before it starts', { starts_at: new Date(2030, 0, 2), ends_at: new Date(2030, 0, 1) }],
     ['with an author that is not a principal', { created_by: 'some-user-id' }],
   ])('the table refuses a row %s', async (_case, row) => {
     await expect(insert(row)).rejects.toThrow(/violates check constraint/)
+  })
+
+  it('serves a target the table does not restrict, so a new platform or region needs no migration', async () => {
+    await insert({ platforms: ['android'], regions: ['usa'] })
+    const [served] = (await publicList()).announcements
+    expect(served.platforms).toEqual(['android'])
+    expect(served.regions).toEqual(['usa'])
   })
 
   it('records an agent as an author', async () => {

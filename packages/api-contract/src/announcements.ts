@@ -14,8 +14,12 @@ const oc = contractBuilder.errors({})
  */
 
 export const ANNOUNCEMENT_SEVERITIES = ['info', 'warning', 'critical'] as const
+/**
+ * Targets a writer may choose. Like the language list, these live here and not in database constraints, so adding
+ * one (android, a new server) is a change to this list alone. Regions are dxdata server ids.
+ */
 export const ANNOUNCEMENT_PLATFORMS = ['web', 'ios'] as const
-export const ANNOUNCEMENT_REGIONS = ['jp', 'intl', 'cn'] as const
+export const ANNOUNCEMENT_REGIONS = ['jp', 'intl', 'usa', 'cn'] as const
 
 export const ANNOUNCEMENT_TITLE_MAX_LENGTH = 80
 export const ANNOUNCEMENT_BODY_MAX_LENGTH = 500
@@ -54,10 +58,17 @@ export const PublicAnnouncementSchema = z.object({
     .nullable(),
   startsAt: z.string().describe('ISO 8601. Clients hide the announcement until then.'),
   endsAt: z.string().nullable().describe('ISO 8601, or null for no end'),
-  platforms: z.array(AnnouncementPlatformSchema).describe('Empty: every platform'),
+  // Plain strings, so a target added later never fails validation here or in a client built before it
+  platforms: z
+    .array(z.string())
+    .describe(
+      `Empty: every platform. Known values: ${ANNOUNCEMENT_PLATFORMS.join(', ')}. Ignore values you do not know.`,
+    ),
   regions: z
-    .array(AnnouncementRegionSchema)
-    .describe('Empty: every region. Matched against the viewer’s chosen region.'),
+    .array(z.string())
+    .describe(
+      `Empty: every region. Matched against the viewer’s chosen region (dxdata server ids: ${ANNOUNCEMENT_REGIONS.join(', ')}).`,
+    ),
   minAppVersion: SemverSchema.nullable().describe('iOS only, inclusive'),
   maxAppVersion: SemverSchema.nullable().describe('iOS only, inclusive'),
   dismissible: z.boolean(),
