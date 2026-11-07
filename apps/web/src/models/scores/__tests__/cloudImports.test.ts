@@ -23,7 +23,7 @@ const serverCanonicalSha256 = (value: unknown) => createHash('sha256').update(ca
  * Hashes the backend test pins for the same values (apps/backend/src/test/cloud-save-canonical-hash.test.ts), so a
  * change on either side that alters the bytes fails both
  */
-const GOLDEN_CHUNK_SHA256 = '96ed5203f93af775e5355b41ac92f295508c208e8ed1e1474c276b06d20ad939'
+const GOLDEN_CHUNK_SHA256 = 'd9e30a9e44e80eab99c2b4a2a8bcd50e4c49a1c33fa44f02d7327dd3b1773a88'
 const GOLDEN_NESTED_SHA256 = '2502e387e95e547fab446a7b2147d589ba621f0994994daf5ca9c692b7df22ce'
 
 describe('clientImportPlan', () => {
@@ -40,6 +40,35 @@ describe('clientImportPlan', () => {
 })
 
 describe('entriesToImportRecords', () => {
+  it('uploads the bucket the calculator reads: the stored Diving-Fish eligibility, whatever the provider', () => {
+    const { records } = entriesToImportRecords(
+      [
+        // An older file with the hint only where the calculator reads it
+        {
+          sheetId: 'dsht_e5nsvt8k2a',
+          achievementRate: 100,
+          providerConfig: { divingFish: { ratingEligibility: 'b35' } },
+        },
+        // An LXNS score a Diving-Fish import stored a bucket on, as a cloud save exports it
+        {
+          sheetId: 'dsht_5mk3yr8gme',
+          achievementRate: 100.5,
+          comboFlag: 'ap',
+          source: { provider: 'lxns' },
+          providerConfig: { divingFish: { ratingEligibility: 'b35' } },
+        },
+        // A bucket the calculator ignores (not Diving-Fish) is not sent
+        { sheetId: 'dsht_kkx38yfx4t', achievementRate: 99, source: { provider: 'lxns', best50Bucket: 'b15' } },
+      ],
+      { source: 'dxrating-json', claimedSource: null },
+    )
+    expect(records.map((record) => [record.sheetId, record.best50Bucket])).toEqual([
+      ['dsht_e5nsvt8k2a', 'b35'],
+      ['dsht_5mk3yr8gme', 'b35'],
+      ['dsht_kkx38yfx4t', null],
+    ])
+  })
+
   it('keeps one record per chart (the best), public sheet IDs and valid achievements only', () => {
     const { records, skipped, duplicates } = entriesToImportRecords(
       [
@@ -221,7 +250,9 @@ describe('rawPayloadSha256 (cross-check with the server)', () => {
       achievementRate: 100.5,
       comboFlag: 'ap',
       dxScore: 2400,
-      source: { provider: 'diving-fish', providerId: '譜面-🎵-ß', best50Bucket: 'b15' },
+      source: { provider: 'lxns', providerId: '譜面-🎵-ß' },
+      // The hint where the calculator reads it (a Diving-Fish import stored it on this LXNS score)
+      providerConfig: { divingFish: { ratingEligibility: 'b15' } },
     },
     { sheetId: 'dsht_5mk3yr8gme', achievementRate: 98 },
   ]
@@ -235,7 +266,7 @@ describe('rawPayloadSha256 (cross-check with the server)', () => {
     expect(hash).toBe(GOLDEN_CHUNK_SHA256)
     // Nulls stay, keys are sorted, unicode is hashed as UTF-8
     expect(canonicalJson(records)).toBe(
-      '[{"achievement":1005000,"best50Bucket":"b15","claimedSource":"diving-fish","comboFlag":"ap","dxScore":2400,' +
+      '[{"achievement":1005000,"best50Bucket":"b15","claimedSource":"lxns","comboFlag":"ap","dxScore":2400,' +
         '"providerRecordId":"譜面-🎵-ß","sheetId":"dsht_e5nsvt8k2a","syncFlag":null},{"achievement":980000,' +
         '"best50Bucket":null,"claimedSource":null,"comboFlag":null,"dxScore":null,"providerRecordId":null,' +
         '"sheetId":"dsht_5mk3yr8gme","syncFlag":null}]',
