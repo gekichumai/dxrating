@@ -4,10 +4,17 @@ RUN npm install -g pnpm@10.33.0
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY patches ./patches
+# Workspace packages admin-api bundles in (the backend's schema and edge-cache modules, the shared contract)
 COPY packages/tsconfig/package.json ./packages/tsconfig/
+COPY packages/api-contract/package.json ./packages/api-contract/
+COPY packages/dxdata/package.json ./packages/dxdata/
+COPY packages/maimai-domain/package.json ./packages/maimai-domain/
+COPY packages/oneshot-renderer/package.json ./packages/oneshot-renderer/
+COPY apps/backend/package.json ./apps/backend/
 COPY apps/admin-api/package.json ./apps/admin-api/
-RUN pnpm install --filter @gekichumai/admin-api... --frozen-lockfile
-COPY packages/tsconfig ./packages/tsconfig
+RUN pnpm install --filter @gekichumai/admin-api... --frozen-lockfile --ignore-scripts
+COPY packages ./packages
+COPY apps/backend ./apps/backend
 COPY apps/admin-api ./apps/admin-api
 WORKDIR /app/apps/admin-api
 RUN pnpm build:bundle

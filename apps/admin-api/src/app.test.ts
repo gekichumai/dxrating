@@ -2,6 +2,9 @@ import { Effect, Layer } from 'effect'
 import { afterAll, describe, expect, it } from 'vitest'
 import { accessVerifierTestLayer, identityFromClaims } from './access'
 import { hashToken } from './agent-tokens'
+import { HttpClientLive } from '@gekichumai/backend/http-client'
+import pg from 'pg'
+import { adminDatabaseFromPool } from './db'
 import { RateLimiterLive } from './rate-limit'
 import { createAdminApiApp } from './app'
 import { adminApiConfigLayer, envSchema } from './config'
@@ -48,6 +51,9 @@ const config = envSchema.parse({
 const runtime = makeAdminApiRuntime(
   Layer.mergeAll(
     RateLimiterLive,
+    HttpClientLive,
+    // Never queried here: the guard tests stop before any handler reaches the database
+    adminDatabaseFromPool(new pg.Pool()),
     adminApiConfigLayer(config),
     accessVerifierTestLayer({
       owner: { kind: 'user', email: 'owner@example.invalid' },
@@ -125,7 +131,12 @@ describe('admin API guard', () => {
     const res = await call('/api/spec.json', { 'cf-access-jwt-assertion': 'owner' })
     expect(res.status).toBe(200)
     const spec = (await res.json()) as { paths: Record<string, unknown> }
-    expect(Object.keys(spec.paths)).toEqual(['/me'])
+    expect(Object.keys(spec.paths).sort()).toEqual([
+      '/announcements',
+      '/announcements/end',
+      '/announcements/update',
+      '/me',
+    ])
   })
 
   it('answers health without Access', async () => {
@@ -145,7 +156,9 @@ describe('config', () => {
   it('fails closed when NODE_ENV is unset: production, so no development identity and Access is required', () => {
     expect(() => envSchema.parse({ ADMIN_DEV_ACCESS_EMAIL: 'a@b.invalid' })).toThrow()
     expect(() => envSchema.parse({})).toThrow()
-    expect(envSchema.parse({ ADMIN_ACCESS_TEAM_DOMAIN: 't', ADMIN_ACCESS_AUD: 'a' }).NODE_ENV).toBe('production')
+    expect(
+      envSchema.parse({ ADMIN_ACCESS_TEAM_DOMAIN: 't', ADMIN_ACCESS_AUD: 'a', DATABASE_URL: 'postgres://x' }).NODE_ENV,
+    ).toBe('production')
   })
   it('refuses the development identity outside development', () => {
     expect(() => envSchema.parse({ NODE_ENV: 'production', ADMIN_DEV_ACCESS_EMAIL: 'a@b.invalid' })).toThrow()
@@ -155,6 +168,7 @@ describe('config', () => {
       NODE_ENV: 'production',
       ADMIN_ACCESS_TEAM_DOMAIN: 't',
       ADMIN_ACCESS_AUD: 'a',
+      DATABASE_URL: 'postgres://x',
       ADMIN_DEV_ACCESS_EMAIL: '',
       ADMIN_HUMAN_EMAILS: '',
     })
@@ -163,11 +177,20 @@ describe('config', () => {
       envSchema.parse({ NODE_ENV: 'production', ADMIN_ACCESS_TEAM_DOMAIN: ' ', ADMIN_ACCESS_AUD: 'a' }),
     ).toThrow()
   })
+  it('requires a database in production', () => {
+    expect(() =>
+      envSchema.parse({ NODE_ENV: 'production', ADMIN_ACCESS_TEAM_DOMAIN: 't', ADMIN_ACCESS_AUD: 'a' }),
+    ).toThrow()
+  })
   it('requires Access settings in production', () => {
     expect(() => envSchema.parse({ NODE_ENV: 'production' })).toThrow()
     expect(
-      envSchema.parse({ NODE_ENV: 'production', ADMIN_ACCESS_TEAM_DOMAIN: 't', ADMIN_ACCESS_AUD: 'a' })
-        .ADMIN_HUMAN_EMAILS,
+      envSchema.parse({
+        NODE_ENV: 'production',
+        ADMIN_ACCESS_TEAM_DOMAIN: 't',
+        ADMIN_ACCESS_AUD: 'a',
+        DATABASE_URL: 'postgres://x',
+      }).ADMIN_HUMAN_EMAILS,
     ).toEqual([])
   })
 })

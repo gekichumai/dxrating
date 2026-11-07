@@ -133,6 +133,26 @@
           }
         ]
       }
+    },
+    {
+      "files": ["apps/admin-api/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "^@gekichumai/backend(?!/(db-schema|edge-cache|http-client)$)",
+                "message": "admin-api may import only @gekichumai/backend/db-schema, /edge-cache and /http-client (gekichumai/meta#50 R2.2)."
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "jsPlugins": [

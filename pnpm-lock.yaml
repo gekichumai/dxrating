@@ -184,6 +184,9 @@ importers:
       '@orpc/zod':
         specifier: 'catalog:'
         version: 2.0.0-beta.40(crossws@0.4.5(srvx@0.11.15))(zod@4.6.7)
+      drizzle-orm:
+        specifier: 1.0.0-rc.5-5935859
+        version: 1.0.0-rc.5-5935859(patch_hash=da6e5acf797448dcdf25ef928078d5533acd034d90164ff69f64e8a5b1242320)(@cloudflare/workers-types@4.20260702.1)(@effect/sql-pg@4.0.0-rc.118(effect@4.0.0-rc.118))(@electric-sql/pglite@0.3.15)(@opentelemetry/api@1.10.0)(@types/pg@8.20.0)(@types/sql.js@1.4.11)(effect@4.0.0-rc.118)(mysql2@3.15.3)(pg@8.23.1)(postgres@3.4.9)(sql.js@1.15.2)(valibot@1.5.0(typescript@7.0.2))(zod@4.6.7)
       effect:
         specifier: 4.0.0-rc.118
         version: 4.0.0-rc.118
@@ -193,6 +196,9 @@ importers:
       jose:
         specifier: 6.2.12
         version: 6.2.12
+      pg:
+        specifier: 'catalog:'
+        version: 8.23.1
       zod:
         specifier: 4.6.7
         version: 4.6.7
@@ -200,9 +206,18 @@ importers:
       '@effect/tsgo':
         specifier: 0.46.1
         version: 0.46.1
+      '@gekichumai/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
+      '@gekichumai/backend':
+        specifier: workspace:*
+        version: link:../backend
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.0
+      '@types/pg':
+        specifier: 'catalog:'
+        version: 8.20.0
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
