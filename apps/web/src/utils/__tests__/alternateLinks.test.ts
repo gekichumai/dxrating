@@ -1,79 +1,46 @@
 import { describe, expect, it } from 'vitest'
+import { SUPPORTED_LOCALES } from '@/setup/locale'
 import { buildAlternateLinks, buildLocalizedUrl } from '../alternateLinks'
 
 describe('buildLocalizedUrl', () => {
-  it('keeps the active pathname and replaces only the locale query', () => {
+  it("puts the path under the language's prefix and keeps the search, minus a leftover locale", () => {
     expect(
-      buildLocalizedUrl(
-        {
-          pathname: '/search',
-          search: {
-            q: '宴',
-            locale: 'ja',
-            difficulty: undefined,
-          },
-        },
-        'zh-Hant',
-      ),
-    ).toBe('https://dxrating.net/search?q=%E5%AE%B4&locale=zh-Hant')
+      buildLocalizedUrl({ pathname: '/search', search: { q: '宴', locale: 'ja', difficulty: undefined } }, 'zh-Hant'),
+    ).toBe('https://dxrating.net/zh-hant/search?q=%E5%AE%B4')
+    expect(buildLocalizedUrl({ pathname: '/' }, 'th')).toBe('https://dxrating.net/th')
   })
 
-  it('builds the default variant without a locale query', () => {
+  it('builds the unprefixed (English) URL without a locale', () => {
     expect(buildLocalizedUrl({ pathname: '/rating', search: { locale: 'zh-Hans' } })).toBe(
       'https://dxrating.net/rating',
     )
+    expect(buildLocalizedUrl({ pathname: '/' }, 'en')).toBe('https://dxrating.net/')
   })
 })
 
 describe('buildAlternateLinks', () => {
-  it('builds alternate links for the current route, dropping non-locale query params', () => {
-    expect(buildAlternateLinks({ pathname: '/songs/song-1', search: { type: 'dx' } })).toEqual([
-      {
-        rel: 'alternate',
-        hrefLang: 'x-default',
-        href: 'https://dxrating.net/songs/song-1',
-      },
-      {
-        rel: 'alternate',
-        hrefLang: 'en',
-        href: 'https://dxrating.net/songs/song-1?locale=en',
-      },
-      {
-        rel: 'alternate',
-        hrefLang: 'ja',
-        href: 'https://dxrating.net/songs/song-1?locale=ja',
-      },
-      {
-        rel: 'alternate',
-        hrefLang: 'ko',
-        href: 'https://dxrating.net/songs/song-1?locale=ko',
-      },
-      {
-        rel: 'alternate',
-        hrefLang: 'zh-Hans',
-        href: 'https://dxrating.net/songs/song-1?locale=zh-Hans',
-      },
-      {
-        rel: 'alternate',
-        hrefLang: 'zh-Hant',
-        href: 'https://dxrating.net/songs/song-1?locale=zh-Hant',
-      },
-      ...['ms', 'id', 'fil', 'vi', 'th', 'my'].map((locale) => ({
-        rel: 'alternate',
-        hrefLang: locale,
-        href: `https://dxrating.net/songs/song-1?locale=${locale}`,
-      })),
+  const prefixes: Record<string, string> = { 'zh-Hans': 'zh-hans', 'zh-Hant': 'zh-hant' }
+  const hrefIn = (locale: string) =>
+    locale === 'en'
+      ? 'https://dxrating.net/songs/song-1'
+      : `https://dxrating.net/${prefixes[locale] ?? locale}/songs/song-1`
+
+  it('lists every language at its path, with the unprefixed URL as x-default, and no query', () => {
+    expect(buildAlternateLinks({ pathname: '/songs/song-1', search: { type: 'dx' } }, 'en')).toEqual([
+      { rel: 'alternate', hrefLang: 'x-default', href: 'https://dxrating.net/songs/song-1' },
+      ...SUPPORTED_LOCALES.map((locale) => ({ rel: 'alternate', hrefLang: locale, href: hrefIn(locale) })),
       { rel: 'canonical', href: 'https://dxrating.net/songs/song-1' },
     ])
   })
 
-  it('makes an explicit locale variant self-canonical', () => {
-    const links = buildAlternateLinks({ pathname: '/rating', search: { locale: 'ja', q: 'x' } })
-    expect(links.at(-1)).toEqual({ rel: 'canonical', href: 'https://dxrating.net/rating?locale=ja' })
-  })
-
-  it('ignores an unsupported locale for the canonical', () => {
-    const links = buildAlternateLinks({ pathname: '/rating', search: { locale: 'fr' } })
-    expect(links.at(-1)).toEqual({ rel: 'canonical', href: 'https://dxrating.net/rating' })
+  it("makes each language's URL its own canonical", () => {
+    expect(buildAlternateLinks({ pathname: '/rating', search: { q: 'x' } }, 'ja').at(-1)).toEqual({
+      rel: 'canonical',
+      href: 'https://dxrating.net/ja/rating',
+    })
+    expect(buildAlternateLinks({ pathname: '/songs/song-1' }, 'zh-Hant').at(-1)).toEqual({
+      rel: 'canonical',
+      href: hrefIn('zh-Hant'),
+    })
   })
 })

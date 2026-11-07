@@ -1,5 +1,11 @@
 import type { JSX } from 'react'
-import { LOCALE_QUERY_PARAM, SUPPORTED_LOCALES, toSupportedLocale, type SupportedLocale } from '@/setup/locale'
+import {
+  DEFAULT_LOCALE,
+  LOCALE_QUERY_PARAM,
+  SUPPORTED_LOCALES,
+  localizePath,
+  type SupportedLocale,
+} from '@/setup/locale'
 
 const SITE_URL = 'https://dxrating.net'
 
@@ -25,32 +31,32 @@ const appendSearchValue = (params: URLSearchParams, key: string, value: unknown)
   }
 }
 
+/**
+ * A page's absolute URL in a language: its path under the language's prefix (`/ja/songs/x`; none for English), with the
+ * search kept except a leftover `locale`. With no locale, the unprefixed URL.
+ */
 export const buildLocalizedUrl = ({ pathname, search = {} }: AlternateLinkLocation, locale?: SupportedLocale) => {
-  const url = new URL(pathname || '/', SITE_URL)
+  const url = new URL(localizePath(pathname || '/', locale ?? DEFAULT_LOCALE), SITE_URL)
 
   for (const [key, value] of Object.entries(search)) {
     if (key === LOCALE_QUERY_PARAM) continue
     appendSearchValue(url.searchParams, key, value)
   }
 
-  if (locale) {
-    url.searchParams.set(LOCALE_QUERY_PARAM, locale)
-  }
-
   return url.toString()
 }
 
 /**
- * The canonical and hreflang links of a page. Each `?locale=` variant is its own canonical URL: the locale variants
- * render different text, so pointing them all at the unparameterized URL contradicted the hreflang cluster and
- * Google indexed them on its own anyway. The unparameterized URL (content negotiated by cookie / Accept-Language)
- * is the x-default. Query parameters other than `locale` (search filters, `?q=`) never make a separate page.
+ * The canonical and hreflang links of a page (`pathname` is the router's, without the language prefix). Each language's
+ * URL is its own canonical (meta#52): `/ja/songs/x` → itself, `/songs/x` → itself. The unprefixed (English) URL is also
+ * the x-default: a visitor who prefers another language is redirected from it to theirs (setup/locale-redirect.ts).
+ * Query parameters (search filters, `?q=`) never make a separate page.
  */
-export const buildAlternateLinks = ({ pathname, search }: AlternateLinkLocation): AlternateLink[] => {
+export const buildAlternateLinks = (
+  { pathname }: AlternateLinkLocation,
+  pageLocale: SupportedLocale,
+): AlternateLink[] => {
   const page = { pathname }
-  const explicitLocale = toSupportedLocale(
-    typeof search?.[LOCALE_QUERY_PARAM] === 'string' ? (search[LOCALE_QUERY_PARAM] as string) : undefined,
-  )
 
   return [
     {
@@ -65,7 +71,7 @@ export const buildAlternateLinks = ({ pathname, search }: AlternateLinkLocation)
     })),
     {
       rel: 'canonical',
-      href: buildLocalizedUrl(page, explicitLocale ?? undefined),
+      href: buildLocalizedUrl(page, pageLocale),
     },
   ]
 }

@@ -1,6 +1,6 @@
 import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
-import { buildSitemap } from '../sitemap[.]xml'
+import { buildSitemap, buildSitemapIndex } from '../sitemap[.]xml'
 
 describe('buildSitemap', () => {
   it('encodes song URLs for route and XML safety', () => {
@@ -73,7 +73,7 @@ describe('buildSitemap plates', () => {
     const sitemap = buildSitemap([])
     for (const path of ['/tools/tolerance', '/tools/rating']) {
       expect(sitemap).toContain(`<loc>https://dxrating.net${path}</loc>`)
-      expect(sitemap).toContain(`hreflang="ja" href="https://dxrating.net${path}?locale=ja"`)
+      expect(sitemap).toContain(`hreflang="ja" href="https://dxrating.net/ja${path}"`)
     }
   })
 
@@ -83,6 +83,24 @@ describe('buildSitemap plates', () => {
     ])
 
     expect(sitemap).toContain('<loc>https://dxrating.net/songs/dsng_hub</loc>')
-    expect(sitemap).toContain('hreflang="ja" href="https://dxrating.net/songs/dsng_hub?locale=ja"')
+    expect(sitemap).toContain('hreflang="ja" href="https://dxrating.net/ja/songs/dsng_hub"')
+  })
+})
+describe('sitemaps per language', () => {
+  it("lists a language's own URLs, each with the full hreflang cluster", () => {
+    const sitemap = buildSitemap([{ id: 'dsng_hub', sheets: [] }], 'zh-Hans')
+    expect(sitemap).toContain('<loc>https://dxrating.net/zh-hans/songs/dsng_hub</loc>')
+    expect(sitemap).toContain('<loc>https://dxrating.net/zh-hans</loc>')
+    expect(sitemap).toContain('hreflang="x-default" href="https://dxrating.net/songs/dsng_hub"')
+    expect(sitemap).toContain('hreflang="th" href="https://dxrating.net/th/songs/dsng_hub"')
+    expect(sitemap).not.toContain('locale=')
+  })
+
+  it('indexes one sitemap per language', () => {
+    const index = buildSitemapIndex()
+    expect(index).toContain('<sitemapindex')
+    expect(index).toContain('<loc>https://dxrating.net/sitemaps/en.xml</loc>')
+    expect(index).toContain('<loc>https://dxrating.net/sitemaps/zh-hant.xml</loc>')
+    expect(index.match(/<sitemap>/g)).toHaveLength(11)
   })
 })

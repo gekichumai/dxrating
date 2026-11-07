@@ -50,7 +50,7 @@ describe('SEO localization', () => {
     const seo = buildDevelopersSeo('ja')
 
     expect(seo.title).toBe('開発者向け: MCP サーバーと API - DXRating')
-    expect(seo.meta).toContainEqual({ property: 'og:url', content: 'https://dxrating.net/developers' })
+    expect(seo.meta).toContainEqual({ property: 'og:url', content: 'https://dxrating.net/ja/developers' })
   })
 
   it('builds localized song sheet title and social metadata', () => {

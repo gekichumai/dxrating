@@ -48,7 +48,8 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet; onClose?: () 
           <IconButton
             size="small"
             onClick={() => {
-              navigator.clipboard.writeText(buildSheetLink(sheet))
+              // The link opens the chart in the language it was copied from
+              navigator.clipboard.writeText(buildSheetLink(sheet, undefined, locale))
               toast.success(m.sheet_copyLink_toastSuccess({}, { locale }), {
                 id: `copy-sheet-link-${sheet.id}`,
               })
