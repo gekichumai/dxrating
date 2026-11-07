@@ -58,6 +58,11 @@ describe('buildAlternateLinks', () => {
         hrefLang: 'zh-Hant',
         href: 'https://dxrating.net/songs/song-1?locale=zh-Hant',
       },
+      ...['ms', 'id', 'fil', 'vi'].map((locale) => ({
+        rel: 'alternate',
+        hrefLang: locale,
+        href: `https://dxrating.net/songs/song-1?locale=${locale}`,
+      })),
       { rel: 'canonical', href: 'https://dxrating.net/songs/song-1' },
     ])
   })

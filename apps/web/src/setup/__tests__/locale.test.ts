@@ -47,7 +47,18 @@ describe('locale detection', () => {
     expect(toSupportedLocale('zh-SG')).toBe('zh-Hans')
     expect(toSupportedLocale('zh-TW')).toBe('zh-Hant')
     expect(toSupportedLocale('zh-HK')).toBe('zh-Hant')
+    expect(toSupportedLocale('ms-MY')).toBe('ms')
+    expect(toSupportedLocale('ms_SG')).toBe('ms')
+    expect(toSupportedLocale('id-ID')).toBe('id')
+    expect(toSupportedLocale('in')).toBe('id')
+    expect(toSupportedLocale('fil-PH')).toBe('fil')
+    expect(toSupportedLocale('tl')).toBe('fil')
+    expect(toSupportedLocale('vi-VN')).toBe('vi')
+    // A region subtag doesn't pick the language: Chinese in Malaysia stays Chinese, English in Malaysia stays English
+    expect(toSupportedLocale('zh-MY')).toBe('zh-Hans')
+    expect(toSupportedLocale('en-MY')).toBe('en')
     expect(toSupportedLocale('fr-FR')).toBeNull()
+    expect(toSupportedLocale('constructor')).toBeNull()
     expect(normalizeDetectedLanguage('fr-FR')).toBe('en')
   })
 
@@ -75,6 +86,14 @@ describe('locale detection', () => {
     })
 
     expect(detectServerLocale(request)).toBe('zh-Hant')
+  })
+
+  it('negotiates the maimai DX International languages from Accept-Language', () => {
+    const request = createServerRequest('https://dxrating.net/search', {
+      'accept-language': 'fr-FR,ms-MY;q=0.9,en;q=0.5',
+    })
+
+    expect(detectServerLocale(request)).toBe('ms')
   })
 
   it('persists the client locale preference to localStorage and the SSR cookie', () => {

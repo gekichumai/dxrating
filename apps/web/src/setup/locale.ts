@@ -1,6 +1,6 @@
 import { parse as parseCookie } from 'cookie'
 
-export const SUPPORTED_LOCALES = ['en', 'ja', 'ko', 'zh-Hans', 'zh-Hant'] as const
+export const SUPPORTED_LOCALES = ['en', 'ja', 'ko', 'zh-Hans', 'zh-Hant', 'ms', 'id', 'fil', 'vi'] as const
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 
 export const DEFAULT_LOCALE: SupportedLocale = 'en'
@@ -8,6 +8,16 @@ export const LOCALE_QUERY_PARAM = 'locale'
 export const LOCALE_COOKIE_NAME = 'dxrating.locale'
 export const LOCALE_STORAGE_KEY = 'dxrating-locale'
 export const LOCALE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
+
+/** A Map, not an object literal: `?locale=constructor` must not find Object.prototype */
+const PRIMARY_LANGUAGE_LOCALES = new Map<string, SupportedLocale>([
+  ['ms', 'ms'],
+  ['id', 'id'],
+  ['in', 'id'],
+  ['fil', 'fil'],
+  ['tl', 'fil'],
+  ['vi', 'vi'],
+])
 
 export function toSupportedLocale(lng: string | null | undefined): SupportedLocale | null {
   if (!lng) return null
@@ -22,7 +32,9 @@ export function toSupportedLocale(lng: string | null | undefined): SupportedLoca
   if (lower === 'zh-hant' || lower === 'zh-tw' || lower === 'zh-hk' || lower === 'zh-mo') return 'zh-Hant'
   if (lower === 'zh' || lower.startsWith('zh-')) return 'zh-Hans'
 
-  return null
+  // Languages of the maimai DX International countries (meta#51), matched on the primary language subtag so any
+  // region (ms-MY, ms-SG, en-MY…) resolves by language. `in` and `tl` are the legacy / ISO 639-1 tags browsers still send
+  return PRIMARY_LANGUAGE_LOCALES.get(lower.split('-')[0]) ?? null
 }
 
 /**

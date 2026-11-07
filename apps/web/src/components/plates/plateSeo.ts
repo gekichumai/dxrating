@@ -9,6 +9,10 @@ const OG_LOCALES: Record<SupportedLocale, string> = {
   ko: 'ko_KR',
   'zh-Hans': 'zh_CN',
   'zh-Hant': 'zh_TW',
+  ms: 'ms_MY',
+  id: 'id_ID',
+  fil: 'fil_PH',
+  vi: 'vi_VN',
 }
 
 function collectionSeo(locale: SupportedLocale, path: string, rawTitle: string, description: string) {

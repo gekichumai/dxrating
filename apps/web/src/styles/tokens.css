@@ -238,6 +238,14 @@ html[lang='zh-Hant'],
   font-family: var(--font-sans);
 }
 
+/* Torus has no Vietnamese letters (ơ, ư, ạ, ế…): with Torus first, a word would switch fonts mid-word. Vietnamese
+   uses system faces that cover it on every platform, without Torus */
+html[lang|='vi'],
+[lang|='vi'] {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-sans);
+}
+
 /* Declared wherever --font-sans changes, so `num` falls back to that element's locale stack, not the root's */
 :root,
 [lang] {

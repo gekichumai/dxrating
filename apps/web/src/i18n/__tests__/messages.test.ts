@@ -28,6 +28,24 @@ describe('messages/*.json', () => {
     }
   })
 
+  it('uses only the placeholders and markup tags the English message has', () => {
+    const en = read('en')
+    const tokens = (pattern: string) => pattern.match(/\{[^}]*\}/g) ?? []
+    for (const locale of SUPPORTED_LOCALES) {
+      const file = read(locale)
+      const unknown = Object.entries(file)
+        .filter(([id]) => id !== '$schema')
+        .flatMap(([id, value]) => {
+          const known = new Set(patterns(en[id]).flatMap(tokens))
+          return patterns(value)
+            .flatMap(tokens)
+            .filter((token) => !known.has(token))
+            .map((token) => `${id}: ${token}`)
+        })
+      expect(unknown, `${locale} has placeholders or tags English doesn't`).toEqual([])
+    }
+  })
+
   it('uses reviewed Korean copy for creating and binding a SEGA ID', () => {
     expect(m.ratingCalculator_io_import_netRecords_dialog_help_register_title({}, { locale: 'ko' })).toBe(
       'SEGA ID가 아직 없어요',
