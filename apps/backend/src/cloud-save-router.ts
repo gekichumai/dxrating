@@ -40,6 +40,7 @@ import {
   type UpstreamFetch,
 } from './services/cloud-save/server-imports'
 import { fetchDivingFishImport, fetchLxnsImport } from './services/cloud-save/upstream-imports'
+import { withViewer } from './proofs/viewer-is'
 
 const os = implement(appContract).$context<ApiContext>()
 
@@ -317,7 +318,15 @@ const importsHandler = {
     .use(serverImportSlot)
     .handler(
       handlerGen(function* ({ context, input }) {
-        return yield* serverImport(context, input, 'lxns', fetchLxnsImport(context.user.id))
+        // The LXNS tokens are read for the signed-in viewer only (gdp-ts `ViewerIs`)
+        const viewer = context.viewer
+        if (!viewer) return yield* Effect.fail(new ORPCError('UNAUTHORIZED'))
+        return yield* serverImport(
+          context,
+          input,
+          'lxns',
+          withViewer(viewer, (named, proof) => fetchLxnsImport(named, proof)),
+        )
       }),
     ),
   divingFish: cloudSave.imports.divingFish
