@@ -42,21 +42,37 @@ describe('admin shell', () => {
   })
 
   it('says the API is unavailable, not that access was denied, when the request fails', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ defined: false, code: 'INTERNAL_SERVER_ERROR', message: 'x' }, { status: 500 })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({ defined: false, code: 'INTERNAL_SERVER_ERROR', message: 'x' }, { status: 500 }),
+      ),
+    )
     mount()
     expect((await screen.findByRole('alert')).textContent).toContain('Admin API unavailable')
   })
 
   it('stops showing the principal when a refetch is denied', async () => {
-    const principal = { type: 'human', id: 'owner@example.invalid', actor: 'human:owner@example.invalid', scopes: ['*'] }
-    const fetchMock = vi.fn(async () => Response.json(principal))
+    const principal = {
+      type: 'human',
+      id: 'owner@example.invalid',
+      actor: 'human:owner@example.invalid',
+      scopes: ['*'],
+    }
+    const fetchMock = vi.fn(async (input: Request | string) =>
+      new URL(input instanceof Request ? input.url : input, 'http://admin.test').pathname === '/api/announcements'
+        ? Response.json({ announcements: [] })
+        : Response.json(principal),
+    )
     vi.stubGlobal('fetch', fetchMock)
     const client = new QueryClient()
     mount(client)
     expect(await screen.findByText('human:owner@example.invalid')).toBeTruthy()
-    fetchMock.mockImplementation(async () => Response.json({ defined: false, code: 'FORBIDDEN', message: 'Forbidden' }, { status: 403 }))
+    fetchMock.mockImplementation(async () =>
+      Response.json({ defined: false, code: 'FORBIDDEN', message: 'Forbidden' }, { status: 403 }),
+    )
     await act(() => client.refetchQueries())
-    expect((await screen.findByRole('alert')).textContent).toContain('No access')
+    expect((await screen.findByText('No access')).closest('[role=alert]')).toBeTruthy()
     expect(screen.queryByText('human:owner@example.invalid')).toBeNull()
     expect(screen.queryByText('owner@example.invalid')).toBeNull()
   })

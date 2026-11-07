@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@gekichumai/admin-api": "workspace:*",
+    "@gekichumai/api-contract": "workspace:*",
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",

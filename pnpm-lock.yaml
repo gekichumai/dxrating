@@ -105,6 +105,9 @@ importers:
       '@gekichumai/admin-api':
         specifier: workspace:*
         version: link:../admin-api
+      '@gekichumai/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
       '@orpc/client':
         specifier: 'catalog:'
         version: 2.0.0-beta.40
