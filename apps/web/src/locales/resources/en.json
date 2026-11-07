@@ -218,7 +218,8 @@
     "layout.label": "Layout",
     "layout.list": "List",
     "layout.grid": "Grid",
-    "favorite.marked": "Favorite"
+    "favorite.marked": "Favorite",
+    "chart-page-link": "Open chart page"
   },
   "song": {
     "not-found.title": "Song not found",

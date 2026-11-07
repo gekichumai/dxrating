@@ -218,7 +218,8 @@
     "layout.label": "版面",
     "layout.list": "列表",
     "layout.grid": "網格",
-    "favorite.marked": "已收藏"
+    "favorite.marked": "已收藏",
+    "chart-page-link": "開啟譜面頁面"
   },
   "song": {
     "not-found.title": "未找到歌曲",

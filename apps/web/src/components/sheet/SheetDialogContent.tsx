@@ -35,6 +35,8 @@ import { useRenderedAt } from '../../utils/renderEnvironment'
 import { AchievementRatingTable } from './AchievementRatingTable'
 import { SheetDialogContentHeader } from './SheetDialogContentHeader'
 import { SheetTitle } from './SheetListItem'
+import { buildSheetPath, songHubPath } from './sheetLinks'
+import { InternalLink } from '@/components/global/InternalLink'
 import { SheetTags } from './tags/SheetTags'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
@@ -253,6 +255,19 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
 
         <div className="text-sm -mt-2">
           <div className="text-fg-2">{sheet.releaseDate && <ReleaseDateText releaseDate={sheet.releaseDate} />}</div>
+        </div>
+
+        {/* The same chart opens as a dialog from Home's search and as a page from every other list: the dialog leads to
+            the page (with the song's other difficulties as tabs) and to the song's table of every chart */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          <InternalLink href={buildSheetPath(sheet)} className="link">
+            {m.sheet_chartPageLink({}, { locale })}
+            <span aria-hidden> →</span>
+          </InternalLink>
+          <InternalLink href={songHubPath(sheet.songId)} className="link">
+            {m.song_hub_allChartsLink({}, { locale })}
+            <span aria-hidden> →</span>
+          </InternalLink>
         </div>
 
         <div className="flex flex-wrap gap-1">

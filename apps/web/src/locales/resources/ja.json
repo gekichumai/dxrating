@@ -218,7 +218,8 @@
     "layout.label": "レイアウト",
     "layout.list": "リスト",
     "layout.grid": "グリッド",
-    "favorite.marked": "お気に入り"
+    "favorite.marked": "お気に入り",
+    "chart-page-link": "譜面ページを開く"
   },
   "song": {
     "not-found.title": "楽曲が見つかりません",
