@@ -34,7 +34,7 @@ describe('aliasHostLabel', () => {
     expect(aliasHostLabel(alias)).toBe(label)
   })
 
-  it.each(['', '   ', '!!!', '...', '（）', '⚔️🍎', '(ﾟ∀ﾟ)', 'abcאב', 'אב', 'مرحبا 1'])(
+  it.each(['', '   ', '!!!', '...', '（）', '⚔️🍎', '(ﾟ∀ﾟ)', 'abcאב', 'אב', 'مرحبا 1', 'www', 'WWW', ' www ', 'ｗｗｗ'])(
     'makes no label from %j',
     (alias) => {
       expect(aliasHostLabel(alias)).toBeNull()
@@ -83,5 +83,11 @@ describe('aliasQuestion', () => {
       toastContent: `${long.trim()}是什么歌`,
     })
     expect(aliasQuestion('!!!').clipboard).toBe('!!!是什么歌')
+  })
+
+  it('falls back to the question for www, which the 是什么歌.com Worker serves as its home page', () => {
+    expect(aliasQuestion('WWW')).toEqual({ clipboard: 'WWW是什么歌', toastContent: 'WWW是什么歌' })
+    // Only the exact label is reserved
+    expect(aliasQuestion('www2').clipboard).toBe('https://www2.是什么歌.com')
   })
 })
