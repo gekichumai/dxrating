@@ -1,8 +1,8 @@
 import { type ServerEnum, type Sheet, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { fireEvent, render, screen } from '@testing-library/react'
-import i18n from 'i18next'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import type { ReactNode } from 'react'
+import { describe, expect, it, vi } from 'vitest'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { SongSheetTabs } from '../SongSheetTabs'
 
 function makeSheet(type: TypeEnum): Sheet {
@@ -19,15 +19,11 @@ function makeSheet(type: TypeEnum): Sheet {
   }
 }
 
+const EnglishLocale = ({ children }: { children: ReactNode }) => (
+  <LocaleProvider initialLocale="en">{children}</LocaleProvider>
+)
+
 describe('SongSheetTabs', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
-  beforeEach(async () => {
-    await i18n.changeLanguage('en')
-  })
-
   it('shows chart types as a segmented control with short codes and full accessible names', () => {
     render(
       <SongSheetTabs
@@ -44,6 +40,7 @@ describe('SongSheetTabs', () => {
         onDifficultyChange={vi.fn()}
         hrefFor={() => '/songs/s/dx/master'}
       />,
+      { wrapper: EnglishLocale },
     )
 
     const typeTabs = screen.getByRole('tablist', { name: 'Chart type' })
@@ -56,19 +53,19 @@ describe('SongSheetTabs', () => {
     expect(screen.getByRole('tab', { name: 'Buddy' })).toBeTruthy()
   })
 
-  it('shows a lone chart type as a localized badge instead of a control', async () => {
-    await i18n.changeLanguage('ja')
-
+  it('shows a lone chart type as a localized badge instead of a control', () => {
     render(
-      <SongSheetTabs
-        sheets={[makeSheet(TypeEnum.DX)]}
-        availableTypes={[TypeEnum.DX]}
-        activeType={TypeEnum.DX}
-        activeDifficulty={DifficultyEnum.Master}
-        onTypeChange={vi.fn()}
-        onDifficultyChange={vi.fn()}
-        hrefFor={() => '/songs/s/dx/master'}
-      />,
+      <LocaleProvider initialLocale="ja">
+        <SongSheetTabs
+          sheets={[makeSheet(TypeEnum.DX)]}
+          availableTypes={[TypeEnum.DX]}
+          activeType={TypeEnum.DX}
+          activeDifficulty={DifficultyEnum.Master}
+          onTypeChange={vi.fn()}
+          onDifficultyChange={vi.fn()}
+          hrefFor={() => '/songs/s/dx/master'}
+        />
+      </LocaleProvider>,
     )
 
     expect(screen.queryByRole('tablist', { name: '譜面タイプ' })).toBeNull()
@@ -90,6 +87,7 @@ describe('SongSheetTabs', () => {
         onDifficultyChange={onDifficultyChange}
         hrefFor={(type, difficulty) => `/songs/s/${type}/${difficulty}?locale=ja`}
       />,
+      { wrapper: EnglishLocale },
     )
 
     const expert = screen.getByRole('tab', { name: 'EXPERT' })

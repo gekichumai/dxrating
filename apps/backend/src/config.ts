@@ -56,6 +56,10 @@ const envSchema = z.object({
   // PostHog (for analytics API queries)
   POSTHOG_PROJECT_ID: optionalString,
   POSTHOG_API_KEY: optionalString,
+
+  // Cloudflare edge cache purge (services/edge-cache.ts); both unset disables it
+  CLOUDFLARE_ZONE_ID: optionalString,
+  CLOUDFLARE_CACHE_PURGE_TOKEN: optionalString,
 })
 
 export const deriveCrossSubDomainCookieDomain = ({
@@ -120,6 +124,10 @@ export const config = {
     projectId: env.POSTHOG_PROJECT_ID,
     apiKey: env.POSTHOG_API_KEY,
   },
+  edgeCache:
+    env.CLOUDFLARE_ZONE_ID && env.CLOUDFLARE_CACHE_PURGE_TOKEN
+      ? { zoneId: env.CLOUDFLARE_ZONE_ID, token: env.CLOUDFLARE_CACHE_PURGE_TOKEN }
+      : undefined,
 } as const
 
 export class AppConfig extends Context.Service<AppConfig, typeof config>()('dxrating/AppConfig') {}

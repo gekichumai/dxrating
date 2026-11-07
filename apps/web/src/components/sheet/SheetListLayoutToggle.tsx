@@ -1,14 +1,21 @@
 import clsx from 'clsx'
 import type { FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import MdiViewGrid from '~icons/mdi/view-grid'
 import MdiViewList from '~icons/mdi/view-list'
+import type { PlainMessage } from '@/i18n/message'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 import { segmentedItem, segmentedItemBase, segmentedTrack } from '../completion/TableChrome'
 import { SHEET_LIST_LAYOUTS, type SheetListLayout } from './sheetListLayout'
 
 const LAYOUT_ICONS: Record<SheetListLayout, typeof MdiViewList> = {
   list: MdiViewList,
   grid: MdiViewGrid,
+}
+
+const LAYOUT_LABELS: Record<SheetListLayout, PlainMessage> = {
+  list: m.sheet_layout_list,
+  grid: m.sheet_layout_grid,
 }
 
 /**
@@ -26,14 +33,14 @@ export const SheetListLayoutToggle: FC<{
   onChange: (layout: SheetListLayout) => void
   className?: string
 }> = ({ layout, onChange, className }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
 
   return (
     <fieldset className={clsx(segmentedTrack, 'm-0 min-w-0 shrink-0 flex-nowrap', className)}>
-      <legend className="sr-only">{t('sheet:layout.label')}</legend>
+      <legend className="sr-only">{m.sheet_layout_label({}, { locale })}</legend>
       {SHEET_LIST_LAYOUTS.map((value) => {
         const Icon = LAYOUT_ICONS[value]
-        const label = t(`sheet:layout.${value}`)
+        const label = LAYOUT_LABELS[value]({}, { locale })
         return (
           <button
             key={value}

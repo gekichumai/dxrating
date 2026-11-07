@@ -2,9 +2,12 @@ import type { ServerEnum } from '@gekichumai/dxdata'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { render, screen, within } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
 import { RecentPage, groupRecentCharts } from '../RecentPage'
+
+// Needs the router's history; covered by its own test
+vi.mock('@/components/global/BackToHomeLink', () => ({ BackToHomeLink: () => null }))
 
 const charts = [
   {

@@ -7,6 +7,8 @@ import {
   groupPlateChartsByLevel,
   listIndexablePlateIds,
   parsePlateRegion,
+  plateExistsInRegion,
+  plateRegionToFollow,
   platePath,
   plateRegionSearch,
 } from '../plateData'
@@ -90,5 +92,36 @@ describe('regional plate projection', () => {
     expect(plateRegionSearch('cn')).toEqual({ region: 'cn' })
     expect(plateRegionSearch('intl')).toEqual({ region: 'intl' })
     expect(plateRegionSearch('jp')).toEqual({ region: undefined })
+  })
+})
+describe('plateRegionToFollow', () => {
+  it('follows the header region on load when the URL names none', () => {
+    expect(plateRegionToFollow({ siteRegion: 'intl', current: 'jp', onLoad: true, explicit: false })).toBe('intl')
+    expect(plateRegionToFollow({ siteRegion: 'cn', current: 'jp', onLoad: true, explicit: false })).toBe('cn')
+  })
+
+  it('keeps a region the URL names on load, but follows a later header switch', () => {
+    expect(plateRegionToFollow({ siteRegion: 'intl', current: 'jp', onLoad: true, explicit: true })).toBeNull()
+    expect(plateRegionToFollow({ siteRegion: 'intl', current: 'jp', onLoad: false, explicit: true })).toBe('intl')
+  })
+
+  it('stays when the regions already agree, the header region has no plates, or the plate is missing there', () => {
+    expect(plateRegionToFollow({ siteRegion: 'jp', current: 'jp', onLoad: true, explicit: false })).toBeNull()
+    expect(plateRegionToFollow({ siteRegion: '_generic', current: 'jp', onLoad: false, explicit: false })).toBeNull()
+    expect(
+      plateRegionToFollow({
+        siteRegion: 'intl',
+        current: 'jp',
+        onLoad: false,
+        explicit: false,
+        available: () => false,
+      }),
+    ).toBeNull()
+  })
+
+  it('knows which plates each region has', () => {
+    const [jpPlate] = buildPlateIndex('jp').flatMap((group) => group.plates)
+    expect(plateExistsInRegion('jp', jpPlate!.id)).toBe(true)
+    expect(plateExistsInRegion('jp', 'no-such-plate')).toBe(false)
   })
 })

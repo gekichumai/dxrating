@@ -1,25 +1,21 @@
 import clsx from 'clsx'
 import { type FC, memo, useCallback } from 'react'
-import { useTranslation } from 'react-i18next'
 import { type GridComputeItemKey, type GridItemContent, VirtuosoGrid } from 'react-virtuoso'
 import { useWebHaptics } from 'web-haptics/react'
 import MdiLock from '~icons/mdi/lock'
 import MdiStar from '~icons/mdi/star'
 import MdiTrashCan from '~icons/mdi/trash-can'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 import { DIFFICULTIES } from '../../models/difficulties'
 import { useSheetFavoriteState } from '../../models/favorite'
 import type { FlattenedSheet } from '../../songs'
 import { DIFFICULTY_SHORT, difficultyTextClassName, difficultyTextStyle } from '../completion/TableChrome'
 import { FadedImage } from '../global/FadedImage'
+import { InternalLink, isPlainNavigationClick } from '../global/InternalLink'
 import { MaterialSurface } from '../global/MaterialSurface'
 import { SHEET_LIST_FIRST_SCREEN_ROWS } from './SheetListContainer'
-import {
-  captureSheetContentViewed,
-  isPlainLinkClick,
-  type SheetListItemAnalyticsProps,
-  SheetType,
-  sheetCoverSrc,
-} from './SheetListItem'
+import { captureSheetContentViewed, type SheetListItemAnalyticsProps, SheetType, sheetCoverSrc } from './SheetListItem'
 import { buildSheetPath } from './sheetLinks'
 
 /**
@@ -43,7 +39,7 @@ const TILE_PILL =
  * Re:MAS still fits beside a 14.9 in a 360px phone's three-column tile.
  */
 const SheetGridDifficulty: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
 
   if (sheet.isTypeUtage) {
     return (
@@ -62,13 +58,13 @@ const SheetGridDifficulty: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       {unavailable && (
         <>
           <MdiTrashCan aria-hidden="true" className="size-3 shrink-0" />
-          <span className="sr-only">{t('sheet:badge.unavailable')}</span>
+          <span className="sr-only">{m.sheet_badge_unavailable({}, { locale })}</span>
         </>
       )}
       {sheet.isLocked && (
         <>
           <MdiLock aria-hidden="true" className="size-3 shrink-0" />
-          <span className="sr-only">{t('sheet:badge.locked')}</span>
+          <span className="sr-only">{m.sheet_badge_locked({}, { locale })}</span>
         </>
       )}
       <span aria-hidden="true">{DIFFICULTY_SHORT[sheet.difficulty]}</span>
@@ -88,15 +84,15 @@ export const SheetGridItem: FC<{
   onOpen: () => void
   analytics?: SheetListItemAnalyticsProps
 }> = memo(({ sheet, dialogOpen, onOpen, analytics }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const haptic = useWebHaptics()
   const [isFavorite] = useSheetFavoriteState(sheet.id)
 
   return (
-    <a
+    <InternalLink
       href={buildSheetPath(sheet)}
       onClick={(event) => {
-        if (!isPlainLinkClick(event)) return
+        if (!isPlainNavigationClick(event)) return
         event.preventDefault()
         onOpen()
         haptic.trigger('medium')
@@ -133,7 +129,7 @@ export const SheetGridItem: FC<{
               aria-hidden="true"
               className="absolute right-1 top-1 size-5 text-amber-400 drop-shadow-[0_1px_1px_rgb(0_0_0/0.5)]"
             />
-            <span className="sr-only">{t('sheet:favorite.marked')}</span>
+            <span className="sr-only">{m.sheet_favorite_marked({}, { locale })}</span>
           </>
         )}
       </span>
@@ -157,7 +153,7 @@ export const SheetGridItem: FC<{
           </span>
         )}
       </span>
-    </a>
+    </InternalLink>
   )
 })
 SheetGridItem.displayName = 'SheetGridItem'

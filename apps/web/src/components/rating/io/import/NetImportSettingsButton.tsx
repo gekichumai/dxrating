@@ -1,6 +1,6 @@
 import { Button } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import IconMdiCogOutline from '~icons/mdi/cog-outline'
+import IconMdiConnection from '~icons/mdi/connection'
 import { useNetImportSettings } from './NetImportSettingsContext'
 
 export function NetImportSettingsButton() {
@@ -9,11 +9,12 @@ export function NetImportSettingsButton() {
   return (
     <Button
       variant="outlined"
-      startIcon={<IconMdiCogOutline />}
+      startIcon={<IconMdiConnection />}
       aria-haspopup="dialog"
       onClick={(event) => openSettings(event.currentTarget)}
     >
-      {t('rating-calculator:io.import.net-records.settings.button')}
+      {/* The same name as the Import menu's item: both open the one maimai NET dialog (import and auto-import) */}
+      {t('rating-calculator:io.import.net-records.title')}
     </Button>
   )
 }

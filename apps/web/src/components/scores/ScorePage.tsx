@@ -1,3 +1,4 @@
+import { Breadcrumb } from '@/components/completion/TableChrome'
 import { Link } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type { CSSProperties, FC, ReactNode } from 'react'
@@ -35,12 +36,18 @@ export const ScorePageFrame: FC<{ width?: keyof typeof FRAME_WIDTHS; children: R
   </div>
 )
 
-export const ScorePageHeader: FC<{ title: ReactNode; description?: ReactNode; children?: ReactNode }> = ({
-  title,
-  description,
-  children,
-}) => (
+/**
+ * A score page's heading. The breadcrumb (DXRating › the page, by default) is the way back to the rest of the site:
+ * these pages are not tabs of the main navigation, so nothing else marks where they sit.
+ */
+export const ScorePageHeader: FC<{
+  title: ReactNode
+  description?: ReactNode
+  children?: ReactNode
+  breadcrumb?: { href?: string; label: ReactNode }[]
+}> = ({ title, description, children, breadcrumb }) => (
   <header className="flex flex-col gap-1">
+    <Breadcrumb items={breadcrumb ?? [{ label: title }]} />
     <h1 className="page-title m-0">{title}</h1>
     {description && <p className="page-description m-0">{description}</p>}
     {children}

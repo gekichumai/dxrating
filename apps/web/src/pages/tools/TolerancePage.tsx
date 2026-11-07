@@ -2,7 +2,6 @@ import type { NoteCounts, TypeEnum } from '@gekichumai/dxdata'
 import { InputAdornment, TextField } from '@mui/material'
 import { Link } from '@tanstack/react-router'
 import { type FC, useDeferredValue, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import MdiMagnify from '~icons/mdi/magnify'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { SheetImage } from '@/components/sheet/SheetListItem'
@@ -11,6 +10,9 @@ import { buildSheetPath, songHubPath } from '@/components/sheet/sheetLinks'
 import { ToleranceCalculator } from '@/components/tools/ToleranceCalculator'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useFilteredSheets } from '@/songs'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
+import { InternalLink } from '@/components/global/InternalLink'
 
 export type ToleranceSelectedSheet = {
   id: string
@@ -57,7 +59,7 @@ const sheetLabel = (sheet: { type: string; difficulty: string; internalLevelValu
  * `/songs/<id>/<type>/<difficulty>/tolerance`, and the picker switches to another chart.
  */
 export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sheet }) => {
-  const { t } = useTranslation(['tools'])
+  const locale = useLocale()
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query.trim())
   const { results } = useFilteredSheets(deferredQuery)
@@ -72,9 +74,13 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
       <TextField
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder={t(sheet ? 'tools:tolerance.search-another' : 'tools:tolerance.search-placeholder')}
+        placeholder={
+          sheet ? m.tools_tolerance_searchAnother({}, { locale }) : m.tools_tolerance_searchPlaceholder({}, { locale })
+        }
         inputProps={{
-          'aria-label': t(sheet ? 'tools:tolerance.search-another' : 'tools:tolerance.search-placeholder'),
+          'aria-label': sheet
+            ? m.tools_tolerance_searchAnother({}, { locale })
+            : m.tools_tolerance_searchPlaceholder({}, { locale }),
           enterKeyHint: 'search',
         }}
         InputProps={{
@@ -89,7 +95,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
       />
       {/* Always mounted, so screen readers hear how many charts match */}
       <p role="status" className="sr-only">
-        {deferredQuery ? t('tools:tolerance.result-count', { count: visibleResults.length }) : ''}
+        {deferredQuery ? m.tools_tolerance_resultCount({ count: visibleResults.length }, { locale }) : ''}
       </p>
       {/* Below lg: one row per chart. At lg: one row per song, with its charts as chips. */}
       {visibleResults.length > 0 && (
@@ -144,7 +150,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
         </ul>
       )}
       {deferredQuery && visibleResults.length === 0 && (
-        <p className="m-0 px-1 text-sm text-secondary">{t('tools:tolerance.no-results')}</p>
+        <p className="m-0 px-1 text-sm text-secondary">{m.tools_tolerance_noResults({}, { locale })}</p>
       )}
     </MaterialSurface>
   )
@@ -153,14 +159,14 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
     return (
       <div className="w-full max-w-2xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
         <header className="flex flex-col gap-2">
-          <h1 className="page-title m-0">{t('tools:tolerance.title')}</h1>
-          <p className="page-description m-0">{t('tools:tolerance.intro')}</p>
+          <h1 className="page-title m-0">{m.tools_tolerance_title({}, { locale })}</h1>
+          <p className="page-description m-0">{m.tools_tolerance_intro({}, { locale })}</p>
           <Link to="/tools/rating" className="link self-start text-sm">
-            {t('tools:rating.title')} →
+            {m.tools_rating_title({}, { locale })} →
           </Link>
         </header>
         {picker}
-        <p className="m-0 text-sm text-secondary">{t('tools:tolerance.pick-a-chart')}</p>
+        <p className="m-0 text-sm text-secondary">{m.tools_tolerance_pickAChart({}, { locale })}</p>
       </div>
     )
   }
@@ -172,10 +178,10 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
           items={[
             { href: songHubPath(sheet.songId), label: <span lang="ja">{sheet.title}</span> },
             { href: sheetPath, label: sheetLabel(sheet) },
-            { label: t('tools:tolerance.title') },
+            { label: m.tools_tolerance_title({}, { locale }) },
           ]}
         />
-        <h1 className="page-title m-0 [word-break:auto-phrase]">{t('tools:tolerance.title')}</h1>
+        <h1 className="page-title m-0 [word-break:auto-phrase]">{m.tools_tolerance_title({}, { locale })}</h1>
       </header>
 
       {/* Mobile: chart, calculator, then the picker. Desktop: chart and picker beside the calculator. */}
@@ -183,9 +189,9 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
         <MaterialSurface variant="thin" className="flex items-center gap-3 p-3 lg:col-start-1 lg:row-start-1">
           <SheetImage name={sheet.imageName} size="large" alt="" />
           <div className="flex flex-col min-w-0">
-            <a href={sheetPath} lang="ja" translate="no" className="link font-bold [overflow-wrap:anywhere]">
+            <InternalLink href={sheetPath} lang="ja" translate="no" className="link font-bold [overflow-wrap:anywhere]">
               {sheet.title}
-            </a>
+            </InternalLink>
             <span className="text-xs text-secondary num">{sheetLabel(sheet)}</span>
           </div>
         </MaterialSurface>

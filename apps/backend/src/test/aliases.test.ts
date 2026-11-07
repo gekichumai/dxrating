@@ -38,6 +38,28 @@ describe('Aliases API', () => {
     expect(revalidated.status).toBe(304)
   })
 
+  it('GET /api/v1/aliases is public and cacheable at the edge, also in a 304', async () => {
+    const res = await fetch(`${getBaseUrl()}/api/v1/aliases`, {
+      headers: { Origin: 'https://dxrating.net' },
+    })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(res.headers.get('Access-Control-Allow-Credentials')).toBeNull()
+    expect(res.headers.get('Vary') ?? '').not.toMatch(/origin/i)
+    expect(res.headers.get('Cache-Control')).toBe('public, no-cache')
+    expect(res.headers.get('CDN-Cache-Control')).toMatch(/^public, max-age=60, stale-while-revalidate=/)
+    expect(res.headers.get('Cache-Tag')).toBe('aliases')
+    const tag = res.headers.get('ETag')
+    await res.arrayBuffer()
+
+    const revalidated = await fetch(`${getBaseUrl()}/api/v1/aliases`, {
+      headers: { Origin: 'https://dxrating.net', 'If-None-Match': tag! },
+    })
+    expect(revalidated.status).toBe(304)
+    expect(revalidated.headers.get('CDN-Cache-Control')).toBe(res.headers.get('CDN-Cache-Control'))
+    expect(revalidated.headers.get('Access-Control-Allow-Origin')).toBe('*')
+  })
+
   it('POST /api/v1/aliases requires authentication', async () => {
     const res = await fetch(`${getBaseUrl()}/api/v1/aliases`, {
       method: 'POST',
@@ -96,5 +118,20 @@ describe('Aliases API', () => {
     const listRes = await fetch(`${getBaseUrl()}/api/v1/aliases`)
     const aliases = await listRes.json()
     expect(aliases.length).toBe(2)
+  })
+
+  it('lists an alias submitted twice for a song once', async () => {
+    await signUp('twice@example.com', 'password123', 'Twice')
+    const cookie = extractSessionCookie(await signIn('twice@example.com', 'password123'))
+    for (let i = 0; i < 2; i++) {
+      await authenticatedFetch(`${getBaseUrl()}/api/v1/aliases`, cookie, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ songId: 'song-1', name: 'same alias' }),
+      })
+    }
+
+    const aliases = await (await fetch(`${getBaseUrl()}/api/v1/aliases`)).json()
+    expect(aliases).toEqual([{ song_id: 'song-1', name: 'same alias' }])
   })
 })

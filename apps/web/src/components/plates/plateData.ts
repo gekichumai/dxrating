@@ -27,6 +27,33 @@ export const parsePlateRegion = (value: unknown): PlateRegion | undefined =>
 
 export const platePath = (plateId: string) => `/plates/${encodeURIComponent(plateId)}`
 
+/**
+ * Where a Plates page should go when the header's region is known or changes, or `null` to stay. On load a URL that
+ * names a region is kept; otherwise, and on every later header switch, the page moves to the header's region when it
+ * has plates there.
+ */
+export function plateRegionToFollow({
+  siteRegion,
+  current,
+  onLoad,
+  explicit,
+  available = () => true,
+}: {
+  siteRegion: string
+  current: PlateRegion
+  onLoad: boolean
+  explicit: boolean
+  available?: (region: PlateRegion) => boolean
+}): PlateRegion | null {
+  const target = parsePlateRegion(siteRegion)
+  if (!target || target === current || !available(target)) return null
+  if (onLoad && explicit) return null
+  return target
+}
+
+/** Whether a plate exists on a region's server: some are missing from one or another */
+export const plateExistsInRegion = (region: PlateRegion, plateId: string) => findPlate(region, plateId) !== undefined
+
 /** zh-Hans readers see the simplified CN plate characters; everyone else the JP ones */
 export const plateScript = (locale: SupportedLocale): 'ja' | 'zh' => (locale === 'zh-Hans' ? 'zh' : 'ja')
 

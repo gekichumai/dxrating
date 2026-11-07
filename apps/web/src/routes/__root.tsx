@@ -7,7 +7,7 @@ import { PostHogProvider } from 'posthog-js/react'
 import clsx from 'clsx'
 import { type CSSProperties, Suspense, useEffect, useMemo, useRef } from 'react'
 import toast from 'react-hot-toast'
-import { I18nextProvider, useTranslation } from 'react-i18next'
+import { I18nextProvider } from 'react-i18next'
 import { NetImportSettingsProvider } from '@/components/rating/io/import/NetImportSettingsContext'
 import { NetImportProgress } from '@/components/rating/io/import/NetImportProgress'
 import { ImportReviewHost } from '@/components/rating/io/import/ImportReviewDialog'
@@ -19,6 +19,9 @@ import { VersionRegionSwitcher } from '@/components/global/preferences/VersionRe
 import { AppTabs } from '@/components/layout/AppTabs'
 import { ThemedBody } from '@/components/layout/ThemedBody'
 import { useResolvedPathname } from '@/components/layout/useResolvedPathname'
+import { NavigationProgress } from '@/components/layout/NavigationProgress'
+import { SkipToContentLink } from '@/components/layout/SkipToContentLink'
+import { NavigationOriginTracker } from '@/components/layout/navigationOrigins'
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
@@ -27,7 +30,7 @@ import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculat
 import { CatalogProvider } from '@/catalog/CatalogContext'
 import { loadCatalogMeta } from '@/catalog/catalogSource'
 import { createServerI18n } from '@/setup/init-i18n'
-import { LocaleProvider } from '@/i18n/LocaleProvider'
+import { LocaleProvider, useLocale } from '@/i18n/LocaleProvider'
 import { buildNotFoundSeoMeta, buildRootSeoMeta, resolveRootHeadState, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
@@ -41,8 +44,11 @@ import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } f
 import '@/index.css'
 import 'virtual:uno.css'
 import '@/components/layout/app-chrome.css'
+import '@/components/layout/navigation-feedback.css'
 import '@/pages/rating-table.css'
 import '@/pages/legal.css'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
 
 const queryClient = new QueryClient()
 
@@ -161,8 +167,17 @@ function RouteChangeAnnouncer() {
   return <output ref={announcerRef} aria-live="polite" aria-atomic="true" className="sr-only" />
 }
 
+// Better Auth's ?error= codes that have their own copy; any other code falls back to the default message
+const OAUTH_ERRORS: Partial<Record<string, PlainMessage>> = {
+  email_doesnt_match: m.auth_userProfile_oauthError_email_doesnt_match,
+  unable_to_link_account: m.auth_userProfile_oauthError_unable_to_link_account,
+  account_already_linked_to_different_user: m.auth_userProfile_oauthError_account_already_linked_to_different_user,
+  default: m.auth_userProfile_oauthError_default,
+  access_denied: m.auth_userProfile_oauthError_access_denied,
+}
+
 function OAuthErrorHandler() {
-  const { t } = useTranslation(['auth'])
+  const locale = useLocale()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -175,10 +190,10 @@ function OAuthErrorHandler() {
     console.warn('[oauth] sign-in returned an error', error, params.get('error_description') ?? '')
     if (error === 'access_denied') {
       // Cancelling at the provider is a choice, not a failure
-      toast(t('auth:user-profile.oauth-error.access_denied'), { id: 'oauth-error' })
+      toast(m.auth_userProfile_oauthError_access_denied({}), { id: 'oauth-error' })
     } else {
-      const message = t(`auth:user-profile.oauth-error.${error}` as const, { defaultValue: '' })
-      toast.error(message || t('auth:user-profile.oauth-error.default'), { id: 'oauth-error' })
+      const message = Object.hasOwn(OAUTH_ERRORS, error) ? OAUTH_ERRORS[error]?.({}, { locale }) : undefined
+      toast.error(message || m.auth_userProfile_oauthError_default({}), { id: 'oauth-error' })
     }
 
     params.delete('error')
@@ -187,7 +202,7 @@ function OAuthErrorHandler() {
       ? `${window.location.pathname}?${params.toString()}${window.location.hash}`
       : `${window.location.pathname}${window.location.hash}`
     window.history.replaceState({}, '', cleanURL)
-  }, [t])
+  }, [locale])
 
   return null
 }
@@ -230,16 +245,16 @@ function RootComponent() {
 }
 
 function AppLayout() {
-  const { t } = useTranslation(['root'])
+  const locale = useLocale()
   const pathname = useResolvedPathname()
   const isLegalPage = isLegalPath(pathname)
 
   return (
     <div className="h-full w-full relative">
-      <a href="#main-content" className="skip-to-content">
-        {t('root:skip-to-content')}
-      </a>
+      <SkipToContentLink>{m.root_skipToContent({}, { locale })}</SkipToContentLink>
       <RouteChangeAnnouncer />
+      <NavigationProgress />
+      <NavigationOriginTracker />
       <VersionBackground />
 
       <div className="h-full w-full relative">

@@ -2,7 +2,6 @@ import type { VersionEnum } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import uniqBy from 'lodash-es/uniqBy'
 import { type FC, useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import MdiInformation from '~icons/mdi/information'
 import {
   type DXVersion,
@@ -15,6 +14,11 @@ import { startViewTransition, wipeOriginFromElement } from '../../../utils/start
 import { VERSION_THEME } from '../../../theme'
 import { VersionPicker, type VersionPickerOption, VersionPickerTrigger } from '../../version/VersionPicker'
 import { WebpSupportedImage } from '../WebpSupportedImage'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { PendingSpinner } from '@/components/global/InternalLink'
+import { beginAppBusy } from '@/components/layout/appBusy'
 
 const fromMergedVersionRegionId = (id: string) => {
   const [version, region] = id.split('__') as [DXVersion, Region]
@@ -22,6 +26,13 @@ const fromMergedVersionRegionId = (id: string) => {
 }
 
 const toMergedVersionRegionId = (version: DXVersion, region: Region) => `${version}__${region}`
+
+export const REGION_LABELS = {
+  jp: m.settings_region_jp,
+  intl: m.settings_region_intl,
+  cn: m.settings_region_cn,
+  _generic: m.settings_region__generic,
+} satisfies Record<Region, PlainMessage>
 
 const getVersionEnum = (version: DXVersion) => DXVersionToDXDataVersionEnumMap[version]
 
@@ -85,9 +96,9 @@ const VERSION_GENERIC_REGIONS: VersionRegion[] = [
 export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = false }) => {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [open, setOpen] = useState(false)
-  const { t } = useTranslation(['settings'])
+  const locale = useLocale()
   const { version, region, setVersionAndRegion } = useAppContext()
-  const selectLabel = t('settings:version-and-region.select')
+  const selectLabel = m.settings_versionAndRegion_select({}, { locale })
   const currentId = toMergedVersionRegionId(version, region)
   const currentVersion = getVersionEnum(version)
   const isListed = [...VERSION_SPECIFIC_REGIONS, ...VERSION_GENERIC_REGIONS].some(({ id }) => id === currentId)
@@ -97,7 +108,7 @@ export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = fal
     version: versionEnum,
     selected: id === currentId,
     // The paired versions are all "Generic", which their heading says once
-    description: region === '_generic' ? undefined : t(`settings:region.${region}`),
+    description: region === '_generic' ? undefined : REGION_LABELS[region]({}, { locale }),
   })
   // A saved choice the list no longer offers (an older regional release) stays visible, and selected, at the front
   const featured = [
@@ -110,6 +121,15 @@ export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = fal
   // switcher was a menu. Starting the wipe while the sheet is still on screen would freeze the sheet and its backdrop
   // in the old snapshot and hide the wipe behind them. startViewTransition skips the wipe under reduced motion.
   const pendingRef = useRef<{ version: DXVersion; region: Region } | null>(null)
+  // From the pick until the new version has rendered (the picker closing, then every page re-rendering for it), the
+  // switcher shows a spinner and the top progress bar runs, so the change never lands unannounced
+  const [switching, setSwitching] = useState(false)
+  const endBusyRef = useRef<() => void>(undefined)
+  const endSwitching = () => {
+    endBusyRef.current?.()
+    endBusyRef.current = undefined
+    setSwitching(false)
+  }
   const fallbackRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const applyPending = () => {
     clearTimeout(fallbackRef.current)
@@ -118,14 +138,22 @@ export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = fal
     if (!next) return
     void startViewTransition(() => {
       setVersionAndRegion(next.version, next.region)
-    }, wipeOriginFromElement(triggerRef.current))
+    }, wipeOriginFromElement(triggerRef.current)).finally(endSwitching)
   }
-  useEffect(() => () => clearTimeout(fallbackRef.current), [])
+  useEffect(
+    () => () => {
+      clearTimeout(fallbackRef.current)
+      endBusyRef.current?.()
+    },
+    [],
+  )
 
   const pick = (option: VersionPickerOption) => {
     setOpen(false)
     if (option.key === currentId) return
     pendingRef.current = fromMergedVersionRegionId(option.key)
+    endBusyRef.current ??= beginAppBusy()
+    setSwitching(true)
     // In case the close transition never reports back (e.g. the dialog unmounts first)
     clearTimeout(fallbackRef.current)
     fallbackRef.current = setTimeout(applyPending, 1000)
@@ -136,7 +164,8 @@ export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = fal
       <VersionPickerTrigger
         ref={triggerRef}
         expanded={open}
-        aria-label={`${selectLabel}: ${currentVersion} · ${t(`settings:region.${region}`)}`}
+        aria-busy={switching || undefined}
+        aria-label={`${selectLabel}: ${currentVersion} · ${REGION_LABELS[region]({}, { locale })}`}
         onClick={() => setOpen(true)}
         className={clsx(
           'version-switcher glass-thin ps-4 pe-2 py-2 [transition-property:background-color] duration-[var(--duration-fast)] hover:bg-white/55',
@@ -148,30 +177,32 @@ export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = fal
             objectFit="contain"
             src={{ at1x: VERSION_THEME[currentVersion].logo }}
             className="version-switcher__logo w-auto touch-callout-none"
-            alt={t('settings:version-and-region.logo-alt', { version: currentVersion })}
+            alt={m.settings_versionAndRegion_logoAlt({ version: currentVersion }, { locale })}
             fetchPriority="high"
             draggable={false}
           />
 
           <span className="self-center rounded-full border border-solid border-[var(--glass-border)] bg-accent-subtle px-3 py-1.5 text-center text-sm font-semibold leading-none text-fg-1 whitespace-nowrap">
-            {t('settings:region.title', { region: t(`settings:region.${region}`) })}
+            {m.settings_region_title({ region: REGION_LABELS[region]({}, { locale }) }, { locale })}
           </span>
         </span>
       </VersionPickerTrigger>
+
+      {switching && <PendingSpinner anchorRef={triggerRef} />}
 
       <VersionPicker
         open={open}
         onClose={() => setOpen(false)}
         title={selectLabel}
-        featured={{ title: t('settings:version-and-region.regional'), options: featured }}
-        pagesTitle={t('settings:version-and-region.select-generic')}
+        featured={{ title: m.settings_versionAndRegion_regional({}, { locale }), options: featured }}
+        pagesTitle={m.settings_versionAndRegion_selectGeneric({}, { locale })}
         options={generic}
         onPick={pick}
         onExited={applyPending}
         footnote={
           <p className="m-0 flex items-start gap-2 text-xs leading-normal text-fg-2">
             <MdiInformation aria-hidden className="mt-0.5 shrink-0" />
-            <span className="text-pretty">{t('settings:version-and-region.info')}</span>
+            <span className="text-pretty">{m.settings_versionAndRegion_info({}, { locale })}</span>
           </p>
         }
       />

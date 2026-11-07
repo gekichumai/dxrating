@@ -11,20 +11,37 @@ import {
   MenuItem,
 } from '@mui/material'
 import { MoreHorizontal } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { useSWRConfig } from 'swr'
 import toast from 'react-hot-toast'
 import { apiClient } from '../../lib/orpc'
 import { useAuth } from '../../hooks/useAuth'
 import { hideComment } from './commentVisibility'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
 
 type Comment = { id: number; author_id: string }
+type SafetyAction = 'report' | 'block'
+
+const SAFETY_ACTION_LABELS = {
+  report: m.sheet_comments_safety_report,
+  block: m.sheet_comments_safety_block,
+} satisfies Record<SafetyAction, PlainMessage>
+const SAFETY_ACTION_DESCRIPTIONS = {
+  report: m.sheet_comments_safety_reportDescription,
+  block: m.sheet_comments_safety_blockDescription,
+} satisfies Record<SafetyAction, PlainMessage>
+const SAFETY_ACTION_SUCCESS = {
+  report: m.sheet_comments_safety_reportSuccess,
+  block: m.sheet_comments_safety_blockSuccess,
+} satisfies Record<SafetyAction, PlainMessage>
+
 export function CommentActions({ comment }: { comment: Comment }) {
-  const { t } = useTranslation('sheet')
+  const locale = useLocale()
   const { user, ensureAuthenticated, LoginDialog } = useAuth()
   const { mutate } = useSWRConfig()
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
-  const [action, setAction] = useState<'report' | 'block' | null>(null)
+  const [action, setAction] = useState<SafetyAction | null>(null)
   const [pending, setPending] = useState(false)
   if (user?.id === comment.author_id) return null
 
@@ -43,11 +60,11 @@ export function CommentActions({ comment }: { comment: Comment }) {
       ).catch(() => {
         /* The server saved the preference; keep the local filter if refresh fails. */
       })
-      toast.success(t(`comments.safety.${action}-success`))
+      toast.success(SAFETY_ACTION_SUCCESS[action]({}, { locale }))
       setAction(null)
     } catch {
       undo()
-      toast.error(t('comments.safety.error'))
+      toast.error(m.sheet_comments_safety_error({}, { locale }))
     } finally {
       setPending(false)
     }
@@ -56,7 +73,7 @@ export function CommentActions({ comment }: { comment: Comment }) {
   return (
     <>
       <IconButton
-        aria-label={t('comments.safety.actions')}
+        aria-label={m.sheet_comments_safety_actions({}, { locale })}
         size="small"
         onClick={(event) => setAnchor(event.currentTarget)}
       >
@@ -71,7 +88,7 @@ export function CommentActions({ comment }: { comment: Comment }) {
               if (await ensureAuthenticated()) setAction(value)
             }}
           >
-            {t(`comments.safety.${value}`)}
+            {SAFETY_ACTION_LABELS[value]({}, { locale })}
           </MenuItem>
         ))}
       </Menu>
@@ -81,14 +98,14 @@ export function CommentActions({ comment }: { comment: Comment }) {
           if (!pending) setAction(null)
         }}
       >
-        <DialogTitle>{action ? t(`comments.safety.${action}`) : ''}</DialogTitle>
+        <DialogTitle>{action ? SAFETY_ACTION_LABELS[action]({}, { locale }) : ''}</DialogTitle>
         <DialogContent>
-          <DialogContentText>{action ? t(`comments.safety.${action}-description`) : ''}</DialogContentText>
+          <DialogContentText>{action ? SAFETY_ACTION_DESCRIPTIONS[action]({}, { locale }) : ''}</DialogContentText>
         </DialogContent>
         <DialogActions>
           {/* Blocking can't be undone yet, so Cancel takes focus and the confirm action carries the danger colour */}
           <Button disabled={pending} onClick={() => setAction(null)} color="inherit" autoFocus={action === 'block'}>
-            {t('comments.safety.cancel')}
+            {m.sheet_comments_safety_cancel({}, { locale })}
           </Button>
           <Button
             disabled={pending}
@@ -96,7 +113,7 @@ export function CommentActions({ comment }: { comment: Comment }) {
             variant="contained"
             color={action === 'block' ? 'error' : 'primary'}
           >
-            {action ? t(`comments.safety.${action}`) : ''}
+            {action ? SAFETY_ACTION_LABELS[action]({}, { locale }) : ''}
           </Button>
         </DialogActions>
       </Dialog>

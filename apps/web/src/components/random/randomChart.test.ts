@@ -1,7 +1,14 @@
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import type { VersionedSheet } from '@gekichumai/maimai-domain'
 import { describe, expect, it } from 'vitest'
-import { countActiveFilters, DEFAULT_RANDOM_FILTERS, filterRandomPool, pickRandom } from './randomChart'
+import {
+  countActiveFilters,
+  DEFAULT_RANDOM_FILTERS,
+  filterRandomPool,
+  findRolledChart,
+  parseRolledChartParam,
+  pickRandom,
+} from './randomChart'
 
 const sheet = (overrides: Partial<VersionedSheet>): VersionedSheet =>
   ({
@@ -67,5 +74,21 @@ describe('filterRandomPool game-version ceiling', () => {
     expect(ids(VersionEnum.PRiSM)).toEqual(['prism'])
     // A new selection re-evaluates the pool
     expect(ids(VersionEnum.MAGiCAL)).toEqual(['prism', 'magical'])
+  })
+})
+describe('the rolled chart in the URL', () => {
+  it('accepts only public sheet IDs', () => {
+    expect(parseRolledChartParam('dsht_abc123')).toBe('dsht_abc123')
+    expect(parseRolledChartParam('dsht_')).toBeUndefined()
+    expect(parseRolledChartParam('../etc')).toBeUndefined()
+    expect(parseRolledChartParam(42)).toBeUndefined()
+    expect(parseRolledChartParam(undefined)).toBeUndefined()
+  })
+
+  it('finds the chart the link names, or nothing', () => {
+    const sheets = [{ id: 'dsht_a' }, { id: 'dsht_b' }]
+    expect(findRolledChart(sheets, 'dsht_b')).toBe(sheets[1])
+    expect(findRolledChart(sheets, 'dsht_gone')).toBeNull()
+    expect(findRolledChart(sheets, undefined)).toBeNull()
   })
 })

@@ -1,4 +1,3 @@
-import i18n from 'i18next'
 import type { ServerEnum } from '@gekichumai/dxdata'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { fireEvent, render, screen, type RenderResult } from '@testing-library/react'
@@ -6,6 +5,8 @@ import type { ReactNode } from 'react'
 import { renderToString } from 'react-dom/server'
 import type { FlattenedSheet } from '@/songs'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 import { initI18n } from '@/setup/init-i18n'
 import { SheetList } from '../SheetList'
 
@@ -47,6 +48,8 @@ const sheetMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@tanstack/react-router', () => ({
+  // InternalLink: no router in these tests, so links render as plain anchors
+  useRouter: () => undefined,
   getRouteApi: () => ({
     useSearch: () => routeState.search,
   }),
@@ -117,6 +120,17 @@ const stubViewport = (wide: boolean) => {
   )
 }
 
+const Providers = ({ children }: { children: ReactNode }) => (
+  <LocaleProvider initialLocale="en">{children}</LocaleProvider>
+)
+
+const renderPage = () =>
+  renderToString(
+    <Providers>
+      <SheetList />
+    </Providers>,
+  )
+
 describe('SheetList', () => {
   beforeAll(() => {
     initI18n()
@@ -149,18 +163,18 @@ describe('SheetList', () => {
       { ...sheet, id: 'older', songId: 'older', releaseDateTimestamp: 1 },
       { ...sheet, id: 'newer', songId: 'newer', releaseDateTimestamp: 2 },
     ]
-    expect(renderToString(<SheetList />)).toContain('newer,older')
-    render(<SheetList />)
+    expect(renderPage()).toContain('newer,older')
+    render(<SheetList />, { wrapper: Providers })
     expect(screen.getByTestId('sheet-list').textContent).toBe('newer,older')
   })
 
   it('introduces the page in the server render when there is no query, and drops it for a query', () => {
-    const intro = i18n.t('root:pages.search.introduction')
+    const intro = m.root_pages_search_introduction({}, { locale: 'en' })
     expect(intro).toMatch(/maimai DX/)
-    expect(renderToString(<SheetList />)).toContain(intro)
+    expect(renderPage()).toContain(intro)
 
     routeState.search = { q: 'test' }
-    expect(renderToString(<SheetList />)).not.toContain(intro)
+    expect(renderPage()).not.toContain(intro)
   })
 
   it('uses the route query immediately and shows seeded results while sheets load', () => {
@@ -187,6 +201,7 @@ describe('SheetList', () => {
           },
         ]}
       />,
+      { wrapper: Providers },
     )
 
     expect(sheetMocks.filteredTerms).toContain('螺旋')
@@ -202,7 +217,7 @@ describe('SheetList', () => {
       view.rerender(<SheetList />)
     }
 
-    view = render(<SheetList />)
+    view = render(<SheetList />, { wrapper: Providers })
 
     const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
     input.focus()
@@ -235,7 +250,7 @@ describe('SheetList', () => {
 
     it('server-renders both layouts, each shown by CSS at the widths it is the default for', async () => {
       await seedResults()
-      const html = renderToString(<SheetList />)
+      const html = renderPage()
 
       expect(html).toMatch(/<div class="w-full lg:hidden"><div data-testid="sheet-list">only<\/div>/)
       expect(html).toMatch(/<div class="w-full hidden lg:block"><div data-testid="sheet-grid">only<\/div>/)
@@ -246,14 +261,14 @@ describe('SheetList', () => {
     it('lists results below lg and shows the grid from lg until the visitor picks one', async () => {
       await seedResults()
       stubViewport(false)
-      const phone = render(<SheetList />)
+      const phone = render(<SheetList />, { wrapper: Providers })
       expect(screen.getByTestId('sheet-list')).toBeTruthy()
       expect(screen.queryByTestId('sheet-grid')).toBeNull()
       expect(screen.getByRole('button', { name: 'List' }).getAttribute('aria-pressed')).toBe('true')
       phone.unmount()
 
       stubViewport(true)
-      render(<SheetList />)
+      render(<SheetList />, { wrapper: Providers })
       expect(screen.getByTestId('sheet-grid')).toBeTruthy()
       expect(screen.queryByTestId('sheet-list')).toBeNull()
       expect(screen.getByRole('button', { name: 'Grid' }).getAttribute('aria-pressed')).toBe('true')
@@ -262,7 +277,7 @@ describe('SheetList', () => {
     it('switches layout and remembers the choice over the default for the width', async () => {
       await seedResults()
       stubViewport(false)
-      const view = render(<SheetList />)
+      const view = render(<SheetList />, { wrapper: Providers })
 
       fireEvent.click(screen.getByRole('button', { name: 'Grid' }))
 
@@ -271,7 +286,7 @@ describe('SheetList', () => {
       expect(window.localStorage.getItem('sheet-list-layout')).toBe('grid')
 
       view.unmount()
-      render(<SheetList />)
+      render(<SheetList />, { wrapper: Providers })
       expect(screen.getByTestId('sheet-grid')).toBeTruthy()
     })
   })

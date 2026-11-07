@@ -7,6 +7,7 @@ import { type CSSProperties, type FC, type ReactNode, useCallback, useEffect, us
 import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { difficultyInkClassName } from '@/utils/difficultyInk'
+import { InternalLink } from '@/components/global/InternalLink'
 
 /** Short difficulty names shown next to levels, so a level never depends on its colour alone */
 export const DIFFICULTY_SHORT: Record<DifficultyEnum, string> = Object.fromEntries(
@@ -42,14 +43,14 @@ export const SegmentedNav: FC<{
 }> = ({ label, labelledBy, items, className }) => (
   <nav aria-label={label} aria-labelledby={labelledBy} className={`${segmentedTrack} self-start ${className ?? ''}`}>
     {items.map((item) => (
-      <a
+      <InternalLink
         key={item.key}
         href={item.href}
         aria-current={item.current ? 'page' : undefined}
         className={segmentedItem(item.current)}
       >
         {item.label}
-      </a>
+      </InternalLink>
     ))}
   </nav>
 )
@@ -83,17 +84,17 @@ export const Breadcrumb: FC<{ items: { href?: string; label: ReactNode }[] }> = 
     <nav aria-label={t('constants:breadcrumb-label')} className="text-xs text-fg-2">
       <ol className="m-0 p-0 list-none flex flex-wrap items-center gap-x-1">
         <li>
-          <a href="/" className="text-inherit no-underline hover:underline underline-offset-2">
+          <InternalLink href="/" className="text-inherit no-underline hover:underline underline-offset-2">
             DXRating
-          </a>
+          </InternalLink>
         </li>
         {items.map((item, index) => (
           <li key={index} className="flex items-center gap-x-1">
             <span aria-hidden>›</span>
             {item.href ? (
-              <a href={item.href} className="text-inherit no-underline hover:underline underline-offset-2">
+              <InternalLink href={item.href} className="text-inherit no-underline hover:underline underline-offset-2">
                 {item.label}
-              </a>
+              </InternalLink>
             ) : (
               <span aria-current="page">{item.label}</span>
             )}

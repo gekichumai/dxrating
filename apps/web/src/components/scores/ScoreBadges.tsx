@@ -2,10 +2,10 @@ import type { ComboFlag, SyncFlag } from '@gekichumai/maimai-domain'
 import { TypeEnum } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import type { CSSProperties, FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import { achievementRankLabel, COMBO_LABELS, SYNC_LABELS } from '@/components/completion/completion'
-import { getSheetTypeAltTextKey } from '@/components/sheet/sheetTypeAssets'
+import { getSheetTypeAltText } from '@/components/sheet/sheetTypeAssets'
 import { FixedWidthText } from '@/components/global/FixedWidthText'
+import { useLocale } from '@/i18n/LocaleProvider'
 import { DIFFICULTIES, DIFFICULTY_SHORT_TITLES } from '@/models/difficulties'
 
 /**
@@ -81,8 +81,8 @@ const DX_LETTERING: CSSProperties = {
 }
 
 export const SheetTypeBadge: FC<{ type: TypeEnum; className?: string }> = ({ type, className }) => {
-  const { t } = useTranslation(['sheet'])
-  const label = t(getSheetTypeAltTextKey(type))
+  const locale = useLocale()
+  const label = getSheetTypeAltText(type, locale)
   if (type === TypeEnum.DX) {
     return (
       <span
