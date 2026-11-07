@@ -67,7 +67,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "{count} bagong chart. Hindi kasama ang mga BASIC at ADVANCED chart.",
+        "countPlural=one": "{count} bagong chart, pinakabago muna. Hindi kasama ang mga BASIC at ADVANCED chart.",
         "countPlural=*": "{count} bagong chart, pinakabago muna. Hindi kasama ang mga BASIC at ADVANCED chart."
       }
     }
@@ -213,7 +213,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Ipakita ang {count} alias",
+        "countPlural=one": "Ipakita lahat ng {count} alias",
         "countPlural=*": "Ipakita lahat ng {count} alias"
       }
     }
@@ -630,7 +630,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Na-import ang 1 record mula sa diving-fish.",
+        "countPlural=one": "Na-import ang {count} record mula sa diving-fish.",
         "countPlural=*": "Na-import ang {count} record mula sa diving-fish."
       }
     }
@@ -662,7 +662,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Na-import ang 1 record mula sa LXNS.",
+        "countPlural=one": "Na-import ang {count} record mula sa LXNS.",
         "countPlural=*": "Na-import ang {count} record mula sa LXNS."
       }
     }
@@ -688,7 +688,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Na-import ang 1 record",
+        "countPlural=one": "Na-import ang {count} record",
         "countPlural=*": "Na-import ang {count} record"
       }
     }
@@ -700,7 +700,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Na-import ang 1 record",
+        "countPlural=one": "Na-import ang {count} record",
         "countPlural=*": "Na-import ang {count} record"
       }
     }
@@ -712,7 +712,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Na-import ang 1 record",
+        "countPlural=one": "Na-import ang {count} record",
         "countPlural=*": "Na-import ang {count} record"
       }
     }
@@ -734,7 +734,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Na-import ang 1 record",
+        "countPlural=one": "Na-import ang {count} record",
         "countPlural=*": "Na-import ang {count} record"
       }
     }
@@ -767,7 +767,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Na-import ang 1 record",
+        "countPlural=one": "Na-import ang {count} record",
         "countPlural=*": "Na-import ang {count} record"
       }
     }
@@ -780,7 +780,7 @@
       "declarations": ["input count", "input region", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Na-import ang 1 record mula sa {region} NET.",
+        "countPlural=one": "Na-import ang {count} record mula sa {region} NET.",
         "countPlural=*": "Na-import ang {count} record mula sa {region} NET."
       }
     }
@@ -844,7 +844,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Papalitan ng 1 record sa import na ito ang iyong mga naka-save na score.",
+        "countPlural=one": "Papalitan ng {count} record sa import na ito ang iyong mga naka-save na score.",
         "countPlural=*": "Papalitan ng {count} record sa import na ito ang iyong mga naka-save na score."
       }
     }
@@ -854,7 +854,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Isasama ang 1 record sa import na ito sa iyong mga naka-save na score. Ang mas mataas na score lang ang papalit sa naka-save.",
+        "countPlural=one": "Isasama ang {count} record sa import na ito sa iyong mga naka-save na score. Ang mas matataas na score lang ang papalit sa mga naka-save.",
         "countPlural=*": "Isasama ang {count} record sa import na ito sa iyong mga naka-save na score. Ang mas matataas na score lang ang papalit sa mga naka-save."
       }
     }
@@ -869,7 +869,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "1 chart ang bababa ang score o maaalis",
+        "countPlural=one": "{count} chart ang bababa ang score o maaalis",
         "countPlural=*": "{count} chart ang bababa ang score o maaalis"
       }
     }
@@ -883,7 +883,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Puwede mong i-undo ang import na ito sa loob ng 1 oras.",
+        "countPlural=one": "Puwede mong i-undo ang import na ito sa loob ng {count} oras.",
         "countPlural=*": "Puwede mong i-undo ang import na ito sa loob ng {count} oras."
       }
     }
@@ -904,7 +904,7 @@
       "declarations": ["input count", "input source", "input time", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Na-import ang 1 record mula sa {source} noong {time}",
+        "countPlural=one": "Na-import ang {count} record mula sa {source} noong {time}",
         "countPlural=*": "Na-import ang {count} record mula sa {source} noong {time}"
       }
     }
@@ -921,7 +921,7 @@
       "declarations": ["input count", "input source", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Maibabalik ang iyong 1 record mula bago ang import mula sa {source}.",
+        "countPlural=one": "Maibabalik ang iyong {count} record mula bago ang import mula sa {source}.",
         "countPlural=*": "Maibabalik ang iyong {count} record mula bago ang import mula sa {source}."
       }
     }
@@ -936,7 +936,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Permanente nitong aalisin ang iyong 1 record sa browser na ito. I-export muna ito kung gusto mo ng backup.",
+        "countPlural=one": "Permanente nitong aalisin ang lahat ng {count} record sa browser na ito. I-export muna ang mga ito kung gusto mo ng backup.",
         "countPlural=*": "Permanente nitong aalisin ang lahat ng {count} record sa browser na ito. I-export muna ang mga ito kung gusto mo ng backup."
       }
     }
@@ -1162,7 +1162,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "1 chart ang nahanap",
+        "countPlural=one": "{count} chart ang nahanap",
         "countPlural=*": "{count} chart ang nahanap"
       }
     }
@@ -1246,7 +1246,7 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "Pindutin ang I-roll para makuha ang nag-iisang tugmang chart.",
+        "countPlural=one": "Pindutin ang I-roll para pumili ng isa sa {count} tugmang chart.",
         "countPlural=*": "Pindutin ang I-roll para pumili ng isa sa {count} tugmang chart."
       }
     }
