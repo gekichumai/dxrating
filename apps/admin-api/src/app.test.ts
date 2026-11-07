@@ -76,6 +76,11 @@ describe('Access claims', () => {
 })
 
 describe('config', () => {
+  it('fails closed when NODE_ENV is unset: production, so no development identity and Access is required', () => {
+    expect(() => envSchema.parse({ ADMIN_DEV_ACCESS_EMAIL: 'a@b.invalid' })).toThrow()
+    expect(() => envSchema.parse({})).toThrow()
+    expect(envSchema.parse({ ADMIN_ACCESS_TEAM_DOMAIN: 't', ADMIN_ACCESS_AUD: 'a' }).NODE_ENV).toBe('production')
+  })
   it('refuses the development identity outside development', () => {
     expect(() => envSchema.parse({ NODE_ENV: 'production', ADMIN_DEV_ACCESS_EMAIL: 'a@b.invalid' })).toThrow()
   })

@@ -17,7 +17,8 @@ const list = z
 
 export const envSchema = z
   .object({
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    // Fails closed: an unset NODE_ENV is production, so the development identity is refused and Access is required
+    NODE_ENV: z.enum(['development', 'production', 'test']).default('production'),
     PORT: z.coerce.number().int().default(3100),
     /** The admin host's own origin; a browser request from any other origin is refused */
     ADMIN_ORIGIN: z.string().url().default('http://localhost:5180'),
