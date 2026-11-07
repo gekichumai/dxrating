@@ -60,9 +60,11 @@ describe('home route (chart search)', () => {
     expect(titles(loaderData, 'en')).toHaveLength(1)
     expect(dialogTitle?.title).toContain('君の知らない物語')
     expect(titles(loaderData, 'ja')[0]?.title).toContain('君の知らない物語')
-    // The constant depends on the visitor's game version, which the server does not know
-    expect(dialogTitle?.title).not.toMatch(/\(\d+\.\d\)|譜面定数/)
-    expect(titles(loaderData, 'ja')[0]?.title).not.toContain('譜面定数')
+    // The level and the constant depend on the visitor's game version, which the server does not know
+    expect(loaderData.dialogSheet?.sheet).not.toHaveProperty('level')
+    expect(dialogTitle?.title).not.toMatch(/Lv\.|\(\d+\.\d\)|譜面定数/)
+    expect(titles(loaderData, 'ja')[0]?.title).not.toMatch(/Lv\.|譜面定数/)
+    expect(dialogTitle?.title).toMatch(/MASTER/)
 
     const [searchTitle] = titles(await loadSearchRouteData({}), 'en')
     expect(searchTitle?.title).not.toContain('君の知らない物語')
