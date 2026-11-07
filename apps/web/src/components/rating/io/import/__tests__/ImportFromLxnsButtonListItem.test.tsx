@@ -1,71 +1,71 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import i18n from 'i18next'
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { ServerImportFailedError } from '@/models/scores/cloudImports'
-import { initI18n } from '@/setup/init-i18n'
+import { Dialog, Menu, MenuList, TextField } from '@mui/material'
+import { type ReactElement, useState } from 'react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ImportFromLxnsButtonListItem } from '../ImportFromLxnsButtonListItem'
 
-const mocks = vi.hoisted(() => ({
-  serverImport: vi.fn(),
-  toastError: vi.fn(),
-}))
-
-vi.mock('react-hot-toast', () => ({
-  default: Object.assign(vi.fn(), { success: vi.fn(), error: mocks.toastError, dismiss: vi.fn() }),
-}))
-vi.mock('web-haptics', () => ({
-  WebHaptics: class {
-    trigger() {}
+// A sign-in dialog shaped like useAuth's: an MUI Dialog (portalled) with a focusable field
+const { auth } = vi.hoisted(() => ({
+  auth: {
+    isAuthenticated: false,
+    loginOpen: false,
+    openLoginDialog: vi.fn(),
+    LoginDialog: (() => null) as () => ReactElement | null,
   },
 }))
-vi.mock('@sentry/tanstackstart-react', () => ({
-  metrics: { count: vi.fn(), distribution: vi.fn() },
-}))
-vi.mock('../../../../../hooks/useAuth', () => ({ useAuth: () => ({ isAuthenticated: true }) }))
-vi.mock('../../../../../lib/orpc', () => ({
-  apiClient: { lxns: { status: vi.fn(async () => ({ connected: true })) } },
-}))
-vi.mock('@/catalog/CatalogContext', () => ({ useSongCatalogLoader: () => async () => ({}) }))
-vi.mock('@/models/scores/useScoreRepository', () => ({ useScoreRepository: () => ({ kind: 'cloud' }) }))
-vi.mock('../cloudImport', async (original) => ({
-  ...(await original<typeof import('../cloudImport')>()),
-  importPath: () => 'server',
-  runServerImportToEnd: mocks.serverImport,
-}))
-
-beforeAll(async () => {
-  initI18n()
-  await i18n.changeLanguage('en')
-})
-
+vi.mock('@/hooks/useAuth', () => ({ useAuth: () => auth }))
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
 })
 
-async function openAndImport() {
-  render(<ImportFromLxnsButtonListItem onClose={vi.fn()} />)
-  fireEvent.click(screen.getByText('Import from LXNS (落雪咖啡屋)'))
-  fireEvent.click(await screen.findByRole('button', { name: 'Import now' }))
-}
+const renderItem = () =>
+  render(
+    <MenuList>
+      <ImportFromLxnsButtonListItem onClose={() => {}} />
+    </MenuList>,
+  )
 
-describe('ImportFromLxnsButtonListItem on a cloud save', () => {
-  it('offers to connect again when the server import lost the LXNS connection', async () => {
-    mocks.serverImport.mockRejectedValue(new ServerImportFailedError('connection_expired', null))
-    await openAndImport()
-
-    expect(await screen.findByRole('button', { name: 'Connect to LXNS' })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Import now' })).toBeNull()
-    expect(mocks.toastError).toHaveBeenCalledWith(
-      'Your LXNS connection has expired. Reconnect your account to keep importing.',
-    )
+describe('LXNS import menu item', () => {
+  it('signed out, says how to use it and opens sign-in instead of being disabled', () => {
+    auth.isAuthenticated = false
+    renderItem()
+    const item = screen.getByRole('menuitem', { name: /LXNS/ })
+    expect(item.getAttribute('aria-disabled')).not.toBe('true')
+    expect(item.textContent).toContain('Sign in to connect LXNS')
+    fireEvent.click(item)
+    expect(auth.openLoginDialog).toHaveBeenCalledOnce()
   })
 
-  it('stays connected after a provider failure that keeps the connection', async () => {
-    mocks.serverImport.mockRejectedValue(new ServerImportFailedError('upstream_error', null))
-    await openAndImport()
+  it('signed in, opens the LXNS import dialog', () => {
+    auth.isAuthenticated = true
+    renderItem()
+    fireEvent.click(screen.getByRole('menuitem', { name: /LXNS/ }))
+    expect(auth.openLoginDialog).not.toHaveBeenCalled()
+    expect(screen.getByRole('dialog')).toBeTruthy()
+  })
 
-    expect(await screen.findByRole('button', { name: 'Import now' })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Connect to LXNS' })).toBeNull()
+  it('keeps the import menu, and so the sign-in form, open while the user tabs through sign-in', () => {
+    auth.isAuthenticated = false
+    auth.LoginDialog = () => (
+      <Dialog open aria-label="Sign in">
+        <TextField label="Email" />
+        <TextField label="Password" />
+      </Dialog>
+    )
+    const onMenuClose = vi.fn()
+    const Harness = () => {
+      const [anchor] = useState(() => document.body)
+      return (
+        <Menu open anchorEl={anchor} onClose={onMenuClose}>
+          <ImportFromLxnsButtonListItem onClose={() => {}} />
+        </Menu>
+      )
+    }
+    render(<Harness />)
+    const email = screen.getByLabelText('Email')
+    email.focus()
+    fireEvent.keyDown(email, { key: 'Tab' })
+    expect(onMenuClose).not.toHaveBeenCalled()
   })
 })

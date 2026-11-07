@@ -1,11 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import toast from 'react-hot-toast'
+import { LocaleProvider, useSetLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 import { SecuritySection } from '../SecuritySection'
 
-const { changePassword, listUserPasskeys, listSessions } = vi.hoisted(() => ({
+const { addPasskey, changePassword, listUserPasskeys, listSessions } = vi.hoisted(() => ({
+  addPasskey: vi.fn(),
   changePassword: vi.fn(),
   listUserPasskeys: vi.fn(),
   listSessions: vi.fn(),
@@ -16,7 +19,7 @@ vi.mock('@/lib/auth-client', () => ({
     changePassword,
     listSessions,
     passkey: {
-      addPasskey: vi.fn(),
+      addPasskey,
       deletePasskey: vi.fn(),
       listUserPasskeys,
     },
@@ -37,10 +40,6 @@ function TestProviders({ children }: { children: ReactNode }) {
 }
 
 describe('SecuritySection', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   beforeEach(() => {
     vi.clearAllMocks()
     changePassword.mockResolvedValue({ error: null })
@@ -82,6 +81,32 @@ describe('SecuritySection', () => {
         newPassword: 'new-password',
         revokeOtherSessions: true,
       }),
+    )
+  })
+
+  it('reports account actions in the language switched to after mounting', async () => {
+    addPasskey.mockResolvedValue({ error: null })
+    const SwitchToJapanese = () => {
+      const setLocale = useSetLocale()
+      return (
+        <button type="button" onClick={() => void setLocale('ja')}>
+          switch
+        </button>
+      )
+    }
+    render(
+      <LocaleProvider initialLocale="en">
+        <SwitchToJapanese />
+        <SecuritySection />
+      </LocaleProvider>,
+      { wrapper: TestProviders },
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'switch' }))
+    fireEvent.click(await screen.findByRole('button', { name: m.auth_userProfile_passkeys_add({}, { locale: 'ja' }) }))
+
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(m.auth_userProfile_passkeys_added({}, { locale: 'ja' })),
     )
   })
 })

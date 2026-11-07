@@ -14,7 +14,6 @@ import {
   RadioGroup,
 } from '@mui/material'
 import { type FC, type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import { captureAnalyticsEvent, type CloudSaveMigrationMode } from '@/lib/analytics'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
@@ -33,6 +32,8 @@ import {
   SaveLimitError,
 } from '@/models/scores/cloudMigration'
 import { LoadError } from './LoadError'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
 import './cloud-save.css'
 
 /**
@@ -112,13 +113,13 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
   onActivate,
   userId,
 }) => {
-  const { t, i18n } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const titleId = useId()
   const [step, setStep] = useState<Step>({ kind: 'loading' })
   const [choice, setChoice] = useState<ExistingChoice>('merge')
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [attempt, setAttempt] = useState(0)
-  const numberFormat = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language])
+  const numberFormat = useMemo(() => new Intl.NumberFormat(locale), [locale])
   // One ID per browser, so a retry (in this dialog or after a reload) sends the same keys
   const deviceId = useMemo(() => getDeviceId(storage), [storage])
   const headingRef = useRef<HTMLHeadingElement>(null)
@@ -176,7 +177,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
         entries,
         mode,
         region,
-        name: t('rating-calculator:cloud-save.migration.save-name'),
+        name: m.ratingCalculator_cloudSave_migration_saveName({}, { locale }),
         target,
         deviceId,
         storage,
@@ -215,12 +216,12 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
       const retryable = !(error instanceof SaveLimitError || error instanceof NothingToImportError)
       const message =
         error instanceof SaveLimitError
-          ? t('rating-calculator:cloud-save.migration.errors.save-limit')
+          ? m.ratingCalculator_cloudSave_migration_errors_saveLimit({}, { locale })
           : error instanceof NothingToImportError
-            ? t('rating-calculator:cloud-save.import.errors.nothing-to-import')
+            ? m.ratingCalculator_cloudSave_import_errors_nothingToImport({}, { locale })
             : mode === 'cloud-only'
-              ? t('rating-calculator:cloud-save.migration.errors.switch-generic')
-              : t('rating-calculator:cloud-save.migration.errors.generic')
+              ? m.ratingCalculator_cloudSave_migration_errors_switchGeneric({}, { locale })
+              : m.ratingCalculator_cloudSave_migration_errors_generic({}, { locale })
       setStep({ kind: 'error', mode, target, message, retryable })
     }
   }
@@ -232,19 +233,24 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
   const count = numberFormat.format(entries.length)
   const unverifiedNote = (
     <Alert severity="info" className="text-pretty">
-      {t('rating-calculator:cloud-save.migration.unverified-note')}
+      {m.ratingCalculator_cloudSave_migration_unverifiedNote({}, { locale })}
     </Alert>
   )
   const backupNote = (
-    <p className="m-0 text-xs text-fg-2 text-pretty">{t('rating-calculator:cloud-save.migration.backup-note')}</p>
+    <p className="m-0 text-xs text-fg-2 text-pretty">
+      {m.ratingCalculator_cloudSave_migration_backupNote({}, { locale })}
+    </p>
   )
 
   /** The records of a cloud save, in words ("1 record", "12 records") */
   const cloudRecords = (save: SaveDTO) =>
-    t('rating-calculator:cloud-save.migration.cloud-records', {
-      count: save.recordCount,
-      formatted: numberFormat.format(save.recordCount),
-    })
+    m.ratingCalculator_cloudSave_migration_cloudRecords(
+      {
+        count: save.recordCount,
+        formatted: numberFormat.format(save.recordCount),
+      },
+      { locale },
+    )
 
   const title = (text: string) => (
     <DialogTitle id={titleId} ref={headingRef} tabIndex={-1} className="outline-none text-pretty">
@@ -257,15 +263,15 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
     case 'loading':
       body = (
         <>
-          {title(t('rating-calculator:cloud-save.migration.title'))}
+          {title(m.ratingCalculator_cloudSave_migration_title({}, { locale }))}
           <DialogContent>
             <output className="flex items-center gap-2 py-2 text-sm text-fg-2">
               <CircularProgress size="1rem" aria-hidden />
-              {t('rating-calculator:cloud-save.saves.loading')}
+              {m.ratingCalculator_cloudSave_saves_loading({}, { locale })}
             </output>
           </DialogContent>
           <DialogActions>
-            <Button onClick={close}>{t('rating-calculator:cloud-save.import-confirm.cancel')}</Button>
+            <Button onClick={close}>{m.ratingCalculator_cloudSave_importConfirm_cancel({}, { locale })}</Button>
           </DialogActions>
         </>
       )
@@ -273,15 +279,15 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
     case 'load-error':
       body = (
         <>
-          {title(t('rating-calculator:cloud-save.migration.title'))}
+          {title(m.ratingCalculator_cloudSave_migration_title({}, { locale }))}
           <DialogContent>
             <LoadError
-              message={t('rating-calculator:cloud-save.saves.error')}
+              message={m.ratingCalculator_cloudSave_saves_error({}, { locale })}
               onRetry={() => setAttempt((value) => value + 1)}
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={close}>{t('rating-calculator:cloud-save.import-confirm.cancel')}</Button>
+            <Button onClick={close}>{m.ratingCalculator_cloudSave_importConfirm_cancel({}, { locale })}</Button>
           </DialogActions>
         </>
       )
@@ -289,21 +295,24 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
     case 'fresh':
       body = (
         <>
-          {title(t('rating-calculator:cloud-save.migration.title'))}
+          {title(m.ratingCalculator_cloudSave_migration_title({}, { locale }))}
           <DialogContent className="flex flex-col gap-3">
             <DialogContentText className="text-pretty">
-              {t('rating-calculator:cloud-save.migration.fresh-description', {
-                count: entries.length,
-                formatted: count,
-              })}
+              {m.ratingCalculator_cloudSave_migration_freshDescription(
+                {
+                  count: entries.length,
+                  formatted: count,
+                },
+                { locale },
+              )}
             </DialogContentText>
             {unverifiedNote}
             {backupNote}
           </DialogContent>
           <DialogActions>
-            <Button onClick={close}>{t('rating-calculator:cloud-save.migration.not-now')}</Button>
+            <Button onClick={close}>{m.ratingCalculator_cloudSave_migration_notNow({}, { locale })}</Button>
             <Button variant="contained" onClick={() => void run('fresh', null)}>
-              {t('rating-calculator:cloud-save.migration.back-up')}
+              {m.ratingCalculator_cloudSave_migration_backUp({}, { locale })}
             </Button>
           </DialogActions>
         </>
@@ -314,21 +323,24 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
       const region = REGION_LABELS[target.region]
       body = (
         <>
-          {title(t('rating-calculator:cloud-save.migration.existing-title'))}
+          {title(m.ratingCalculator_cloudSave_migration_existingTitle({}, { locale }))}
           <DialogContent className="flex flex-col gap-3">
             {step.changed && (
               <Alert severity="warning" className="text-pretty">
-                {t('rating-calculator:cloud-save.migration.changed')}
+                {m.ratingCalculator_cloudSave_migration_changed({}, { locale })}
               </Alert>
             )}
             <DialogContentText className="text-pretty">
-              {t('rating-calculator:cloud-save.migration.existing-description', {
-                name: target.name,
-                region: region || t('rating-calculator:cloud-save.saves.region-any'),
-                cloudRecords: cloudRecords(target),
-                count: entries.length,
-                formatted: count,
-              })}
+              {m.ratingCalculator_cloudSave_migration_existingDescription(
+                {
+                  name: target.name,
+                  region: region || m.ratingCalculator_cloudSave_saves_regionAny({}, { locale }),
+                  cloudRecords: cloudRecords(target),
+                  count: entries.length,
+                  formatted: count,
+                },
+                { locale },
+              )}
             </DialogContentText>
             <RadioGroup
               value={choice}
@@ -341,9 +353,11 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
                 control={<Radio size="small" />}
                 label={
                   <span className="flex flex-col py-1">
-                    <span className="text-sm font-semibold">{t('rating-calculator:cloud-save.migration.merge')}</span>
+                    <span className="text-sm font-semibold">
+                      {m.ratingCalculator_cloudSave_migration_merge({}, { locale })}
+                    </span>
                     <span className="text-xs text-fg-2 text-pretty">
-                      {t('rating-calculator:cloud-save.migration.merge-description')}
+                      {m.ratingCalculator_cloudSave_migration_mergeDescription({}, { locale })}
                     </span>
                   </span>
                 }
@@ -354,10 +368,10 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
                 label={
                   <span className="flex flex-col py-1">
                     <span className="text-sm font-semibold">
-                      {t('rating-calculator:cloud-save.migration.cloud-only')}
+                      {m.ratingCalculator_cloudSave_migration_cloudOnly({}, { locale })}
                     </span>
                     <span className="text-xs text-fg-2 text-pretty">
-                      {t('rating-calculator:cloud-save.migration.cloud-only-description')}
+                      {m.ratingCalculator_cloudSave_migration_cloudOnlyDescription({}, { locale })}
                     </span>
                   </span>
                 }
@@ -379,26 +393,26 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
                   />
                 }
               >
-                {t('rating-calculator:cloud-save.migration.advanced')}
+                {m.ratingCalculator_cloudSave_migration_advanced({}, { locale })}
               </Button>
               <Collapse in={advancedOpen} unmountOnExit>
                 <div className="mt-2 flex flex-col items-start gap-2 glass-inset p-3">
                   <p className="m-0 text-xs text-fg-2 text-pretty">
-                    {t('rating-calculator:cloud-save.migration.replace-description')}
+                    {m.ratingCalculator_cloudSave_migration_replaceDescription({}, { locale })}
                   </p>
                   <Button size="small" color="error" onClick={() => setStep({ kind: 'confirm-replace', target })}>
-                    {t('rating-calculator:cloud-save.migration.replace')}
+                    {m.ratingCalculator_cloudSave_migration_replace({}, { locale })}
                   </Button>
                 </div>
               </Collapse>
             </div>
           </DialogContent>
           <DialogActions>
-            <Button onClick={close}>{t('rating-calculator:cloud-save.migration.not-now')}</Button>
+            <Button onClick={close}>{m.ratingCalculator_cloudSave_migration_notNow({}, { locale })}</Button>
             <Button variant="contained" onClick={() => void run(choice, target)}>
               {choice === 'merge'
-                ? t('rating-calculator:cloud-save.migration.merge-action')
-                : t('rating-calculator:cloud-save.migration.cloud-only-action')}
+                ? m.ratingCalculator_cloudSave_migration_mergeAction({}, { locale })
+                : m.ratingCalculator_cloudSave_migration_cloudOnlyAction({}, { locale })}
             </Button>
           </DialogActions>
         </>
@@ -409,28 +423,26 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
       const { target } = step
       body = (
         <>
-          {title(t('rating-calculator:cloud-save.migration.replace-title'))}
+          {title(m.ratingCalculator_cloudSave_migration_replaceTitle({}, { locale }))}
           <DialogContent>
             <Alert severity="warning" className="text-pretty">
-              {t(
-                target.recordCount === 0
-                  ? 'rating-calculator:cloud-save.migration.replace-warning-empty'
-                  : 'rating-calculator:cloud-save.migration.replace-warning',
-                {
-                  name: target.name,
-                  cloudRecords: cloudRecords(target),
-                  count: entries.length,
-                  formatted: count,
-                },
-              )}
+              {target.recordCount === 0
+                ? m.ratingCalculator_cloudSave_migration_replaceWarningEmpty(
+                    { name: target.name, count: entries.length, formatted: count },
+                    { locale },
+                  )
+                : m.ratingCalculator_cloudSave_migration_replaceWarning(
+                    { name: target.name, cloudRecords: cloudRecords(target), count: entries.length, formatted: count },
+                    { locale },
+                  )}
             </Alert>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setStep({ kind: 'existing', target })}>
-              {t('rating-calculator:cloud-save.import-confirm.back')}
+              {m.ratingCalculator_cloudSave_importConfirm_back({}, { locale })}
             </Button>
             <Button color="error" variant="contained" onClick={() => void run('replace', target)}>
-              {t('rating-calculator:cloud-save.migration.replace-confirm')}
+              {m.ratingCalculator_cloudSave_migration_replaceConfirm({}, { locale })}
             </Button>
           </DialogActions>
         </>
@@ -442,15 +454,15 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
         <>
           {title(
             step.mode === 'cloud-only'
-              ? t('rating-calculator:cloud-save.migration.switching-title')
-              : t('rating-calculator:cloud-save.migration.running-title'),
+              ? m.ratingCalculator_cloudSave_migration_switchingTitle({}, { locale })
+              : m.ratingCalculator_cloudSave_migration_runningTitle({}, { locale }),
           )}
           <DialogContent>
             <output className="flex items-center gap-2 py-2 text-sm text-fg-2">
               <CircularProgress size="1rem" aria-hidden />
               {step.mode === 'cloud-only'
-                ? t('rating-calculator:cloud-save.migration.switching')
-                : t('rating-calculator:cloud-save.migration.running')}
+                ? m.ratingCalculator_cloudSave_migration_switching({}, { locale })
+                : m.ratingCalculator_cloudSave_migration_running({}, { locale })}
             </output>
           </DialogContent>
         </>
@@ -461,30 +473,36 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
         <>
           {title(
             step.mode === 'cloud-only'
-              ? t('rating-calculator:cloud-save.migration.switched-title')
-              : t('rating-calculator:cloud-save.migration.done-title'),
+              ? m.ratingCalculator_cloudSave_migration_switchedTitle({}, { locale })
+              : m.ratingCalculator_cloudSave_migration_doneTitle({}, { locale }),
           )}
           <DialogContent className="flex flex-col gap-3">
             <DialogContentText className="text-pretty">
               {step.mode === 'cloud-only'
-                ? t('rating-calculator:cloud-save.migration.done-cloud-only')
-                : t('rating-calculator:cloud-save.migration.done', {
-                    count: step.uploaded,
-                    formatted: numberFormat.format(step.uploaded),
-                  })}
+                ? m.ratingCalculator_cloudSave_migration_doneCloudOnly({}, { locale })
+                : m.ratingCalculator_cloudSave_migration_done(
+                    {
+                      count: step.uploaded,
+                      formatted: numberFormat.format(step.uploaded),
+                    },
+                    { locale },
+                  )}
             </DialogContentText>
             {step.skipped > 0 && (
               <p className="m-0 text-xs text-fg-2">
-                {t('rating-calculator:cloud-save.import.skipped', {
-                  count: step.skipped,
-                })}
+                {m.ratingCalculator_cloudSave_import_skipped(
+                  {
+                    count: step.skipped,
+                  },
+                  { locale },
+                )}
               </p>
             )}
             {step.mode !== 'cloud-only' && unverifiedNote}
           </DialogContent>
           <DialogActions>
             <Button variant="contained" onClick={onClose}>
-              {t('rating-calculator:cloud-save.migration.close')}
+              {m.ratingCalculator_cloudSave_migration_close({}, { locale })}
             </Button>
           </DialogActions>
         </>
@@ -495,8 +513,8 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
         <>
           {title(
             step.mode === 'cloud-only'
-              ? t('rating-calculator:cloud-save.migration.switch-error-title')
-              : t('rating-calculator:cloud-save.migration.error-title'),
+              ? m.ratingCalculator_cloudSave_migration_switchErrorTitle({}, { locale })
+              : m.ratingCalculator_cloudSave_migration_errorTitle({}, { locale }),
           )}
           <DialogContent className="flex flex-col gap-3">
             <Alert severity="error" className="text-pretty">
@@ -504,21 +522,21 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
             </Alert>
             <p className="m-0 text-xs text-fg-2 text-pretty">
               {step.retryable
-                ? t('rating-calculator:cloud-save.migration.error-safe')
-                : t('rating-calculator:cloud-save.migration.error-unchanged')}
+                ? m.ratingCalculator_cloudSave_migration_errorSafe({}, { locale })
+                : m.ratingCalculator_cloudSave_migration_errorUnchanged({}, { locale })}
             </p>
           </DialogContent>
           <DialogActions>
             {step.retryable ? (
               <>
-                <Button onClick={close}>{t('rating-calculator:cloud-save.migration.close')}</Button>
+                <Button onClick={close}>{m.ratingCalculator_cloudSave_migration_close({}, { locale })}</Button>
                 <Button variant="contained" onClick={() => void run(step.mode, step.target)}>
-                  {t('rating-calculator:cloud-save.retry')}
+                  {m.ratingCalculator_cloudSave_retry({}, { locale })}
                 </Button>
               </>
             ) : (
               <Button variant="contained" onClick={close}>
-                {t('rating-calculator:cloud-save.migration.close')}
+                {m.ratingCalculator_cloudSave_migration_close({}, { locale })}
               </Button>
             )}
           </DialogActions>

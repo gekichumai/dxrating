@@ -9,9 +9,10 @@ import {
   DialogTitle,
 } from '@mui/material'
 import { type FC, useEffect, useId, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { LoadError } from './LoadError'
 import { SaveOptionList } from './SaveSelector'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
 import './cloud-save.css'
 
 /**
@@ -32,7 +33,7 @@ export interface ChooseCloudSaveDialogProps {
 type LoadState = { kind: 'loading' } | { kind: 'error' } | { kind: 'loaded'; saves: readonly SaveDTO[] }
 
 export const ChooseCloudSaveDialog: FC<ChooseCloudSaveDialogProps> = ({ open, onClose, listSaves, onChoose }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const titleId = useId()
   const descriptionId = useId()
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
@@ -68,24 +69,26 @@ export const ChooseCloudSaveDialog: FC<ChooseCloudSaveDialogProps> = ({ open, on
       maxWidth="xs"
     >
       <DialogTitle id={titleId} ref={headingRef} tabIndex={-1} className="outline-none">
-        {t('rating-calculator:cloud-save.choose.dialog-title')}
+        {m.ratingCalculator_cloudSave_choose_dialogTitle({}, { locale })}
       </DialogTitle>
       <DialogContent className="flex flex-col gap-3">
         <DialogContentText id={descriptionId} className="text-sm text-pretty">
-          {t('rating-calculator:cloud-save.choose.dialog-description')}
+          {m.ratingCalculator_cloudSave_choose_dialogDescription({}, { locale })}
         </DialogContentText>
         {state.kind === 'loading' ? (
           <output className="flex items-center gap-2 py-2 text-sm text-fg-2">
             <CircularProgress size="1rem" aria-hidden />
-            {t('rating-calculator:cloud-save.saves.loading')}
+            {m.ratingCalculator_cloudSave_saves_loading({}, { locale })}
           </output>
         ) : state.kind === 'error' ? (
           <LoadError
-            message={t('rating-calculator:cloud-save.saves.error')}
+            message={m.ratingCalculator_cloudSave_saves_error({}, { locale })}
             onRetry={() => setAttempt((value) => value + 1)}
           />
         ) : state.saves.length === 0 ? (
-          <p className="m-0 text-sm text-fg-2 text-pretty">{t('rating-calculator:cloud-save.choose.empty')}</p>
+          <p className="m-0 text-sm text-fg-2 text-pretty">
+            {m.ratingCalculator_cloudSave_choose_empty({}, { locale })}
+          </p>
         ) : (
           <SaveOptionList
             saves={state.saves}
@@ -98,7 +101,7 @@ export const ChooseCloudSaveDialog: FC<ChooseCloudSaveDialogProps> = ({ open, on
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>{t('rating-calculator:cloud-save.choose.cancel')}</Button>
+        <Button onClick={onClose}>{m.ratingCalculator_cloudSave_choose_cancel({}, { locale })}</Button>
       </DialogActions>
     </Dialog>
   )

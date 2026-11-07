@@ -273,6 +273,33 @@ describe('Arcades API', () => {
     expect(filtered.items[0].chainId).toBe('gigo')
   })
 
+  it('hides venues whose every installation is absent, and their chains', async () => {
+    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+    try {
+      // Gamma's only installation goes absent, as when its source is retired.
+      await pool.query(`
+        UPDATE arcade.venues SET chain_id = 'timezone' WHERE public_id = 'dven_4444444444';
+        UPDATE arcade.installations SET absent_since = '2026-11-06T00:00:00Z'
+        WHERE venue_id = (SELECT id FROM arcade.venues WHERE public_id = 'dven_4444444444');
+      `)
+    } finally {
+      await pool.end()
+    }
+
+    const response = await fetch(`${getBaseUrl()}/api/v1/arcades/venues`)
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body.items.map((venue: { name: string }) => venue.name)).toEqual([
+      'Alpha Arcade',
+      'Beta Game Center',
+      'ＧｉＧＯ 秋葉原',
+    ])
+    expect(body.chains.map((chain: { id: string }) => chain.id)).toEqual(['gigo'])
+
+    const chainResponse = await fetch(`${getBaseUrl()}/api/v1/arcades/venues?chains=timezone`)
+    expect((await chainResponse.json()).items).toEqual([])
+  })
+
   it('returns detail and a 404 for an unknown venue', async () => {
     const listResponse = await fetch(`${getBaseUrl()}/api/v1/arcades/venues?query=Beta`)
     const list = await listResponse.json()
@@ -318,10 +345,10 @@ describe('Arcades API', () => {
       'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400',
     )
     expect(response.headers.get('cdn-cache-control')).toBe(
-      'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800',
+      'public, max-age=300, stale-while-revalidate=86400, stale-if-error=604800',
     )
     expect(response.headers.get('cloudflare-cdn-cache-control')).toBe(
-      'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800',
+      'public, max-age=300, stale-while-revalidate=86400, stale-if-error=604800',
     )
     expect(response.headers.get('access-control-allow-origin')).toBe('*')
     expect(response.headers.has('access-control-allow-credentials')).toBe(false)

@@ -1,6 +1,5 @@
 import { Button } from '@mui/material'
 import { type FC, type ReactNode, useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import MdiContentCopy from '~icons/mdi/content-copy'
 import MdiDownload from '~icons/mdi/download'
@@ -14,6 +13,8 @@ import {
   shareImageFile,
 } from '@/utils/shareImage/shareImage'
 import { ResponsiveDialog } from './ResponsiveDialog'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 /** An object URL for the blob, revoked when the blob changes or the component unmounts */
 export const useObjectUrl = (blob: Blob | null | undefined) => {
@@ -42,7 +43,7 @@ export interface ShareImageActionsProps {
  * because the share sheet is awkward on desktop; on phones the image itself can also be long-pressed.
  */
 export const ShareImageActions: FC<ShareImageActionsProps> = ({ blob, filename, shareTitle, onOutcome }) => {
-  const { t } = useTranslation(['share'])
+  const locale = useLocale()
   // Capabilities are read after mount: the dialog is client-only, but this keeps the first render deterministic
   const [support, setSupport] = useState({ copy: false, share: false })
   useEffect(() => {
@@ -52,18 +53,18 @@ export const ShareImageActions: FC<ShareImageActionsProps> = ({ blob, filename, 
   const handleCopy = async () => {
     try {
       await copyImage(blob)
-      toast.success(t('share:image.copied'))
+      toast.success(m.share_image_copied({}, { locale }))
       onOutcome?.('copied')
     } catch (error) {
       console.error(error)
-      toast.error(t('share:image.copy-failed'))
+      toast.error(m.share_image_copyFailed({}, { locale }))
       onOutcome?.('failed')
     }
   }
 
   const handleShare = async () => {
     const outcome = await shareImageFile(blob, filename, shareTitle)
-    if (outcome === 'failed') toast.error(t('share:image.share-failed'))
+    if (outcome === 'failed') toast.error(m.share_image_shareFailed({}, { locale }))
     onOutcome?.(outcome)
   }
 
@@ -77,11 +78,11 @@ export const ShareImageActions: FC<ShareImageActionsProps> = ({ blob, filename, 
           onOutcome?.('downloaded')
         }}
       >
-        {t('share:image.download')}
+        {m.share_image_download({}, { locale })}
       </Button>
       {support.copy && (
         <Button variant="outlined" startIcon={<MdiContentCopy aria-hidden="true" />} onClick={() => void handleCopy()}>
-          {t('share:image.copy')}
+          {m.share_image_copy({}, { locale })}
         </Button>
       )}
       {support.share && (
@@ -90,7 +91,7 @@ export const ShareImageActions: FC<ShareImageActionsProps> = ({ blob, filename, 
           startIcon={<MdiShareVariant aria-hidden="true" />}
           onClick={() => void handleShare()}
         >
-          {t('share:image.share')}
+          {m.share_image_share({}, { locale })}
         </Button>
       )}
     </div>
@@ -109,19 +110,19 @@ export interface ShareImageViewerProps extends ShareImageActionsProps {
  * they stay in reach when a tall image scrolls.
  */
 export const ShareImageViewer: FC<ShareImageViewerProps> = ({ open, onClose, title, alt, ...actions }) => {
-  const { t } = useTranslation(['share'])
+  const locale = useLocale()
   const url = useObjectUrl(actions.blob)
   return (
     <ResponsiveDialog
       open={open}
       setOpen={(next) => !next && onClose()}
       maxWidth="sm"
-      title={title ?? t('share:image.viewer-title')}
+      title={title ?? m.share_image_viewerTitle({}, { locale })}
     >
       {() => (
         <div className="flex flex-col gap-3">
           <ShareImageActions {...actions} />
-          <p className="m-0 text-xs text-fg-2">{t('share:image.hint')}</p>
+          <p className="m-0 text-xs text-fg-2">{m.share_image_hint({}, { locale })}</p>
           {url && (
             <img
               src={url}

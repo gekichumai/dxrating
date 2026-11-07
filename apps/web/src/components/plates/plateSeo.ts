@@ -1,5 +1,5 @@
 import type { SupportedLocale } from '@/setup/locale'
-import { createServerI18n } from '@/setup/init-i18n'
+import { m } from '@/paraglide/messages'
 import { formatSeoTitle } from '@/utils/seo'
 import { platePath } from './plateData'
 
@@ -9,16 +9,12 @@ const OG_LOCALES: Record<SupportedLocale, string> = {
   ko: 'ko_KR',
   'zh-Hans': 'zh_CN',
   'zh-Hant': 'zh_TW',
-}
-
-const i18nCache = new Map<SupportedLocale, ReturnType<typeof createServerI18n>>()
-const t = (locale: SupportedLocale, key: string, values?: Record<string, unknown>) => {
-  let instance = i18nCache.get(locale)
-  if (!instance) {
-    instance = createServerI18n(locale)
-    i18nCache.set(locale, instance)
-  }
-  return instance.t(key, values)
+  ms: 'ms_MY',
+  id: 'id_ID',
+  fil: 'fil_PH',
+  vi: 'vi_VN',
+  th: 'th_TH',
+  my: 'my_MM',
 }
 
 function collectionSeo(locale: SupportedLocale, path: string, rawTitle: string, description: string) {
@@ -48,7 +44,12 @@ const breadcrumb = (locale: SupportedLocale, url: string, leaf?: string) => ({
   '@id': `${url}#breadcrumb`,
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'DXRating', item: 'https://dxrating.net/' },
-    { '@type': 'ListItem', position: 2, name: t(locale, 'plates:breadcrumb'), item: 'https://dxrating.net/plates' },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: m.plates_breadcrumb({}, { locale }),
+      item: 'https://dxrating.net/plates',
+    },
     ...(leaf ? [{ '@type': 'ListItem', position: 3, name: leaf, item: url }] : []),
   ],
 })
@@ -57,8 +58,8 @@ export function buildPlateIndexSeo(locale: SupportedLocale) {
   const seo = collectionSeo(
     locale,
     '/plates',
-    t(locale, 'plates:index.seo-title'),
-    t(locale, 'plates:index.seo-description'),
+    m.plates_index_seoTitle({}, { locale }),
+    m.plates_index_seoDescription({}, { locale }),
   )
   const structuredData = {
     '@context': 'https://schema.org',
@@ -67,7 +68,7 @@ export function buildPlateIndexSeo(locale: SupportedLocale) {
         '@type': 'CollectionPage',
         '@id': `${seo.url}#webpage`,
         url: seo.url,
-        name: t(locale, 'plates:index.title'),
+        name: m.plates_index_title({}, { locale }),
         description: seo.description,
         inLanguage: locale,
         isPartOf: { '@id': 'https://dxrating.net/#website' },
@@ -87,8 +88,8 @@ export function buildPlatePageSeo(
   const seo = collectionSeo(
     locale,
     platePath(page.plateId),
-    t(locale, 'plates:seo-title', values),
-    t(locale, 'plates:seo-description', values),
+    m.plates_seoTitle(values, { locale }),
+    m.plates_seoDescription(values, { locale }),
   )
   const structuredData = {
     '@context': 'https://schema.org',
@@ -97,7 +98,7 @@ export function buildPlatePageSeo(
         '@type': 'CollectionPage',
         '@id': `${seo.url}#webpage`,
         url: seo.url,
-        name: t(locale, 'plates:title', values),
+        name: m.plates_title(values, { locale }),
         description: seo.description,
         inLanguage: locale,
         isPartOf: { '@id': 'https://dxrating.net/#website' },

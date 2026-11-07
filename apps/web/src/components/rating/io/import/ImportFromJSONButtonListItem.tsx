@@ -1,7 +1,6 @@
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import MdiJson from '~icons/mdi/code-json'
 import { useWebHaptics } from 'web-haptics/react'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
@@ -11,11 +10,13 @@ import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { exportSavePicker } from '@/components/cloud-save/exportSavePicker'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
 
 export const ImportFromJSONButtonListItem: FC<{
   onClose: () => void
 }> = ({ onClose }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const repository = useScoreRepository()
   const haptic = useWebHaptics()
 
@@ -46,7 +47,7 @@ export const ImportFromJSONButtonListItem: FC<{
               // Not a DXRating rating file: nothing of it is imported
               console.error('[ImportFromJSONButtonListItem] Invalid rating file', parsed.error)
               analytics.failed('invalid_file')
-              toast.error(t('rating-calculator:io.import.json.invalid-file'))
+              toast.error(m.ratingCalculator_io_import_json_invalidFile({}, { locale }))
               return
             }
             try {
@@ -66,17 +67,17 @@ export const ImportFromJSONButtonListItem: FC<{
               // `null`: the user cancelled the preview (local save) or the merge / clear-first choice (cloud save)
               if (!result) {
                 analytics.failed('cancelled_by_user')
-                toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
+                toast(m.ratingCalculator_io_import_review_cancelled({}, { locale }), { id: 'import-review-cancelled' })
                 return
               }
               // A cloud save counts what the server took: entries that match no chart or that it rejects are left out
               analytics.succeeded(result.count)
               haptic.trigger('success')
-              toast.success(t('rating-calculator:io.import.json.success', { count: result.count }))
-              announceImportLeftOut(result, t, (message) => toast(message))
+              toast.success(m.ratingCalculator_io_import_json_success({ count: result.count }, { locale }))
+              announceImportLeftOut(result, locale, (message) => toast(message))
               // Only a cloud save verifies records; a local save keeps the provider each entry names
               if (fromCloudExport && repository.kind === 'cloud') {
-                toast(t('rating-calculator:cloud-save.export-import.claimed-only'), {
+                toast(m.ratingCalculator_cloudSave_exportImport_claimedOnly({}, { locale }), {
                   id: 'cloud-export-claimed-only',
                   duration: 8_000,
                 })
@@ -84,8 +85,8 @@ export const ImportFromJSONButtonListItem: FC<{
             } catch (error) {
               analytics.failed('invalid_file')
               toast.error(
-                cloudImportErrorMessage(error, t) ??
-                  t('rating-calculator:io.import.json.error', { error: formatErrorMessage(error) }),
+                cloudImportErrorMessage(error, locale) ??
+                  m.ratingCalculator_io_import_json_error({ error: formatErrorMessage(error) }, { locale }),
               )
             }
           }
@@ -97,7 +98,7 @@ export const ImportFromJSONButtonListItem: FC<{
       <ListItemIcon>
         <MdiJson />
       </ListItemIcon>
-      <ListItemText>{t('rating-calculator:io.import.json.title')}</ListItemText>
+      <ListItemText>{m.ratingCalculator_io_import_json_title({}, { locale })}</ListItemText>
     </MenuItem>
   )
 }

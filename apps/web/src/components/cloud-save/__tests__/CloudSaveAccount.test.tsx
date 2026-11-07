@@ -1,8 +1,7 @@
 import type { ImportJobDTO, SaveDTO, UserFeatures } from '@gekichumai/api-contract'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import i18n from 'i18next'
 import { type ReactNode, StrictMode, useState } from 'react'
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
 import { type ActiveSave, ActiveSaveContext } from '@/models/scores/ActiveSaveContext'
 import { CloudMigrationContext } from '@/models/scores/CloudMigrationContext'
@@ -14,7 +13,6 @@ import {
   exportBodyToBlob,
   exportFileName,
 } from '@/models/scores/cloudSaveActions'
-import { initI18n } from '@/setup/init-i18n'
 import { CloudMigrationDialog } from '../CloudMigrationDialog'
 import { CloudMigrationPrompt } from '../CloudMigrationPrompt'
 import { CloudSaveOptIn } from '../CloudSaveOptIn'
@@ -26,6 +24,7 @@ import { createDemoCloudSave } from '@/models/scores/demoCloudSave'
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { VersionEnum } from '@gekichumai/dxdata'
 import { getSongCatalog } from '@gekichumai/maimai-domain'
+import { m } from '@/paraglide/messages'
 
 const posthog = vi.hoisted(() => ({ capture: vi.fn() }))
 vi.mock('posthog-js', () => ({ default: posthog }))
@@ -166,11 +165,6 @@ function expectNoIdentifiers() {
   const payload = JSON.stringify(posthog.capture.mock.calls)
   expect(payload).not.toMatch(/user-1|dsav_|dimp_|dsht_|Phone|device|@/)
 }
-
-beforeAll(async () => {
-  initI18n()
-  await i18n.changeLanguage('en')
-})
 
 beforeEach(() => {
   vi.clearAllMocks()

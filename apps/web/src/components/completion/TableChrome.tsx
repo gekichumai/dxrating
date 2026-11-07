@@ -1,21 +1,19 @@
 /**
  * Shared chrome of the data-table pages (constants, versions, plates): breadcrumb, segmented navigation, toggle
- * chips and the horizontal scroller with its overflow cue. One selected treatment everywhere: the accent fill.
+ * chips and the horizontal scroller's overflow state. One selected treatment everywhere: the accent fill.
  */
 import { DifficultyEnum } from '@gekichumai/dxdata'
 import { type CSSProperties, type FC, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { difficultyInkClassName } from '@/utils/difficultyInk'
+import { InternalLink } from '@/components/global/InternalLink'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 /** Short difficulty names shown next to levels, so a level never depends on its colour alone */
-export const DIFFICULTY_SHORT: Record<DifficultyEnum, string> = {
-  [DifficultyEnum.Basic]: 'BAS',
-  [DifficultyEnum.Advanced]: 'ADV',
-  [DifficultyEnum.Expert]: 'EXP',
-  [DifficultyEnum.Master]: 'MAS',
-  [DifficultyEnum.ReMaster]: 'Re:M',
-}
+export const DIFFICULTY_SHORT: Record<DifficultyEnum, string> = Object.fromEntries(
+  Object.entries(DIFFICULTIES).map(([difficulty, entry]) => [difficulty, entry.shortTitle]),
+) as Record<DifficultyEnum, string>
 
 /**
  * Difficulty-coloured text that passes 4.5:1: `ink` on light glass, `inkDark` in the dark theme, switched through CSS
@@ -32,10 +30,11 @@ const SELECTED = 'bg-accent-strong text-on-accent'
 
 /** A track of 8px items at a 4px inset: 12px outer radius (8 + 4) */
 export const segmentedTrack = 'glass-thin flex flex-wrap gap-1 p-1'
+/** A segment without its selected or idle colours, for a control that styles those itself */
+export const segmentedItemBase =
+  'inline-flex items-center min-h-8 px-3 rounded-[var(--radius-md)] text-sm no-underline transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)]'
 export const segmentedItem = (current: boolean) =>
-  `inline-flex items-center min-h-8 px-3 rounded-[var(--radius-md)] text-sm no-underline transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] ${
-    current ? SELECTED : 'text-fg-1 hover:bg-surface/60'
-  }`
+  `${segmentedItemBase} ${current ? SELECTED : 'text-fg-1 hover:bg-surface/60'}`
 
 export const SegmentedNav: FC<{
   label?: string
@@ -45,14 +44,14 @@ export const SegmentedNav: FC<{
 }> = ({ label, labelledBy, items, className }) => (
   <nav aria-label={label} aria-labelledby={labelledBy} className={`${segmentedTrack} self-start ${className ?? ''}`}>
     {items.map((item) => (
-      <a
+      <InternalLink
         key={item.key}
         href={item.href}
         aria-current={item.current ? 'page' : undefined}
         className={segmentedItem(item.current)}
       >
         {item.label}
-      </a>
+      </InternalLink>
     ))}
   </nav>
 )
@@ -81,22 +80,22 @@ export const FilterChip: FC<{ active: boolean; onClick: () => void; children: Re
 )
 
 export const Breadcrumb: FC<{ items: { href?: string; label: ReactNode }[] }> = ({ items }) => {
-  const { t } = useTranslation(['constants'])
+  const locale = useLocale()
   return (
-    <nav aria-label={t('constants:breadcrumb-label')} className="text-xs text-fg-2">
+    <nav aria-label={m.constants_breadcrumbLabel({}, { locale })} className="text-xs text-fg-2">
       <ol className="m-0 p-0 list-none flex flex-wrap items-center gap-x-1">
         <li>
-          <a href="/" className="text-inherit no-underline hover:underline underline-offset-2">
+          <InternalLink href="/" className="text-inherit no-underline hover:underline underline-offset-2">
             DXRating
-          </a>
+          </InternalLink>
         </li>
         {items.map((item, index) => (
           <li key={index} className="flex items-center gap-x-1">
             <span aria-hidden>›</span>
             {item.href ? (
-              <a href={item.href} className="text-inherit no-underline hover:underline underline-offset-2">
+              <InternalLink href={item.href} className="text-inherit no-underline hover:underline underline-offset-2">
                 {item.label}
-              </a>
+              </InternalLink>
             ) : (
               <span aria-current="page">{item.label}</span>
             )}
@@ -110,8 +109,8 @@ export const Breadcrumb: FC<{ items: { href?: string; label: ReactNode }[] }> = 
 type Overflow = { start: boolean; end: boolean }
 
 /**
- * Horizontal scroller for a table that may not fit: fades the edge that hides content and reports overflow, so key
- * columns can turn sticky. Server and first client render report no overflow (deterministic SSR).
+ * Horizontal scroller for a table that may not fit: reports overflow, so key columns can turn sticky. The edge fade
+ * itself is the `scroll-fade-x` class (index.css). Server and first client render report no overflow (deterministic SSR).
  */
 export const useHorizontalOverflow = <T extends HTMLElement>() => {
   const ref = useRef<T>(null)
@@ -139,14 +138,5 @@ export const useHorizontalOverflow = <T extends HTMLElement>() => {
     }
   }, [measure])
 
-  const fade =
-    overflow.start && overflow.end
-      ? '[mask-image:linear-gradient(to_right,transparent,#000_24px,#000_calc(100%-24px),transparent)]'
-      : overflow.end
-        ? '[mask-image:linear-gradient(to_right,#000_calc(100%-24px),transparent)]'
-        : overflow.start
-          ? '[mask-image:linear-gradient(to_right,transparent,#000_24px)]'
-          : ''
-
-  return { ref, overflowing: overflow.start || overflow.end, scrolled: overflow.start, fade }
+  return { ref, overflowing: overflow.start || overflow.end, scrolled: overflow.start }
 }

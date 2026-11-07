@@ -1,7 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import i18n from 'i18next'
-import { beforeAll, describe, expect, it } from 'vitest'
-import { initI18n } from '../../../setup/init-i18n'
+import { describe, expect, it } from 'vitest'
 import { CloudSaveDemoBoundary, requestedCloudSaveDemo, requestedCloudSaveDemoFlow } from '../CloudSaveDemoBoundary'
 import { useCloudSaveStatus, useCloudSaveUi } from '../CloudSaveUiContext'
 import { useScoreRepository } from '../useScoreRepository'
@@ -16,11 +14,6 @@ const Probe = () => {
     </output>
   )
 }
-
-beforeAll(async () => {
-  initI18n()
-  await i18n.changeLanguage('en')
-})
 
 describe('cloud save demo (?demoCloudSave=1)', () => {
   it('is honoured on dev and preview hosts only', () => {

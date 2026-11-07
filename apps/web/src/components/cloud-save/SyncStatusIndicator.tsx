@@ -1,7 +1,6 @@
 import { ButtonBase, Popover } from '@mui/material'
 import clsx from 'clsx'
 import { type CSSProperties, type FC, useEffect, useId, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiCloudAlertOutline from '~icons/mdi/cloud-alert-outline'
 import IconMdiCloudCheckOutline from '~icons/mdi/cloud-check-outline'
 import IconMdiCloudOffOutline from '~icons/mdi/cloud-off-outline'
@@ -11,6 +10,9 @@ import { useCloudSaveStatus } from '@/models/scores/CloudSaveUiContext'
 import type { ScoreRepositoryStatus } from '@/models/scores/ScoreRepository'
 import { labelSeparator } from './provenanceLabel'
 import { SyncIssuesList } from './SyncIssuesList'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
 import './cloud-save.css'
 
 const STATE_ICONS: Record<ScoreRepositoryStatus['state'], FC<{ className?: string }>> = {
@@ -18,6 +20,13 @@ const STATE_ICONS: Record<ScoreRepositoryStatus['state'], FC<{ className?: strin
   syncing: IconMdiCloudSyncOutline,
   offline: IconMdiCloudOffOutline,
   error: IconMdiCloudAlertOutline,
+}
+
+const STATE_MESSAGES: Record<ScoreRepositoryStatus['state'], PlainMessage> = {
+  idle: m.ratingCalculator_cloudSave_status_idle,
+  syncing: m.ratingCalculator_cloudSave_status_syncing,
+  offline: m.ratingCalculator_cloudSave_status_offline,
+  error: m.ratingCalculator_cloudSave_status_error,
 }
 
 /** Issues already reported on this page: each one counts once (§12.3), however often it re-renders */
@@ -39,7 +48,7 @@ function useReportShownIssues(issues: ScoreRepositoryStatus['issues'] | undefine
  * sent and the sync issues. Renders nothing on the local save.
  */
 export const SyncStatusIndicator: FC<{ className?: string; style?: CSSProperties }> = ({ className, style }) => {
-  const { t, i18n } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const status = useCloudSaveStatus()
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const popoverId = useId()
@@ -48,12 +57,14 @@ export const SyncStatusIndicator: FC<{ className?: string; style?: CSSProperties
 
   const { state, pendingCount, issues } = status
   const Icon = STATE_ICONS[state]
-  const stateText = t(`rating-calculator:cloud-save.status.${state}`)
+  const stateText = STATE_MESSAGES[state]({}, { locale })
   const pendingText =
-    pendingCount > 0 ? t('rating-calculator:cloud-save.status.pending', { count: pendingCount }) : null
+    pendingCount > 0 ? m.ratingCalculator_cloudSave_status_pending({ count: pendingCount }, { locale }) : null
   const issuesText =
-    issues.length > 0 ? t('rating-calculator:cloud-save.status.issues', { count: issues.length }) : null
-  const label = [t('rating-calculator:cloud-save.title'), stateText, pendingText, issuesText].filter(Boolean).join(', ')
+    issues.length > 0 ? m.ratingCalculator_cloudSave_status_issues({ count: issues.length }, { locale }) : null
+  const label = [m.ratingCalculator_cloudSave_title({}, { locale }), stateText, pendingText, issuesText]
+    .filter(Boolean)
+    .join(', ')
   // Announced when it changes: a sync that stopped working and new issues, not every "Syncing…"
   const announcement = [state === 'offline' || state === 'error' ? stateText : null, issuesText]
     .filter(Boolean)
@@ -101,7 +112,7 @@ export const SyncStatusIndicator: FC<{ className?: string; style?: CSSProperties
           paper: {
             className: 'cloud-save-surface',
             role: 'dialog',
-            'aria-label': t('rating-calculator:cloud-save.title'),
+            'aria-label': m.ratingCalculator_cloudSave_title({}, { locale }),
             sx: {
               mt: 1,
               width: '22rem',
@@ -117,17 +128,19 @@ export const SyncStatusIndicator: FC<{ className?: string; style?: CSSProperties
           <div className="flex items-center gap-2">
             <Icon className="size-5 shrink-0 text-fg-2" aria-hidden />
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-fg-1">{t('rating-calculator:cloud-save.title')}</div>
+              <div className="text-sm font-semibold text-fg-1">
+                {m.ratingCalculator_cloudSave_title({}, { locale })}
+              </div>
               {/* Not a live region: the sync cycles would be read out while the popover is open */}
               <p className="m-0 text-xs text-fg-2">
-                {[stateText, pendingText].filter(Boolean).join(labelSeparator(i18n.language))}
+                {[stateText, pendingText].filter(Boolean).join(labelSeparator(locale))}
               </p>
             </div>
           </div>
           {/* The header's announcement is hidden while the popover is open (a modal): the same one, here */}
           <output className="sr-only">{announcement}</output>
           <h3 className="m-0 mt-1 text-xs font-semibold uppercase tracking-wide text-fg-2">
-            {t('rating-calculator:cloud-save.issues.title')}
+            {m.ratingCalculator_cloudSave_issues_title({}, { locale })}
           </h3>
         </div>
         <div className="max-h-[min(24rem,60vh)] overflow-y-auto">

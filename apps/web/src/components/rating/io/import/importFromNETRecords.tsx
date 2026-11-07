@@ -1,8 +1,7 @@
 import type { VersionEnum } from '@gekichumai/dxdata'
 import { normalizeMaimaiNetRecords, type SongCatalog } from '@gekichumai/maimai-domain'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
-import * as Sentry from '@sentry/tanstackstart-react'
-import i18n from 'i18next'
+import * as Sentry from '@/lib/telemetry'
 import { WebHaptics } from 'web-haptics'
 import toast from 'react-hot-toast'
 import { reviewAndApplyImport } from '@/models/scores/importReview'
@@ -10,14 +9,17 @@ import type { WebScoreRepository } from '@/models/scores/ScoreRepository'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import {
-  NET_IMPORT_ERROR_I18N,
+  NET_IMPORT_ERROR_MESSAGES,
   NetImportError,
   type NetImportErrorCode,
   isNetImportErrorCode,
   netImportErrorCodeOf,
   unexpectedErrorSubtitle,
 } from './netImportErrorFeedback'
+import type { PlainMessage } from '@/i18n/message'
+import { getLocale } from '@/paraglide/runtime'
 import { captureAnalyticsEvent } from '@/lib/analytics'
+import { m } from '@/paraglide/messages'
 import { netImportProgress } from './netImportProgressStore'
 import {
   FETCH_STATE_PROGRESS,
@@ -27,11 +29,11 @@ import {
 import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
 import { ImportAlreadyRunningError, ServerImportFailedError } from '@/models/scores/cloudImports'
 
-const ERROR_CODE_I18N = NET_IMPORT_ERROR_I18N
+const ERROR_CODE_MESSAGES = NET_IMPORT_ERROR_MESSAGES
 
-const ERROR_CODE_DETAIL_I18N: Partial<Record<NetImportErrorCode, string>> = {
-  NET_MAINTENANCE: 'rating-calculator:io.import.net-records.errors.maintenance-detail',
-  AIME_CARD_UNAVAILABLE: 'rating-calculator:io.import.net-records.errors.aime-card-unavailable-detail',
+const ERROR_CODE_DETAIL_MESSAGES: Partial<Record<NetImportErrorCode, PlainMessage>> = {
+  NET_MAINTENANCE: m.ratingCalculator_io_import_netRecords_errors_maintenanceDetail,
+  AIME_CARD_UNAVAILABLE: m.ratingCalculator_io_import_netRecords_errors_aimeCardUnavailableDetail,
 }
 
 export type { FetchNetRecordProgressState }
@@ -136,7 +138,6 @@ export const importFromNETRecords = async (
     trigger,
   })
 
-  const t = i18n.t.bind(i18n)
   netImportProgress.update({ status: 'running', stage: 'ready', progress: 0 })
   try {
     const storedAuthParams = (() => {
@@ -158,7 +159,7 @@ export const importFromNETRecords = async (
         mode,
         trigger,
       })
-      netImportProgress.finish('error', t('rating-calculator:io.import.net-records.no-credentials'))
+      netImportProgress.finish('error', m.ratingCalculator_io_import_netRecords_noCredentials())
       return
     }
     const { region, username, password } = params
@@ -195,9 +196,9 @@ export const importFromNETRecords = async (
         'success',
         <div className="flex flex-col">
           <span>
-            {t('rating-calculator:cloud-save.import.success', {
+            {m.ratingCalculator_cloudSave_import_success({
               source: `maimai NET (${String(region).toUpperCase()})`,
-              summary: summarizeImportJob(job, t),
+              summary: summarizeImportJob(job, getLocale()),
             })}
           </span>
         </div>,
@@ -251,7 +252,7 @@ export const importFromNETRecords = async (
           trigger,
         })
         netImportProgress.update(null)
-        toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
+        toast(m.ratingCalculator_io_import_review_cancelled(), { id: 'import-review-cancelled' })
         return
       }
     }
@@ -263,20 +264,20 @@ export const importFromNETRecords = async (
       'success',
       <div className="flex flex-col">
         <span>
-          {t('rating-calculator:io.import.net-records.imported', {
+          {m.ratingCalculator_io_import_netRecords_imported({
             count: entries.length,
             region: String(region).toUpperCase(),
           })}
         </span>
         {lastRecord && (
           <>
-            <span className="text-sm text-secondary">{t('rating-calculator:io.import.net-records.latest-play')}</span>
+            <span className="text-sm text-secondary">{m.ratingCalculator_io_import_netRecords_latestPlay()}</span>
             <span className="text-xs text-secondary">
               {lastRecord.sheet.songId} [{lastRecord.sheet.type}]
             </span>
             {lastRecordPlayedAt && (
               <span className="text-xs text-secondary">
-                {t('rating-calculator:io.import.net-records.date', {
+                {m.ratingCalculator_io_import_netRecords_date({
                   date: lastRecordPlayedAt,
                 })}
               </span>
@@ -324,13 +325,13 @@ export const importFromNETRecords = async (
 
     const title =
       error instanceof NetImportError
-        ? t(ERROR_CODE_I18N[error.code])
+        ? ERROR_CODE_MESSAGES[error.code]()
         : error instanceof ImportAlreadyRunningError
-          ? t('rating-calculator:cloud-save.import.errors.already-running')
-          : t('rating-calculator:io.import.net-records.errors.unknown')
-    const translatedDetail = error instanceof NetImportError ? ERROR_CODE_DETAIL_I18N[error.code] : undefined
+          ? m.ratingCalculator_cloudSave_import_errors_alreadyRunning()
+          : m.ratingCalculator_io_import_netRecords_errors_unknown()
+    const translatedDetail = error instanceof NetImportError ? ERROR_CODE_DETAIL_MESSAGES[error.code] : undefined
     const subtitle = translatedDetail
-      ? t(translatedDetail)
+      ? translatedDetail()
       : error instanceof ImportAlreadyRunningError
         ? null
         : unexpectedErrorSubtitle(error)

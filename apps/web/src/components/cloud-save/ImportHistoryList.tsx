@@ -1,11 +1,14 @@
 import type { ImportCountsDTO, ImportJobDTO } from '@gekichumai/api-contract'
 import { CircularProgress } from '@mui/material'
 import { type FC, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useCloudSaveUi } from '@/models/scores/CloudSaveUiContext'
 import { importHistoryFailure } from './importFailureMessage'
 import { LoadError } from './LoadError'
 import { sourceName } from './provenanceLabel'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { IMPORT_COUNT_MESSAGES } from '@/components/rating/io/import/cloudImport'
 
 /** The counts shown for a job, in this order; zeros are left out */
 const COUNT_KEYS = [
@@ -19,21 +22,27 @@ const COUNT_KEYS = [
   'rejected',
 ] as const satisfies (keyof ImportCountsDTO)[]
 
+const TRIGGER_MESSAGES = {
+  user: m.ratingCalculator_cloudSave_history_trigger_user,
+  auto: m.ratingCalculator_cloudSave_history_trigger_auto,
+  migration: m.ratingCalculator_cloudSave_history_trigger_migration,
+} satisfies Record<ImportJobDTO['trigger'], PlainMessage>
+
 type LoadState = { kind: 'loading' } | { kind: 'error' } | { kind: 'loaded'; jobs: readonly ImportJobDTO[] }
 
 /** The recent imports of the active cloud save (`GET /saves/{id}/imports`), with what each one changed */
 export const ImportHistoryList: FC = () => {
-  const { t, i18n } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const cloud = useCloudSaveUi()
   const controller = cloud?.controller ?? null
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
   const format = useMemo(() => {
     try {
-      return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' })
+      return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' })
     } catch {
       return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
     }
-  }, [i18n.language])
+  }, [locale])
 
   // Bumped by "Try again" after a failed load
   const [attempt, setAttempt] = useState(0)
@@ -56,33 +65,33 @@ export const ImportHistoryList: FC = () => {
     return (
       <output className="flex items-center gap-2 py-2 text-sm text-fg-2">
         <CircularProgress size="1rem" aria-hidden />
-        {t('rating-calculator:cloud-save.history.loading')}
+        {m.ratingCalculator_cloudSave_history_loading({}, { locale })}
       </output>
     )
   }
   if (state.kind === 'error') {
     return (
       <LoadError
-        message={t('rating-calculator:cloud-save.history.error')}
+        message={m.ratingCalculator_cloudSave_history_error({}, { locale })}
         onRetry={() => setAttempt((value) => value + 1)}
       />
     )
   }
   if (state.jobs.length === 0) {
-    return <p className="m-0 text-sm text-fg-2">{t('rating-calculator:cloud-save.history.empty')}</p>
+    return <p className="m-0 text-sm text-fg-2">{m.ratingCalculator_cloudSave_history_empty({}, { locale })}</p>
   }
 
   return (
     <ul className="m-0 flex list-none flex-col divide-y divide-black/8 p-0">
       {state.jobs.map((job) => {
         const counts = COUNT_KEYS.filter((key) => job.counts[key] > 0).map((key) =>
-          t(`rating-calculator:cloud-save.history.counts.${key}`, { count: job.counts[key] }),
+          IMPORT_COUNT_MESSAGES[key]({ count: job.counts[key] }, { locale }),
         )
         const status =
           job.status === 'failed'
-            ? importHistoryFailure(job.errorCode, t)
+            ? importHistoryFailure(job.errorCode, locale)
             : job.status === 'running'
-              ? t('rating-calculator:cloud-save.history.running')
+              ? m.ratingCalculator_cloudSave_history_running({}, { locale })
               : null
         const startedAt = Date.parse(job.startedAt)
         return (
@@ -91,11 +100,11 @@ export const ImportHistoryList: FC = () => {
               <span className="text-sm font-semibold text-fg-1">
                 {/* What this browser uploaded itself (§7.4 fallback, migration): never named as a verified provider */}
                 {job.source === 'legacy-local'
-                  ? t('rating-calculator:cloud-save.provenance.from-device')
+                  ? m.ratingCalculator_cloudSave_provenance_fromDevice({}, { locale })
                   : sourceName(job.source)}
               </span>
               <span className="text-xs text-fg-2">
-                {t(`rating-calculator:cloud-save.history.trigger.${job.trigger}`)}
+                {TRIGGER_MESSAGES[job.trigger]({}, { locale })}
                 {Number.isNaN(startedAt) ? '' : ` · ${format.format(new Date(startedAt))}`}
               </span>
             </div>

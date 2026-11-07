@@ -1,9 +1,10 @@
 import MdiBeta from '~icons/mdi/beta'
 import clsx from 'clsx'
-import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const BetaBadge = ({ className }: { className?: string }) => {
-  const { t } = useTranslation(['global'])
+  const locale = useLocale()
 
   return (
     <div
@@ -13,7 +14,7 @@ export const BetaBadge = ({ className }: { className?: string }) => {
       )}
     >
       <MdiBeta aria-hidden />
-      <span>{t('global:beta')}</span>
+      <span>{m.global_beta({}, { locale })}</span>
     </div>
   )
 }

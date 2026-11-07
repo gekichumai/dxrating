@@ -1,9 +1,10 @@
 import { Button, IconButton } from '@mui/material'
 import { type FC, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiClose from '~icons/mdi/close'
 import IconMdiCloudUploadOutline from '~icons/mdi/cloud-upload-outline'
 import { focusMigrationReturnTarget, useCloudMigrationOffer } from '@/models/scores/CloudMigrationContext'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
 
 const DISMISSED_KEY = 'dxr-cloud-migration-prompt-dismissed'
 
@@ -21,7 +22,7 @@ function readDismissed(): boolean {
  * nothing unless the offer is available (signed in, cloud save on, a local save, no cloud save chosen).
  */
 export const CloudMigrationPrompt: FC = () => {
-  const { t, i18n } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const offer = useCloudMigrationOffer()
   const [dismissed, setDismissed] = useState(readDismissed)
   const sectionRef = useRef<HTMLElement>(null)
@@ -44,24 +45,27 @@ export const CloudMigrationPrompt: FC = () => {
     <section
       ref={sectionRef}
       className="mt-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 glass-inset px-3 py-2"
-      aria-label={t('rating-calculator:cloud-save.migration.title')}
+      aria-label={m.ratingCalculator_cloudSave_migration_title({}, { locale })}
     >
       <IconMdiCloudUploadOutline className="size-5 shrink-0 text-fg-2" aria-hidden />
       <p className="m-0 min-w-0 text-sm text-fg-1 text-pretty">
-        {t('rating-calculator:cloud-save.migration.prompt', {
-          count: offer.localCount,
-          formatted: new Intl.NumberFormat(i18n.language).format(offer.localCount),
-        })}
+        {m.ratingCalculator_cloudSave_migration_prompt(
+          {
+            count: offer.localCount,
+            formatted: new Intl.NumberFormat(locale).format(offer.localCount),
+          },
+          { locale },
+        )}
       </p>
       <div className="col-span-3 col-start-1 row-start-2 flex justify-end">
         <Button size="small" variant="contained" onClick={offer.open}>
-          {t('rating-calculator:cloud-save.migration.back-up')}
+          {m.ratingCalculator_cloudSave_migration_backUp({}, { locale })}
         </Button>
       </div>
       <IconButton
         size="small"
         onClick={dismiss}
-        aria-label={t('rating-calculator:cloud-save.migration.not-now')}
+        aria-label={m.ratingCalculator_cloudSave_migration_notNow({}, { locale })}
         className="col-start-3 row-start-1"
       >
         <IconMdiClose className="size-4" aria-hidden />

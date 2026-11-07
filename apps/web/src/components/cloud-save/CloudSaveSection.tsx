@@ -1,6 +1,5 @@
 import type { FC, ReactNode } from 'react'
 import { useCallback, useId, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { Button } from '@mui/material'
 import { useActiveSave } from '@/models/scores/ActiveSaveContext'
 import { focusMigrationReturnTarget, useCloudMigrationOffer } from '@/models/scores/CloudMigrationContext'
@@ -11,6 +10,8 @@ import { DownloadMyDataButton } from './DownloadMyDataButton'
 import { ImportHistoryList } from './ImportHistoryList'
 import { SaveSelector } from './SaveSelector'
 import { SyncIssuesList } from './SyncIssuesList'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
 
 const Group: FC<{
   title: string
@@ -47,7 +48,7 @@ export function useHasCloudSaveSection(): boolean {
  * save, and "Download my data"
  */
 export const CloudSaveSection: FC = () => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const cloud = useCloudSaveUi()
   const { features, userId, decided, kind, listSaves, setActiveSaveId } = useActiveSave()
   const migration = useCloudMigrationOffer()
@@ -85,36 +86,42 @@ export const CloudSaveSection: FC = () => {
           tabIndex={-1}
           data-cloud-migration-focus-return=""
         >
-          {t('rating-calculator:cloud-save.title')}
+          {m.ratingCalculator_cloudSave_title({}, { locale })}
         </h1>
         <p className="text-sm text-fg-2 m-0">
           {/* Nothing is in sync until a cloud save is active */}
-          {t(cloud ? 'rating-calculator:cloud-save.description' : 'rating-calculator:cloud-save.description-inactive')}
+          {(cloud ? m.ratingCalculator_cloudSave_description : m.ratingCalculator_cloudSave_descriptionInactive)(
+            {},
+            { locale },
+          )}
         </p>
       </div>
       <CloudSaveOptIn />
       {migration.available && (
         <Group
-          title={t('rating-calculator:cloud-save.migration.title')}
-          description={t('rating-calculator:cloud-save.migration.section-description', {
-            count: migration.localCount,
-          })}
+          title={m.ratingCalculator_cloudSave_migration_title({}, { locale })}
+          description={m.ratingCalculator_cloudSave_migration_sectionDescription(
+            {
+              count: migration.localCount,
+            },
+            { locale },
+          )}
         >
           <div>
             <Button size="small" variant="contained" onClick={migration.open}>
-              {t('rating-calculator:cloud-save.migration.back-up')}
+              {m.ratingCalculator_cloudSave_migration_backUp({}, { locale })}
             </Button>
           </div>
         </Group>
       )}
       {chooseAvailable && (
         <Group
-          title={t('rating-calculator:cloud-save.choose.title')}
-          description={t('rating-calculator:cloud-save.choose.section-description')}
+          title={m.ratingCalculator_cloudSave_choose_title({}, { locale })}
+          description={m.ratingCalculator_cloudSave_choose_sectionDescription({}, { locale })}
         >
           <div>
             <Button size="small" variant="contained" onClick={() => setChooseOpen(true)}>
-              {t('rating-calculator:cloud-save.choose.open')}
+              {m.ratingCalculator_cloudSave_choose_open({}, { locale })}
             </Button>
           </div>
           {chooseOpen && (
@@ -125,23 +132,23 @@ export const CloudSaveSection: FC = () => {
       {cloud && (
         <>
           <Group
-            title={t('rating-calculator:cloud-save.saves.title')}
-            description={t('rating-calculator:cloud-save.saves.description')}
+            title={m.ratingCalculator_cloudSave_saves_title({}, { locale })}
+            description={m.ratingCalculator_cloudSave_saves_description({}, { locale })}
           >
             <SaveSelector />
           </Group>
-          <Group title={t('rating-calculator:cloud-save.issues.title')}>
+          <Group title={m.ratingCalculator_cloudSave_issues_title({}, { locale })}>
             <SyncIssuesList />
           </Group>
-          <Group title={t('rating-calculator:cloud-save.history.title')}>
+          <Group title={m.ratingCalculator_cloudSave_history_title({}, { locale })}>
             <ImportHistoryList />
           </Group>
         </>
       )}
       {cloudSaveOn && (
         <Group
-          title={t('rating-calculator:cloud-save.export.title')}
-          description={t('rating-calculator:cloud-save.export.description')}
+          title={m.ratingCalculator_cloudSave_export_title({}, { locale })}
+          description={m.ratingCalculator_cloudSave_export_description({}, { locale })}
         >
           <DownloadMyDataButton />
         </Group>

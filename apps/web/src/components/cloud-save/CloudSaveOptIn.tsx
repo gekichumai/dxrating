@@ -1,11 +1,14 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Switch } from '@mui/material'
 import { type FC, type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Trans, useTranslation } from 'react-i18next'
+import { ParaglideMessage } from '@inlang/paraglide-js-react'
+import type { PlainMessage } from '@/i18n/message'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useActiveSave } from '@/models/scores/ActiveSaveContext'
 import { focusMigrationReturnTarget } from '@/models/scores/CloudMigrationContext'
 import { CLOUD_SAVE_CONSENT_VERSION, useCloudSaveActions } from '@/models/scores/cloudSaveActions'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
 import './cloud-save.css'
 
 /** The privacy policy, in a new tab so the consent stays open; its text comes from the translation */
@@ -26,9 +29,14 @@ export const CloudSaveConsentDialog: FC<{
   onCancel(): void
   onAgree(): void
 }> = ({ open, busy, onCancel, onAgree }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const titleId = useId()
-  const points = ['stored', 'retention', 'passwords', 'leaving'] as const
+  const points: { key: string; message: PlainMessage }[] = [
+    { key: 'stored', message: m.ratingCalculator_cloudSave_optIn_consentStored },
+    { key: 'retention', message: m.ratingCalculator_cloudSave_optIn_consentRetention },
+    { key: 'passwords', message: m.ratingCalculator_cloudSave_optIn_consentPasswords },
+    { key: 'leaving', message: m.ratingCalculator_cloudSave_optIn_consentLeaving },
+  ]
   return (
     <Dialog
       open={open}
@@ -42,29 +50,31 @@ export const CloudSaveConsentDialog: FC<{
       }}
     >
       <DialogTitle id={titleId} className="text-pretty">
-        {t('rating-calculator:cloud-save.opt-in.consent-title')}
+        {m.ratingCalculator_cloudSave_optIn_consentTitle({}, { locale })}
       </DialogTitle>
       <DialogContent className="flex flex-col gap-3">
-        <p className="m-0 text-sm text-fg-2 text-pretty">{t('rating-calculator:cloud-save.opt-in.consent-intro')}</p>
+        <p className="m-0 text-sm text-fg-2 text-pretty">
+          {m.ratingCalculator_cloudSave_optIn_consentIntro({}, { locale })}
+        </p>
         <ul className="m-0 flex flex-col gap-2 ps-5 text-sm text-fg-2">
           {points.map((point) => (
-            <li key={point} className="text-pretty">
-              {t(`rating-calculator:cloud-save.opt-in.consent-${point}`)}
+            <li key={point.key} className="text-pretty">
+              {point.message({}, { locale })}
             </li>
           ))}
         </ul>
         <p className="m-0 text-xs text-fg-2 text-pretty">
-          <Trans
-            i18nKey="rating-calculator:cloud-save.opt-in.consent-privacy"
-            components={{
-              privacy: <PrivacyPolicyLink />,
-            }}
+          <ParaglideMessage
+            message={m.ratingCalculator_cloudSave_optIn_consentPrivacy}
+            inputs={{}}
+            options={{ locale }}
+            markup={{ privacy: ({ children }) => <PrivacyPolicyLink>{children}</PrivacyPolicyLink> }}
           />
         </p>
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancel} disabled={busy}>
-          {t('rating-calculator:cloud-save.import-confirm.cancel')}
+          {m.ratingCalculator_cloudSave_importConfirm_cancel({}, { locale })}
         </Button>
         {/* Stays focusable while the consent is sent (aria-disabled): a second press does nothing */}
         <Button
@@ -74,9 +84,9 @@ export const CloudSaveConsentDialog: FC<{
           aria-busy={busy || undefined}
           className={busy ? 'cursor-progress opacity-60' : undefined}
         >
-          {t('rating-calculator:cloud-save.opt-in.agree')}
+          {m.ratingCalculator_cloudSave_optIn_agree({}, { locale })}
         </Button>
-        <output className="sr-only">{busy ? t('rating-calculator:cloud-save.opt-in.sending') : ''}</output>
+        <output className="sr-only">{busy ? m.ratingCalculator_cloudSave_optIn_sending({}, { locale }) : ''}</output>
       </DialogActions>
     </Dialog>
   )
@@ -88,7 +98,7 @@ export const CloudSaveConsentDialog: FC<{
  * (`POST /me/features/cloud-save/opt-in`), then the features are read again and the cloud save surfaces appear.
  */
 export const CloudSaveOptIn: FC = () => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const activeSave = useActiveSave()
   const actions = useCloudSaveActions()
   const [consentOpen, setConsentOpen] = useState(false)
@@ -121,13 +131,13 @@ export const CloudSaveOptIn: FC = () => {
       captureAnalyticsEvent('cloudsave_enabled', { via: 'opt_in' })
       setConsentOpen(false)
       focusScopeAfterOptIn.current = rootRef.current?.parentElement ?? null
-      toast.success(t('rating-calculator:cloud-save.opt-in.success'), {
+      toast.success(m.ratingCalculator_cloudSave_optIn_success({}, { locale }), {
         id: 'cloud-save-opt-in',
       })
       // The cached features say "off": read them again, which shows the cloud save surfaces
       activeSave.refreshFeatures()
     } catch {
-      toast.error(t('rating-calculator:cloud-save.opt-in.error'), {
+      toast.error(m.ratingCalculator_cloudSave_optIn_error({}, { locale }), {
         id: 'cloud-save-opt-in',
       })
     } finally {
@@ -139,10 +149,10 @@ export const CloudSaveOptIn: FC = () => {
     <div ref={rootRef} className="flex items-start gap-3 glass-inset p-3">
       <div className="min-w-0 flex-1">
         <label htmlFor={switchId} className="block cursor-pointer text-sm font-semibold text-fg-1">
-          {t('rating-calculator:cloud-save.opt-in.title')}
+          {m.ratingCalculator_cloudSave_optIn_title({}, { locale })}
         </label>
         <p id={descriptionId} className="m-0 mt-0.5 text-xs text-fg-2 text-pretty">
-          {t('rating-calculator:cloud-save.opt-in.description')}
+          {m.ratingCalculator_cloudSave_optIn_description({}, { locale })}
         </p>
       </div>
       <Switch

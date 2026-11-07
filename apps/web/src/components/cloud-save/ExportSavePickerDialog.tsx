@@ -1,7 +1,8 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
 import { type FC, useEffect, useId, useMemo, useSyncExternalStore } from 'react'
-import { useTranslation } from 'react-i18next'
 import { exportSavePicker } from './exportSavePicker'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
 import './cloud-save.css'
 
 const REGION_LABELS: Record<string, string> = {
@@ -12,14 +13,14 @@ const REGION_LABELS: Record<string, string> = {
 
 /** Answers `exportSavePicker.request()`: which save of a "Download my data" file to import */
 export const ExportSavePickerDialog: FC = () => {
-  const { t, i18n } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const request = useSyncExternalStore(
     exportSavePicker.subscribe,
     exportSavePicker.getSnapshot,
     exportSavePicker.getServerSnapshot,
   )
   const titleId = useId()
-  const numberFormat = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language])
+  const numberFormat = useMemo(() => new Intl.NumberFormat(locale), [locale])
   useEffect(() => exportSavePicker.registerHost(), [])
   if (!request) return null
   const cancel = () => request.resolve(null)
@@ -36,10 +37,10 @@ export const ExportSavePickerDialog: FC = () => {
         sx: { borderRadius: '0.75rem' },
       }}
     >
-      <DialogTitle id={titleId}>{t('rating-calculator:cloud-save.export-import.pick-title')}</DialogTitle>
+      <DialogTitle id={titleId}>{m.ratingCalculator_cloudSave_exportImport_pickTitle({}, { locale })}</DialogTitle>
       <DialogContent className="flex flex-col gap-3">
         <DialogContentText className="text-pretty">
-          {t('rating-calculator:cloud-save.export-import.pick-description')}
+          {m.ratingCalculator_cloudSave_exportImport_pickDescription({}, { locale })}
         </DialogContentText>
         <ul className="m-0 flex list-none flex-col gap-1 p-0">
           {request.saves.map((save) => (
@@ -59,10 +60,13 @@ export const ExportSavePickerDialog: FC = () => {
                   </span>
                 )}
                 <span className="mt-0.5 shrink-0 text-xs text-fg-2 tabular-nums">
-                  {t('rating-calculator:cloud-save.saves.records', {
-                    count: save.entries.length,
-                    formatted: numberFormat.format(save.entries.length),
-                  })}
+                  {m.ratingCalculator_cloudSave_saves_records(
+                    {
+                      count: save.entries.length,
+                      formatted: numberFormat.format(save.entries.length),
+                    },
+                    { locale },
+                  )}
                 </span>
               </button>
             </li>
@@ -70,7 +74,7 @@ export const ExportSavePickerDialog: FC = () => {
         </ul>
       </DialogContent>
       <DialogActions>
-        <Button onClick={cancel}>{t('rating-calculator:cloud-save.import-confirm.cancel')}</Button>
+        <Button onClick={cancel}>{m.ratingCalculator_cloudSave_importConfirm_cancel({}, { locale })}</Button>
       </DialogActions>
     </Dialog>
   )

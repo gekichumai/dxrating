@@ -1,9 +1,10 @@
 import { Button } from '@mui/material'
 import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import IconMdiDownload from '~icons/mdi/download'
 import { saveBlobAsFile, useCloudSaveActions } from '@/models/scores/cloudSaveActions'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
 
 const isRateLimited = (error: unknown) =>
   typeof error === 'object' &&
@@ -12,7 +13,7 @@ const isRateLimited = (error: unknown) =>
 
 /** "Download my data" (§11.3): every cloud save, with provenance, import jobs, events and snapshots, as JSON */
 export const DownloadMyDataButton: FC = () => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const actions = useCloudSaveActions()
   const [busy, setBusy] = useState(false)
 
@@ -23,14 +24,14 @@ export const DownloadMyDataButton: FC = () => {
     try {
       const { blob, fileName } = await actions.exportData()
       saveBlobAsFile(blob, fileName)
-      toast.success(t('rating-calculator:cloud-save.export.success'), {
+      toast.success(m.ratingCalculator_cloudSave_export_success({}, { locale }), {
         id: 'cloud-export',
       })
     } catch (error) {
       toast.error(
         isRateLimited(error)
-          ? t('rating-calculator:cloud-save.export.rate-limited')
-          : t('rating-calculator:cloud-save.export.error'),
+          ? m.ratingCalculator_cloudSave_export_rateLimited({}, { locale })
+          : m.ratingCalculator_cloudSave_export_error({}, { locale }),
         { id: 'cloud-export' },
       )
     } finally {
@@ -49,10 +50,12 @@ export const DownloadMyDataButton: FC = () => {
         aria-busy={busy || undefined}
         className={busy ? 'cursor-progress opacity-60' : undefined}
       >
-        {busy ? t('rating-calculator:cloud-save.export.preparing') : t('rating-calculator:cloud-save.export.button')}
+        {busy
+          ? m.ratingCalculator_cloudSave_export_preparing({}, { locale })
+          : m.ratingCalculator_cloudSave_export_button({}, { locale })}
       </Button>
       {/* Read out while the button keeps the focus */}
-      <output className="sr-only">{busy ? t('rating-calculator:cloud-save.export.preparing') : ''}</output>
+      <output className="sr-only">{busy ? m.ratingCalculator_cloudSave_export_preparing({}, { locale }) : ''}</output>
     </div>
   )
 }

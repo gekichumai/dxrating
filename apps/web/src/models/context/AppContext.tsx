@@ -1,4 +1,5 @@
 import { VERSION_ID_MAP, VersionEnum } from '@gekichumai/dxdata'
+import { LATEST_REGION_VERSIONS as DOMAIN_LATEST_REGION_VERSIONS } from '@gekichumai/maimai-domain'
 import { createContext, type FC, type PropsWithChildren, useCallback, useEffect, useMemo, useState } from 'react'
 
 type AppContext = AppContextStates & AppContextFns
@@ -26,11 +27,27 @@ export const DXVersionToDXDataVersionEnumMap: Record<DXVersion, VersionEnum> = {
   magical: VersionEnum.MAGiCAL,
 }
 
+const toDXVersion = (version: VersionEnum): DXVersion => {
+  const entry = Object.entries(DXVersionToDXDataVersionEnumMap).find(([, value]) => value === version)
+  if (!entry) throw new Error(`No DXVersion for ${version}`)
+  return entry[0] as DXVersion
+}
+
+/** The version each region runs now, from the shared table in @gekichumai/maimai-domain */
 export const LATEST_REGION_VERSIONS = {
-  jp: 'magical',
-  intl: 'circle-plus',
-  cn: 'prism',
-} as const satisfies Record<Exclude<Region, '_generic'>, DXVersion>
+  jp: toDXVersion(DOMAIN_LATEST_REGION_VERSIONS.jp),
+  intl: toDXVersion(DOMAIN_LATEST_REGION_VERSIONS.intl),
+  cn: toDXVersion(DOMAIN_LATEST_REGION_VERSIONS.cn),
+} satisfies Record<Exclude<Region, '_generic'>, DXVersion>
+
+/**
+ * Stored choices to move forward without asking. CN's latest was listed as PRiSM until PRiSM PLUS was added, so a
+ * `prism` + `cn` choice was the picker's "latest CN", not a deliberate pick of an older version.
+ */
+export function migrateStoredAppContext(state: AppContextStates): AppContextStates {
+  if (state.region === 'cn' && state.version === 'prism') return { ...state, version: LATEST_REGION_VERSIONS.cn }
+  return state
+}
 
 export interface AppContextStates {
   version: DXVersion
@@ -38,6 +55,8 @@ export interface AppContextStates {
 }
 
 interface AppContextFns {
+  /** False on the server and until the stored choice has been applied after mount: the region is the default until then */
+  hydrated: boolean
   availableVersionUpdate: DXVersion | null
   dismissVersionUpdate: () => void
   setVersionAndRegion: (version: DXVersion, region: Region) => void
@@ -46,6 +65,7 @@ interface AppContextFns {
 export const AppContext = createContext<AppContext>({
   version: 'magical',
   region: 'jp',
+  hydrated: false,
   availableVersionUpdate: null,
   dismissVersionUpdate: () => {},
   setVersionAndRegion: () => {
@@ -80,7 +100,15 @@ export function readStoredAppContext(): AppContextStates {
 
     const parsed = JSON.parse(stored)
     if (!isAppContextStates(parsed)) return getDefaultAppContext()
-    return parsed
+    const migrated = migrateStoredAppContext(parsed)
+    if (migrated !== parsed) {
+      try {
+        window.localStorage.setItem('app-context', JSON.stringify(migrated))
+      } catch {
+        // Migrated again next visit; this visit still uses the migrated choice
+      }
+    }
+    return migrated
   } catch {
     return getDefaultAppContext()
   }
@@ -108,11 +136,13 @@ export const AppContextProvider: FC<PropsWithChildren<object>> = ({ children }) 
   const [state, setState] = useState<AppContextStates>(() => getDefaultAppContext())
 
   const [availableVersionUpdate, setAvailableVersionUpdate] = useState<DXVersion | null>(null)
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     const stored = readStoredAppContext()
     setState(stored)
     setAvailableVersionUpdate(getAvailableVersionUpdate(stored))
+    setHydrated(true)
   }, [])
 
   const dismissVersionUpdate = useCallback(() => {
@@ -141,11 +171,12 @@ export const AppContextProvider: FC<PropsWithChildren<object>> = ({ children }) 
       version: state.version,
 
       region: state.region ?? 'jp',
+      hydrated,
       setVersionAndRegion,
       availableVersionUpdate,
       dismissVersionUpdate,
     }),
-    [state, setVersionAndRegion, availableVersionUpdate, dismissVersionUpdate],
+    [state, hydrated, setVersionAndRegion, availableVersionUpdate, dismissVersionUpdate],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

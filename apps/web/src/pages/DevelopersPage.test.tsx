@@ -1,13 +1,8 @@
 import { render, screen } from '@testing-library/react'
-import { beforeAll, describe, expect, it } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { describe, expect, it } from 'vitest'
 import { DevelopersPage } from './DevelopersPage'
 
 describe('DevelopersPage', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('offers the MCP server and the REST API, each with one primary action', () => {
     render(<DevelopersPage />)
 

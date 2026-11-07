@@ -1,9 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { ActiveSaveContext, type ActiveSave } from '@/models/scores/ActiveSaveContext'
-import { initI18n } from '@/setup/init-i18n'
 import { UserProfileModal } from '../UserProfileModal'
 import { VersionEnum } from '@gekichumai/dxdata'
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
@@ -27,10 +26,6 @@ vi.mock('@/lib/auth-client', () => ({
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }))
 
 describe('UserProfileModal', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('flushes the cloud save before signing out', async () => {
     const order: string[] = []
     let finishFlush: () => void = () => {}

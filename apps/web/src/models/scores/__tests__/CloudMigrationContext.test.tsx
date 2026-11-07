@@ -1,12 +1,10 @@
 import type { SaveDTO, UserFeatures } from '@gekichumai/api-contract'
 import { act, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react'
 import { IDBFactory } from 'fake-indexeddb'
-import i18n from 'i18next'
 import type { FC, PropsWithChildren } from 'react'
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CloudMigrationPrompt } from '../../../components/cloud-save/CloudMigrationPrompt'
 import { CloudSaveSection } from '../../../components/cloud-save/CloudSaveSection'
-import { initI18n } from '../../../setup/init-i18n'
 import { RatingCalculatorContextProvider } from '../../context/RatingCalculatorContext'
 import {
   ACTIVE_SAVE_STORAGE_KEY,
@@ -148,11 +146,6 @@ function cloudActions(migration = migrationApi()): CloudSaveActions & { migratio
 }
 
 const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 20)))
-
-beforeAll(async () => {
-  initI18n()
-  await i18n.changeLanguage('en')
-})
 
 beforeEach(() => {
   window.localStorage.clear()

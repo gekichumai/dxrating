@@ -15,14 +15,22 @@ export interface UserRecord {
   entry: PlayEntry
   /** The catalog sheet of the record; null while the catalog lacks it */
   sheet: VersionedSheet | null
-  /** Best result of every field across all stored entries of the sheet (a lower score can carry the AP / FDX) */
-  best: { achievementRate: number; comboFlag: ComboFlag; syncFlag: SyncFlag }
+  /**
+   * Best result of every field across all stored entries of the sheet (a lower score can carry the AP / FDX, or the
+   * higher DX score); `dxScore` is null when no entry reports one
+   */
+  best: { achievementRate: number; comboFlag: ComboFlag; syncFlag: SyncFlag; dxScore: number | null }
   /** Import metadata (CN Diving Fish bucket hint), from any stored entry of the sheet */
   source: RatingEntry['source']
 }
 
 const COMBO_RANK: readonly ComboFlag[] = [null, 'fc', 'fcp', 'ap', 'app']
 const SYNC_RANK: readonly SyncFlag[] = [null, 'sync', 'fs', 'fsp', 'fsd', 'fsdp']
+
+const dxScoreOf = (entry: PlayEntry): number | null =>
+  typeof entry.dxScore === 'number' && Number.isFinite(entry.dxScore) ? entry.dxScore : null
+
+const higherDxScore = (a: number | null, b: number | null) => (a === null ? b : b === null ? a : Math.max(a, b))
 
 function strongest<T>(rank: readonly T[], a: T, b: T): T {
   return rank.indexOf(b) > rank.indexOf(a) ? b : a
@@ -104,6 +112,7 @@ export function groupUserRecords(
           achievementRate: entry.achievementRate,
           comboFlag: entry.comboFlag ?? null,
           syncFlag: entry.syncFlag ?? null,
+          dxScore: dxScoreOf(entry),
         },
         source: playEntrySource(entry),
       })
@@ -118,6 +127,7 @@ export function groupUserRecords(
         achievementRate: Math.max(existing.best.achievementRate, entry.achievementRate),
         comboFlag: strongest(COMBO_RANK, existing.best.comboFlag, entry.comboFlag ?? null),
         syncFlag: strongest(SYNC_RANK, existing.best.syncFlag, entry.syncFlag ?? null),
+        dxScore: higherDxScore(existing.best.dxScore, dxScoreOf(entry)),
       },
       source: undefined,
     })

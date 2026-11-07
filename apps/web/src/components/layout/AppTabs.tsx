@@ -2,16 +2,26 @@ import { CircularProgress, Tooltip } from '@mui/material'
 import { Link, useLocation, useRouterState } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { type FC, type ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
 import MdiTrendingUpIcon from '~icons/mdi/trending-up'
 import MdiUpdateIcon from '~icons/mdi/update'
 import {
   APP_TAB_LINKS,
+  type AppTabValue,
   CHART_DISCOVERY_NAV_LINKS,
   getActiveAppTabValue,
   getPendingAppTabValue,
 } from '@/routes/-top-nav-links'
 import { captureAnalyticsEvent } from '@/lib/analytics'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
+
+const TAB_LABELS = {
+  recent: m.root_pages_recent_iconLabel,
+  trending: m.root_pages_trending_iconLabel,
+  search: m.home_tabLabel,
+  rating: m.root_pages_rating_title,
+} satisfies Record<AppTabValue, PlainMessage>
 
 interface AppTabContentProps {
   children: ReactNode
@@ -42,7 +52,7 @@ const AppTabContent: FC<AppTabContentProps> = ({ children, fixedSize = false, pe
  * The container is 12px glass with a 3px padding and a 1px border around 8px links (8 + 3 + 1 = 12).
  */
 export const AppTabs: FC = () => {
-  const { t } = useTranslation(['root'])
+  const locale = useLocale()
   const location = useLocation()
 
   const activeTab = getActiveAppTabValue(location.pathname)
@@ -53,10 +63,10 @@ export const AppTabs: FC = () => {
   const selectedTab = pendingTab || activeTab
 
   return (
-    <nav aria-label={t('root:primary-navigation')} className="app-nav glass-thin flex items-center p-[3px]">
+    <nav aria-label={m.root_primaryNavigation({}, { locale })} className="app-nav glass-thin flex items-center p-[3px]">
       <ul className="flex items-center gap-0.5 list-none m-0 p-0">
         {APP_TAB_LINKS.map((link) => {
-          const label = t(link.labelKey)
+          const label = TAB_LABELS[link.value]({}, { locale })
           const isSelected = selectedTab === link.value
           const isPendingTab = pendingTab === link.value
           const isIconOnlyTab = CHART_DISCOVERY_NAV_LINKS.some((chartLink) => chartLink.value === link.value)

@@ -2,11 +2,12 @@ import { CategoryEnum } from '@gekichumai/dxdata'
 import { ButtonBase, Chip } from '@mui/material'
 import { type FC, useMemo } from 'react'
 import { type Control, useController } from 'react-hook-form'
-import { useTranslation } from 'react-i18next'
 import { LongPressCallbackReason, useLongPress } from 'use-long-press'
 import { GestureHint } from '../../global/GestureHint'
 import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { SheetFilterSection } from './SheetFilterSection'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const SheetCategoryFilterInputCategory = ({
   category,
@@ -106,7 +107,7 @@ export const SheetCategoryFilter: FC<{
   control: Control<SheetSortFilterForm>
   reset: () => void
 }> = ({ control, reset }) => {
-  const { t } = useTranslation(['sheet', 'global'])
+  const locale = useLocale()
   const {
     field: { onChange, value },
   } = useController<SheetSortFilterForm, 'filters.categories'>({
@@ -116,11 +117,11 @@ export const SheetCategoryFilter: FC<{
 
   return (
     <SheetFilterSection
-      titleLeft={t('sheet:filter.category.title')}
+      titleLeft={m.sheet_filter_category_title({}, { locale })}
       titleRight={
         <>
-          <GestureHint gesture="tap" description={t('sheet:filter.version.gesture-hint.tap')} />
-          <GestureHint gesture="tap-hold" description={t('sheet:filter.version.gesture-hint.tap-hold')} />
+          <GestureHint gesture="tap" description={m.sheet_filter_version_gestureHint_tap({}, { locale })} />
+          <GestureHint gesture="tap-hold" description={m.sheet_filter_version_gestureHint_tapHold({}, { locale })} />
         </>
       }
       reset={reset}

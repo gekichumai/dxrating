@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { type FC, type ImgHTMLAttributes, memo, useState } from 'react'
 import MdiImageRemove from '~icons/mdi/image-remove'
 

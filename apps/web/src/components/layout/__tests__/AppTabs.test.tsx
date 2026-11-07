@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import i18n from 'i18next'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { AppTabs } from '../AppTabs'
 
 const { capture, routeLocation, routerState } = vi.hoisted(() => ({
@@ -44,13 +43,15 @@ vi.mock('~icons/mdi/update', () => ({
   default: ({ className }: { className?: string }) => <svg className={className} />,
 }))
 
-describe('AppTabs', () => {
-  beforeAll(() => {
-    initI18n()
-  })
+const renderAppTabs = () =>
+  render(
+    <LocaleProvider initialLocale="en">
+      <AppTabs />
+    </LocaleProvider>,
+  )
 
-  beforeEach(async () => {
-    await i18n.changeLanguage('en')
+describe('AppTabs', () => {
+  beforeEach(() => {
     capture.mockClear()
     routeLocation.pathname = '/rating'
     routerState.isLoading = false
@@ -60,7 +61,7 @@ describe('AppTabs', () => {
   })
 
   it('renders a navigation landmark of links with every link in the tab order', () => {
-    render(<AppTabs />)
+    renderAppTabs()
 
     const nav = screen.getByRole('navigation', { name: 'Main' })
     const links = within(nav).getAllByRole('link')
@@ -71,7 +72,7 @@ describe('AppTabs', () => {
   })
 
   it('marks the current route link and captures deliberate navigation', () => {
-    render(<AppTabs />)
+    renderAppTabs()
 
     const ratingTab = screen.getByRole('link', { name: 'My rating' })
 
@@ -91,7 +92,7 @@ describe('AppTabs', () => {
     routerState.location.pathname = '/'
     routerState.resolvedLocation = { pathname: '/rating' }
 
-    render(<AppTabs />)
+    renderAppTabs()
 
     const searchTab = screen.getByRole('link', { name: 'Home' })
     const ratingTab = screen.getByRole('link', { name: 'My rating' })
@@ -112,7 +113,7 @@ describe('AppTabs', () => {
     routerState.location.pathname = '/charts/recent'
     routerState.resolvedLocation = { pathname: '/charts/trending' }
 
-    render(<AppTabs />)
+    renderAppTabs()
 
     const recentTab = screen.getByRole('link', { name: 'New charts' })
 
@@ -127,7 +128,7 @@ describe('AppTabs', () => {
     routerState.isLoading = true
     routerState.resolvedLocation = undefined
 
-    render(<AppTabs />)
+    renderAppTabs()
 
     const ratingTab = screen.getByRole('link', { name: 'My rating' })
 
