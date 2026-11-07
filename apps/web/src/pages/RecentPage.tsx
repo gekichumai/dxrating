@@ -98,7 +98,7 @@ const RecentChartGroupSection: FC<{ group: RecentChartGroup; locale: SupportedLo
     <section aria-labelledby={headingId} className="flex w-full flex-col gap-2">
       {/* Sticky over the rows, so it takes the denser overlay tint and the full blur: rows passing under it must not
           read through */}
-      <div className="glass-thin sticky top-1 z-2 flex items-baseline justify-between gap-2 px-3 py-1.5 bg-[var(--glass-overlay-bg)] [-webkit-backdrop-filter:var(--glass-blur)] [backdrop-filter:var(--glass-blur)]">
+      <div className="glass-thin sticky top-1 z-2 mx-[var(--sticky-inline-inset)] flex items-baseline justify-between gap-2 px-3 py-1.5 bg-[var(--glass-overlay-bg)] [-webkit-backdrop-filter:var(--glass-blur)] [backdrop-filter:var(--glass-blur)]">
         <h2 id={headingId} className="m-0 text-base font-semibold text-fg-1 num">
           {group.releaseDate ? (
             <time dateTime={group.releaseDate}>
