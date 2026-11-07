@@ -6,5 +6,5 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   plugins: [react(), UnoCSS()],
   server: { port: 5180, strictPort: true, proxy: { '/api': 'http://localhost:3100' } },
-  test: { environment: 'happy-dom' },
+  test: { environment: 'happy-dom', include: ['src/**/*.test.tsx', 'worker/**/*.test.ts'] },
 })
