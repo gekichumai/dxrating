@@ -40,6 +40,11 @@ import {
   DXDATA_PATH,
 } from './services/dxdata'
 import { createDxdataV2Store, DXDATA_V2_CACHE_TAG, DXDATA_V2_PATH } from './services/dxdata-v2'
+import {
+  createCommunityOverlayHandler,
+  DXDATA_V2_COMMUNITY_PATH,
+  readListsThrough,
+} from './services/dxdata-v2-community'
 import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi'
 import { applyApiPolicyToOpenApi } from './services/api-policy'
 import { addPublicApiExamplesToOpenApi } from './services/openapi-examples'
@@ -93,7 +98,7 @@ const ARCADE_VENUES_RETAINED_304_HEADERS = [
   'access-control-allow-origin',
   'access-control-expose-headers',
 ]
-const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH, DXDATA_V2_PATH])
+const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH, DXDATA_V2_PATH, DXDATA_V2_COMMUNITY_PATH])
 // The tag and alias lists are public data that the edge shares between every caller. The edge ignores
 // `Vary: Origin`, so a cached copy must not carry one caller's reflected origin: reads answer `*` without
 // credentials, like the catalog. Writes on the same paths (POST /aliases) keep the credentialed API CORS.
@@ -660,6 +665,15 @@ const dxdataV2Handler = createDxdataEffect(
 // the potentially large snapshot body.
 app.on(['GET', 'HEAD'], DXDATA_PATH, (c) => runApp(dxdataHandler(c), { signal: c.req.raw.signal }))
 app.on(['GET', 'HEAD'], DXDATA_V2_PATH, (c) => runApp(dxdataV2Handler(c), { signal: c.req.raw.signal }))
+
+// The v2 community overlay, built from the public v1 tag and alias routes themselves, so it follows their rules
+const communityOverlayHandler = createCommunityOverlayHandler(
+  readListsThrough((path) => app.request(path, { headers: { [API_CLIENT_HEADER]: 'dxrating-v2-community' } })),
+  reportCatalogError,
+)
+app.on(['GET', 'HEAD'], DXDATA_V2_COMMUNITY_PATH, (c) =>
+  runApp(communityOverlayHandler(c), { signal: c.req.raw.signal }),
+)
 
 const arcadeVenuesCacheHeaders = createMiddleware((c, next) =>
   runApp(
