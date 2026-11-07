@@ -99,9 +99,14 @@ export const InternalLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<H
     useEffect(() => {
       if (!router || !pending || !href) return undefined
       const target = pathnameOf(href)
-      return router.subscribe('onBeforeLoad', ({ toLocation }) => {
+      const unsubscribe = router.subscribe('onBeforeLoad', ({ toLocation }) => {
         if (pathnameOf(toLocation.pathname) !== target) setNavigationId(undefined)
       })
+      // A navigation started in the same task as the click (before this effect ran) emitted its event already: the
+      // router's latest destination tells whether this link's navigation was replaced in the meantime
+      const destination = router.latestLocation?.pathname
+      if (destination !== undefined && pathnameOf(destination) !== target) setNavigationId(undefined)
+      return unsubscribe
     }, [router, pending, href])
 
     const handleClick = useCallback(

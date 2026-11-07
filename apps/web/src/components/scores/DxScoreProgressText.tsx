@@ -1,12 +1,13 @@
 import { type DxScoreProgress, dxScoreProgress } from '@gekichumai/maimai-domain'
 import clsx from 'clsx'
 import type { FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiStarFourPoints from '~icons/mdi/star-four-points'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 /** DX score stars as a gold four-point star and a count (the in-game ✦); nothing below ✦1 */
 export const DxScoreStarGlyphs: FC<{ stars: number; className?: string }> = ({ stars, className }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   if (stars <= 0) return null
   return (
     <span
@@ -14,7 +15,7 @@ export const DxScoreStarGlyphs: FC<{ stars: number; className?: string }> = ({ s
     >
       <IconMdiStarFourPoints aria-hidden className="size-[0.95em]" />
       <span aria-hidden>{stars}</span>
-      <span className="sr-only">{t('sheet:dx-score.stars', { stars })}</span>
+      <span className="sr-only">{m.sheet_dxScore_stars({ stars }, { locale })}</span>
     </span>
   )
 }
@@ -33,14 +34,14 @@ export const DxScoreProgressText: FC<{
   align?: 'start' | 'end'
   className?: string
 }> = ({ dxScore, max, layout = 'stacked', align = 'start', className }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const progress = dxScoreProgress(dxScore, max)
   if (!progress) {
     if (dxScore == null) return <span className={clsx('text-fg-2', className)}>–</span>
     return <span className={clsx('num', className)}>{dxScore}</span>
   }
   const next = progress.next
-    ? t('sheet:dx-score.to-next-star', { remaining: progress.next.remaining, stars: progress.next.stars })
+    ? m.sheet_dxScore_toNextStar({ remaining: progress.next.remaining, stars: progress.next.stars }, { locale })
     : undefined
 
   if (layout === 'compact') {

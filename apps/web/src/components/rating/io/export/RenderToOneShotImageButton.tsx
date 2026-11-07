@@ -9,7 +9,6 @@ import {
 } from '@mui/material'
 import * as Sentry from '@sentry/tanstackstart-react'
 import { type FC, useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
 import IconMdiImage from '~icons/mdi/image'
 import { useAppContext, useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
@@ -17,6 +16,8 @@ import { useRatingEntries } from '../../useRatingEntries'
 import { mapCalculatedEntryForOneShot } from './oneshotPayload'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { ShareImageActions, useObjectUrl } from '@/components/global/ShareImageViewer'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const useElapsedTime = (isLoading: boolean) => {
   const startTime = useRef<number | null>(null)
@@ -50,7 +51,7 @@ const useElapsedTime = (isLoading: boolean) => {
 }
 
 const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const { b15Entries, b35Entries, allEntries } = useRatingEntries()
   const version = useAppContextDXDataVersion()
   const { region } = useAppContext()
@@ -117,7 +118,7 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
   return (
     <>
       <DialogTitle className="text-lg font-bold pb-0">
-        {t('rating-calculator:io.export.oneshot-image.dialog.title')}
+        {m.ratingCalculator_io_export_oneshotImage_dialog_title({}, { locale })}
       </DialogTitle>
 
       <DialogContent classes={{ root: '!pt-4' }}>
@@ -130,27 +131,29 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
                 <CircularProgress />
 
                 <div className="text-lg font-bold">
-                  {t('rating-calculator:io.export.oneshot-image.dialog.loading.title')}
+                  {m.ratingCalculator_io_export_oneshotImage_dialog_loading_title({}, { locale })}
                 </div>
 
                 <div className="text-base font-bold num">
                   {elapsedTime
                     ? `${(elapsedTime / 1000).toFixed(1)}s`
-                    : t('rating-calculator:io.export.oneshot-image.dialog.loading.calculating')}
+                    : m.ratingCalculator_io_export_oneshotImage_dialog_loading_calculating({}, { locale })}
                 </div>
 
-                <div className="text-sm">{t('rating-calculator:io.export.oneshot-image.dialog.loading.message')}</div>
+                <div className="text-sm">
+                  {m.ratingCalculator_io_export_oneshotImage_dialog_loading_message({}, { locale })}
+                </div>
               </div>
             </div>
           ) : error ? (
             <p role="alert" className="m-0 text-danger">
-              {t('rating-calculator:io.export.oneshot-image.dialog.error')}
+              {m.ratingCalculator_io_export_oneshotImage_dialog_error({}, { locale })}
             </p>
           ) : (
             imageUrl && (
               <img
                 src={imageUrl}
-                alt={t('rating-calculator:io.export.oneshot-image.preview-alt')}
+                alt={m.ratingCalculator_io_export_oneshotImage_previewAlt({}, { locale })}
                 className="block w-full h-auto rounded-[var(--radius-md)] [-webkit-touch-callout:default]"
                 style={{ boxShadow: 'var(--shadow-overlay)' }}
               />
@@ -162,32 +165,34 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
               <ShareImageActions
                 blob={data}
                 filename={data.type === 'image/png' ? 'dxrating-b50.png' : 'dxrating-b50.jpg'}
-                shareTitle={t('rating-calculator:io.export.oneshot-image.dialog.title')}
+                shareTitle={m.ratingCalculator_io_export_oneshotImage_dialog_title({}, { locale })}
               />
             </div>
           )}
 
           <div className="text-secondary mt-4 flex flex-col gap-1">
             <div className="text-sm font-bold">
-              {t('rating-calculator:io.export.oneshot-image.dialog.save-instruction')}
+              {m.ratingCalculator_io_export_oneshotImage_dialog_saveInstruction({}, { locale })}
             </div>
 
-            <div className="text-xs">{t('rating-calculator:io.export.oneshot-image.dialog.beta-notice')}</div>
+            <div className="text-xs">{m.ratingCalculator_io_export_oneshotImage_dialog_betaNotice({}, { locale })}</div>
           </div>
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         {error && !isValidating && (
-          <Button onClick={() => void mutate()}>{t('rating-calculator:io.export.oneshot-image.dialog.retry')}</Button>
+          <Button onClick={() => void mutate()}>
+            {m.ratingCalculator_io_export_oneshotImage_dialog_retry({}, { locale })}
+          </Button>
         )}
-        <Button onClick={onClose}>{t('rating-calculator:io.export.oneshot-image.dialog.close')}</Button>
+        <Button onClick={onClose}>{m.ratingCalculator_io_export_oneshotImage_dialog_close({}, { locale })}</Button>
       </DialogActions>
     </>
   )
 }
 
 export const RenderToOneShotImageButton: FC = () => {
-  const { t } = useTranslation()
+  const locale = useLocale()
   const { isLoading, b15Entries, b35Entries, allEntries } = useRatingEntries()
   const [open, setOpen] = useState(false)
 
@@ -207,7 +212,7 @@ export const RenderToOneShotImageButton: FC = () => {
         disabled={isLoading}
         startIcon={<IconMdiImage />}
       >
-        {t('rating-calculator:io.export.oneshot-image.button')}
+        {m.ratingCalculator_io_export_oneshotImage_button({}, { locale })}
       </Button>
 
       <Dialog maxWidth="md" open={open} onClose={() => setOpen(false)}>

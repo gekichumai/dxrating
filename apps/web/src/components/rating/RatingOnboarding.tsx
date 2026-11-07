@@ -1,12 +1,13 @@
 import { Button } from '@mui/material'
 import type { FC, ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiCloudDownloadOutline from '~icons/mdi/cloud-download-outline'
 import IconMdiConnection from '~icons/mdi/connection'
 import IconMdiPlaylistPlus from '~icons/mdi/playlist-plus'
 import { ImportMenu } from './io/ImportMenu'
 import { useNetImportSettings } from './io/import/NetImportSettingsContext'
 import { captureAnalyticsEvent } from '../../lib/analytics'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 /** The id of the add-entry form's wrapper; "Add a chart" moves focus to the chart field inside it */
 export const RATING_ADD_ENTRY_ID = 'rating-add-entry'
@@ -35,7 +36,7 @@ const OnboardingStep: FC<{
  * first. The calculator renders in the browser only (ClientOnly), so none of this reaches the server render.
  */
 export const RatingOnboarding: FC = () => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const { openSettings } = useNetImportSettings()
 
   const focusChartField = () => {
@@ -49,10 +50,10 @@ export const RatingOnboarding: FC = () => {
     <section className="glass rating-onboarding" aria-labelledby="rating-onboarding-title">
       <div className="flex flex-col gap-2">
         <h2 id="rating-onboarding-title" className="m-0 text-xl font-semibold leading-snug text-fg-1 text-balance">
-          {t('rating-calculator:empty.title')}
+          {m.ratingCalculator_empty_title({}, { locale })}
         </h2>
         <p className="m-0 text-sm sm:text-base leading-relaxed text-fg-2 text-pretty max-w-[65ch]">
-          {t('rating-calculator:empty.description')}
+          {m.ratingCalculator_empty_description({}, { locale })}
         </p>
       </div>
 
@@ -60,8 +61,8 @@ export const RatingOnboarding: FC = () => {
         <OnboardingStep
           recommended
           icon={<IconMdiConnection />}
-          title={t('rating-calculator:empty.net.title')}
-          description={t('rating-calculator:empty.net.description')}
+          title={m.ratingCalculator_empty_net_title({}, { locale })}
+          description={m.ratingCalculator_empty_net_description({}, { locale })}
           action={
             <Button
               variant="contained"
@@ -71,20 +72,20 @@ export const RatingOnboarding: FC = () => {
                 openSettings(event.currentTarget)
               }}
             >
-              {t('rating-calculator:empty.net.button')}
+              {m.ratingCalculator_empty_net_button({}, { locale })}
             </Button>
           }
         />
         <OnboardingStep
           icon={<IconMdiCloudDownloadOutline />}
-          title={t('rating-calculator:empty.other.title')}
-          description={t('rating-calculator:empty.other.description')}
-          action={<ImportMenu label={t('rating-calculator:empty.other.button')} />}
+          title={m.ratingCalculator_empty_other_title({}, { locale })}
+          description={m.ratingCalculator_empty_other_description({}, { locale })}
+          action={<ImportMenu label={m.ratingCalculator_empty_other_button({}, { locale })} />}
         />
         <OnboardingStep
           icon={<IconMdiPlaylistPlus />}
-          title={t('rating-calculator:empty.manual.title')}
-          description={t('rating-calculator:empty.manual.description')}
+          title={m.ratingCalculator_empty_manual_title({}, { locale })}
+          description={m.ratingCalculator_empty_manual_description({}, { locale })}
           action={
             <Button
               variant="text"
@@ -93,7 +94,7 @@ export const RatingOnboarding: FC = () => {
                 focusChartField()
               }}
             >
-              {t('rating-calculator:empty.manual.button')}
+              {m.ratingCalculator_empty_manual_button({}, { locale })}
             </Button>
           }
         />

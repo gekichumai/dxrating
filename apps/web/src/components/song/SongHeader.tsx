@@ -1,7 +1,6 @@
 import { Button, ButtonGroup, IconButton, Tooltip } from '@mui/material'
 import { motion, useReducedMotion } from 'motion/react'
 import { type FC, type ReactNode, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import IconMdiContentCopy from '~icons/mdi/content-copy'
 import IconMdiSpotify from '~icons/mdi/spotify'
@@ -12,6 +11,8 @@ import type { FlattenedSheet } from '../../songs'
 import { MaterialSurface } from '../global/MaterialSurface'
 import { AddSheetAltNameButton } from '../sheet/AddSheetAltNameButton'
 import { SheetAltNames } from '../sheet/SheetAltNames'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 // One outlined treatment for every search service: neutral ink (the brand glyph identifies the service), sentence
 // case, and a hover tint only where hover exists
@@ -54,7 +55,7 @@ const BrandSearchButton: FC<{
 const COVER_SIZE = { collapsed: '5rem', expanded: '16rem' }
 
 export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const [imgExpanded, setImgExpanded] = useState(false)
   const [imgError, setImgError] = useState(false)
   const reduceMotion = useReducedMotion()
@@ -62,11 +63,11 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
   const coverUrl = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
   const coverSize = imgExpanded ? COVER_SIZE.expanded : COVER_SIZE.collapsed
-  const newTab = t('sheet:search-links.new-tab')
+  const newTab = m.sheet_searchLinks_newTab({}, { locale })
 
   const copyTitle = () => {
     navigator.clipboard.writeText(song.title)
-    toast.success(t('sheet:copy-title.toast-success'), { id: `copy-song-title-${song.songId}` })
+    toast.success(m.sheet_copyTitle_toastSuccess({}, { locale }), { id: `copy-song-title-${song.songId}` })
   }
 
   return (
@@ -83,7 +84,7 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           transition={reduceMotion ? { duration: 0 } : { type: 'spring', duration: 0.3, bounce: 0 }}
           onClick={() => setImgExpanded((p) => !p)}
           aria-pressed={imgExpanded}
-          aria-label={t('sheet:cover-zoom', { title: song.title })}
+          aria-label={m.sheet_coverZoom({ title: song.title }, { locale })}
         >
           {imgError ? (
             <MdiImageRemove aria-hidden className="text-fg-2 text-2xl" />
@@ -107,10 +108,10 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             >
               {song.title}
             </h1>
-            <Tooltip title={t('sheet:copy-title.tooltip')}>
+            <Tooltip title={m.sheet_copyTitle_tooltip({}, { locale })}>
               <IconButton
                 size="small"
-                aria-label={t('sheet:copy-title.tooltip')}
+                aria-label={m.sheet_copyTitle_tooltip({}, { locale })}
                 onClick={copyTitle}
                 className="shrink-0 -mt-1 !text-fg-2"
               >
@@ -131,7 +132,7 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         <BrandSearchButton
           href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`maimai ${song.title}`)}`}
           icon={<IconMdiYouTube aria-hidden />}
-          aria-label={`${t('sheet:search-links.search-on', { service: 'YouTube' })} ${newTab}`}
+          aria-label={`${m.sheet_searchLinks_searchOn({ service: 'YouTube' }, { locale })} ${newTab}`}
         >
           YouTube
         </BrandSearchButton>
@@ -139,7 +140,7 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         <ButtonGroup
           size="small"
           variant="outlined"
-          aria-label={t('sheet:search-links.search-on', { service: 'bilibili' })}
+          aria-label={m.sheet_searchLinks_searchOn({ service: 'bilibili' }, { locale })}
           sx={{ '& .MuiButtonGroup-grouped': searchButtonSx }}
         >
           <Button
@@ -147,24 +148,24 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             target="_blank"
             rel="noopener noreferrer"
             startIcon={<RiBilibiliFill aria-hidden />}
-            aria-label={t('sheet:search-links.bilibili-app')}
+            aria-label={m.sheet_searchLinks_bilibiliApp({}, { locale })}
           >
-            {t('sheet:search-links.app')}
+            {m.sheet_searchLinks_app({}, { locale })}
           </Button>
           <Button
             href={`https://search.bilibili.com/all?keyword=${encodeURIComponent(song.title)}`}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`${t('sheet:search-links.bilibili-web')} ${newTab}`}
+            aria-label={`${m.sheet_searchLinks_bilibiliWeb({}, { locale })} ${newTab}`}
           >
-            {t('sheet:search-links.web')}
+            {m.sheet_searchLinks_web({}, { locale })}
           </Button>
         </ButtonGroup>
 
         <BrandSearchButton
           href={`https://open.spotify.com/search/${encodeURIComponent(`${song.title} ${song.artist}`)}`}
           icon={<IconMdiSpotify aria-hidden />}
-          aria-label={`${t('sheet:search-links.search-on', { service: 'Spotify' })} ${newTab}`}
+          aria-label={`${m.sheet_searchLinks_searchOn({ service: 'Spotify' }, { locale })} ${newTab}`}
         >
           Spotify
         </BrandSearchButton>

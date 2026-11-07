@@ -17,7 +17,6 @@ import {
 import clsx from 'clsx'
 import { MotionConfig } from 'motion/react'
 import { type FC, type PropsWithChildren, type ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
 import useSWR from 'swr'
 import { match } from 'ts-pattern'
@@ -37,9 +36,11 @@ import { AchievementRatingTable } from './AchievementRatingTable'
 import { SheetDialogContentHeader } from './SheetDialogContentHeader'
 import { SheetTitle } from './SheetListItem'
 import { SheetTags } from './tags/SheetTags'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const direction = match(delta)
     .when(
       (d) => d > 0,
@@ -52,10 +53,10 @@ const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
     .otherwise(() => 'neutral')
   const altText =
     delta > 0
-      ? t('sheet:internal-level-history.delta.increased')
+      ? m.sheet_internalLevelHistory_delta_increased({}, { locale })
       : delta < 0
-        ? t('sheet:internal-level-history.delta.decreased')
-        : t('sheet:internal-level-history.delta.unchanged')
+        ? m.sheet_internalLevelHistory_delta_decreased({}, { locale })
+        : m.sheet_internalLevelHistory_delta_unchanged({}, { locale })
 
   return (
     <img
@@ -84,11 +85,10 @@ const SheetDialogTitleHeading: FC<{ className?: string; children?: ReactNode }> 
 
 // Comments load on the client only, so formatting in the app locale cannot differ from a server render
 const CommentCreatedAt: FC<{ createdAt: string }> = ({ createdAt }) => {
-  const { i18n } = useTranslation()
+  const locale = useLocale()
   const formattedDate = useMemo(
-    () =>
-      new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(createdAt)),
-    [createdAt, i18n.language],
+    () => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(createdAt)),
+    [createdAt, locale],
   )
 
   return (
@@ -99,19 +99,19 @@ const CommentCreatedAt: FC<{ createdAt: string }> = ({ createdAt }) => {
 }
 
 const ReleaseDateText: FC<{ releaseDate: string }> = ({ releaseDate }) => {
-  const { t, i18n } = useTranslation(['sheet'])
+  const locale = useLocale()
   const renderedAt = useRenderedAt()
   const releaseDateText = useMemo(() => {
-    const parts = formatSheetReleaseDateParts(releaseDate, i18n.language, renderedAt)
+    const parts = formatSheetReleaseDateParts(releaseDate, locale, renderedAt)
 
-    return t('sheet:release-date', parts)
-  }, [releaseDate, i18n.language, renderedAt, t])
+    return m.sheet_releaseDate(parts, { locale })
+  }, [releaseDate, locale, renderedAt])
 
   return releaseDateText
 }
 
 const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t } = useTranslation(['auth', 'sheet', 'global'])
+  const locale = useLocale()
   const { session, user, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
   const visibility = useCommentVisibility(user?.id)
   const [content, setContent] = useState<string>('')
@@ -166,8 +166,8 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         <div className="flex gap-2 mt-1">
           <TextField
             className="flex-grow"
-            label={t('sheet:comments.input-label')}
-            placeholder={t('sheet:comments.placeholder')}
+            label={m.sheet_comments_inputLabel({}, { locale })}
+            placeholder={m.sheet_comments_placeholder({}, { locale })}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             minRows={1}
@@ -176,12 +176,16 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             data-attr="comment-input"
           />
           <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
-            {submitting ? <CircularProgress size={24} aria-label={t('global:submit')} /> : t('global:submit')}
+            {submitting ? (
+              <CircularProgress size={24} aria-label={m.global_submit({}, { locale })} />
+            ) : (
+              m.global_submit({}, { locale })
+            )}
           </Button>
         </div>
       ) : (
         <Button variant="outlined" className="self-start" onClick={openLoginDialog}>
-          {t('auth:form.login-or-register-to-comment')}
+          {m.auth_form_loginOrRegisterToComment({}, { locale })}
         </Button>
       )}
 
@@ -195,7 +199,9 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           {filterComments(comments ?? [], visibility).map((comment) => (
             <div key={comment.id} className="glass-inset flex flex-col gap-1 px-4 py-2">
               <div className="text-fg-2 flex items-center gap-1">
-                <div className="text-sm font-semibold">{comment.display_name ?? t('sheet:comments.anonymous')}</div>
+                <div className="text-sm font-semibold">
+                  {comment.display_name ?? m.sheet_comments_anonymous({}, { locale })}
+                </div>
                 <CommentActions comment={comment} />
 
                 <CommentCreatedAt createdAt={comment.created_at} />
@@ -208,7 +214,9 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             </div>
           ))}
           {filterComments(comments ?? [], visibility).length === 0 && (
-            <p className="glass-inset m-0 p-4 text-center text-sm text-fg-2">{t('sheet:comments.empty')}</p>
+            <p className="glass-inset m-0 p-4 text-center text-sm text-fg-2">
+              {m.sheet_comments_empty({}, { locale })}
+            </p>
           )}
         </div>
       )}
@@ -226,8 +234,8 @@ export interface SheetDialogContentProps {
 const externalLinkProps = { target: '_blank', rel: 'noopener noreferrer' } as const
 
 export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, currentAchievementRate, onClose }) => {
-  const { t, i18n } = useTranslation(['sheet', 'global'])
-  const numberFormat = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language])
+  const locale = useLocale()
+  const numberFormat = useMemo(() => new Intl.NumberFormat(locale), [locale])
 
   return (
     // Under reduced motion the cover, star and tag springs become instant; opacity fades remain
@@ -263,7 +271,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
               `maimai ${sheet.title} ${sheet.difficulty}`,
             )}`}
             {...externalLinkProps}
-            aria-label={t('sheet:external-search.youtube')}
+            aria-label={m.sheet_externalSearch_youtube({}, { locale })}
             className="!border-black/25"
           >
             YouTube
@@ -274,18 +282,18 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
               startIcon={<RiBilibiliFill aria-hidden="true" className="text-[#00A1D6]" />}
               href={`bilibili://search?keyword=${encodeURIComponent(`${sheet.title} ${sheet.difficulty}`)}`}
               {...externalLinkProps}
-              aria-label={t('sheet:external-search.bilibili-app')}
+              aria-label={m.sheet_externalSearch_bilibiliApp({}, { locale })}
             >
-              {t('sheet:external-search.app')}
+              {m.sheet_externalSearch_app({}, { locale })}
             </Button>
             <Button
               href={`https://search.bilibili.com/all?keyword=${encodeURIComponent(
                 `${sheet.title} ${sheet.difficulty}`,
               )}`}
               {...externalLinkProps}
-              aria-label={t('sheet:external-search.bilibili-web')}
+              aria-label={m.sheet_externalSearch_bilibiliWeb({}, { locale })}
             >
-              {t('sheet:external-search.web')}
+              {m.sheet_externalSearch_web({}, { locale })}
             </Button>
           </ButtonGroup>
 
@@ -296,7 +304,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
             size="small"
             href={`https://open.spotify.com/search/${encodeURIComponent(`${sheet.title} ${sheet.artist}`)}`}
             {...externalLinkProps}
-            aria-label={t('sheet:external-search.spotify')}
+            aria-label={m.sheet_externalSearch_spotify({}, { locale })}
             className="!border-black/25"
           >
             Spotify
@@ -306,13 +314,13 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
         <div className="flex flex-col gap-6 mt-2">
           {!sheet.isTypeUtage && (
             <div className="flex flex-col gap-1">
-              <SectionHeader>{t('sheet:internal-level-history.title')}</SectionHeader>
+              <SectionHeader>{m.sheet_internalLevelHistory_title({}, { locale })}</SectionHeader>
               <SheetInternalLevelHistory sheet={sheet} />
             </div>
           )}
 
           <div className="flex flex-col gap-1">
-            <SectionHeader>{t('sheet:details.title')}</SectionHeader>
+            <SectionHeader>{m.sheet_details_title({}, { locale })}</SectionHeader>
             <div>
               <Table
                 size="small"
@@ -321,13 +329,13 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                 <TableBody>
                   <TableRow>
                     <TableCell component="th" scope="row">
-                      {t('sheet:details.category')}
+                      {m.sheet_details_category({}, { locale })}
                     </TableCell>
                     <TableCell>{sheet.category}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell component="th" scope="row">
-                      {t('sheet:details.song-artist')}
+                      {m.sheet_details_songArtist({}, { locale })}
                     </TableCell>
                     <TableCell>{sheet.artist}</TableCell>
                   </TableRow>
@@ -336,14 +344,14 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                     <>
                       <TableRow>
                         <TableCell component="th" scope="row">
-                          {t('sheet:details.bpm')}
+                          {m.sheet_details_bpm({}, { locale })}
                         </TableCell>
                         <TableCell>{sheet.bpm}</TableCell>
                       </TableRow>
 
                       <TableRow>
                         <TableCell component="th" scope="row">
-                          {t('sheet:details.chart-designer')}
+                          {m.sheet_details_chartDesigner({}, { locale })}
                         </TableCell>
                         <TableCell>{sheet.noteDesigner}</TableCell>
                       </TableRow>
@@ -352,48 +360,48 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                         <>
                           <TableRow>
                             <TableCell component="th" scope="rowgroup" colSpan={2}>
-                              {t('sheet:details.notes-statistics.title')}
+                              {m.sheet_details_notesStatistics_title({}, { locale })}
                             </TableCell>
                           </TableRow>
 
                           <TableRow>
                             <TableCell component="th" scope="row" className="!pl-8">
-                              {t('sheet:details.notes-statistics.tap')}
+                              {m.sheet_details_notesStatistics_tap({}, { locale })}
                             </TableCell>
                             <TableCell className="num">{numberFormat.format(sheet.noteCounts.tap ?? 0)}</TableCell>
                           </TableRow>
 
                           <TableRow>
                             <TableCell component="th" scope="row" className="!pl-8">
-                              {t('sheet:details.notes-statistics.hold')}
+                              {m.sheet_details_notesStatistics_hold({}, { locale })}
                             </TableCell>
                             <TableCell className="num">{numberFormat.format(sheet.noteCounts.hold ?? 0)}</TableCell>
                           </TableRow>
 
                           <TableRow>
                             <TableCell component="th" scope="row" className="!pl-8">
-                              {t('sheet:details.notes-statistics.slide')}
+                              {m.sheet_details_notesStatistics_slide({}, { locale })}
                             </TableCell>
                             <TableCell className="num">{numberFormat.format(sheet.noteCounts.slide ?? 0)}</TableCell>
                           </TableRow>
 
                           <TableRow>
                             <TableCell component="th" scope="row" className="!pl-8">
-                              {t('sheet:details.notes-statistics.touch')}
+                              {m.sheet_details_notesStatistics_touch({}, { locale })}
                             </TableCell>
                             <TableCell className="num">{numberFormat.format(sheet.noteCounts.touch ?? 0)}</TableCell>
                           </TableRow>
 
                           <TableRow>
                             <TableCell component="th" scope="row" className="!pl-8">
-                              {t('sheet:details.notes-statistics.break')}
+                              {m.sheet_details_notesStatistics_break({}, { locale })}
                             </TableCell>
                             <TableCell className="num">{numberFormat.format(sheet.noteCounts.break ?? 0)}</TableCell>
                           </TableRow>
 
                           <TableRow>
                             <TableCell component="th" scope="row" className="!pl-8">
-                              {t('sheet:details.notes-statistics.total')}
+                              {m.sheet_details_notesStatistics_total({}, { locale })}
                             </TableCell>
                             <TableCell className="num font-semibold">
                               {sheet.noteCounts.total === undefined || sheet.noteCounts.total === null
@@ -408,7 +416,7 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
 
                   <TableRow>
                     <TableCell component="th" scope="row">
-                      {t('sheet:details.regional-availability')}
+                      {m.sheet_details_regionalAvailability({}, { locale })}
                     </TableCell>
                     <TableCell>
                       <ul className="m-0 flex list-none flex-wrap items-center gap-1.5 p-0">
@@ -426,7 +434,9 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
                               {available && <IconMdiCheck aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />}
                               {region}
                               <span className="sr-only">
-                                {available ? t('sheet:details.available') : t('sheet:details.unavailable')}
+                                {available
+                                  ? m.sheet_details_available({}, { locale })
+                                  : m.sheet_details_unavailable({}, { locale })}
                               </span>
                             </li>
                           ),
@@ -437,16 +447,16 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
 
                   <TableRow>
                     <TableCell component="th" scope="row">
-                      {t('sheet:details.unlock.label')}
+                      {m.sheet_details_unlock_label({}, { locale })}
                     </TableCell>
                     <TableCell>
                       {sheet.isLocked ? (
                         <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] bg-status-warning px-1.5 py-0.5 text-xs font-semibold text-on-accent">
                           <IconMdiLock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-                          {t('sheet:details.unlock.required')}
+                          {m.sheet_details_unlock_required({}, { locale })}
                         </span>
                       ) : (
-                        t('sheet:details.unlock.not-required')
+                        m.sheet_details_unlock_notRequired({}, { locale })
                       )}
                     </TableCell>
                   </TableRow>
@@ -456,13 +466,13 @@ export const SheetDialogContent: FC<SheetDialogContentProps> = memo(({ sheet, cu
           </div>
 
           <div className="flex flex-col gap-1">
-            <SectionHeader>{t('sheet:comments.title')}</SectionHeader>
+            <SectionHeader>{m.sheet_comments_title({}, { locale })}</SectionHeader>
             <SheetComments sheet={sheet} />
           </div>
 
           {!sheet.isTypeUtage && (
             <div className="flex flex-col gap-1">
-              <SectionHeader>{t('sheet:details.achievement-to-rating.title')}</SectionHeader>
+              <SectionHeader>{m.sheet_details_achievementToRating_title({}, { locale })}</SectionHeader>
               <AchievementRatingTable
                 internalLevelValue={sheet.internalLevelValue}
                 currentAchievementRate={currentAchievementRate}
@@ -479,7 +489,7 @@ SheetDialogContent.displayName = 'memo(SheetDialogContent)'
 const SheetInternalLevelHistory: FC<{
   sheet: FlattenedSheet
 }> = ({ sheet }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const appVersion = useAppContextDXDataVersion()
   const scrollableContainer = useRef<HTMLDivElement>(null)
   const multiverInternalLevelValues = useMemo(
@@ -542,7 +552,7 @@ const SheetInternalLevelHistory: FC<{
                         ? '/images/versions/magical/logo.webp'
                         : `https://shama.dxrating.net/images/version-title/${VERSION_SLUG_MAP.get(version)}.png`
                     }
-                    alt={t('sheet:version-title-alt', { version })}
+                    alt={m.sheet_versionTitleAlt({ version }, { locale })}
                     className="h-40.75px w-83px min-w-[83px] -ml-1 touch-callout-none"
                     draggable={false}
                   />
@@ -574,7 +584,7 @@ const SheetInternalLevelHistory: FC<{
           </TableBody>
         </Table>
       ) : (
-        <p className="m-0 text-fg-2 px-1">{t('sheet:internal-level-history.empty')}</p>
+        <p className="m-0 text-fg-2 px-1">{m.sheet_internalLevelHistory_empty({}, { locale })}</p>
       )}
     </div>
   )

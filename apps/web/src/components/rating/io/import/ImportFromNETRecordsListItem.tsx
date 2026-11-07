@@ -1,8 +1,9 @@
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
-import { useTranslation } from 'react-i18next'
 import IconMdiConnection from '~icons/mdi/connection'
 import { ImportRegionSupportTag } from './ImportRegionSupportTag'
 import { useMaimaiNetStatus } from './useMaimaiNetStatus'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 interface AchievementRecord {
   sheet: {
@@ -29,7 +30,7 @@ export type RecentRecord = AchievementRecord & {
 }
 
 export const ImportFromNETRecordsListItem = ({ onSelect }: { onSelect: () => void }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   // The menu mounts this only while it is open
   const maintenance = useMaimaiNetStatus(true)
   return (
@@ -38,7 +39,7 @@ export const ImportFromNETRecordsListItem = ({ onSelect }: { onSelect: () => voi
         <IconMdiConnection />
       </ListItemIcon>
       <ListItemText
-        primary={t('rating-calculator:io.import.net-records.title')}
+        primary={m.ratingCalculator_io_import_netRecords_title({}, { locale })}
         secondary={
           <span className="flex gap-1">
             <ImportRegionSupportTag region="intl" maintenance={maintenance.intl} />

@@ -19,6 +19,8 @@ import { ResponsiveDialog } from '../global/ResponsiveDialog'
 import { VersionLogo } from './VersionLogo'
 import { VersionEraPager, VersionPairGrid } from './VersionPairList'
 import { VERSION_ERAS, type VersionEra, pairVersions, pairVersionsByEra, versionEraOf } from './versionEras'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 /** One choice in the picker. `key` tells apart two choices with the same version (one per region, say) */
 export interface VersionPickerOption {
@@ -345,14 +347,14 @@ export const VersionSelectionSummary: FC<{ selected: readonly VersionEnum[]; all
   all,
   allLabel,
 }) => {
-  const { t } = useTranslation(['versions'])
+  const locale = useLocale()
   if (all) return <span className="text-sm font-medium">{allLabel}</span>
-  if (selected.length === 0) return <span className="text-sm text-fg-2">{t('versions:picker.none')}</span>
+  if (selected.length === 0) return <span className="text-sm text-fg-2">{m.versions_picker_none({}, { locale })}</span>
   // Two logos on phones and three from sm up, so the logos, the count and the chevron never overlap at 320px. Both
   // counts render and CSS picks one, which keeps SSR and the first client render identical.
   const shown = selected.slice(0, 3)
   const more = (visible: number) =>
-    selected.length > visible ? t('versions:picker.more', { count: selected.length - visible }) : null
+    selected.length > visible ? m.versions_picker_more({ count: selected.length - visible }, { locale }) : null
   const phoneMore = more(2)
   const wideMore = more(3)
   return (
@@ -388,7 +390,7 @@ export const VersionMultiSelect: FC<{
   allLabel: string
   className?: string
 }> = ({ available, value, onChange, label, allLabel, className }) => {
-  const { t } = useTranslation(['versions'])
+  const locale = useLocale()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<VersionEnum[]>([])
 
@@ -410,7 +412,7 @@ export const VersionMultiSelect: FC<{
   }
 
   const options = available.map((version) => ({ key: version, version, selected: draft.includes(version) }))
-  const current = all ? allLabel : chosen.length === 0 ? t('versions:picker.none') : summary.join(', ')
+  const current = all ? allLabel : chosen.length === 0 ? m.versions_picker_none({}, { locale }) : summary.join(', ')
 
   return (
     <>

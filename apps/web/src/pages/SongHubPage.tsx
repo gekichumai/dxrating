@@ -1,6 +1,5 @@
 import { getRouteApi } from '@tanstack/react-router'
 import type { FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { SheetImage } from '@/components/sheet/SheetListItem'
@@ -8,6 +7,8 @@ import { SongBackLink } from '@/components/song/SongBackLink'
 import { SongChartsTable } from '@/components/song/hub/SongChartsTable'
 import { useSongSheets } from './useSongSheets'
 import { LinkBehavior } from '@/components/global/InternalLink'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const routeApi = getRouteApi('/songs_/$songId')
 
@@ -15,7 +16,7 @@ const routeApi = getRouteApi('/songs_/$songId')
 export const SongHubPage: FC = () => {
   const { songId } = routeApi.useParams()
   const search = routeApi.useSearch()
-  const { t } = useTranslation(['song', 'sheet'])
+  const locale = useLocale()
   const { song, searchAcronyms, flattenedSheets } = useSongSheets(songId)
 
   if (!song) {
@@ -24,9 +25,11 @@ export const SongHubPage: FC = () => {
 
   const aliases = [...new Set(searchAcronyms)].filter((alias) => alias && alias !== song.title)
   const facts: { key: string; label: string; value: string }[] = [
-    { key: 'artist', label: t('sheet:details.song-artist'), value: song.artist },
-    ...(song.bpm ? [{ key: 'bpm', label: t('sheet:details.bpm'), value: String(song.bpm) }] : []),
-    ...(song.version ? [{ key: 'version', label: t('song:hub.version'), value: String(song.version) }] : []),
+    { key: 'artist', label: m.sheet_details_songArtist({}, { locale }), value: song.artist },
+    ...(song.bpm ? [{ key: 'bpm', label: m.sheet_details_bpm({}, { locale }), value: String(song.bpm) }] : []),
+    ...(song.version
+      ? [{ key: 'version', label: m.song_hub_version({}, { locale }), value: String(song.version) }]
+      : []),
   ]
 
   return (
@@ -38,7 +41,7 @@ export const SongHubPage: FC = () => {
         <SheetImage
           name={song.imageName}
           size="large"
-          alt={t('sheet:cover-art-alt', { title: song.title })}
+          alt={m.sheet_coverArtAlt({ title: song.title }, { locale })}
           className="h-20 w-20 shrink-0 rounded-lg overflow-hidden outline outline-1 -outline-offset-1 outline-black/10 lg:w-full lg:h-auto lg:aspect-square"
         />
         <div className="min-w-0 flex flex-col gap-1 lg:w-full">
@@ -58,7 +61,7 @@ export const SongHubPage: FC = () => {
             ))}
             {aliases.length > 0 && (
               <div className="contents" data-testid="song-hub-aliases">
-                <dt className="text-fg-2">{t('song:hub.aliases')}</dt>
+                <dt className="text-fg-2">{m.song_hub_aliases({}, { locale })}</dt>
                 <dd className="m-0 min-w-0 break-words text-fg-1">{aliases.join(' / ')}</dd>
               </div>
             )}

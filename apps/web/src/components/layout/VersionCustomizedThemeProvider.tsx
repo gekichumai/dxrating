@@ -74,6 +74,9 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ 
             primary: {
               // Lightened for dark glass; fills of it carry dark text (--on-accent), ≥4.5:1 in every version
               main: versionTheme.accentStrongDarkColor,
+              // The hover shade of contained buttons: lighter, not MUI's darkened default, which fell to ~3.5:1 under
+              // the dark text
+              dark: versionTheme.accentStrongDarkHoverColor,
               contrastText: '#111114',
             },
             // --danger (dark.css). Fills carry dark text, so the hover shade (`dark`, contained buttons) is set rather

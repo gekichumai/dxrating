@@ -1,3 +1,4 @@
+import { DifficultyLevelBadge, SheetTypeBadge } from '@/components/scores/ScoreBadges'
 import {
   Alert,
   Button,
@@ -64,8 +65,6 @@ import { achievementRateBand, captureAnalyticsEvent } from '../lib/analytics'
 import { type FlattenedSheet, useSheets } from '../songs'
 import type { Rating } from '../utils/rating'
 import type { NextRatingTarget } from '@gekichumai/maimai-domain'
-import { DIFFICULTIES } from '../models/difficulties'
-import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
 import { COMPLETION_TARGET_LABELS } from '@/components/completion/completion'
 import { switchFocusRing } from '../components/rating/focusRing'
 import { useLocale } from '@/i18n/LocaleProvider'
@@ -389,7 +388,6 @@ RatingCalculatorSyncFlagCell.displayName = 'memo(RatingCalculatorSyncFlagCell)'
 
 const RatingChartCell: FC<{ row: Row<Entry> }> = ({ row }) => {
   const { sheet, achievementRate } = row.original
-  const difficulty = DIFFICULTIES[sheet.difficulty as keyof typeof DIFFICULTIES]
   return (
     <SheetListItem
       sheet={sheet}
@@ -409,14 +407,17 @@ const RatingChartCell: FC<{ row: Row<Entry> }> = ({ row }) => {
         <span className="rating-chart-title" title={sheet.title} lang="ja" translate="no">
           {sheet.title}
         </span>
+        {/* The shared two-tone pill (difficulty | level) and type badge, as on the top lists; desktop has a column of
+            its own for the level, so the pill keeps only its difficulty half there */}
         <span className="rating-chart-meta">
-          <span className={difficultyInkClassName} style={difficultyInkStyle(sheet.difficulty)}>
-            {difficulty?.title ?? sheet.difficulty}
-          </span>
-          <span>
-            {sheet.type.toUpperCase()}
-            {/* Desktop has a column of its own for the level */}
-            <span className="rating-chart-meta-level"> · {sheetLevelLabel(sheet)}</span>
+          <DifficultyLevelBadge
+            difficulty={sheet.difficulty}
+            level={sheetLevelLabel(sheet)}
+            levelClassName="rating-chart-meta-level"
+          />
+          <SheetTypeBadge type={sheet.type} />
+          <span aria-hidden className="rating-chart-meta-narrow-level num">
+            {sheetLevelLabel(sheet)}
           </span>
         </span>
       </span>

@@ -31,52 +31,51 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       )
     }
 
+    // AnimatePresence gets its keyed children directly: with mode="popLayout" it clones each child with a ref, which
+    // a Fragment cannot take (React warns "Invalid prop `ref` supplied to `React.Fragment`")
     if (data.length === 0) {
-      return <>{addButton}</>
+      return addButton
     }
 
-    return (
-      <>
-        {data.map((tag) => (
-          <MotionTooltip
-            {...chipPresenceTransitions}
-            key={tag.id}
-            title={<Markdown content={localizeMessage(tag.localized_description)} />}
-            arrow
-            slotProps={{
-              popper: {
-                modifiers: [
-                  {
-                    name: 'offset',
-                    options: {
-                      offset: [0, -8],
-                    },
-                  },
-                ],
-              },
-            }}
-          >
-            <Chip
-              key={tag.id}
-              label={localizeMessage(tag.localized_name)}
-              size="small"
-              // Focusable, so the description tooltip also opens from the keyboard (MUI Tooltip opens on focus)
-              tabIndex={0}
-              // Group colours are pastels: dark mode's light chip text would vanish on them
-              className="cursor-help px-0.5 dark:!text-[var(--tag-fg)]"
-              style={
+    return [
+      ...data.map((tag) => (
+        <MotionTooltip
+          {...chipPresenceTransitions}
+          key={tag.id}
+          title={<Markdown content={localizeMessage(tag.localized_description)} />}
+          arrow
+          slotProps={{
+            popper: {
+              modifiers: [
                 {
-                  backgroundColor: tag.group?.color,
-                  '--tag-fg': tag.group?.color ? deriveColor(tag.group.color, 'text') : undefined,
-                } as CSSProperties
-              }
-            />
-          </MotionTooltip>
-        ))}
-
-        {addButton}
-      </>
-    )
+                  name: 'offset',
+                  options: {
+                    offset: [0, -8],
+                  },
+                },
+              ],
+            },
+          }}
+        >
+          <Chip
+            key={tag.id}
+            label={localizeMessage(tag.localized_name)}
+            size="small"
+            // Focusable, so the description tooltip also opens from the keyboard (MUI Tooltip opens on focus)
+            tabIndex={0}
+            // Group colours are pastels: dark mode's light chip text would vanish on them
+            className="cursor-help px-0.5 dark:!text-[var(--tag-fg)]"
+            style={
+              {
+                backgroundColor: tag.group?.color,
+                '--tag-fg': tag.group?.color ? deriveColor(tag.group.color, 'text') : undefined,
+              } as CSSProperties
+            }
+          />
+        </MotionTooltip>
+      )),
+      addButton,
+    ]
   }
 
   return (
