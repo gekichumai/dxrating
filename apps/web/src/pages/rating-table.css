@@ -215,7 +215,9 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  overflow-wrap: anywhere;
+  /* Wraps between words; a single word longer than the whole line (rare at these widths) still breaks, then the
+     clamp ellipsis ends the second line. The full title is the link's title attribute */
+  overflow-wrap: break-word;
   font-size: 0.875rem;
   line-height: 1.2;
   font-weight: 600;
@@ -434,6 +436,33 @@
   .rating-table .rating-col--includedIn {
     width: 96px;
   }
+}
+
+/* Tablets: the lamp, achievement, rating and action columns appear at their desktop widths, which left the chart
+   about 64px and broke titles mid-word ("Desperad/o"). The tighter widths of the sidebar layout (1280px) give the
+   chart column the rest */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .rating-table thead th {
+    padding-inline: 6px;
+    font-size: 0.8125rem;
+  }
+  .rating-table-row > td {
+    padding-inline: 6px;
+  }
+  .rating-table .rating-col--includedIn {
+    width: 88px;
+  }
+  .rating-table .rating-col--comboFlag,
+  .rating-table .rating-col--syncFlag {
+    width: 64px;
+  }
+  .rating-table .rating-col--achievementRate {
+    width: 112px;
+  }
+  .rating-table .rating-col--rating {
+    width: 128px;
+  }
+  /* The action column keeps its width: on a touch screen the remove button stays a 44px target */
 }
 
 /* The level and DX score columns need the desktop width; under it the level stays in the chart meta */
