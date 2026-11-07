@@ -90,7 +90,12 @@ const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH])
 // The tag and alias lists are public data that the edge shares between every caller. The edge ignores
 // `Vary: Origin`, so a cached copy must not carry one caller's reflected origin: reads answer `*` without
 // credentials, like the catalog. Writes on the same paths (POST /aliases) keep the credentialed API CORS.
-const PUBLIC_LIST_PATHS = new Set(['/api/v1/tags', '/api/v1/aliases'])
+const PUBLIC_LIST_PATHS = new Set(['/api/v1/tags', '/api/v1/aliases', '/api/v1/announcements'])
+const PUBLIC_LIST_CACHE_TAGS: Record<string, string> = {
+  '/api/v1/tags': 'tags',
+  '/api/v1/aliases': 'aliases',
+  '/api/v1/announcements': 'announcements',
+}
 // Browsers always revalidate, which the edge answers with a 304, so a client that refetches right after its own
 // write is never held on a copy in its own cache. The edge keeps a copy for a minute and then revalidates it in the
 // background, so a new tag or alias reaches everyone within a few minutes; mutations also clear the server cache.
@@ -778,7 +783,7 @@ const publicListCacheHeaders = createMiddleware(async (c, next) => {
   c.header('Cache-Control', PUBLIC_LIST_BROWSER_CACHE_CONTROL)
   c.header('CDN-Cache-Control', PUBLIC_LIST_CDN_CACHE_CONTROL)
   c.header('Cloudflare-CDN-Cache-Control', PUBLIC_LIST_CDN_CACHE_CONTROL)
-  c.header('Cache-Tag', c.req.path === '/api/v1/tags' ? 'tags' : 'aliases')
+  c.header('Cache-Tag', PUBLIC_LIST_CACHE_TAGS[c.req.path] ?? 'aliases')
 })
 for (const path of PUBLIC_LIST_PATHS) {
   app.on(['GET', 'HEAD'], path, publicListEtag, publicListCacheHeaders)

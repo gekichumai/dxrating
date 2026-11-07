@@ -60,6 +60,9 @@ const envSchema = z.object({
   // Cloudflare edge cache purge (services/edge-cache.ts); both unset disables it
   CLOUDFLARE_ZONE_ID: optionalString,
   CLOUDFLARE_CACHE_PURGE_TOKEN: optionalString,
+
+  // Better Auth user IDs allowed to use the admin API (src/admin/require-admin.ts), comma-separated. Unset: nobody.
+  ADMIN_USER_IDS: optionalString,
 })
 
 export const deriveCrossSubDomainCookieDomain = ({
@@ -80,6 +83,16 @@ export const deriveCrossSubDomainCookieDomain = ({
 }
 
 const env = envSchema.parse(process.env)
+
+/** A comma-separated list of IDs, without blanks or repeats */
+export const parseIdList = (value: string | undefined): readonly string[] => [
+  ...new Set(
+    (value ?? '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter((id) => id !== ''),
+  ),
+]
 
 export const config = {
   nodeEnv: env.NODE_ENV,
@@ -123,6 +136,9 @@ export const config = {
   posthog: {
     projectId: env.POSTHOG_PROJECT_ID,
     apiKey: env.POSTHOG_API_KEY,
+  },
+  admin: {
+    userIds: parseIdList(env.ADMIN_USER_IDS),
   },
   edgeCache:
     env.CLOUDFLARE_ZONE_ID && env.CLOUDFLARE_CACHE_PURGE_TOKEN

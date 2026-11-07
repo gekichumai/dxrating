@@ -686,3 +686,46 @@ export const userExtraRelations = relations(user, ({ one, many }) => ({
   songAliases: many(songAliases),
   lxnsOauthToken: one(lxnsOauthTokens),
 }))
+/**
+ * Global announcements (gekichumai/meta#49). Text columns map language tags to text, so a new language needs no
+ * migration; the API validates the tags against the shared list (`@gekichumai/api-contract` locales). Nothing is
+ * deleted: ending an announcement sets `ends_at`.
+ */
+export const announcements = pgTable(
+  'announcements',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    revision: integer('revision').default(1).notNull(),
+    severity: text('severity', { enum: ['info', 'warning', 'critical'] }).notNull(),
+    title: jsonb('title').$type<Record<string, string>>().notNull(),
+    body: jsonb('body').$type<Record<string, string>>().notNull(),
+    link_url: text('link_url'),
+    link_label: jsonb('link_label').$type<Record<string, string>>(),
+    starts_at: timestamp('starts_at', { withTimezone: true }).defaultNow().notNull(),
+    ends_at: timestamp('ends_at', { withTimezone: true }),
+    platforms: text('platforms')
+      .array()
+      .default(sql`'{}'::text[]`)
+      .notNull(),
+    regions: text('regions')
+      .array()
+      .default(sql`'{}'::text[]`)
+      .notNull(),
+    min_app_version: text('min_app_version'),
+    max_app_version: text('max_app_version'),
+    dismissible: boolean('dismissible').default(true).notNull(),
+    created_by: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+    updated_by: text('updated_by').references(() => user.id, { onDelete: 'set null' }),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check('announcements_severity_check', sql`${table.severity} IN ('info', 'warning', 'critical')`),
+    check('announcements_title_has_en', sql`${table.title} ? 'en'`),
+    check('announcements_body_has_en', sql`${table.body} ? 'en'`),
+    check('announcements_window_check', sql`${table.ends_at} IS NULL OR ${table.ends_at} > ${table.starts_at}`),
+    check('announcements_platforms_check', sql`${table.platforms} <@ ARRAY['web', 'ios']::text[]`),
+    check('announcements_regions_check', sql`${table.regions} <@ ARRAY['jp', 'intl', 'cn']::text[]`),
+    index('announcements_ends_at').on(table.ends_at),
+  ],
+)

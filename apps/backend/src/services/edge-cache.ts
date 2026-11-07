@@ -8,7 +8,7 @@ export class EdgeCacheError extends Data.TaggedError('EdgeCacheError')<{
 }> {}
 
 /** The `Cache-Tag` values of the public responses the Cloudflare edge stores (see app.ts and services/dxdata.ts) */
-export const EDGE_CACHE_TAGS = ['dxdata', 'arcade-venues', 'tags', 'aliases'] as const
+export const EDGE_CACHE_TAGS = ['dxdata', 'arcade-venues', 'tags', 'aliases', 'announcements'] as const
 
 /** How often the publication pointer is compared with the one the edge was last told about */
 export const EDGE_CACHE_CHECK_INTERVAL = Duration.seconds(60)
