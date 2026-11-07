@@ -48,6 +48,15 @@ describe('cloud score mapping', () => {
     const net = recordFromDTO(dto({ provenance: verifiedProvenance() }))
     expect(cloudRecordToScoreRecord(net, IDENTITY).best50Bucket).toBeNull()
     expect(cloudRecordToPlayEntry(net, IDENTITY).source).toEqual({ provider: 'maimai-net', providerId: '12345' })
+    expect(cloudRecordToPlayEntry(net, IDENTITY).providerConfig).toBeUndefined()
+  })
+
+  it('gives the calculator the bucket of a verified Diving-Fish record, where a local import stores it', () => {
+    // A server import's record, read back: the calculator reads `providerConfig`, not `source`
+    const verified = recordFromDTO(dto({ best50Bucket: 'b35' }))
+    expect(cloudRecordToPlayEntry(verified, IDENTITY).providerConfig).toEqual({
+      divingFish: { ratingEligibility: 'b35' },
+    })
   })
 
   it('keeps the best 50 hint of a backed-up (legacy-local) record, still client_reported', () => {
