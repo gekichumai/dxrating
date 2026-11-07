@@ -16,6 +16,7 @@ import {
 import { useDisclosure } from '@mantine/hooks'
 import { ORPCError } from '@orpc/client'
 import { useQuery } from '@tanstack/react-query'
+import { Announcements } from './Announcements'
 import { adminOrpc } from './api'
 
 /** The admin shell (gekichumai/meta#50; Mantine per the owner). English only (meta#50 Q6). */
@@ -51,7 +52,8 @@ export function App() {
       </AppShell.Header>
 
       <AppShell.Navbar p="xs" className="admin-glass">
-        <NavLink label="Overview" active />
+        <NavLink label="Overview" href="#overview" />
+        <NavLink label="Announcements" href="#announcements" />
       </AppShell.Navbar>
 
       <AppShell.Main>
@@ -68,7 +70,7 @@ export function App() {
             </Alert>
           )}
           {principal && (
-            <Card className="admin-glass" padding="lg">
+            <Card className="admin-glass" padding="lg" id="overview">
               <Group justify="space-between" mb="sm">
                 <Title order={2} size="h5">
                   Signed in
@@ -98,6 +100,13 @@ export function App() {
                 </Table.Tbody>
               </Table>
             </Card>
+          )}
+          {principal && (principal.scopes.includes('*') || principal.scopes.includes('announcements:read')) && (
+            <div id="announcements">
+              <Announcements
+                canWrite={principal.scopes.includes('*') || principal.scopes.includes('announcements:write')}
+              />
+            </div>
           )}
         </Stack>
       </AppShell.Main>

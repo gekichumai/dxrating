@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@gekichumai/admin-api": "workspace:*",
+    "@gekichumai/api-contract": "workspace:*",
     "@mantine/core": "9.7.3",
     "@mantine/hooks": "9.7.3",
     "@orpc/client": "catalog:",
