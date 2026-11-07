@@ -13,7 +13,6 @@ import * as Sentry from '@sentry/tanstackstart-react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { type FC, type ReactNode, useCallback, useId, useMemo, useState, useTransition } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useEffectOnce, useUpdateEffect } from 'react-use'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information-outline'
@@ -43,6 +42,8 @@ import { type FlattenedSheet, getFlattenedSheets, useFilteredSheets, useSheets }
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
 import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
 import { compareSheetsBySorts, getSongCatalogPositions } from './sheetSorting'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const searchRouteApi = getRouteApi('/')
 
@@ -274,7 +275,7 @@ const SheetListInnerContent: FC<{
   seedSheets: readonly SearchQuerySeedSheet[]
   hub?: ReactNode
 }> = ({ search, seedSheets, hub }) => {
-  const { t, i18n } = useTranslation(['sheet', 'root'])
+  const locale = useLocale()
   const { data: sheets, isLoading } = useSheets()
   const version = useAppContextDXDataVersion()
   const [sortFilterOptions, setSortFilterOptions] = useState<SheetSortFilterForm>(getDefaultSheetSortFilterForm)
@@ -409,7 +410,7 @@ const SheetListInnerContent: FC<{
   const summaryTotal = sheets?.length ?? filteredResults.length
   const summaryProgress = summaryTotal > 0 ? filteredResults.length / summaryTotal : 0
   // The locale comes from the request (cookie or header), so server and client format counts identically
-  const numberFormat = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language])
+  const numberFormat = useMemo(() => new Intl.NumberFormat(locale), [locale])
   const summaryFound = isLoading ? '…' : numberFormat.format(filteredResults.length)
   const summaryCount = isLoading ? '…' : numberFormat.format(sheets?.length ?? 0)
 
@@ -425,7 +426,7 @@ const SheetListInnerContent: FC<{
         />
       )}
       <div className="flex-container pb-global">
-        <h1 className="sr-only">{t('root:pages.search.title')}</h1>
+        <h1 className="sr-only">{m.root_pages_search_title({}, { locale })}</h1>
 
         <ResponsiveDialog
           open={!!activeSheet}
@@ -451,8 +452,8 @@ const SheetListInnerContent: FC<{
 
           <TextField
             className="min-w-0 flex-1"
-            label={t('sheet:search')}
-            placeholder={t('sheet:search-placeholder')}
+            label={m.sheet_search({}, { locale })}
+            placeholder={m.sheet_searchPlaceholder({}, { locale })}
             variant="outlined"
             value={inputQuery}
             fullWidth
@@ -478,7 +479,7 @@ const SheetListInnerContent: FC<{
                     })
                   }}
                   size="small"
-                  aria-label={t('sheet:search-clear')}
+                  aria-label={m.sheet_searchClear({}, { locale })}
                 >
                   <IconMdiClose aria-hidden="true" />
                 </IconButton>
@@ -503,7 +504,7 @@ const SheetListInnerContent: FC<{
             or a crawler. Hidden while a query runs, like the hub; the query comes from the URL, so SSR matches. */}
         {!inputQuery && (
           <p className="m-0 max-w-[72ch] self-start px-1 text-sm leading-relaxed text-fg-2 text-pretty">
-            {t('root:pages.search.introduction')}
+            {m.root_pages_search_introduction({}, { locale })}
           </p>
         )}
 
@@ -518,17 +519,20 @@ const SheetListInnerContent: FC<{
             <div className="relative z-1 flex h-full items-center gap-2" aria-hidden="true">
               <MdiIconInfo className="shrink-0 text-accent-strong" />
               <div className="min-w-0 num">
-                {t('sheet:search-summary', {
-                  found: summaryFound,
-                  total: summaryCount,
-                  elapsed: hydrated ? (searchElapsed + filteringElapsed).toFixed(1) : '…',
-                })}
+                {m.sheet_searchSummary(
+                  {
+                    found: summaryFound,
+                    total: summaryCount,
+                    elapsed: hydrated ? (searchElapsed + filteringElapsed).toFixed(1) : '…',
+                  },
+                  { locale },
+                )}
               </div>
             </div>
             {/* Rendered empty first and always mounted, so each new count is announced politely */}
             <output aria-live="polite" className="sr-only">
               {hydrated && !isLoading
-                ? t('sheet:search-summary-status', { found: summaryFound, total: summaryCount })
+                ? m.sheet_searchSummaryStatus({ found: summaryFound, total: summaryCount }, { locale })
                 : ''}
             </output>
           </div>
@@ -558,8 +562,10 @@ const SheetListInnerContent: FC<{
           )
         ) : listSheets.length === 0 ? (
           <MaterialSurface className="flex w-full flex-col items-center gap-1 px-4 py-8 text-center">
-            <p className="m-0 text-base font-semibold text-fg-1">{t('sheet:search-empty.title')}</p>
-            <p className="m-0 max-w-[50ch] text-sm text-fg-2 text-pretty">{t('sheet:search-empty.description')}</p>
+            <p className="m-0 text-base font-semibold text-fg-1">{m.sheet_searchEmpty_title({}, { locale })}</p>
+            <p className="m-0 max-w-[50ch] text-sm text-fg-2 text-pretty">
+              {m.sheet_searchEmpty_description({}, { locale })}
+            </p>
           </MaterialSurface>
         ) : (
           // Each layout keeps its own slot, so the one that stays when the other drops out after hydration is not

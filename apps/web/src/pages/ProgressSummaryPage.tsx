@@ -3,7 +3,6 @@ import { dxScoreProgress, maxDxScore, type VersionedSheet } from '@gekichumai/ma
 import { Link } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { type CSSProperties, type FC, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiStarFourPoints from '~icons/mdi/star-four-points'
 import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import {
@@ -26,6 +25,8 @@ import {
   ScorePageHeader,
 } from '@/components/scores/ScorePage'
 import { useUserRecords } from '@/models/useUserRecords'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 /** Matrix columns; each cell links into the constant table with that target */
 export const PROGRESS_COLUMNS: CompletionTarget[] = ['s', 'ss', 'sss', 'sssp', 'fc', 'ap', 'app', 'fsd']
@@ -120,7 +121,7 @@ const stickyColumn =
   'sticky left-0 z-1 bg-[var(--glass-bg)] backdrop-blur-md shadow-[inset_-1px_0_0_var(--glass-border)]'
 
 export const ProgressSummaryPage: FC = () => {
-  const { t } = useTranslation(['completion'])
+  const locale = useLocale()
   // Totals need every chart: the route's catalog slice has none, so wait for the complete catalog
   const catalog = useCompleteSongCatalog()
   const { bySheetId, isDemo } = useUserRecords()
@@ -129,19 +130,22 @@ export const ProgressSummaryPage: FC = () => {
 
   return (
     <ScorePageFrame width="me">
-      <ScorePageHeader title={t('completion:progress.title')} description={t('completion:progress.intro')}>
-        {isDemo && <DemoScoresNotice className="mt-3">{t('completion:demo')}</DemoScoresNotice>}
+      <ScorePageHeader
+        title={m.completion_progress_title({}, { locale })}
+        description={m.completion_progress_intro({}, { locale })}
+      >
+        {isDemo && <DemoScoresNotice className="mt-3">{m.completion_demo({}, { locale })}</DemoScoresNotice>}
       </ScorePageHeader>
 
       {bySheetId.size === 0 ? (
         <NoScoresState
-          title={t('completion:progress.empty-title')}
-          description={t('completion:progress.empty')}
-          action={<ImportScoresLink>{t('completion:progress.import')}</ImportScoresLink>}
+          title={m.completion_progress_emptyTitle({}, { locale })}
+          description={m.completion_progress_empty({}, { locale })}
+          action={<ImportScoresLink>{m.completion_progress_import({}, { locale })}</ImportScoresLink>}
         />
       ) : !rows ? (
         <MaterialSurface className="p-4 text-sm text-fg-2">
-          <output>{t('completion:progress.loading')}</output>
+          <output>{m.completion_progress_loading({}, { locale })}</output>
         </MaterialSurface>
       ) : (
         <MaterialSurface className="w-full overflow-hidden">
@@ -159,10 +163,10 @@ export const ProgressSummaryPage: FC = () => {
               <thead className="text-xs text-left text-fg-2">
                 <tr>
                   <th scope="col" className={clsx('px-3 py-2 font-semibold', stickyColumn)}>
-                    {t('completion:progress.level')}
+                    {m.completion_progress_level({}, { locale })}
                   </th>
                   <th scope="col" className="px-2 py-2 font-semibold text-right whitespace-nowrap">
-                    {t('completion:progress.played')}
+                    {m.completion_progress_played({}, { locale })}
                   </th>
                   {PROGRESS_COLUMNS.map((column) => (
                     <th key={column} scope="col" className="px-2 py-2 font-semibold text-right whitespace-nowrap">
@@ -210,12 +214,15 @@ export const ProgressSummaryPage: FC = () => {
                               'outline-offset-[-1px] hover:outline hover:outline-1 hover:outline-[var(--accent-strong)]',
                               count && 'bg-[color-mix(in_oklab,var(--accent)_var(--fill),transparent)]',
                             )}
-                            aria-label={t('completion:progress.cell-label', {
-                              level: row.level,
-                              target: COMPLETION_TARGET_LABELS[column],
-                              count,
-                              total: row.total,
-                            })}
+                            aria-label={m.completion_progress_cellLabel(
+                              {
+                                level: row.level,
+                                target: COMPLETION_TARGET_LABELS[column],
+                                count,
+                                total: row.total,
+                              },
+                              { locale },
+                            )}
                           >
                             {count}
                           </Link>
@@ -240,13 +247,15 @@ export const ProgressSummaryPage: FC = () => {
  * many that is. The constant tables have no DX score target, so these cells are not links.
  */
 const DxStarTable: FC<{ rows: DxStarRow[] }> = ({ rows }) => {
-  const { t } = useTranslation(['completion'])
+  const locale = useLocale()
   return (
     <section aria-labelledby="dx-star-progress-title" className="mt-6">
       <h2 id="dx-star-progress-title" className="mb-1 text-base font-semibold text-fg-1">
-        {t('completion:progress.dx.title')}
+        {m.completion_progress_dx_title({}, { locale })}
       </h2>
-      <p className="mb-3 text-sm text-fg-2 text-pretty max-w-[65ch]">{t('completion:progress.dx.intro')}</p>
+      <p className="mb-3 text-sm text-fg-2 text-pretty max-w-[65ch]">
+        {m.completion_progress_dx_intro({}, { locale })}
+      </p>
       <MaterialSurface className="w-full overflow-hidden">
         <div className="scroll-fade-x scroll-fade-x-end-only overflow-x-auto overscroll-x-contain">
           <table className="w-full text-sm border-collapse md:table-fixed">
@@ -261,10 +270,10 @@ const DxStarTable: FC<{ rows: DxStarRow[] }> = ({ rows }) => {
             <thead className="text-xs text-left text-fg-2">
               <tr>
                 <th scope="col" className={clsx('px-3 py-2 font-semibold', stickyColumn)}>
-                  {t('completion:progress.level')}
+                  {m.completion_progress_level({}, { locale })}
                 </th>
                 <th scope="col" className="px-2 py-2 font-semibold text-right whitespace-nowrap">
-                  {t('completion:progress.dx.with-score')}
+                  {m.completion_progress_dx_withScore({}, { locale })}
                 </th>
                 {DX_STAR_COLUMNS.map((star) => (
                   <th key={star} scope="col" className="px-2 py-2 font-semibold text-right whitespace-nowrap">
@@ -272,11 +281,11 @@ const DxStarTable: FC<{ rows: DxStarRow[] }> = ({ rows }) => {
                       <IconMdiStarFourPoints aria-hidden className="size-[0.95em]" />
                       <span aria-hidden>{star}</span>
                     </span>
-                    <span className="sr-only">{t('completion:progress.dx.star', { star })}</span>
+                    <span className="sr-only">{m.completion_progress_dx_star({ star }, { locale })}</span>
                   </th>
                 ))}
                 <th scope="col" className="px-2 py-2 font-semibold text-right whitespace-nowrap">
-                  {t('completion:progress.dx.average')}
+                  {m.completion_progress_dx_average({}, { locale })}
                 </th>
               </tr>
             </thead>
@@ -311,12 +320,15 @@ const DxStarTable: FC<{ rows: DxStarRow[] }> = ({ rows }) => {
                         >
                           <span aria-hidden>{count}</span>
                           <span className="sr-only">
-                            {t('completion:progress.dx.cell-label', {
-                              level: row.level,
-                              star,
-                              count,
-                              total: row.total,
-                            })}
+                            {m.completion_progress_dx_cellLabel(
+                              {
+                                level: row.level,
+                                star,
+                                count,
+                                total: row.total,
+                              },
+                              { locale },
+                            )}
                           </span>
                         </span>
                       </td>

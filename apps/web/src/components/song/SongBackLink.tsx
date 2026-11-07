@@ -1,9 +1,10 @@
 import { IconButton } from '@mui/material'
 import { useCanGoBack, useRouter } from '@tanstack/react-router'
 import type { FC, MouseEvent } from 'react'
-import { useTranslation } from 'react-i18next'
 import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { withLocaleQuery } from '@/setup/locale'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const isSameOrigin = (url: string, origin: string) => {
   try {
@@ -40,7 +41,7 @@ const isModifiedClick = (event: MouseEvent) =>
  * the URL alone and a modified click (new tab) still opens something useful.
  */
 export const SongBackLink: FC<{ search: unknown; className?: string }> = ({ search, className }) => {
-  const { t } = useTranslation(['song'])
+  const locale = useLocale()
   const router = useRouter()
   const canGoBack = useCanGoBack()
   const homeHref = withLocaleQuery('/', search)
@@ -50,7 +51,7 @@ export const SongBackLink: FC<{ search: unknown; className?: string }> = ({ sear
       component="a"
       href={homeHref}
       size="small"
-      aria-label={t('song:back')}
+      aria-label={m.song_back({}, { locale })}
       onClick={(event: MouseEvent<HTMLAnchorElement>) => {
         if (isModifiedClick(event)) return
         event.preventDefault()

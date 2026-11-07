@@ -1,8 +1,9 @@
 import clsx from 'clsx'
 import { type FC, memo, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { calculateRating } from '../../utils/rating'
 import { DXRank } from '../global/DXRank'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const PRESET_ACHIEVEMENT_RATES = [100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50]
 
@@ -50,17 +51,17 @@ const RatingColumn: FC<{
   /** Shown only when the columns sit side by side; stacked, it is visually hidden but still labels its rows for screen readers */
   headerVisibleOnlyWhenSplit?: boolean
 }> = ({ rows, currentAchievementRate, headerVisibleOnlyWhenSplit }) => {
-  const { t } = useTranslation(['sheet', 'global'])
+  const locale = useLocale()
 
   return (
     <table className="w-full border-collapse num text-sm text-fg-1">
       <thead className={clsx(headerVisibleOnlyWhenSplit && 'sr-only @[34rem]:not-sr-only')}>
         <tr className="text-xs text-fg-2">
           <th scope="col" colSpan={2} className="px-2 pb-1 text-start font-normal">
-            {t('sheet:details.achievement-to-rating.achievement')}
+            {m.sheet_details_achievementToRating_achievement({}, { locale })}
           </th>
           <th scope="col" className="px-2 pb-1 text-end font-normal">
-            {t('sheet:details.achievement-to-rating.rating')}
+            {m.sheet_details_achievementToRating_rating({}, { locale })}
           </th>
         </tr>
       </thead>
@@ -90,7 +91,7 @@ const RatingColumn: FC<{
                   {formatAchievementRate(row.achievementRate)}
                   {isCurrent && (
                     <span className="rounded-[var(--radius-xs)] bg-accent px-1 py-px text-[0.6875rem] font-semibold leading-tight text-on-accent">
-                      {t('global:current')}
+                      {m.global_current({}, { locale })}
                     </span>
                   )}
                 </span>

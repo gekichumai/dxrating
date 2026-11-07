@@ -1,13 +1,14 @@
 import type { TextFieldProps } from '@mui/material'
 import { type FC, useMemo } from 'react'
 import { type Control, type FieldPath, useController, type UseControllerProps } from 'react-hook-form'
-import { useTranslation } from 'react-i18next'
 import { useControllerRulePresets } from '../../global/form/useControllerRulePresets'
 import { TouchDeviceGuard } from '../../global/TouchDeviceGuard'
 import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { FloatValueInputField } from './FloatValueInputField'
 import { SheetFilterInternalLevelInputLongPressSlider } from './SheetFilterLevelInputLongPressSlider'
 import { SheetFilterSection } from './SheetFilterSection'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const SheetFilterInternalLevelValueInput = <T extends SheetSortFilterForm>({
   label,
@@ -64,20 +65,20 @@ export const SheetInternalLevelFilter: FC<{
   control: Control<SheetSortFilterForm>
   reset: () => void
 }> = ({ control, reset }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const rulePresets = useControllerRulePresets()
   const internalLevelValueBoundRules = useMemo(
     () => ({
-      min: rulePresets.min(t('sheet:filter.internal-level-value.min'), 0),
-      max: rulePresets.max(t('sheet:filter.internal-level-value.max'), 15),
+      min: rulePresets.min(m.sheet_filter_internalLevelValue_min({}, { locale }), 0),
+      max: rulePresets.max(m.sheet_filter_internalLevelValue_max({}, { locale }), 15),
     }),
-    [rulePresets, t],
+    [rulePresets, locale],
   )
 
   return (
-    <SheetFilterSection titleLeft={t('sheet:filter.internal-level-value.title')} reset={reset}>
+    <SheetFilterSection titleLeft={m.sheet_filter_internalLevelValue_title({}, { locale })} reset={reset}>
       <SheetFilterInternalLevelValueInput
-        label={t('sheet:filter.internal-level-value.min')}
+        label={m.sheet_filter_internalLevelValue_min({}, { locale })}
         name="filters.internalLevelValue.min"
         control={control}
         controllerProps={{
@@ -88,7 +89,7 @@ export const SheetInternalLevelFilter: FC<{
         }}
       />
       <SheetFilterInternalLevelValueInput
-        label={t('sheet:filter.internal-level-value.max')}
+        label={m.sheet_filter_internalLevelValue_max({}, { locale })}
         name="filters.internalLevelValue.max"
         control={control}
         controllerProps={{

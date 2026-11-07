@@ -1,9 +1,10 @@
 import type { Breakpoint } from '@mui/material'
 import { Dialog, DialogContent, Fade, Grow, IconButton, SwipeableDrawer, useMediaQuery } from '@mui/material'
 import { type FC, type ReactNode, useEffect, useId, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiClose from '~icons/mdi/close'
 import { useIsLargeDevice } from '../../utils/breakpoints'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const ResponsiveDialog: FC<{
   open: boolean
@@ -32,7 +33,7 @@ export const ResponsiveDialog: FC<{
   onExited,
   children,
 }) => {
-  const { t } = useTranslation(['global'])
+  const locale = useLocale()
   const isLargeDevice = useIsLargeDevice()
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const generatedTitleId = useId()
@@ -68,8 +69,8 @@ export const ResponsiveDialog: FC<{
     <IconButton
       onClick={() => setOpen(false)}
       disabled={disableClose}
-      aria-label={t('global:dialog.close')}
-      title={t('global:dialog.close')}
+      aria-label={m.global_dialog_close({}, { locale })}
+      title={m.global_dialog_close({}, { locale })}
       size="small"
       className="!-me-1.5 !shrink-0 !text-fg-2"
     >
