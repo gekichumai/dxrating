@@ -171,6 +171,31 @@ describe('entriesToImportRecords', () => {
     }
   })
 
+  it('ranks bucket hints by the entries that carry them, whatever the order of the file', () => {
+    const a: PlayEntry = { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100.5 }
+    const b: PlayEntry = {
+      sheetId: 'dsht_e5nsvt8k2a',
+      achievementRate: 99,
+      providerConfig: { divingFish: { ratingEligibility: 'b35' } },
+    }
+    const c: PlayEntry = {
+      sheetId: 'dsht_e5nsvt8k2a',
+      achievementRate: 100,
+      providerConfig: { divingFish: { ratingEligibility: 'b15' } },
+    }
+    for (const entries of [
+      [a, b, c],
+      [a, c, b],
+      [b, a, c],
+      [b, c, a],
+      [c, a, b],
+      [c, b, a],
+    ]) {
+      const [record] = entriesToImportRecords(entries, { source: 'dxrating-json', claimedSource: null }).records
+      expect([record?.achievement, record?.best50Bucket]).toEqual([1005000, 'b15'])
+    }
+  })
+
   it('never keeps an entry the server would reject, and counts it apart from the skipped ones', () => {
     const { records, skipped, rejected } = entriesToImportRecords(
       [

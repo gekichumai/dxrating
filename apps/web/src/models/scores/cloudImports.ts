@@ -18,6 +18,7 @@ import {
 } from '@gekichumai/maimai-domain'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
 import type { ImportEntrySource } from './ScoreRepository'
+import { preferHint, type HintCandidate } from './collapseScoreRecords'
 
 /**
  * Imports into a cloud save (meta#17, design §5.5, §7.3, §7.4, §8.3): what goes over the wire and how failures are
@@ -82,6 +83,8 @@ export function entriesToImportRecords(
   plan: ClientImportPlan,
 ): { records: ImportRecord[]; skipped: number; rejected: number; duplicates: number } {
   const bySheetId = new Map<string, ImportRecord>()
+  // Each chart's bucket hint, ranked by the entry that carries it, as the device ranks it, not by the collapsed fields
+  const hints = new Map<string, HintCandidate | null>()
   let skipped = 0
   let rejected = 0
   let duplicates = 0
@@ -118,15 +121,24 @@ export function entriesToImportRecords(
     const existing = bySheetId.get(record.sheetId)
     if (existing) duplicates++
     bySheetId.set(record.sheetId, existing ? collapseImportRecords(existing, record) : record)
+    const hint: HintCandidate | null = record.best50Bucket
+      ? { bucket: record.best50Bucket, achievement: record.achievement, comboFlag: record.comboFlag, domainHint: null }
+      : null
+    hints.set(record.sheetId, preferHint(hints.get(record.sheetId) ?? null, hint))
   }
-  return { records: [...bySheetId.values()], skipped, rejected, duplicates }
+  const records = [...bySheetId.values()].map((record) => {
+    const best50Bucket = hints.get(record.sheetId)?.bucket ?? null
+    return record.best50Bucket === best50Bucket ? record : { ...record, best50Bucket }
+  })
+  return { records, skipped, rejected, duplicates }
 }
 
 /**
  * One record of a chart from two entries of it in a file, read the way the device reads them
  * (`collapseScoreRecordList`): achievement, combo, sync and DX score each at their best independently, so a lower
- * score keeps its AP or FDX. The rest (provider ID, claimed source, bucket) comes from the better score by the
- * server's order (achievement, then combo, then sync), the first entry on a tie; a bucket hint never loses to none.
+ * score keeps its AP or FDX. Provider ID and claimed source come from the better score by the server's order
+ * (achievement, then combo, then sync), the first entry on a tie. The bucket is chosen apart, from the entries' own
+ * hints (`entriesToImportRecords`).
  */
 function collapseImportRecords(existing: ImportRecord, record: ImportRecord): ImportRecord {
   const [best, other] = compareScore(record, existing) > 0 ? [record, existing] : [existing, record]
@@ -138,7 +150,6 @@ function collapseImportRecords(existing: ImportRecord, record: ImportRecord): Im
     syncFlag: stronger(syncFlagRank, best.syncFlag, other.syncFlag),
     dxScore:
       best.dxScore == null || (other.dxScore != null && other.dxScore > best.dxScore) ? other.dxScore : best.dxScore,
-    best50Bucket: best.best50Bucket ?? other.best50Bucket,
   }
 }
 
