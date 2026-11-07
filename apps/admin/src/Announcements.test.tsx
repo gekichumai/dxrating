@@ -84,6 +84,16 @@ describe('announcements page', () => {
     })
   })
 
+  it('says when a far-off scheduled notice reaches clients', async () => {
+    stub()
+    mount()
+    fireEvent.click(await screen.findByRole('button', { name: 'New announcement' }))
+    const inThreeDays = new Date(Date.now() + 3 * 86_400_000)
+    const local = new Date(inThreeDays.getTime() - inThreeDays.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+    fireEvent.change(screen.getByLabelText('Starts (empty: now)'), { target: { value: local } })
+    expect(screen.getByRole('note').textContent).toContain('24 hours before it starts')
+  })
+
   it('ends an announcement after confirming', async () => {
     stub()
     vi.stubGlobal('confirm', () => true)

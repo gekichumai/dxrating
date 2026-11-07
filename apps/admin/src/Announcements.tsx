@@ -1,4 +1,5 @@
 import {
+  ANNOUNCEMENT_LOOKAHEAD_MS,
   ANNOUNCEMENT_PLATFORMS,
   ANNOUNCEMENT_REGIONS,
   ANNOUNCEMENT_SEVERITIES,
@@ -178,7 +179,7 @@ export function Announcements({ canWrite }: { canWrite: boolean }) {
                 ))}
               </select>
             </label>
-            <label className="text-sm">
+            <label className="text-sm" title="The public list includes a notice from 24 hours before it starts">
               Starts (empty: now)
               <input
                 type="datetime-local"
@@ -197,6 +198,13 @@ export function Announcements({ canWrite }: { canWrite: boolean }) {
               />
             </label>
           </div>
+
+          {draft.startsAt && Date.parse(fromLocalInput(draft.startsAt)!) - Date.now() > ANNOUNCEMENT_LOOKAHEAD_MS && (
+            <p className="m-0 text-sm text-muted" role="note">
+              Clients receive a scheduled notice up to 24 hours before it starts, so this one reaches them from{' '}
+              {new Date(Date.parse(fromLocalInput(draft.startsAt)!) - ANNOUNCEMENT_LOOKAHEAD_MS).toLocaleString()}.
+            </p>
+          )}
 
           <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
             <legend className="text-sm font-medium">Text (English required; empty languages fall back)</legend>
