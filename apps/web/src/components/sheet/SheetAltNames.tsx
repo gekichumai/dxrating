@@ -4,18 +4,16 @@ import toast from 'react-hot-toast'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import type { SupportedLocale } from '@/setup/locale'
+import { aliasQuestion } from './aliasQuestion'
 
 /**
  * What clicking an alias copies. Chinese-speaking players share an alias as "<alias>是什么歌" ("what song is
- * <alias>?"), so in zh-Hans and zh-Hant a short alias copies as the https://<alias>.是什么歌.com link and a long one
- * (over 50 characters) as the plain question; other locales copy the alias itself.
+ * <alias>?"), so zh-Hans and zh-Hant copy its 是什么歌 link (see aliasQuestion); other locales copy the alias itself.
  */
 export function aliasCopyContent(altName: string, locale: SupportedLocale) {
+  if (locale === 'zh-Hans' || locale === 'zh-Hant') return aliasQuestion(altName)
   const alias = altName.trim()
-  if (locale !== 'zh-Hans' && locale !== 'zh-Hant') return { clipboard: alias, toastContent: alias }
-  if (altName.length > 50) return { clipboard: `${alias}是什么歌`, toastContent: `${alias}是什么歌` }
-  const host = alias.replace(/[\s|\n|，|。|！|@|；|《|》|？|：|【|】|（|）|、|·|~|!|#|%|&|*|(|)|{|}|\\[|\\]|\\|]/g, '-')
-  return { clipboard: `https://${host}.是什么歌.com`, toastContent: `${host}.是什么歌.com` }
+  return { clipboard: alias, toastContent: alias }
 }
 
 const COLLAPSED_MASK = 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5rem, rgba(0,0,0,0) 100%)'

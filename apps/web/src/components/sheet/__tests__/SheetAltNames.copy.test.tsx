@@ -13,7 +13,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-const LONG_ALIAS = 'a long alias with spaces, punctuation and more than fifty characters in it!'
+const LONG_ALIAS = 'a long alias with spaces, punctuation and more than sixty-three characters in it!'
 
 function clickAlias(alias: string, locale: SupportedLocale) {
   const writeText = vi.fn().mockResolvedValue(undefined)
@@ -38,14 +38,17 @@ describe('song aliases', () => {
   })
 
   it.each(['zh-Hans', 'zh-Hant'] as const)('copy a short alias as its 是什么歌 link in %s', (locale) => {
-    const { writeText, toast } = clickAlias('我的 歌（DX）', locale)
-    expect(writeText).toHaveBeenCalledWith('https://我的-歌-DX-.是什么歌.com')
-    expect(toast).toContain('我的-歌-DX-.是什么歌.com')
+    const { writeText, toast } = clickAlias('Mr. Wonderland', locale)
+    expect(writeText).toHaveBeenCalledWith('https://mr-wonderland.是什么歌.com')
+    expect(toast).toContain('mr-wonderland.是什么歌.com')
   })
 
-  it.each(['zh-Hans', 'zh-Hant'] as const)('copy a long alias as a 是什么歌 question in %s', (locale) => {
-    const { writeText, toast } = clickAlias(LONG_ALIAS, locale)
-    expect(writeText).toHaveBeenCalledWith(`${LONG_ALIAS}是什么歌`)
-    expect(toast).toContain(`${LONG_ALIAS}是什么歌`)
-  })
+  it.each(['zh-Hans', 'zh-Hant'] as const)(
+    'copy an alias too long for a hostname label as a 是什么歌 question in %s',
+    (locale) => {
+      const { writeText, toast } = clickAlias(LONG_ALIAS, locale)
+      expect(writeText).toHaveBeenCalledWith(`${LONG_ALIAS}是什么歌`)
+      expect(toast).toContain(`${LONG_ALIAS}是什么歌`)
+    },
+  )
 })
