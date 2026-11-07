@@ -174,6 +174,21 @@ describe('input validation', () => {
     expect(ImportRecordSchema.safeParse({ ...record, comboFlag: 'fdx' }).success).toBe(false)
   })
 
+  it('refuses timestamps PostgreSQL cannot store (year 0, a 5-digit year in UTC)', () => {
+    const at = (clientEditedAt: string) =>
+      MutationSchema.safeParse({
+        mutationId: '01927b5e-8f3a-7c2d-9e4f-000000000000',
+        op: 'delete',
+        sheetId,
+        clientEditedAt,
+      }).success
+    expect(at('2026-11-01T00:00:00.000Z')).toBe(true)
+    expect(at('0001-01-01T00:00:00.000Z')).toBe(true)
+    expect(at('0000-01-01T00:00:00.000Z')).toBe(false)
+    expect(at('0001-01-01T00:30:00+01:00')).toBe(false)
+    expect(at('9999-12-31T23:30:00-01:00')).toBe(false)
+  })
+
   it('refuses U+0000 and lone surrogates, which PostgreSQL text and JSONB cannot store', () => {
     expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '123' }).success).toBe(true)
     expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '1\u00002' }).success).toBe(false)
