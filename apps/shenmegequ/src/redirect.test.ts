@@ -120,7 +120,7 @@ describe('Host header', () => {
 /**
  * The label builder web (#587) and iOS use for `<label>.是什么歌.com`, copied here so the decode side is tested against
  * its real output: NFKC, trim, lowercase; whitespace and dot runs → `-`; keep letters, numbers, marks and `-`;
- * collapse and trim `-`; give up when empty or over 63 bytes once punycoded.
+ * drop variation selectors and any combining mark at the start or after a `-`; collapse and trim `-`; give up when empty or over 63 bytes once punycoded.
  */
 function encodeLabel(alias: string): string | null {
   const label = alias
@@ -129,6 +129,8 @@ function encodeLabel(alias: string): string | null {
     .toLowerCase()
     .replace(/[\s.。．｡]+/gu, '-')
     .replace(/[^\p{L}\p{N}\p{M}-]/gu, '')
+    .replace(/[\uFE00-\uFE0F\u{E0100}-\u{E01EF}]/gu, '')
+    .replace(/(^|-)\p{M}+/gu, '$1')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
   if (label === '' || punycodeLabel(label).length > 63) return null
@@ -143,6 +145,8 @@ describe('labels built by web and iOS', () => {
     ['一号店', '一号店', '一号店'],
     ['ヒバナ', 'ヒバナ', 'ヒバナ'],
     ['Ｂｉｇ　Ｄａｄｄｙ', 'big-daddy', 'big daddy'],
+    ['❤️love', 'love', 'love'],
+    ['a ﾟb', 'a-b', 'a b'],
   ])('%s → %s → %s', (alias, label, query) => {
     expect(encodeLabel(alias)).toBe(label)
     const host = `${punycodeLabel(label)}.${ZONE}`
