@@ -10,6 +10,7 @@ import {
   listAnnouncements,
   updateAnnouncement,
 } from './announcements'
+import { listPublications } from './catalog/publications'
 import { requireAdmin, requireScope } from './require-admin'
 import type { DatabaseError } from './db'
 import type { AdminApiServices } from './runtime'
@@ -65,6 +66,15 @@ export const adminApiRouter = os.router({
         yield* requireScope(principal, 'announcements:write')
         const result = yield* endAnnouncement(principal, input.id).pipe(Effect.orDie)
         return result ?? (yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'No such announcement' })))
+      }),
+    ),
+  },
+  catalog: {
+    publications: os.catalog.publications.handler(
+      handlerGen(function* ({ context, input }) {
+        const principal = yield* requireAdmin(headersOf(context))
+        yield* requireScope(principal, 'catalog:read')
+        return yield* listPublications(input).pipe(Effect.orDie)
       }),
     ),
   },

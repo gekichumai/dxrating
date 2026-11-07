@@ -135,6 +135,7 @@ describe('admin API guard', () => {
       '/announcements',
       '/announcements/end',
       '/announcements/update',
+      '/catalog/publications',
       '/me',
     ])
   })

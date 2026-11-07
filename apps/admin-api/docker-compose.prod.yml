@@ -2,6 +2,9 @@
 services:
   admin-api:
     image: ghcr.io/gekichumai/dxrating/admin-api:${ADMIN_API_IMAGE_TAG:-latest}
+    # Coolify's deploy webhook runs `docker compose up` without a pull for a Compose service, so a moving `:latest` tag
+    # kept the old image after #590 (healthy restart, old code). `always` makes every `up` pull the tag first.
+    pull_policy: always
     expose:
       - '3100'
     # Coolify shows every ${VAR} below in the service's Environment Variables; set them there (names in the L3 PR).
