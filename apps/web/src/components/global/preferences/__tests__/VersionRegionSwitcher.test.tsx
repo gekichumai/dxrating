@@ -1,7 +1,6 @@
 import { AppContextProvider } from '@/models/context/AppContext'
-import { initI18n } from '@/setup/init-i18n'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { vi } from 'vitest'
 import { VersionRegionSwitcher } from '../VersionRegionSwitcher'
 
@@ -10,10 +9,6 @@ vi.mock('~icons/mdi/information', () => ({
 }))
 
 describe('VersionRegionSwitcher', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('offers the current regional releases', async () => {
     render(
       <AppContextProvider>

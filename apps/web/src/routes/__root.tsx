@@ -1,13 +1,11 @@
 import { HeadContent, Outlet, Scripts, createRootRoute, useRouter } from '@tanstack/react-router'
 import { CircularProgress } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import i18n from 'i18next'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
 import clsx from 'clsx'
-import { type CSSProperties, Suspense, useEffect, useMemo, useRef } from 'react'
+import { type CSSProperties, Suspense, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
-import { I18nextProvider } from 'react-i18next'
 import { NetImportSettingsProvider } from '@/components/rating/io/import/NetImportSettingsContext'
 import { NetImportProgress } from '@/components/rating/io/import/NetImportProgress'
 import { ImportReviewHost } from '@/components/rating/io/import/ImportReviewDialog'
@@ -30,7 +28,6 @@ import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { CatalogProvider } from '@/catalog/CatalogContext'
 import { loadCatalogMeta } from '@/catalog/catalogSource'
-import { createServerI18n } from '@/setup/init-i18n'
 import { LocaleProvider, useLocale } from '@/i18n/LocaleProvider'
 import { buildNotFoundSeoMeta, buildRootSeoMeta, resolveRootHeadState, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
@@ -210,37 +207,34 @@ function OAuthErrorHandler() {
 
 function RootComponent() {
   const { locale, renderedAt } = Route.useRouteContext()
-  const routeI18n = useMemo(() => (import.meta.env.SSR ? createServerI18n(locale) : i18n), [locale])
 
   return (
     <RenderEnvironmentProvider renderedAt={renderedAt}>
-      <I18nextProvider i18n={routeI18n}>
-        <LocaleProvider initialLocale={locale}>
-          <AppContextProvider>
-            <RootDocument>
-              <CatalogProvider>
-                <QueryClientProvider client={queryClient}>
-                  <VersionCustomizedThemeProvider>
-                    <RatingCalculatorContextProvider>
-                      <PostHogProvider client={posthog}>
-                        <NetImportSettingsProvider>
-                          <SideEffector />
-                          <CustomizedToaster />
-                          <NetImportProgress />
-                          <ImportReviewHost />
-                          <OAuthErrorHandler />
-                          <RegionVersionUpdatePrompt />
-                          <AppLayout />
-                        </NetImportSettingsProvider>
-                      </PostHogProvider>
-                    </RatingCalculatorContextProvider>
-                  </VersionCustomizedThemeProvider>
-                </QueryClientProvider>
-              </CatalogProvider>
-            </RootDocument>
-          </AppContextProvider>
-        </LocaleProvider>
-      </I18nextProvider>
+      <LocaleProvider initialLocale={locale}>
+        <AppContextProvider>
+          <RootDocument>
+            <CatalogProvider>
+              <QueryClientProvider client={queryClient}>
+                <VersionCustomizedThemeProvider>
+                  <RatingCalculatorContextProvider>
+                    <PostHogProvider client={posthog}>
+                      <NetImportSettingsProvider>
+                        <SideEffector />
+                        <CustomizedToaster />
+                        <NetImportProgress />
+                        <ImportReviewHost />
+                        <OAuthErrorHandler />
+                        <RegionVersionUpdatePrompt />
+                        <AppLayout />
+                      </NetImportSettingsProvider>
+                    </PostHogProvider>
+                  </RatingCalculatorContextProvider>
+                </VersionCustomizedThemeProvider>
+              </QueryClientProvider>
+            </CatalogProvider>
+          </RootDocument>
+        </AppContextProvider>
+      </LocaleProvider>
     </RenderEnvironmentProvider>
   )
 }

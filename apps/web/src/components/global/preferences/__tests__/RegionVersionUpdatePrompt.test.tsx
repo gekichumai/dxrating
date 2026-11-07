@@ -1,8 +1,7 @@
 import { AppContextProvider, type AppContextStates } from '@/models/context/AppContext'
 import { useAppContext } from '@/models/context/useAppContext'
-import { initI18n } from '@/setup/init-i18n'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RegionVersionUpdatePrompt } from '../RegionVersionUpdatePrompt'
 import { VersionRegionSwitcher } from '../VersionRegionSwitcher'
 
@@ -33,7 +32,6 @@ function saveSelection(version: AppContextStates['version'], region: AppContextS
 }
 
 describe('regional version updates', () => {
-  beforeAll(() => initI18n())
   beforeEach(() => {
     cleanup()
     storage = new Map()

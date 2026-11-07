@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LocalScoreRepository } from '@/models/scores/LocalScoreRepository'
 import { ScoreRepositoryContext } from '@/models/scores/useScoreRepository'
 import { ImportFromJSONButtonListItem } from '../ImportFromJSONButtonListItem'
@@ -46,10 +45,6 @@ async function importFile(content: string) {
 
 describe('ImportFromJSONButtonListItem', () => {
   let repository: LocalScoreRepository
-
-  beforeAll(() => {
-    initI18n()
-  })
 
   afterEach(() => {
     // A preview a failed test left open

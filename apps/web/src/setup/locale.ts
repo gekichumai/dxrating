@@ -1,4 +1,3 @@
-import type { DetectorOptions } from 'i18next-browser-languagedetector'
 import { parse as parseCookie } from 'cookie'
 
 export const SUPPORTED_LOCALES = ['en', 'ja', 'ko', 'zh-Hans', 'zh-Hant'] as const
@@ -52,10 +51,6 @@ export function normalizeDetectedLanguage(lng: string) {
   return toSupportedLocale(lng) ?? DEFAULT_LOCALE
 }
 
-export function convertDetectedLanguage(lng: string) {
-  return toSupportedLocale(lng) ?? lng
-}
-
 export function resolveSupportedLocale(candidates: string | readonly string[] | null | undefined) {
   const values = Array.isArray(candidates) ? candidates : candidates ? [candidates] : []
 
@@ -101,24 +96,6 @@ export function detectServerLocale(request: Request): SupportedLocale {
     detectLocaleFromAcceptLanguage(request.headers.get('accept-language')) ??
     DEFAULT_LOCALE
   )
-}
-
-export function getClientLanguageDetectionOptions(): DetectorOptions {
-  return {
-    order: ['querystring', 'cookie', 'htmlTag', 'localStorage', 'sessionStorage', 'navigator'],
-    lookupQuerystring: LOCALE_QUERY_PARAM,
-    lookupLocalStorage: LOCALE_STORAGE_KEY,
-    lookupSessionStorage: LOCALE_STORAGE_KEY,
-    lookupCookie: LOCALE_COOKIE_NAME,
-    caches: [],
-    excludeCacheFor: ['cimode'],
-    cookieOptions: {
-      path: '/',
-      sameSite: 'lax',
-      maxAge: LOCALE_COOKIE_MAX_AGE_SECONDS,
-    },
-    convertDetectedLanguage,
-  }
 }
 
 export function persistClientLocalePreference(locale: SupportedLocale) {

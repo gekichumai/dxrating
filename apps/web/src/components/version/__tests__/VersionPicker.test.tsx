@@ -1,8 +1,7 @@
 import { VersionEnum } from '@gekichumai/dxdata'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useState } from 'react'
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { afterEach, describe, expect, it } from 'vitest'
 import { VersionMultiSelect, VersionPicker } from '../VersionPicker'
 
 const AVAILABLE = [
@@ -35,7 +34,6 @@ function Filter({ initial }: { initial: VersionEnum[] }) {
 const openFilter = () => fireEvent.click(screen.getByRole('button', { name: /^Version:/ }))
 
 describe('VersionPicker', () => {
-  beforeAll(() => initI18n())
   afterEach(cleanup)
 
   it('marks every chosen version and applies the draft only when closed', async () => {

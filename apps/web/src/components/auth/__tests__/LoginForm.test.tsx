@@ -1,9 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import toast from 'react-hot-toast'
 import { LocaleProvider, useSetLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
-import { initI18n } from '@/setup/init-i18n'
 import { LoginForm } from '../LoginForm'
 
 const { passkeySignIn, emailSignIn, socialSignIn, emailSignUp } = vi.hoisted(() => ({
@@ -50,10 +49,6 @@ vi.mock('@marsidev/react-turnstile', async () => {
 })
 
 describe('LoginForm', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   beforeEach(() => {
     vi.clearAllMocks()
     vi.unstubAllGlobals()

@@ -1,8 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Dialog, Menu, MenuList, TextField } from '@mui/material'
 import { type ReactElement, useState } from 'react'
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ImportFromLxnsButtonListItem } from '../ImportFromLxnsButtonListItem'
 
 // A sign-in dialog shaped like useAuth's: an MUI Dialog (portalled) with a focusable field
@@ -15,8 +14,6 @@ const { auth } = vi.hoisted(() => ({
   },
 }))
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => auth }))
-
-beforeAll(() => initI18n())
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
