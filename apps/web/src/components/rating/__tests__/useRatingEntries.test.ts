@@ -168,4 +168,32 @@ describe('calculateWebRatingEntries', () => {
     expect(calculateWebRatingEntries(args).b35Entries).toHaveLength(1)
     expect(calculateWebRatingEntries({ ...args, apOnly: true }).b35Entries).toHaveLength(1)
   })
+
+  it('keeps the CN bucket a Diving-Fish import stored on a better score it kept from another provider', () => {
+    const sheet = makeSheet('hinted')
+    // An LXNS AP the Diving-Fish import did not replace: it keeps LXNS's provenance and gets Diving-Fish's B35
+    const kept = recordFromDTO({
+      sheetId: 'hinted',
+      achievement: 1005000,
+      comboFlag: 'ap',
+      syncFlag: null,
+      dxScore: null,
+      best50Bucket: 'b35',
+      providerRecordId: null,
+      provenance: verifiedProvenance({ source: 'lxns', importJobId: 'dimp_lx' }),
+      revision: 2,
+      valueChangedAt: '2026-11-03T00:00:00.000Z',
+      clientEditedAt: null,
+      deletedAt: null,
+    })
+    const args = {
+      entries: [cloudRecordToPlayEntry(kept, null)],
+      sheets: [sheet],
+      catalog: makeCatalog([sheet]),
+      appVersion: VersionEnum.CiRCLEPLUS,
+      region: 'cn' as const,
+    }
+    expect(calculateWebRatingEntries(args).b35Entries).toHaveLength(1)
+    expect(calculateWebRatingEntries({ ...args, apOnly: true }).b35Entries).toHaveLength(1)
+  })
 })

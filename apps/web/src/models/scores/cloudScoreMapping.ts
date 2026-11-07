@@ -62,10 +62,20 @@ export function cloudRecordToScoreRecord(record: CloudRecord, identity: SheetIde
     comboFlag: record.comboFlag,
     syncFlag: record.syncFlag,
     dxScore: record.dxScore,
-    // `calculateBest50` honours Diving-Fish hints only, as the local save does (`playEntryToScoreRecord`)
-    best50Bucket: record.provenance.source === 'diving-fish' ? record.best50Bucket : null,
+    // `calculateBest50` honours Diving-Fish hints only, as the local save does (`playEntryToScoreRecord`): see
+    // honoursBucketHint
+    best50Bucket: honoursBucketHint(record) ? record.best50Bucket : null,
     provenance: record.provenance,
   }
+}
+
+/**
+ * Whether the calculator reads a record's best 50 hint. A server import stores one only from Diving-Fish: a
+ * Diving-Fish record's own, or the bucket a Diving-Fish job wrote onto a better score it kept from another provider
+ * (`decideImportMerge`), which keeps that provider's provenance. A manual entry carries none
+ */
+function honoursBucketHint(record: CloudRecord): boolean {
+  return record.provenance.source !== 'manual'
 }
 
 /** The calculator's entry of a record, in the format the local save and JSON exports use */
@@ -86,7 +96,7 @@ export function cloudRecordToPlayEntry(record: CloudRecord, identity: SheetIdent
   }
   // The calculator (`useRatingEntries`) reads the best 50 hint from `providerConfig`, as a local Diving-Fish import
   // stores it
-  if (record.provenance.source === 'diving-fish' && record.best50Bucket !== null) {
+  if (record.best50Bucket !== null && honoursBucketHint(record)) {
     entry.providerConfig = { divingFish: { ratingEligibility: record.best50Bucket } }
   }
   return entry
