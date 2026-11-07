@@ -131,7 +131,7 @@ export const shouldShortCircuit = (
   })
 
 /** Whether any of `sheetIds` is a tombstone deleted at or after `since` (a deletion made while a job ran) */
-const hasDeletionSince = (database: DatabaseService, saveId: string, since: Date, sheetIds: readonly string[]) =>
+export const hasDeletionSince = (database: DatabaseService, saveId: string, since: Date, sheetIds: readonly string[]) =>
   Effect.map(
     database.raw<{ found: boolean }>(
       'CloudSave.deletionSinceJobStart',
