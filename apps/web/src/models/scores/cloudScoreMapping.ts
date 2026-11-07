@@ -84,6 +84,11 @@ export function cloudRecordToPlayEntry(record: CloudRecord, identity: SheetIdent
     if (record.providerRecordId !== null) entry.source.providerId = record.providerRecordId
     if (provider === 'diving-fish' && record.best50Bucket !== null) entry.source.best50Bucket = record.best50Bucket
   }
+  // The calculator (`useRatingEntries`) reads the best 50 hint from `providerConfig`, as a local Diving-Fish import
+  // stores it
+  if (record.provenance.source === 'diving-fish' && record.best50Bucket !== null) {
+    entry.providerConfig = { divingFish: { ratingEligibility: record.best50Bucket } }
+  }
   return entry
 }
 
