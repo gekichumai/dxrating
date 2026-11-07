@@ -37,4 +37,18 @@ describe('sheet search ranking on the catalog snapshot', () => {
     expect(topTitles('Link', 1)).toEqual(['Link'])
     expect(topTitles('系ぎて', 1)).toEqual(['系ぎて'])
   })
+
+  it('finds kanji titles from their reading in kana and romaji', () => {
+    expect(topTitles('きみのしらないものがたり', 1)).toEqual(['君の知らない物語'])
+    expect(topTitles('kiminoshiranaimonogatari', 1)).toEqual(['君の知らない物語'])
+  })
+
+  it('puts a latin title prefix ahead of a romaji reading', () => {
+    expect(topTitles('shoo', 1)).toEqual(['Shooting Stars'])
+    expect(topTitles('しょう')).toContain('唱')
+  })
+
+  it('puts a literal artist match ahead of one only in another spelling', () => {
+    expect(topTitles('lumo', 1)).toEqual(['デンパラダイム'])
+  })
 })
