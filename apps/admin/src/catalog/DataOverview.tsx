@@ -39,72 +39,77 @@ export function DataOverview() {
           Nothing is published on {data.channel} yet.
         </Text>
       )}
-      {data?.current && (
+      {/* Sources are worth seeing before the first publication too */}
+      {data && Array.isArray(data.sources) && (
         <Stack gap="md">
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-            <div>
-              <Text size="xs" c="dimmed">
-                Current publication
-              </Text>
-              <Group gap="xs" align="baseline">
-                <Anchor href={routeHref('publications')} fw={600}>
-                  r{data.current.revision}
-                </Anchor>
-                <Text size="sm">{formatUtc(data.current.publishedAt)}</Text>
-                <Text size="sm" c="dimmed">
-                  {formatAge(data.current.ageSeconds)}
+          {data.current && (
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+              <div>
+                <Text size="xs" c="dimmed">
+                  Current publication
                 </Text>
-              </Group>
-              <Text size="xs" c="dimmed">
-                {data.current.songCount.toLocaleString('en')} songs · {data.current.sheetCount.toLocaleString('en')}{' '}
-                sheets · {data.current.pipelineVersion} ·{' '}
-                {data.current.hasProvenanceManifest ? 'provenance manifest' : 'no provenance manifest'}
-              </Text>
-            </div>
-            <div>
-              <Text size="xs" c="dimmed">
-                Latest change
-              </Text>
-              {data.latestChange ? (
-                <>
-                  <Anchor
-                    href={routeHref('diff', { from: data.latestChange.from, to: data.latestChange.to })}
-                    size="sm"
-                  >
-                    r{data.latestChange.from} → r{data.latestChange.to}: {data.latestChange.summary.songsChanged} songs
-                    changed
-                    {data.latestChange.summary.songsAdded > 0 ? `, ${data.latestChange.summary.songsAdded} added` : ''}
-                    {data.latestChange.summary.songsRemoved > 0
-                      ? `, ${data.latestChange.summary.songsRemoved} removed`
-                      : ''}
+                <Group gap="xs" align="baseline">
+                  <Anchor href={routeHref('publications')} fw={600}>
+                    r{data.current.revision}
                   </Anchor>
-                  <Group gap={4} mt={4}>
-                    {data.latestChange.pathCounts.map((p) => (
-                      <Badge
-                        key={p.path}
-                        component="a"
-                        href={routeHref('diff', {
-                          from: data.latestChange!.from,
-                          to: data.latestChange!.to,
-                          path: p.path,
-                        })}
-                        size="xs"
-                        variant="outline"
-                        tt="none"
-                        style={{ cursor: 'pointer' }}
-                      >
-                        {p.path} · {p.count}
-                      </Badge>
-                    ))}
-                  </Group>
-                </>
-              ) : (
-                <Text size="sm" c="dimmed">
-                  Only one publication so far.
+                  <Text size="sm">{formatUtc(data.current.publishedAt)}</Text>
+                  <Text size="sm" c="dimmed">
+                    {formatAge(data.current.ageSeconds)}
+                  </Text>
+                </Group>
+                <Text size="xs" c="dimmed">
+                  {data.current.songCount.toLocaleString('en')} songs · {data.current.sheetCount.toLocaleString('en')}{' '}
+                  sheets · {data.current.pipelineVersion} ·{' '}
+                  {data.current.hasProvenanceManifest ? 'provenance manifest' : 'no provenance manifest'}
                 </Text>
-              )}
-            </div>
-          </SimpleGrid>
+              </div>
+              <div>
+                <Text size="xs" c="dimmed">
+                  Latest change
+                </Text>
+                {data.latestChange ? (
+                  <>
+                    <Anchor
+                      href={routeHref('diff', { from: data.latestChange.from, to: data.latestChange.to })}
+                      size="sm"
+                    >
+                      r{data.latestChange.from} → r{data.latestChange.to}: {data.latestChange.summary.songsChanged}{' '}
+                      songs changed
+                      {data.latestChange.summary.songsAdded > 0
+                        ? `, ${data.latestChange.summary.songsAdded} added`
+                        : ''}
+                      {data.latestChange.summary.songsRemoved > 0
+                        ? `, ${data.latestChange.summary.songsRemoved} removed`
+                        : ''}
+                    </Anchor>
+                    <Group gap={4} mt={4}>
+                      {data.latestChange.pathCounts.map((p) => (
+                        <Badge
+                          key={p.path}
+                          component="a"
+                          href={routeHref('diff', {
+                            from: data.latestChange!.from,
+                            to: data.latestChange!.to,
+                            path: p.path,
+                          })}
+                          size="xs"
+                          variant="outline"
+                          tt="none"
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {p.path} · {p.count}
+                        </Badge>
+                      ))}
+                    </Group>
+                  </>
+                ) : (
+                  <Text size="sm" c="dimmed">
+                    Only one publication so far.
+                  </Text>
+                )}
+              </div>
+            </SimpleGrid>
+          )}
 
           <div>
             <Text size="xs" fw={600} mb={4}>

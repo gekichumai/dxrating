@@ -63,11 +63,21 @@ describe('admin shell', () => {
       actor: 'human:owner@example.invalid',
       scopes: ['*'],
     }
-    const fetchMock = vi.fn(async (input: Request | string) =>
-      new URL(input instanceof Request ? input.url : input, 'http://admin.test').pathname === '/api/announcements'
-        ? Response.json({ announcements: [] })
-        : Response.json(principal),
-    )
+    const empty: Record<string, unknown> = {
+      '/api/announcements': { announcements: [] },
+      '/api/catalog/overview': {
+        channel: 'production-v1',
+        observedAt: '2026-11-07T00:00:00.000Z',
+        current: null,
+        latestChange: null,
+        sources: [],
+        failures: { recorded: false, note: 'not recorded' },
+      },
+    }
+    const fetchMock = vi.fn(async (input: Request | string) => {
+      const path = new URL(input instanceof Request ? input.url : input, 'http://admin.test').pathname
+      return Response.json(empty[path] ?? principal)
+    })
     vi.stubGlobal('fetch', fetchMock)
     const client = new QueryClient()
     mount(client)

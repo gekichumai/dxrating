@@ -109,13 +109,15 @@ describe('DataOverview', () => {
     expect(screen.getByText(/does not record failed source attempts/)).toBeTruthy()
   })
 
-  it('says when nothing is published yet', async () => {
+  it('says when nothing is published yet, and still lists the sources', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => Response.json({ ...overview, current: null, latestChange: null, sources: [] })),
+      vi.fn(async () => Response.json({ ...overview, current: null, latestChange: null })),
     )
     mount()
     expect((await screen.findByText(/Nothing is published/)).textContent).toContain('production-v1')
+    // Source freshness still shows, so a source that never fed the catalog is visible before the first publication
+    expect(screen.getByRole('table', { name: 'Sources' }).textContent).toContain('sega_official_jp')
   })
 
   it('formats ages', () => {

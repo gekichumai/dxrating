@@ -75,10 +75,14 @@ suite('catalog overview (admin API)', () => {
     expect(body.failures.recorded).toBe(false)
   })
 
-  it('is empty, not an error, before anything is published, and needs catalog:read', async () => {
+  it('is empty, not an error, before anything is published, and still lists sources; needs catalog:read', async () => {
+    await observeSourceFixture(t.pool, { id: 'sega_official_jp', name: 'SEGA JP', kind: 'catalog' }, [
+      { at: new Date().toISOString(), items: 10 },
+    ])
     const { status, body } = await json('/catalog/overview')
     expect(status).toBe(200)
-    expect([body.current, body.latestChange, body.sources]).toEqual([null, null, []])
+    expect([body.current, body.latestChange]).toEqual([null, null])
+    expect(body.sources.map((s: any) => [s.id, s.itemCount])).toEqual([['sega_official_jp', 10]])
     expect((await t.get('/catalog/overview', t.agent(CATALOG_READER))).status).toBe(200)
     expect((await t.get('/catalog/overview', t.agent(ANNOUNCEMENT_READER))).status).toBe(403)
   })

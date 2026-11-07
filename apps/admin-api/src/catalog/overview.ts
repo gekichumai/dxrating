@@ -67,7 +67,8 @@ export const catalogOverview = (input: { channel: string }) =>
     // The latest publication against the one before it: the summary only (the full list is /catalog/diff)
     const latestChange =
       current && current.publicationCount > 1
-        ? yield* diffPublications({ channel: input.channel, offset: 0, limit: 1 }).pipe(
+        ? // Pinned to the revision read above, so a publication landing in between can't pair r2 with an r2→r3 change
+          yield* diffPublications({ channel: input.channel, to: current.revision, offset: 0, limit: 1 }).pipe(
             Effect.map((diff) => ({
               from: diff.from.revision,
               to: diff.to.revision,
