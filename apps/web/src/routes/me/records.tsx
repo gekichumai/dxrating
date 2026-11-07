@@ -1,10 +1,11 @@
 import { CircularProgress } from '@mui/material'
-import { useTranslation } from 'react-i18next'
 import { ClientOnly, createFileRoute } from '@tanstack/react-router'
 import { isToplistKind, isToplistSort, type ToplistSort } from '@/components/toplists/toplistData'
 import type { ToplistKind } from '@/lib/analytics'
 import { ToplistsPage } from '@/pages/ToplistsPage'
 import { buildToplistsSeo, resolveSeoLocale } from '@/utils/seo'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export interface ToplistSearch {
   tab?: ToplistKind
@@ -27,12 +28,12 @@ export const Route = createFileRoute('/me/records')({
 })
 
 function RecordsRouteComponent() {
-  const { t } = useTranslation()
+  const locale = useLocale()
   return (
     <ClientOnly
       fallback={
         <div className="flex items-center justify-center w-full min-h-60vh">
-          <CircularProgress size="2rem" disableShrink aria-label={t('toplists:loading')} />
+          <CircularProgress size="2rem" disableShrink aria-label={m.toplists_loading({}, { locale })} />
         </div>
       }
     >

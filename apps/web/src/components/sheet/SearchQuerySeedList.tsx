@@ -1,11 +1,12 @@
 import type { FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import { SheetListItemContentView, SheetListItemSummary } from './SheetListItem'
 import type { SearchQuerySeedSheet } from './searchQuerySeed'
 import { InternalLink } from '@/components/global/InternalLink'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const SearchQuerySeedList: FC<{ sheets: readonly SearchQuerySeedSheet[] }> = ({ sheets }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
 
   if (sheets.length === 0) return null
 
@@ -23,7 +24,7 @@ export const SearchQuerySeedList: FC<{ sheets: readonly SearchQuerySeedSheet[] }
               internalLevelValue={sheet.internalLevelValue}
               isTypeUtage={sheet.isTypeUtage}
               imageName={sheet.imageName}
-              imageAlt={t('sheet:cover-art-alt', { title: sheet.title })}
+              imageAlt={m.sheet_coverArtAlt({ title: sheet.title }, { locale })}
             >
               <SheetListItemSummary
                 title={sheet.title}

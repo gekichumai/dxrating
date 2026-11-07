@@ -16,7 +16,6 @@ import clsx from 'clsx'
 import { MotionConfig, useReducedMotion } from 'motion/react'
 import { type FC, useContext, useEffect, useId, useState, useTransition } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
-import { useTranslation } from 'react-i18next'
 import { useEffectOnce } from 'react-use'
 import MdiChevronDownIcon from '~icons/mdi/chevron-down'
 import MdiFilterIcon from '~icons/mdi/filter'
@@ -31,6 +30,8 @@ import { SheetDifficultyFilter } from './filters/SheetDifficultyFilter'
 import { SheetInternalLevelFilter } from './filters/SheetInternalLevelFilter'
 import { SheetTagFilter } from './filters/SheetTagFilter'
 import { SheetVersionFilter } from './filters/SheetVersionFilter'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export interface SortPredicate {
   descriptor: keyof FlattenedSheet
@@ -276,15 +277,15 @@ const SheetSortFilterFormListener: FC<{
 const SheetSortFilterFormReset: FC<{
   onReset: () => void
 }> = ({ onReset }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const [openDialog, setOpenDialog] = useState(false)
 
   return (
     <>
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} TransitionComponent={Grow}>
-        <DialogTitle>{t('sheet:sort-and-filter.reset.dialog.title')}</DialogTitle>
+        <DialogTitle>{m.sheet_sortAndFilter_reset_dialog_title({}, { locale })}</DialogTitle>
         <DialogContent>
-          <DialogContentText>{t('sheet:sort-and-filter.reset.dialog.message')}</DialogContentText>
+          <DialogContentText>{m.sheet_sortAndFilter_reset_dialog_message({}, { locale })}</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button
@@ -292,7 +293,7 @@ const SheetSortFilterFormReset: FC<{
               setOpenDialog(false)
             }}
           >
-            {t('sheet:sort-and-filter.reset.dialog.cancel')}
+            {m.sheet_sortAndFilter_reset_dialog_cancel({}, { locale })}
           </Button>
           <Button
             variant="contained"
@@ -302,7 +303,7 @@ const SheetSortFilterFormReset: FC<{
               onReset()
             }}
           >
-            {t('sheet:sort-and-filter.reset.dialog.confirm')}
+            {m.sheet_sortAndFilter_reset_dialog_confirm({}, { locale })}
           </Button>
         </DialogActions>
       </Dialog>
@@ -316,7 +317,7 @@ const SheetSortFilterFormReset: FC<{
         onClick={() => setOpenDialog(true)}
         size="small"
       >
-        {t('sheet:sort-and-filter.reset.button')}
+        {m.sheet_sortAndFilter_reset_button({}, { locale })}
       </Button>
     </>
   )
@@ -330,7 +331,7 @@ export const SheetSortFilterTrigger: FC<{
   variant?: 'bar' | 'compact'
   className?: string
 }> = ({ expanded, contentId, onToggle, pending = false, variant = 'bar', className }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
 
   if (variant === 'compact') {
     return (
@@ -346,15 +347,15 @@ export const SheetSortFilterTrigger: FC<{
             : '!border-black/25 !bg-[var(--glass-thin-bg)] hover:!border-black/60',
           className,
         )}
-        aria-label={t('sheet:sort-and-filter.title')}
+        aria-label={m.sheet_sortAndFilter_title({}, { locale })}
         aria-controls={contentId}
         aria-expanded={expanded}
         onClick={onToggle}
       >
         <MdiFilterIcon aria-hidden="true" className="h-5 w-5 shrink-0" />
         <span className="flex flex-col text-left text-xs font-semibold leading-tight">
-          <span className="whitespace-nowrap">{t('sheet:filter.title')}</span>
-          <span className="whitespace-nowrap">{t('sheet:sort.title')}</span>
+          <span className="whitespace-nowrap">{m.sheet_filter_title({}, { locale })}</span>
+          <span className="whitespace-nowrap">{m.sheet_sort_title({}, { locale })}</span>
         </span>
         <MdiChevronDownIcon
           aria-hidden="true"
@@ -379,7 +380,7 @@ export const SheetSortFilterTrigger: FC<{
       aria-expanded={expanded}
       onClick={onToggle}
     >
-      <div className="text-xl font-semibold leading-none">{t('sheet:sort-and-filter.title')}</div>
+      <div className="text-xl font-semibold leading-none">{m.sheet_sortAndFilter_title({}, { locale })}</div>
       {pending && <CircularProgress disableShrink className="ml-2 !h-4 !w-4" />}
       <div className="flex-1" />
       <MdiChevronDownIcon
@@ -396,7 +397,7 @@ const SheetSortFilterFormContent: FC<{
   onExpandedChange?: (expanded: boolean) => void
   showDefaultTrigger?: boolean
 }> = ({ expanded: controlledExpanded, contentId, onExpandedChange, showDefaultTrigger = true }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const { queryActive } = useContext(SheetDetailsContext)
   const { control, setValue, reset } = useFormContext<SheetSortFilterForm>()
   const [uncontrolledExpanded, setUncontrolledExpanded] = useState(false)
@@ -453,7 +454,7 @@ const SheetSortFilterFormContent: FC<{
       <section className="flex flex-col gap-4" aria-labelledby={`${resolvedContentId}-filter`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 id={`${resolvedContentId}-filter`} className="m-0 text-xl font-semibold leading-tight">
-            {t('sheet:filter.title')}
+            {m.sheet_filter_title({}, { locale })}
           </h2>
           <SheetSortFilterFormReset
             onReset={() => {
@@ -477,12 +478,12 @@ const SheetSortFilterFormContent: FC<{
       <section className="flex flex-col gap-4" aria-labelledby={`${resolvedContentId}-sort`}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <h2 id={`${resolvedContentId}-sort`} className="m-0 text-xl font-semibold leading-tight">
-            {t('sheet:sort.title')}
+            {m.sheet_sort_title({}, { locale })}
           </h2>
           {queryActive && (
             <p className="m-0 inline-flex items-center gap-1 text-sm text-fg-2">
               <MdiInformationOutline aria-hidden="true" className="shrink-0" />
-              {t('sheet:sort.temporarily-disabled')}
+              {m.sheet_sort_temporarilyDisabled({}, { locale })}
             </p>
           )}
         </div>

@@ -1,11 +1,12 @@
 import clsx from 'clsx'
 import type { FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useAppContextSlugVersion } from '../../models/context/useAppContext'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const DXRank: FC<{ rank?: string | null; className?: string }> = ({ rank, className }) => {
   const slugVersion = useAppContextSlugVersion()
-  const { t } = useTranslation(['global'])
+  const locale = useLocale()
 
   if (!rank) {
     return <div className={clsx('aspect-w-128 aspect-h-60 bg-gray-200 rounded', className)} />
@@ -18,7 +19,7 @@ export const DXRank: FC<{ rank?: string | null; className?: string }> = ({ rank,
   return (
     <img
       src={image}
-      alt={t('global:dx-rank-alt', { rank })}
+      alt={m.global_dxRankAlt({ rank }, { locale })}
       className={clsx('aspect-w-128 aspect-h-60', className)}
       draggable={false}
     />

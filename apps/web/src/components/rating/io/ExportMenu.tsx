@@ -1,12 +1,13 @@
 import { Button, Menu } from '@mui/material'
 import { type FC, useId, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { ExportToJSONMenuItem } from './export/ExportToJSONMenuItem'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const ExportMenu: FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const open = Boolean(anchorEl)
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget)
   }
@@ -26,7 +27,7 @@ export const ExportMenu: FC = () => {
         onClick={handleClick}
         variant="outlined"
       >
-        {t('rating-calculator:io.export.button')}
+        {m.ratingCalculator_io_export_button({}, { locale })}
       </Button>
 
       <Menu
