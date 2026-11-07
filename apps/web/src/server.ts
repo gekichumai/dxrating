@@ -13,6 +13,7 @@ import {
   toStoredHtmlResponse,
 } from './setup/html-cache'
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
+import { localeRedirect } from './setup/locale-redirect'
 import { trailingSlashRedirect } from './setup/trailing-slash'
 import { finishServerTimingSpan, setServerTimingHeader, startServerTimingSpan } from './setup/server-timing'
 import { sentryScrubOptions } from './lib/sentryScrub'
@@ -79,7 +80,7 @@ async function handleWithHtmlCache(request: Request, env: unknown, ctx: WorkerEx
 const requestHandler: ServerEntry = SentryStart.wrapFetchWithSentry({
   fetch(request, ...rest: unknown[]) {
     const [env, ctx] = rest as [unknown, WorkerExecutionContext | undefined]
-    return trailingSlashRedirect(request) ?? handleWithHtmlCache(request, env, ctx)
+    return trailingSlashRedirect(request) ?? localeRedirect(request) ?? handleWithHtmlCache(request, env, ctx)
   },
 })
 

@@ -30,7 +30,7 @@ import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { CatalogProvider } from '@/catalog/CatalogContext'
 import { loadCatalogMeta } from '@/catalog/catalogSource'
-import { LocaleProvider, useLocale } from '@/i18n/LocaleProvider'
+import { LocaleProvider, LocaleUrlSync, useLocale } from '@/i18n/LocaleProvider'
 import { buildNotFoundSeoMeta, buildRootSeoMeta, resolveRootHeadState, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
@@ -38,6 +38,7 @@ import { useThemeColorSync } from '@/utils/useThemeColorSync'
 import { useRevealFocusInScrollFade } from '@/utils/useRevealFocusInScrollFade'
 import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
 import { THEME_INLINE_SCRIPT } from '@/setup/theme-script'
+import { splitLocalePath } from '@/setup/locale'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
 // All app CSS is global and ships as one stylesheet: the base styles first, then utilities, then page styles whose
 // classes are scoped to their page (rating-table, legal-*)
@@ -60,11 +61,10 @@ const fallbackElement = (
 
 export const Route = createRootRoute({
   notFoundComponent: NotFoundContent,
+  // The page's language is the one its URL path names (`/ja/…`, meta#52), on the server and after every client
+  // navigation, so <html lang> and the head follow Back and Forward between languages
   beforeLoad: (ctx) => ({
-    locale: resolveSeoLocale([
-      { context: (ctx as { serverContext?: unknown }).serverContext },
-      { context: ctx.context },
-    ]),
+    locale: splitLocalePath(new URL(ctx.location.publicHref, 'https://dxrating.net').pathname).locale,
     renderedAt: resolveRenderedAt([
       { context: (ctx as { serverContext?: unknown }).serverContext },
       { context: ctx.context },
@@ -221,6 +221,7 @@ function RootComponent() {
                   <RatingCalculatorContextProvider>
                     <PostHogProvider client={posthog}>
                       <NetImportSettingsProvider>
+                        <LocaleUrlSync />
                         <SideEffector />
                         <CustomizedToaster />
                         <NetImportProgress />

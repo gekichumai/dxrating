@@ -11,7 +11,6 @@ import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { m } from '@/paraglide/messages'
-import { keepLocaleSearch } from '@/setup/locale'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { useUserRecords } from '@/models/useUserRecords'
 import type { FlattenedSheet } from '@/songs'
@@ -45,7 +44,6 @@ export const SongChartsTable: FC<{
 }> = ({ songId, sheets, activeSheetId }) => {
   const locale = useLocale()
   // Chart links stay on the hub URL's language variant (each `?locale=` variant is its own canonical page)
-  const localeSearch = keepLocaleSearch(useSearch({ strict: false }))
   // Rating hints need every scored chart: the route slice holds only this song, so wait for the complete catalog
   const completeCatalog = useCompleteSongCatalog()
   const { region } = useAppContext()
@@ -128,7 +126,6 @@ export const SongChartsTable: FC<{
                     <Link
                       to="/songs/$songId/$type/$difficulty"
                       params={{ songId, type: sheet.type, difficulty: sheet.difficulty }}
-                      {...localeSearch}
                       className="inline-flex items-center gap-1 no-underline text-inherit rounded-[var(--radius-sm)] after:absolute after:inset-0 after:content-['']"
                     >
                       {/* As wide as the longest type name in this table, so every difficulty pill starts at the same x */}

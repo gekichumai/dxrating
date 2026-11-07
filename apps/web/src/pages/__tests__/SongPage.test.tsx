@@ -1,6 +1,7 @@
 import { DifficultyEnum, VersionEnum } from '@gekichumai/dxdata'
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { SongPage } from '../SongPage'
 
 // WWW, by its public song ID
@@ -104,22 +105,21 @@ describe('SongPage', () => {
     expect(screen.queryByRole('table')).toBeNull()
   })
 
-  it('keeps the URL locale when switching charts', () => {
-    routeState.search = { locale: 'ja' }
-    render(<SongPage />)
+  it("links to the other charts and back in the page's language", () => {
+    render(
+      <LocaleProvider initialLocale="ja">
+        <SongPage />
+      </LocaleProvider>,
+    )
 
-    expect(routeState.tabs?.hrefFor('dx', 'expert')).toBe('/songs/dsng_d3kkdkrcqj/dx/expert?locale=ja')
+    expect(routeState.tabs?.hrefFor('dx', 'expert')).toBe('/ja/songs/dsng_d3kkdkrcqj/dx/expert')
+    // Router navigations and Links carry no locale: the router adds the prefix (router.tsx)
     routeState.tabs?.onDifficultyChange('expert')
-    expect(routeState.navigate).toHaveBeenCalledWith(
-      expect.objectContaining({ params: expect.objectContaining({ difficulty: 'expert' }), search: { locale: 'ja' } }),
-    )
-    expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe('/?locale=ja')
-    expect(screen.getByRole('link', { name: /All charts of this song/ }).getAttribute('href')).toBe(
-      '/songs/dsng_d3kkdkrcqj?locale=ja',
-    )
+    expect(routeState.navigate.mock.calls[0]?.[0]).not.toHaveProperty('search')
+    expect(screen.getByRole('link', { name: '戻る' }).getAttribute('href')).toBe('/ja')
   })
 
-  it('adds no locale to chart links when the URL has none', () => {
+  it('adds no prefix to English chart links', () => {
     render(<SongPage />)
 
     expect(routeState.tabs?.hrefFor('dx', 'expert')).toBe('/songs/dsng_d3kkdkrcqj/dx/expert')
