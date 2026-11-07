@@ -1,8 +1,8 @@
 import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
-import { announcementsContract } from './announcements'
-import { SUPPORTED_LOCALES } from './locales'
+import { announcementsContract } from './announcements.ts'
+import { SUPPORTED_LOCALES } from './locales.ts'
 
 const oc = contractBuilder.errors({})
 

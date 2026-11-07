@@ -1,7 +1,7 @@
 import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
-import { BASE_LOCALE, LOCALE_FALLBACKS, SUPPORTED_LOCALES } from './locales'
+import { BASE_LOCALE, LOCALE_FALLBACKS, SUPPORTED_LOCALES } from './locales.ts'
 
 const oc = contractBuilder.errors({})
 
@@ -216,7 +216,8 @@ export const adminAnnouncementsContract = {
   update: oc
     .meta(
       openapi({
-        method: 'PUT',
+        // POST rather than PUT: the API's CORS policy allows GET and POST only
+        method: 'POST',
         path: '/admin/announcements/{id}',
         summary: 'Replace an announcement',
         tags: ADMIN_ROUTE_TAGS,

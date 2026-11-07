@@ -147,9 +147,13 @@ export const createAnnouncement = Effect.fn('Announcements.create')(function* (
 
 const notFound = () => new ORPCError('NOT_FOUND', { message: 'Announcement not found' })
 
+/** A localized map with its keys sorted: jsonb does not keep the order a request sent them in */
+const canonicalText = (text: Record<string, string> | null) =>
+  text ? Object.entries(text).toSorted(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)) : null
+
 /** What a viewer reads: a change here shows a dismissed announcement again */
 const contentKey = (row: Pick<AnnouncementRow, 'title' | 'body' | 'link_url' | 'link_label'>) =>
-  JSON.stringify([row.title, row.body, row.link_url, row.link_label])
+  JSON.stringify([canonicalText(row.title), canonicalText(row.body), row.link_url, canonicalText(row.link_label)])
 
 /** Replaces an announcement's fields. `startsAt: null` keeps its start. */
 export const updateAnnouncement = Effect.fn('Announcements.update')(function* (

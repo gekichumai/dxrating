@@ -66,7 +66,7 @@ src/
 ### oRPC (`/api/v1/*`)
 
 - `GET /announcements` — Current and upcoming global announcements (every language and target; clients filter)
-- `GET|POST /admin/announcements`, `PUT /admin/announcements/:id`, `POST /admin/announcements/:id/end` — Admin only (`requireAdmin`), tagged `internal`
+- `GET|POST /admin/announcements`, `POST /admin/announcements/:id`, `POST /admin/announcements/:id/end` — Admin only (`requireAdmin`), tagged `internal`
 - `GET /tags` — List tags, groups, and song associations
 - `POST /tags/attach` — Attach tag to song sheet (auth required)
 - `POST /comments` — Create comment (auth required)

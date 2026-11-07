@@ -119,13 +119,13 @@ describe('Announcements', () => {
   it('bumps the revision when the text changes, not for a new end date', async () => {
     const created = await create()
     const extended = await adminFetch(`/admin/announcements/${created.id}`, {
-      method: 'PUT',
+      method: 'POST',
       body: fields({ endsAt: new Date(Date.now() + HOUR).toISOString() }),
     })
     expect((await extended.json()).revision).toBe(1)
 
     const reworded = await adminFetch(`/admin/announcements/${created.id}`, {
-      method: 'PUT',
+      method: 'POST',
       body: fields({ title: { en: 'Maintenance extended' } }),
     })
     const body = await reworded.json()
@@ -133,6 +133,33 @@ describe('Announcements', () => {
     expect(body.title).toEqual({ en: 'Maintenance extended' })
     // A null start keeps the existing one
     expect(body.startsAt).toBe(created.startsAt)
+  })
+
+  // jsonb stores keys in its own order, so a resubmitted map in another order is the same text
+  it('keeps the revision for the same translations sent in another key order', async () => {
+    const created = await create({ title: { ja: 'お知らせ', en: 'Notice' }, body: { ja: '本文', en: 'Body' } })
+    const res = await adminFetch(`/admin/announcements/${created.id}`, {
+      method: 'POST',
+      body: fields({
+        title: { ja: 'お知らせ', en: 'Notice' },
+        body: { ja: '本文', en: 'Body' },
+        endsAt: new Date(Date.now() + HOUR).toISOString(),
+      }),
+    })
+    expect((await res.json()).revision).toBe(1)
+  })
+
+  it('accepts a browser preflight for every admin route from the site', async () => {
+    const res = await fetch(`${getBaseUrl()}/api/v1/admin/announcements/1`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'https://dxrating.net',
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'content-type',
+      },
+    })
+    expect(res.status).toBeLessThan(300)
+    expect(res.headers.get('Access-Control-Allow-Methods') ?? '').toContain('POST')
   })
 
   it('ends a scheduled announcement before it ever shows', async () => {
@@ -185,7 +212,7 @@ describe('Announcements', () => {
     const routes: Array<[string, string, unknown?]> = [
       ['GET', '/admin/announcements'],
       ['POST', '/admin/announcements', fields()],
-      ['PUT', `/admin/announcements/${created.id}`, fields()],
+      ['POST', `/admin/announcements/${created.id}`, fields()],
       ['POST', `/admin/announcements/${created.id}/end`],
     ]
     for (const [method, path, body] of routes) {
