@@ -40,7 +40,8 @@ export function scheduleErrorReporting(router: AnyRouter) {
   startEarlyErrorBuffer()
   const buffer = earlyErrors
   // The router is created before any client-side navigation, so this is the document's own URL
-  const documentLocation = { pathname: window.location.pathname, search: window.location.search }
+  const { href, pathname, search } = window.location
+  const documentLocation = { href, pathname, search }
 
   const load = () => {
     import('./error-reporting')

@@ -150,5 +150,10 @@ test('names the pageload after the document when the visitor navigates before th
         (item.payload.contexts as { trace?: { op?: string } } | undefined)?.trace?.op === 'pageload',
     )
   await expect.poll(() => Boolean(pageload()), { timeout: 20_000 }).toBe(true)
-  expect(pageload()?.payload.transaction).toBe('/')
+  const documentUrl = new URL('/', page.url()).href
+  const payload = pageload()?.payload
+  expect(payload?.transaction).toBe('/')
+  expect((payload?.request as { url?: string } | undefined)?.url).toBe(documentUrl)
+  const traceData = (payload?.contexts as { trace?: { data?: Record<string, unknown> } } | undefined)?.trace?.data
+  expect(traceData?.['url.full']).toBe(documentUrl)
 })

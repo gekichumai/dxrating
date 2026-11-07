@@ -71,21 +71,22 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Chromium
-        run: pnpm --filter @gekichumai/dxrating-web exec playwright install --with-deps chromium
-
       # A placeholder release turns the browser SDK on, as in deployed builds. There is no SENTRY_AUTH_TOKEN, so nothing
       # is uploaded; VITE_E2E_BUILD turns the Worker's Sentry off, and the tests stub the tunnel, so nothing is sent.
       - name: Build
         run: pnpm --filter @gekichumai/dxrating-web exec vite build
+        timeout-minutes: 10
         env:
           SENTRY_RELEASE: dxrating@pr-0+0000000
           VITE_E2E_BUILD: '1'
 
+      # The runner's preinstalled Google Chrome: `playwright install` hangs after the download on this Node version
       - name: Run Playwright
         run: pnpm --filter @gekichumai/dxrating-web exec playwright test
+        timeout-minutes: 10
         env:
           E2E_EXPECT_SENTRY: '1'
+          E2E_CHROMIUM_PATH: /usr/bin/google-chrome
 
       - name: Upload traces
         if: failure()

@@ -4,7 +4,7 @@ import { sentryScrubOptions } from '@/lib/sentryScrub'
 import type { TelemetrySdk } from '@/lib/telemetry'
 
 /** Where the document was loaded, before any client-side navigation */
-export type DocumentLocation = { pathname: string; search: string }
+export type DocumentLocation = { href: string; pathname: string; search: string }
 
 /**
  * Starts the browser SDK. Loaded with import() after hydration (see error-reporting-loader.ts), so nothing the first
@@ -80,7 +80,7 @@ export function initErrorReporting(router: AnyRouter, documentLocation: Document
   return { metrics: Sentry.metrics, logger: Sentry.logger, captureException: Sentry.captureException }
 }
 /** The pageload span the router integration would have started, named after the document's route */
-function startDocumentPageload(router: AnyRouter, { pathname, search }: DocumentLocation) {
+function startDocumentPageload(router: AnyRouter, { href, pathname, search }: DocumentLocation) {
   const client = Sentry.getClient()
   if (!client) return
 
@@ -91,13 +91,25 @@ function startDocumentPageload(router: AnyRouter, { pathname, search }: Document
   const routeId = matches.at(-1)?.routeId
   const route = routeId && routeId !== '__root__' ? routeId : undefined
 
-  Sentry.startBrowserTracingPageLoadSpan(client, {
+  const span = Sentry.startBrowserTracingPageLoadSpan(client, {
     name: route ?? pathname,
     attributes: {
       [Sentry.SEMANTIC_ATTRIBUTE_SENTRY_OP]: 'pageload',
       [Sentry.SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN]: 'auto.pageload.react.tanstack_router',
       [Sentry.SEMANTIC_ATTRIBUTE_SENTRY_SOURCE]: route ? 'route' : 'url',
+      // Attributes given here win over the ones the SDK reads from the current location
       'url.path': pathname,
+      'url.full': href,
     },
+  })
+  if (!span) return
+
+  // The transaction's request URL is read from the current location when it is sent; it must be the document's
+  const spanId = span.spanContext().spanId
+  Sentry.addEventProcessor((event) => {
+    if (event.type === 'transaction' && event.contexts?.trace?.span_id === spanId) {
+      event.request = { ...event.request, url: href }
+    }
+    return event
   })
 }
