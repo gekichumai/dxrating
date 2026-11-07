@@ -4,11 +4,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { pullChanges } from '../services/cloud-save/changes'
 import { runCloudSaveCleanup } from '../services/cloud-save/cleanup'
 import { ImportInProgress } from '../services/cloud-save/errors'
-import { startImportJob } from '../services/cloud-save/jobs'
+import { canonicalSha256, startImportJob } from '../services/cloud-save/jobs'
 import { applyImportRecords, type MergeRecord } from '../services/cloud-save/merge'
 import { completeImportJob } from '../services/cloud-save/merge'
 import { applyMutations } from '../services/cloud-save/mutations'
-import { lockSave } from '../services/cloud-save/saves'
+import { replaceRecords } from '../services/cloud-save/replace'
+import { lockSave, saveTransaction } from '../services/cloud-save/saves'
 import { deleteMutation, importRecords, runDatabase, sheetId, testPool } from './cloud-save-helpers'
 import { cleanDatabase, setupTestServer, teardownTestServer } from './setup'
 
@@ -403,6 +404,48 @@ describe('cloud save merge module (shared vectors, applied to the database)', ()
       [sheetId(1)],
     )
     expect(record.rows).toEqual([{ achievement: 1005000, deleted_at: null }])
+  })
+
+  it('dates the writes of a transaction when it holds the save lock, not when it began', async () => {
+    await insert('score_saves', { id: 'dsav_clock', user_id: USER, name: 'clock', region: 'jp' })
+    // A transaction that waited (here: slept) before it got the lock: an import job may have started meanwhile
+    const { began, locked } = await runDatabase((database) =>
+      saveTransaction(database, () =>
+        Effect.gen(function* () {
+          const { rows } = yield* database.raw<{ began: Date }>('test.began', 'SELECT now() AS began, pg_sleep(0.05)')
+          const save = yield* lockSave(database, USER, 'dsav_clock')
+          return { began: rows[0]!.began, locked: save.now }
+        }),
+      ),
+    )
+    expect(locked.getTime() - began.getTime()).toBeGreaterThanOrEqual(40)
+  })
+
+  it('does not short-circuit an automatic job past a replace, which keeps duplicates its own way', async () => {
+    await insert('score_saves', { id: 'dsav_replace', user_id: USER, name: 'replace', region: 'jp' })
+    // two results of one chart with the same score: the replace keeps the first, the merge backfills the DX score
+    const records = [
+      { sheetId: sheetId(1), achievement: 1000000, comboFlag: null, syncFlag: null, dxScore: null },
+      { sheetId: sheetId(1), achievement: 1000000, comboFlag: null, syncFlag: null, dxScore: 100 },
+    ]
+    const replaced = await runDatabase((database) =>
+      replaceRecords(database, USER, 'dsav_replace', {
+        ifRevision: 0,
+        idempotencyKey: 'replace-duplicates',
+        source: 'dxrating-json',
+        records,
+      }),
+    )
+    expect(replaced.job.status).toBe('succeeded')
+    const next = await importRecords(USER, 'dsav_replace', 'dxrating-json', records, {
+      trigger: 'auto',
+      sha: canonicalSha256(records),
+    })
+    const record = await pool.query(
+      `SELECT dx_score FROM score_records WHERE save_id = 'dsav_replace' AND sheet_id = $1`,
+      [sheetId(1)],
+    )
+    expect(record.rows).toEqual([{ dx_score: 100 }])
   })
 
   it('does not short-circuit an automatic job past a tombstone the cleanup purged since', async () => {
