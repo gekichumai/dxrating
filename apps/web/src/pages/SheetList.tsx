@@ -9,10 +9,21 @@ import {
 } from '@gekichumai/dxdata'
 import { getSongCatalog } from '@gekichumai/maimai-domain'
 import { IconButton, TextField } from '@mui/material'
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@/lib/telemetry'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
-import { type FC, type ReactNode, useCallback, useId, useMemo, useState, useTransition } from 'react'
-import { useTranslation } from 'react-i18next'
+import clsx from 'clsx'
+import {
+  type FC,
+  type ReactNode,
+  startTransition,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from 'react'
 import { useEffectOnce, useUpdateEffect } from 'react-use'
 import IconMdiClose from '~icons/mdi/close'
 import MdiIconInfo from '~icons/mdi/information-outline'
@@ -21,12 +32,16 @@ import { ResponsiveDialog } from '../components/global/ResponsiveDialog'
 import { SearchQuerySeedList } from '../components/sheet/SearchQuerySeedList'
 import type { SearchQuerySeedSheet } from '../components/sheet/searchQuerySeed'
 import { SheetDialogContent } from '../components/sheet/SheetDialogContent'
+import { SheetGridContainer, SheetGridSkeleton } from '../components/sheet/SheetGridContainer'
 import { SHEET_LIST_FIRST_SCREEN_ROWS, SheetListContainer } from '../components/sheet/SheetListContainer'
+import { SheetListLayoutToggle } from '../components/sheet/SheetListLayoutToggle'
+import { type SheetListLayout, useSheetListLayout } from '../components/sheet/sheetListLayout'
 import { SheetRowLayoutContext } from '../components/sheet/sheetRowLayout'
 import {
   getDefaultSheetSortFilterForm,
   SheetSortFilter,
   SheetSortFilterTrigger,
+  countActiveSortFilters,
   type SheetSortFilterForm,
 } from '../components/sheet/SheetSortFilter'
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
@@ -37,8 +52,11 @@ import { readFavoriteSheetIds } from '../models/favorite'
 import { useCatalogDocument, useSongCatalog } from '../catalog/CatalogContext'
 import { type FlattenedSheet, getFlattenedSheets, useFilteredSheets, useSheets } from '../songs'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
+import { afterNextPaint } from '../utils/afterNextPaint'
 import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
 import { compareSheetsBySorts, getSongCatalogPositions } from './sheetSorting'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const searchRouteApi = getRouteApi('/')
 
@@ -48,6 +66,43 @@ const chainEvery =
     fns.every((fn) => fn(arg))
 
 const skeletonWidths = Array.from({ length: 20 }).map((_, index) => 5.5 + (index % 7) * 0.8)
+
+/**
+ * Where each layout shows. Once the layout is known only that one renders. Before that (the server render and
+ * hydration, see useSheetListLayout) both render and CSS shows the default for the width, so the cached HTML suits
+ * every screen and nothing moves when hydration settles it. The `lg` breakpoint matches SHEET_GRID_DEFAULT_MEDIA_QUERY.
+ */
+const layoutSlots = (layout: SheetListLayout | null) => ({
+  list: layout === 'grid' ? null : clsx('w-full', layout === null && 'lg:hidden'),
+  grid: layout === 'list' ? null : clsx('w-full', layout === null && 'hidden lg:block'),
+})
+
+const SheetListSkeleton: FC = () => (
+  <MaterialSurface className="flex flex-col w-full p-1" aria-hidden="true">
+    {skeletonWidths.map((width, i) => (
+      <div
+        // 78px stacked rows, then the 56px one-line table rows of SheetListContainer from lg
+        className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] lg:h-14 px-3 py-2"
+        // oxlint-disable-next-line react/no-array-index-key -- index is stable
+        key={i}
+        style={{
+          animationDelay: `${i * 40}ms`,
+        }}
+      >
+        <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] lg:h-10 lg:w-10 lg:min-w-10 lg:min-h-10 rounded-[var(--radius-xs)] bg-black/8" />
+        <div className="flex flex-col gap-1">
+          <div className="bg-black/8 h-5 mb-1 rounded-[var(--radius-xs)]" style={{ width: `${width}rem` }}>
+            &nbsp;
+          </div>
+          <div className="w-24 bg-black/5 h-3 rounded-[var(--radius-xs)]">&nbsp;</div>
+        </div>
+
+        <div className="flex-1" />
+        <div className="w-10 bg-black/8 h-6 mr-2 rounded-[var(--radius-xs)]">&nbsp;</div>
+      </div>
+    ))}
+  </MaterialSurface>
+)
 
 type SearchParams = ReturnType<typeof searchRouteApi.useSearch>
 type SheetListProps = {
@@ -228,12 +283,80 @@ const computeSortFilteredSheets = (
   return sortFilteredResults
 }
 
+/**
+ * The search field. It owns its text, so a keystroke re-renders only the field; the query goes to the list in a
+ * transition. When the query changes from outside (Back to another ?q=, a link), the list bumps `externalRevision`
+ * and the field takes that query.
+ */
+/** How long typing pauses before the query is written to the URL */
+const URL_QUERY_DELAY_MS = 400
+
+const SheetSearchField: FC<{
+  query: string
+  /** Bumped when the query changes from outside (Back, a link): the field then takes `query` over its own text */
+  externalRevision: number
+  onQueryChange: (query: string) => void
+  resultCount: number
+}> = ({ query, externalRevision, onQueryChange, resultCount }) => {
+  const locale = useLocale()
+  const [value, setValue] = useState(query)
+
+  useUpdateEffect(() => {
+    setValue(query)
+  }, [externalRevision])
+
+  const change = (next: string) => {
+    setValue(next)
+    startTransition(() => onQueryChange(next))
+  }
+
+  return (
+    <TextField
+      className="min-w-0 flex-1"
+      label={m.sheet_search({}, { locale })}
+      placeholder={m.sheet_searchPlaceholder({}, { locale })}
+      variant="outlined"
+      value={value}
+      fullWidth
+      // Over the background art the field needs the blurred material, not just the inset tint
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          backgroundColor: 'var(--glass-thin-bg)',
+          backdropFilter: 'var(--glass-blur-thin)',
+          WebkitBackdropFilter: 'var(--glass-blur-thin)',
+        },
+      }}
+      onChange={(e) => {
+        change(e.target.value)
+      }}
+      InputProps={{
+        endAdornment: value && (
+          <IconButton
+            onClick={() => {
+              change('')
+              captureAnalyticsEvent('sheet_search_clear_button_clicked', {
+                previous_query_length: value.length,
+                result_count: resultCount,
+              })
+            }}
+            size="small"
+            aria-label={m.sheet_searchClear({}, { locale })}
+          >
+            <IconMdiClose aria-hidden="true" />
+          </IconButton>
+        ),
+      }}
+      data-attr="sheet-search"
+    />
+  )
+}
+
 const SheetListInnerContent: FC<{
   search: SearchParams
   seedSheets: readonly SearchQuerySeedSheet[]
   hub?: ReactNode
 }> = ({ search, seedSheets, hub }) => {
-  const { t, i18n } = useTranslation(['sheet', 'root'])
+  const locale = useLocale()
   const { data: sheets, isLoading } = useSheets()
   const version = useAppContextDXDataVersion()
   const [sortFilterOptions, setSortFilterOptions] = useState<SheetSortFilterForm>(getDefaultSheetSortFilterForm)
@@ -242,31 +365,79 @@ const SheetListInnerContent: FC<{
   const [hydrated, setHydrated] = useState(false)
   const sortFilterContentId = useId()
   const navigate = useNavigate()
+  const [layout, setLayout] = useSheetListLayout()
+  const slots = layoutSlots(layout)
+  const changeLayout = useCallback(
+    (next: SheetListLayout) => {
+      if (layout) captureAnalyticsEvent('sheet_list_layout_changed', { layout: next, previous_layout: layout })
+      setLayout(next)
+    },
+    [layout, setLayout],
+  )
 
   const query = search.q ?? ''
-  const [inputQuery, setInputQuery] = useState(query)
-  const { results, elapsed: searchElapsed } = useFilteredSheets(inputQuery)
+  // The query the results follow. The field (SheetSearchField) keeps its own text and hands each keystroke over in a
+  // transition, so typing repaints only the field; the search, filtering, list and the ?q= navigation (which
+  // re-renders the route) run behind the paint, and a newer keystroke interrupts a stale render. Keystroke INP was
+  // ~200-300ms at 4x CPU with all of it in the input event
+  const [resultsQuery, setResultsQuery] = useState(query)
+  const [externalRevision, setExternalRevision] = useState(0)
+  const { results, elapsed: searchElapsed } = useFilteredSheets(resultsQuery)
+
+  // The ?q= update waits until typing pauses. The router's state is an external store, so its update renders
+  // synchronously, with the route and this list: done on every keystroke, it pulled the whole re-render back into
+  // the input event, and a keystroke cost 300-400ms at 6x CPU
+  const urlQueryTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  // The ?q= writes this list has under way. While one is, the route reporting its query is that write arriving
+  // (possibly after newer typing), not a navigation, and the draft stays. Any other value is an outside change (Back,
+  // a link): it cancels a pending write and replaces both the results and the field's text. A write retires when its
+  // navigation settles, whether or not the route ever reports it
+  const pendingWrites = useRef<{ query: string }[]>([])
+  const routeQuery = useRef(query)
+  routeQuery.current = query
+  useEffect(() => () => clearTimeout(urlQueryTimer.current), [])
 
   useUpdateEffect(() => {
-    setInputQuery(query)
+    if (pendingWrites.current.some((write) => write.query === query)) return
+    clearTimeout(urlQueryTimer.current)
+    pendingWrites.current = []
+    setResultsQuery(query)
+    setExternalRevision((revision) => revision + 1)
   }, [query])
 
   useEffectOnce(() => {
     setHydrated(true)
   })
 
+  /** Called in a transition by the search field */
   const updateQuery = useCallback(
     (nextQuery: string) => {
-      setInputQuery(nextQuery)
-      navigate({
-        to: '/',
-        search: (prev: Record<string, unknown>) => ({
-          ...prev,
-          q: nextQuery || undefined,
-        }),
-        replace: true,
-        resetScroll: false,
-      })
+      setResultsQuery(nextQuery)
+      clearTimeout(urlQueryTimer.current)
+      urlQueryTimer.current = setTimeout(() => {
+        // The URL will already have it (typing returned to it): no write, and nothing would report one. That is
+        // the newest outstanding write's query, or with none, the route's: while an older write waits for the
+        // loader, the route still reports the query before it
+        if (nextQuery === (pendingWrites.current.at(-1)?.query ?? routeQuery.current)) return
+        const write = { query: nextQuery }
+        pendingWrites.current.push(write)
+        void Promise.resolve(
+          navigate({
+            to: '/',
+            search: (prev: Record<string, unknown>) => ({
+              ...prev,
+              q: nextQuery || undefined,
+            }),
+            replace: true,
+            resetScroll: false,
+          }),
+        ).finally(() => {
+          // After the route's render of it (and its effect above) has run
+          setTimeout(() => {
+            pendingWrites.current = pendingWrites.current.filter((pending) => pending !== write)
+          })
+        })
+      }, URL_QUERY_DELAY_MS)
     },
     [navigate],
   )
@@ -298,7 +469,7 @@ const SheetListInnerContent: FC<{
   }, [search, catalog])
   const activeSheetId = activeSheet?.id ?? null
 
-  const handleSheetDialogChange = useCallback(
+  const navigateSheetDialog = useCallback(
     (sheet: FlattenedSheet | null) => {
       if (sheet) {
         navigate({
@@ -328,54 +499,65 @@ const SheetListInnerContent: FC<{
     },
     [navigate],
   )
+  // Opening or closing the chart dialog is a navigation (?songId&type&difficulty), and the router's update renders the
+  // whole route synchronously: it runs after the tap (or Escape) has painted, not in its event (~150-300ms at 4x CPU)
+  const cancelDialogNavigation = useRef<() => void>(undefined)
+  useEffect(() => () => cancelDialogNavigation.current?.(), [])
+  const handleSheetDialogChange = useCallback(
+    (sheet: FlattenedSheet | null) => {
+      cancelDialogNavigation.current?.()
+      cancelDialogNavigation.current = afterNextPaint(() => navigateSheetDialog(sheet))
+    },
+    [navigateSheetDialog],
+  )
 
   const { filteredResults, elapsed: filteringElapsed } = useMemo(() => {
     const startTime = performance.now()
     const sortFilteredResults = getSortFilteredSheets(
       results,
       sortFilterOptions,
-      inputQuery,
+      resultsQuery,
       version,
       songCatalogPositions,
     )
     const elapsed = performance.now() - startTime
     Sentry.metrics.distribution('sheet_filter.duration', elapsed, {
       unit: 'millisecond',
-      attributes: { has_query: String(!!inputQuery), has_filters: String(!!sortFilterOptions) },
+      attributes: { has_query: String(!!resultsQuery), has_filters: String(!!sortFilterOptions) },
     })
 
     return {
       filteredResults: sortFilteredResults,
       elapsed,
     }
-  }, [results, sortFilterOptions, inputQuery, version, songCatalogPositions])
-  const showSeedResults = isLoading && inputQuery && seedSheets.length > 0
+  }, [results, sortFilterOptions, resultsQuery, version, songCatalogPositions])
+  const showSeedResults = isLoading && resultsQuery && seedSheets.length > 0
   // Until the complete catalog loads (and during SSR), the default list shows its first rows from the page's slice
   const firstScreenSheets = useMemo(
-    () => (isLoading && !inputQuery ? getSheetListFirstScreen(catalogDocument, version, sortFilterOptions) : null),
-    [isLoading, inputQuery, catalogDocument, version, sortFilterOptions],
+    () => (isLoading && !resultsQuery ? getSheetListFirstScreen(catalogDocument, version, sortFilterOptions) : null),
+    [isLoading, resultsQuery, catalogDocument, version, sortFilterOptions],
   )
   const listSheets = isLoading ? (firstScreenSheets?.length ? firstScreenSheets : null) : filteredResults
   const summaryTotal = sheets?.length ?? filteredResults.length
   const summaryProgress = summaryTotal > 0 ? filteredResults.length / summaryTotal : 0
   // The locale comes from the request (cookie or header), so server and client format counts identically
-  const numberFormat = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language])
+  const numberFormat = useMemo(() => new Intl.NumberFormat(locale), [locale])
   const summaryFound = isLoading ? '…' : numberFormat.format(filteredResults.length)
   const summaryCount = isLoading ? '…' : numberFormat.format(sheets?.length ?? 0)
 
   return (
-    <SheetDetailsContextProvider queryActive={!!inputQuery}>
+    <SheetDetailsContextProvider queryActive={!!resultsQuery}>
       {sortFilterOptions && !isLoading && (
         <SheetSearchAnalytics
-          key={`${inputQuery}:${filteredResults.length}:${JSON.stringify(sortFilterOptions)}`}
-          query={inputQuery}
+          key={`${resultsQuery}:${filteredResults.length}:${JSON.stringify(sortFilterOptions)}`}
+          query={resultsQuery}
           resultCount={filteredResults.length}
           durationMs={searchElapsed + filteringElapsed}
           sortFilter={sortFilterOptions}
         />
       )}
       <div className="flex-container pb-global">
-        <h1 className="sr-only">{t('root:pages.search.title')}</h1>
+        <h1 className="sr-only">{m.root_pages_search_title({}, { locale })}</h1>
 
         <ResponsiveDialog
           open={!!activeSheet}
@@ -395,46 +577,16 @@ const SheetListInnerContent: FC<{
             expanded={sortFilterExpanded}
             contentId={sortFilterContentId}
             pending={sortFilterPending}
+            activeCount={countActiveSortFilters(sortFilterOptions)}
             onToggle={toggleSortFilter}
             className="self-stretch"
           />
 
-          <TextField
-            className="min-w-0 flex-1"
-            label={t('sheet:search')}
-            placeholder={t('sheet:search-placeholder')}
-            variant="outlined"
-            value={inputQuery}
-            fullWidth
-            // Over the background art the field needs the blurred material, not just the inset tint
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'var(--glass-thin-bg)',
-                backdropFilter: 'var(--glass-blur-thin)',
-                WebkitBackdropFilter: 'var(--glass-blur-thin)',
-              },
-            }}
-            onChange={(e) => {
-              updateQuery(e.target.value)
-            }}
-            InputProps={{
-              endAdornment: inputQuery && (
-                <IconButton
-                  onClick={() => {
-                    updateQuery('')
-                    captureAnalyticsEvent('sheet_search_clear_button_clicked', {
-                      previous_query_length: inputQuery.length,
-                      result_count: filteredResults.length,
-                    })
-                  }}
-                  size="small"
-                  aria-label={t('sheet:search-clear')}
-                >
-                  <IconMdiClose aria-hidden="true" />
-                </IconButton>
-              ),
-            }}
-            data-attr="sheet-search"
+          <SheetSearchField
+            query={resultsQuery}
+            externalRevision={externalRevision}
+            onQueryChange={updateQuery}
+            resultCount={filteredResults.length}
           />
         </div>
 
@@ -443,34 +595,52 @@ const SheetListInnerContent: FC<{
           contentId={sortFilterContentId}
           showDefaultTrigger={false}
           onChange={(v) => {
-            setSortFilterOptions(v)
+            // A filter chip or sort change re-filters and re-renders the whole list (~150-250ms at 4x CPU): in a
+            // transition, the control paints its new state first, and a newer change interrupts a stale render
+            startTransition(() => setSortFilterOptions(v))
           }}
         />
 
-        {!inputQuery && hub}
+        {!resultsQuery && hub}
 
-        <div className="glass-thin relative overflow-hidden px-4 py-2 text-sm font-semibold text-fg-1">
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 origin-left bg-accent-subtle transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none"
-            style={{ transform: `scaleX(${summaryProgress})` }}
-          />
-          <div className="relative z-1 flex items-center gap-2" aria-hidden="true">
-            <MdiIconInfo className="shrink-0 text-accent-strong" />
-            <div className="tabular-nums">
-              {t('sheet:search-summary', {
-                found: summaryFound,
-                total: summaryCount,
-                elapsed: hydrated ? (searchElapsed + filteringElapsed).toFixed(1) : '…',
-              })}
+        {/* What the page is, in words: the hub above is links and covers, which say little to a first-time visitor
+            or a crawler. Hidden while a query runs, like the hub; the query comes from the URL, so SSR matches. */}
+        {!resultsQuery && (
+          <p className="m-0 max-w-[72ch] self-start px-1 text-sm leading-relaxed text-fg-2 text-pretty">
+            {m.root_pages_search_introduction({}, { locale })}
+          </p>
+        )}
+
+        {/* The result count, with the list / grid switch beside it, as in the iOS app's results header */}
+        <div className="flex w-full items-stretch gap-2">
+          <div className="glass-thin relative min-w-0 flex-1 overflow-hidden px-4 py-2 text-sm font-semibold text-fg-1">
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 origin-left bg-accent-subtle transition-transform duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none"
+              style={{ transform: `scaleX(${summaryProgress})` }}
+            />
+            <div className="relative z-1 flex h-full items-center gap-2" aria-hidden="true">
+              <MdiIconInfo className="shrink-0 text-accent-strong" />
+              <div className="min-w-0 num">
+                {m.sheet_searchSummary(
+                  {
+                    found: summaryFound,
+                    total: summaryCount,
+                    elapsed: hydrated ? (searchElapsed + filteringElapsed).toFixed(1) : '…',
+                  },
+                  { locale },
+                )}
+              </div>
             </div>
+            {/* Rendered empty first and always mounted, so each new count is announced politely */}
+            <output aria-live="polite" className="sr-only">
+              {hydrated && !isLoading
+                ? m.sheet_searchSummaryStatus({ found: summaryFound, total: summaryCount }, { locale })
+                : ''}
+            </output>
           </div>
-          {/* Rendered empty first and always mounted, so each new count is announced politely */}
-          <output aria-live="polite" className="sr-only">
-            {hydrated && !isLoading
-              ? t('sheet:search-summary-status', { found: summaryFound, total: summaryCount })
-              : ''}
-          </output>
+
+          <SheetListLayoutToggle layout={layout} onChange={changeLayout} />
         </div>
 
         {!listSheets ? (
@@ -480,45 +650,55 @@ const SheetListInnerContent: FC<{
               <SearchQuerySeedList sheets={seedSheets} />
             </SheetRowLayoutContext.Provider>
           ) : (
-            <MaterialSurface className="flex flex-col w-full p-1" aria-hidden="true">
-              {skeletonWidths.map((width, i) => (
-                <div
-                  // 78px stacked rows, then the 56px one-line table rows of SheetListContainer from lg
-                  className="animate-pulse flex items-center justify-start gap-4 w-full h-[78px] lg:h-14 px-3 py-2"
-                  // oxlint-disable-next-line react/no-array-index-key -- index is stable
-                  key={i}
-                  style={{
-                    animationDelay: `${i * 40}ms`,
-                  }}
-                >
-                  <div className="h-12 w-12 min-w-[3rem] min-h-[3rem] lg:h-10 lg:w-10 lg:min-w-10 lg:min-h-10 rounded-[var(--radius-xs)] bg-black/8" />
-                  <div className="flex flex-col gap-1">
-                    <div className="bg-black/8 h-5 mb-1 rounded-[var(--radius-xs)]" style={{ width: `${width}rem` }}>
-                      &nbsp;
-                    </div>
-                    <div className="w-24 bg-black/5 h-3 rounded-[var(--radius-xs)]">&nbsp;</div>
-                  </div>
-
-                  <div className="flex-1" />
-                  <div className="w-10 bg-black/8 h-6 mr-2 rounded-[var(--radius-xs)]">&nbsp;</div>
+            <>
+              {slots.list !== null && (
+                <div className={slots.list}>
+                  <SheetListSkeleton />
                 </div>
-              ))}
-            </MaterialSurface>
+              )}
+              {slots.grid !== null && (
+                <div className={slots.grid}>
+                  <SheetGridSkeleton />
+                </div>
+              )}
+            </>
           )
         ) : listSheets.length === 0 ? (
           <MaterialSurface className="flex w-full flex-col items-center gap-1 px-4 py-8 text-center">
-            <p className="m-0 text-base font-semibold text-fg-1">{t('sheet:search-empty.title')}</p>
-            <p className="m-0 max-w-[50ch] text-sm text-fg-2 text-pretty">{t('sheet:search-empty.description')}</p>
+            <p className="m-0 text-base font-semibold text-fg-1">{m.sheet_searchEmpty_title({}, { locale })}</p>
+            <p className="m-0 max-w-[50ch] text-sm text-fg-2 text-pretty">
+              {m.sheet_searchEmpty_description({}, { locale })}
+            </p>
           </MaterialSurface>
         ) : (
-          <SheetListContainer
-            sheets={listSheets}
-            activeSheetId={activeSheetId}
-            onSheetDialogChange={handleSheetDialogChange}
-            analyticsSource="search_results"
-            analyticsQueryPresent={!!inputQuery}
-            analyticsResultCount={listSheets.length}
-          />
+          // Each layout keeps its own slot, so the one that stays when the other drops out after hydration is not
+          // remounted
+          <>
+            {slots.list !== null && (
+              <div className={slots.list}>
+                <SheetListContainer
+                  sheets={listSheets}
+                  activeSheetId={activeSheetId}
+                  onSheetDialogChange={handleSheetDialogChange}
+                  analyticsSource="search_results"
+                  analyticsQueryPresent={!!resultsQuery}
+                  analyticsResultCount={listSheets.length}
+                />
+              </div>
+            )}
+            {slots.grid !== null && (
+              <div className={slots.grid}>
+                <SheetGridContainer
+                  sheets={listSheets}
+                  activeSheetId={activeSheetId}
+                  onSheetDialogChange={handleSheetDialogChange}
+                  analyticsSource="search_results"
+                  analyticsQueryPresent={!!resultsQuery}
+                  analyticsResultCount={listSheets.length}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </SheetDetailsContextProvider>

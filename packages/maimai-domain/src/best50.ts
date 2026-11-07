@@ -1,6 +1,7 @@
 import { VERSION_ID_MAP, VersionEnum, type VersionEnum as Version } from '@gekichumai/dxdata'
 import { match } from 'ts-pattern'
 import type { SongCatalog } from './song-catalog'
+import { LATEST_REGION_VERSIONS } from './region-versions.ts'
 import type { Best50Bucket, ComboFlag, RatingEntry, Region, VersionedSheet } from './types'
 
 export type RatingRank =
@@ -57,6 +58,11 @@ export interface CalculatedRatingEntry {
   sheet: VersionedSheet
   rating: RatingAward
   bucket: 'b15' | 'b35' | null
+  /**
+   * The bucket the chart competes in, whether or not it made the cut: a Diving-Fish hint (kept across duplicate plays
+   * of the chart) wins, otherwise the chart version decides. Null when the chart counts for neither bucket.
+   */
+  competingBucket?: Best50Bucket | null
 }
 
 interface BucketAwareCalculatedRatingEntry extends CalculatedRatingEntry {
@@ -164,6 +170,7 @@ export function calculateBest50({
       sheet: entry.sheet,
       rating: entry.rating,
       bucket: getSelectedBucket(b15Ids.has(entry.entry.sheetId), b35Ids.has(entry.entry.sheetId)),
+      competingBucket: getEntryBucket(entry, version, region),
     }),
   )
   const b15 = allEntries.filter((entry) => entry.bucket === 'b15').sort(byRatingDesc)
@@ -233,6 +240,9 @@ export function isB15Sheet(sheetVersion: Version, appVersion: Version, region: R
   const appVersionId = VERSION_ID_MAP.get(appVersion)
   const sheetVersionId = VERSION_ID_MAP.get(sheetVersion)
   if (appVersionId === undefined || sheetVersionId === undefined) return false
+  // intl and cn get some charts later than Japan: at the server's current version, one whose Japanese version is newer
+  // was added there during this version, so it is new there. A past version never had it.
+  if (region !== 'jp' && appVersion === LATEST_REGION_VERSIONS[region] && sheetVersionId > appVersionId) return true
   const useCircleB15 = appVersionId >= VERSION_ID_MAP.get(VersionEnum.CiRCLE)!
   return useCircleB15
     ? appVersionId === sheetVersionId || appVersionId === sheetVersionId + 1

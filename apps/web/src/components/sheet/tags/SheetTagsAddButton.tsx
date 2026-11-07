@@ -2,7 +2,6 @@ import { Button, Chip, Dialog, Grow } from '@mui/material'
 import clsx from 'clsx'
 import { type CSSProperties, type FC, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
 import IconMdiTagPlus from '~icons/mdi/tag-plus'
 import { useAuth } from '../../../hooks/useAuth'
@@ -15,12 +14,15 @@ import { chipPresenceTransitions } from '../sheetMotion'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import { Markdown } from '../../global/Markdown'
 import { SheetListItemContent } from '../SheetListItem'
+import { withAttachedTag } from '../../../models/useCombinedTags'
 import { useSheetTags } from './useSheetTags'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const SheetTagsAddDialog: FC<{
   sheet: FlattenedSheet
 }> = ({ sheet }) => {
-  const { t } = useTranslation(['sheet', 'auth'])
+  const locale = useLocale()
   const [pending, setPending] = useState(false)
   const localizeMessage = useLocalizedMessageTranslation()
   const { session, openLoginDialog, LoginDialog } = useAuth()
@@ -53,14 +55,24 @@ const SheetTagsAddDialog: FC<{
         tagId: tagId,
       })
 
-      toast.success(t('sheet:tags.add.toast-success'), {
+      toast.success(m.sheet_tags_add_toastSuccess({}, { locale }), {
         id: `tag-add-success:${tagId}`,
       })
-      mutateExistingTags()
+      void mutateExistingTags(
+        (current) =>
+          withAttachedTag(current, {
+            song_id: sheet.songId,
+            sheet_id: sheet.id,
+            sheet_type: sheet.type,
+            sheet_difficulty: sheet.difficulty,
+            tag_id: tagId,
+          }),
+        { revalidate: false },
+      )
     } catch (error) {
       console.error('Failed to add tag', error)
 
-      toast.error(t('sheet:tags.add.toast-failed', { error: formatErrorMessage(error) }), {
+      toast.error(m.sheet_tags_add_toastFailed({ error: formatErrorMessage(error) }, { locale }), {
         id: `tag-add-failed:${tagId}`,
       })
     } finally {
@@ -71,7 +83,7 @@ const SheetTagsAddDialog: FC<{
   return (
     <div className="flex flex-col gap-2 p-4 relative">
       <LoginDialog />
-      <h2 className="m-0 text-lg font-semibold">{t('sheet:tags.add.title')}</h2>
+      <h2 className="m-0 text-lg font-semibold">{m.sheet_tags_add_title({}, { locale })}</h2>
       <div className="text-lg">
         <SheetListItemContent sheet={sheet} />
       </div>
@@ -145,9 +157,9 @@ const SheetTagsAddDialog: FC<{
       {!session && (
         // Signed out: a real button on a scrim over the tag picker, reachable by keyboard and named by its text
         <div className="absolute inset-0 z-1 flex flex-col items-center justify-center gap-2 bg-white/85 p-8 text-center">
-          <p className="m-0 text-sm text-fg-1">{t('sheet:tags.add.login-required')}</p>
+          <p className="m-0 text-sm text-fg-1">{m.sheet_tags_add_loginRequired({}, { locale })}</p>
           <Button variant="contained" onClick={openLoginDialog}>
-            {t('auth:login.label')}
+            {m.auth_login_label({}, { locale })}
           </Button>
         </div>
       )}
@@ -156,7 +168,7 @@ const SheetTagsAddDialog: FC<{
 }
 
 export const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const [open, setOpen] = useState(false)
 
   return (
@@ -174,7 +186,7 @@ export const SheetTagsAddButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => 
       >
         <IconMdiTagPlus aria-hidden="true" className="h-4 w-4" />
 
-        <span className="text-xs font-semibold">{t('sheet:tags.add.button')}</span>
+        <span className="text-xs font-semibold">{m.sheet_tags_add_button({}, { locale })}</span>
       </MotionButtonBase>
     </>
   )

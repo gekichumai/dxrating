@@ -348,6 +348,8 @@ export const credentialHygiene: MiddlewareHandler = async (c, next) => {
   if (log) c.set('log', scrubbingLogger(log, { netRoute }))
   try {
     await next()
+    // evlog logs the error Hono kept (`c.error`) with its own logger once the handlers return: keep a scrubbed copy
+    if (c.error) c.error = scrubValue(c.error, { netRoute })
   } finally {
     release()
   }

@@ -1,9 +1,9 @@
 import { TypeEnum } from '@gekichumai/dxdata'
-import type { VersionedSheet } from '@gekichumai/maimai-domain'
+import { dxScoreProgress, maxDxScore, type VersionedSheet } from '@gekichumai/maimai-domain'
 import { Link } from '@tanstack/react-router'
 import clsx from 'clsx'
-import { type CSSProperties, type FC, useCallback, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { type CSSProperties, type FC, useMemo } from 'react'
+import IconMdiStarFourPoints from '~icons/mdi/star-four-points'
 import { useCompleteSongCatalog } from '@/catalog/CatalogContext'
 import {
   CONSTANT_TABLE_LEVELS,
@@ -25,6 +25,8 @@ import {
   ScorePageHeader,
 } from '@/components/scores/ScorePage'
 import { useUserRecords } from '@/models/useUserRecords'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 /** Matrix columns; each cell links into the constant table with that target */
 export const PROGRESS_COLUMNS: CompletionTarget[] = ['s', 'ss', 'sss', 'sssp', 'fc', 'ap', 'app', 'fsd']
@@ -69,91 +71,222 @@ export function buildProgressRows(
   return [...rows.values()]
 }
 
-const targetSearch = (target: CompletionTarget) => (target === DEFAULT_COMPLETION_TARGET ? {} : { target })
+/** DX score star columns: charts at or above each star, as the grade columns count a better result too */
+export const DX_STAR_COLUMNS = [1, 2, 3, 4, 5] as const
 
-/**
- * Whether a horizontal scroller still has content past its end edge, to show the edge fade only then. A callback ref,
- * because the scroller mounts only once the records are in, after the first render.
- */
-function useOverflowEnd<T extends HTMLElement>() {
-  const [hasMore, setHasMore] = useState(false)
-  const ref = useCallback((el: T | null) => {
-    if (!el) return
-    const measure = () => setHasMore(el.scrollWidth - el.clientWidth - Math.abs(el.scrollLeft) > 1)
-    measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(el)
-    // The table can widen without the scroller resizing (the chart list finishing loading)
-    if (el.firstElementChild) observer.observe(el.firstElementChild)
-    el.addEventListener('scroll', measure, { passive: true })
-    return () => {
-      observer.disconnect()
-      el.removeEventListener('scroll', measure)
-    }
-  }, [])
-  return { ref, hasMore }
+export interface DxStarRow {
+  level: ConstantTableLevel
+  total: number
+  /** Played charts whose best play reports a DX score */
+  withDxScore: number
+  /** Charts at ✦n or above, index n − 1 */
+  atLeast: number[]
+  /** Mean share of the maximum over `withDxScore` charts, in percent; null when there are none */
+  averagePercent: number | null
 }
+
+export function buildDxStarRows(
+  sheets: readonly VersionedSheet[],
+  records: ReadonlyMap<string, { best: { dxScore: number | null } }>,
+): DxStarRow[] {
+  const rows = new Map<string, Omit<DxStarRow, 'averagePercent'> & { percentSum: number }>(
+    CONSTANT_TABLE_LEVELS.map((level) => [
+      level,
+      { level, total: 0, withDxScore: 0, atLeast: DX_STAR_COLUMNS.map(() => 0), percentSum: 0 },
+    ]),
+  )
+  for (const sheet of sheets) {
+    const row = rows.get(sheet.level)
+    if (!row || !isTableSheet(sheet)) continue
+    row.total++
+    const progress = dxScoreProgress(records.get(sheet.id)?.best.dxScore, maxDxScore(sheet.noteCounts))
+    if (!progress) continue
+    row.withDxScore++
+    // The exact share: truncating each chart before averaging would bias the mean down
+    row.percentSum += (progress.dxScore / progress.max) * 100
+    for (let star = 1; star <= progress.stars; star++) row.atLeast[star - 1]!++
+  }
+  return [...rows.values()].map(({ percentSum, ...row }) => ({
+    ...row,
+    // Truncate to two decimals, with a tolerance far below 0.01% so float noise can't pull an exact value such as
+    // 95.2 (1071 / 1125) down to 95.19
+    averagePercent: row.withDxScore ? Math.floor((percentSum / row.withDxScore) * 100 + 1e-7) / 100 : null,
+  }))
+}
+
+const targetSearch = (target: CompletionTarget) => (target === DEFAULT_COMPLETION_TARGET ? {} : { target })
 
 // The level column stays put while the counts scroll sideways: glass over the scrolled cells, with an edge line
 const stickyColumn =
   'sticky left-0 z-1 bg-[var(--glass-bg)] backdrop-blur-md shadow-[inset_-1px_0_0_var(--glass-border)]'
 
 export const ProgressSummaryPage: FC = () => {
-  const { t } = useTranslation(['completion'])
+  const locale = useLocale()
   // Totals need every chart: the route's catalog slice has none, so wait for the complete catalog
   const catalog = useCompleteSongCatalog()
   const { bySheetId, isDemo } = useUserRecords()
   const rows = useMemo(() => (catalog ? buildProgressRows(catalog.sheets, bySheetId) : null), [catalog, bySheetId])
-
-  const scroller = useOverflowEnd<HTMLDivElement>()
+  const dxRows = useMemo(() => (catalog ? buildDxStarRows(catalog.sheets, bySheetId) : null), [catalog, bySheetId])
 
   return (
-    <ScorePageFrame width="5xl">
-      <ScorePageHeader title={t('completion:progress.title')} description={t('completion:progress.intro')}>
-        {isDemo && <DemoScoresNotice className="mt-3">{t('completion:demo')}</DemoScoresNotice>}
+    <ScorePageFrame width="me">
+      <ScorePageHeader
+        title={m.completion_progress_title({}, { locale })}
+        description={m.completion_progress_intro({}, { locale })}
+      >
+        {isDemo && <DemoScoresNotice className="mt-3">{m.completion_demo({}, { locale })}</DemoScoresNotice>}
       </ScorePageHeader>
 
       {bySheetId.size === 0 ? (
         <NoScoresState
-          title={t('completion:progress.empty-title')}
-          description={t('completion:progress.empty')}
-          action={<ImportScoresLink>{t('completion:progress.import')}</ImportScoresLink>}
+          title={m.completion_progress_emptyTitle({}, { locale })}
+          description={m.completion_progress_empty({}, { locale })}
+          action={<ImportScoresLink>{m.completion_progress_import({}, { locale })}</ImportScoresLink>}
         />
       ) : !rows ? (
         <MaterialSurface className="p-4 text-sm text-fg-2">
-          <output>{t('completion:progress.loading')}</output>
+          <output>{m.completion_progress_loading({}, { locale })}</output>
         </MaterialSurface>
       ) : (
-        <MaterialSurface
-          ref={scroller.ref}
-          className={clsx(
-            'w-full overflow-x-auto overscroll-x-contain',
-            scroller.hasMore && '[mask-image:linear-gradient(to_right,black_calc(100%-24px),transparent)]',
-          )}
-        >
-          {/* Fixed layout from md: the eight target columns share the width equally, so the heat cells form an even
-              grid. Below md the table keeps its natural width and scrolls sideways under the sticky level column */}
+        <MaterialSurface className="w-full overflow-hidden">
+          <div className="scroll-fade-x scroll-fade-x-end-only overflow-x-auto overscroll-x-contain">
+            {/* Fixed layout from md: the eight target columns share the width equally, so the heat cells form an even
+                grid. Below md the table keeps its natural width and scrolls sideways under the sticky level column */}
+            <table className="w-full text-sm border-collapse md:table-fixed">
+              <colgroup>
+                <col className="md:w-24" />
+                <col className="md:w-28" />
+                {PROGRESS_COLUMNS.map((column) => (
+                  <col key={column} />
+                ))}
+              </colgroup>
+              <thead className="text-xs text-left text-fg-2">
+                <tr>
+                  <th scope="col" className={clsx('px-3 py-2 font-semibold', stickyColumn)}>
+                    {m.completion_progress_level({}, { locale })}
+                  </th>
+                  <th scope="col" className="px-2 py-2 font-semibold text-right whitespace-nowrap">
+                    {m.completion_progress_played({}, { locale })}
+                  </th>
+                  {PROGRESS_COLUMNS.map((column) => (
+                    <th key={column} scope="col" className="px-2 py-2 font-semibold text-right whitespace-nowrap">
+                      {COMPLETION_TARGET_LABELS[column]}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr
+                    key={row.level}
+                    className="border-t border-solid border-[var(--glass-border)] border-x-0 border-b-0"
+                  >
+                    <th scope="row" className={clsx('px-1 py-1 text-left whitespace-nowrap', stickyColumn)}>
+                      <Link
+                        to="/constants/$level"
+                        params={{ level: constantTableSlug(row.level) }}
+                        className="block px-2 py-1 rounded-[var(--radius-sm)] font-semibold text-accent-strong no-underline hover:underline"
+                      >
+                        Lv.{row.level}
+                      </Link>
+                    </th>
+                    <td className="px-2 py-2 text-right num whitespace-nowrap text-fg-1">
+                      {row.played}
+                      <span className="text-fg-2">/{row.total}</span>
+                    </td>
+                    {PROGRESS_COLUMNS.map((column) => {
+                      const count = row.counts[column]
+                      const ratio = row.total ? count / row.total : 0
+                      return (
+                        <td key={column} className="px-1 py-1 text-right num">
+                          <Link
+                            to="/constants/$level"
+                            params={{ level: constantTableSlug(row.level) }}
+                            search={targetSearch(column)}
+                            // Fill strength is the share cleared, tinted with the version accent
+                            style={
+                              count
+                                ? ({ '--fill': `${Math.round((0.08 + ratio * 0.34) * 100)}%` } as CSSProperties)
+                                : undefined
+                            }
+                            className={clsx(
+                              'block px-1.5 py-1 rounded-[var(--radius-sm)] no-underline text-fg-1',
+                              'outline-offset-[-1px] hover:outline hover:outline-1 hover:outline-[var(--accent-strong)]',
+                              count && 'bg-[color-mix(in_oklab,var(--accent)_var(--fill),transparent)]',
+                            )}
+                            aria-label={m.completion_progress_cellLabel(
+                              {
+                                level: row.level,
+                                target: COMPLETION_TARGET_LABELS[column],
+                                count,
+                                total: row.total,
+                              },
+                              { locale },
+                            )}
+                          >
+                            {count}
+                          </Link>
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </MaterialSurface>
+      )}
+
+      {rows && dxRows && dxRows.some((row) => row.withDxScore > 0) && <DxStarTable rows={dxRows} />}
+    </ScorePageFrame>
+  )
+}
+/**
+ * DX score stars per level, under the grade matrix: charts at or above each star, filled like the grade cells, and
+ * the mean share of the maximum. Only charts whose best play reports a DX score count; the played column says how
+ * many that is. The constant tables have no DX score target, so these cells are not links.
+ */
+const DxStarTable: FC<{ rows: DxStarRow[] }> = ({ rows }) => {
+  const locale = useLocale()
+  return (
+    <section aria-labelledby="dx-star-progress-title" className="mt-6">
+      <h2 id="dx-star-progress-title" className="mb-1 text-base font-semibold text-fg-1">
+        {m.completion_progress_dx_title({}, { locale })}
+      </h2>
+      <p className="mb-3 text-sm text-fg-2 text-pretty max-w-[65ch]">
+        {m.completion_progress_dx_intro({}, { locale })}
+      </p>
+      <MaterialSurface className="w-full overflow-hidden">
+        <div className="scroll-fade-x scroll-fade-x-end-only overflow-x-auto overscroll-x-contain">
           <table className="w-full text-sm border-collapse md:table-fixed">
             <colgroup>
               <col className="md:w-24" />
               <col className="md:w-28" />
-              {PROGRESS_COLUMNS.map((column) => (
-                <col key={column} />
+              {DX_STAR_COLUMNS.map((star) => (
+                <col key={star} />
               ))}
+              <col className="md:w-28" />
             </colgroup>
             <thead className="text-xs text-left text-fg-2">
               <tr>
                 <th scope="col" className={clsx('px-3 py-2 font-semibold', stickyColumn)}>
-                  {t('completion:progress.level')}
+                  {m.completion_progress_level({}, { locale })}
                 </th>
                 <th scope="col" className="px-2 py-2 font-semibold text-right whitespace-nowrap">
-                  {t('completion:progress.played')}
+                  {m.completion_progress_dx_withScore({}, { locale })}
                 </th>
-                {PROGRESS_COLUMNS.map((column) => (
-                  <th key={column} scope="col" className="px-2 py-2 font-semibold text-right whitespace-nowrap">
-                    {COMPLETION_TARGET_LABELS[column]}
+                {DX_STAR_COLUMNS.map((star) => (
+                  <th key={star} scope="col" className="px-2 py-2 font-semibold text-right whitespace-nowrap">
+                    <span className="inline-flex items-center justify-end gap-px text-[#8A5A00] dark:text-[#F2C94C]">
+                      <IconMdiStarFourPoints aria-hidden className="size-[0.95em]" />
+                      <span aria-hidden>{star}</span>
+                    </span>
+                    <span className="sr-only">{m.completion_progress_dx_star({ star }, { locale })}</span>
                   </th>
                 ))}
+                <th scope="col" className="px-2 py-2 font-semibold text-right whitespace-nowrap">
+                  {m.completion_progress_dx_average({}, { locale })}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -162,57 +295,60 @@ export const ProgressSummaryPage: FC = () => {
                   key={row.level}
                   className="border-t border-solid border-[var(--glass-border)] border-x-0 border-b-0"
                 >
-                  <th scope="row" className={clsx('px-1 py-1 text-left whitespace-nowrap', stickyColumn)}>
-                    <Link
-                      to="/constants/$level"
-                      params={{ level: constantTableSlug(row.level) }}
-                      className="block px-2 py-1 rounded-[var(--radius-sm)] font-semibold text-accent-strong no-underline hover:underline"
-                    >
-                      Lv.{row.level}
-                    </Link>
+                  <th scope="row" className={clsx('px-3 py-2 text-left whitespace-nowrap font-semibold', stickyColumn)}>
+                    Lv.{row.level}
                   </th>
                   <td className="px-2 py-2 text-right num whitespace-nowrap text-fg-1">
-                    {row.played}
+                    {row.withDxScore}
                     <span className="text-fg-2">/{row.total}</span>
                   </td>
-                  {PROGRESS_COLUMNS.map((column) => {
-                    const count = row.counts[column]
+                  {DX_STAR_COLUMNS.map((star, index) => {
+                    const count = row.atLeast[index]!
                     const ratio = row.total ? count / row.total : 0
                     return (
-                      <td key={column} className="px-1 py-1 text-right num">
-                        <Link
-                          to="/constants/$level"
-                          params={{ level: constantTableSlug(row.level) }}
-                          search={targetSearch(column)}
-                          // Fill strength is the share cleared, tinted with the version accent
+                      <td key={star} className="px-1 py-1 text-right num">
+                        <span
                           style={
                             count
                               ? ({ '--fill': `${Math.round((0.08 + ratio * 0.34) * 100)}%` } as CSSProperties)
                               : undefined
                           }
                           className={clsx(
-                            'block px-1.5 py-1 rounded-[var(--radius-sm)] no-underline text-fg-1',
-                            'outline-offset-[-1px] hover:outline hover:outline-1 hover:outline-[var(--accent-strong)]',
+                            'block px-1.5 py-1 rounded-[var(--radius-sm)] text-fg-1',
                             count && 'bg-[color-mix(in_oklab,var(--accent)_var(--fill),transparent)]',
                           )}
-                          aria-label={t('completion:progress.cell-label', {
-                            level: row.level,
-                            target: COMPLETION_TARGET_LABELS[column],
-                            count,
-                            total: row.total,
-                          })}
                         >
-                          {count}
-                        </Link>
+                          <span aria-hidden>{count}</span>
+                          <span className="sr-only">
+                            {m.completion_progress_dx_cellLabel(
+                              {
+                                level: row.level,
+                                star,
+                                count,
+                                total: row.total,
+                              },
+                              { locale },
+                            )}
+                          </span>
+                        </span>
                       </td>
                     )
                   })}
+                  <td className="px-2 py-2 text-right num whitespace-nowrap text-fg-1">
+                    {row.averagePercent === null ? (
+                      <span className="text-fg-2" aria-hidden>
+                        –
+                      </span>
+                    ) : (
+                      `${row.averagePercent.toFixed(2)}%`
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </MaterialSurface>
-      )}
-    </ScorePageFrame>
+        </div>
+      </MaterialSurface>
+    </section>
   )
 }

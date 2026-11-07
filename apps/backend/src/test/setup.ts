@@ -136,6 +136,7 @@ export async function cleanDatabase() {
   await pool.query('DELETE FROM arcade.chains')
   await pool.query('DELETE FROM arcade.games')
   await pool.query('DELETE FROM arcade.crawl_runs')
+  await pool.query('DELETE FROM announcements')
   await pool.query('DELETE FROM tag_songs')
   await pool.query('DELETE FROM tags')
   await pool.query('DELETE FROM tag_groups')

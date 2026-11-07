@@ -16,6 +16,17 @@
  *   --radius-xl 16px  overlays: dialogs, drawers, menus and popovers with a 4px list inset around md items
  *   9999px            only for avatars and genuinely round controls
  * Panels whose content sits at a 12px+ padding are separate surfaces and keep their own token.
+ *
+ * Numbers (uno.config.ts rules; the faces are in index.css):
+ *   --font-sans       the locale's text stack, Torus first. Set on :root and on every [lang] rule below
+ *   --font-numeric    'DXR Numeric' (Nunito digits, tabular by default) in front of --font-sans
+ *   `num`             numbers below 20px (text-xs … text-lg): table cells, achievements, ratings in rows,
+ *                     constants, note counts, DX scores, deltas, counts. Sets --font-numeric and tabular-nums, so
+ *                     columns line up and live values do not jitter. Only digits and % + , - . / : ± × – — − switch
+ *                     font; letters and CJK stay on --font-sans
+ *   `display-num`     headline numbers at 20px and up (text-xl …): the player rating on home and on the rating
+ *                     page, the level and constant in a chart header, big stat tiles. Keeps the brand font. Torus
+ *                     has no tnum, so never put `tabular-nums` on it: it does nothing
  */
 
 :root {
@@ -36,6 +47,11 @@
   /* Status fills that carry white text (>=4.5:1): availability, unlock, success and warning badges */
   --status-positive: #047857;
   --status-warning: #b45309;
+  /*
+   * The DX chart type's multicolour lettering, from the official でらっくす plate as the iOS app draws it: red, orange,
+   * green and cyan, each stop deepened to >=4.5:1 on white (the plate's yellow cannot be, so it is skipped)
+   */
+  --dx-lettering: linear-gradient(90deg, #d32f2f, #b35600, #3e7d1c, #0277a8);
 
   /* What `bg-white/…` and `text-black/…` utilities resolve to; dark.css swaps them (uno.config.ts postprocess) */
   --surface-rgb: 255 255 255;
@@ -207,21 +223,65 @@
    Japanese titles need the Japanese glyph forms even when the page locale is Chinese; Korean breaks between words */
 html[lang|='ja'],
 [lang|='ja'] {
-  font-family:
+  --font-sans:
     Torus, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Noto Sans JP', 'Noto Sans CJK JP', Meiryo,
     system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 html[lang='zh-Hans'],
 [lang='zh-Hans'] {
-  font-family:
+  --font-sans:
     Torus, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC', system-ui,
     sans-serif;
+  font-family: var(--font-sans);
 }
 
 html[lang='zh-Hant'],
 [lang='zh-Hant'] {
-  font-family: Torus, 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', system-ui, sans-serif;
+  --font-sans: Torus, 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', system-ui, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Torus has no Vietnamese letters (ơ, ư, ạ, ế…): with Torus first, a word would switch fonts mid-word. Vietnamese
+   uses system faces that cover it on every platform, without Torus */
+html[lang|='vi'],
+[lang|='vi'] {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Thai and Burmese: Torus has neither script, so Latin words and numbers stay on Torus and the script falls back to
+   the platform's own face (macOS/iOS, Windows, Android/Linux in that order). System fonts only: no download for
+   anyone, and these rules apply only under these locales. Their stacked vowels and tone marks need taller lines */
+html[lang|='th'],
+[lang|='th'] {
+  --font-sans:
+    Torus, Thonburi, 'Sukhumvit Set', 'Leelawadee UI', Leelawadee, 'Noto Sans Thai', 'Noto Sans Thai UI', Tahoma,
+    system-ui, sans-serif;
+  font-family: var(--font-sans);
+}
+
+html[lang|='th'] {
+  line-height: 1.6;
+}
+
+html[lang|='my'],
+[lang|='my'] {
+  --font-sans:
+    Torus, 'Myanmar Sangam MN', 'Myanmar MN', 'Myanmar Text', 'Noto Sans Myanmar', 'Noto Sans Myanmar UI', Padauk,
+    system-ui, sans-serif;
+  font-family: var(--font-sans);
+}
+
+html[lang|='my'] {
+  line-height: 1.8;
+}
+
+/* Declared wherever --font-sans changes, so `num` falls back to that element's locale stack, not the root's */
+:root,
+[lang] {
+  --font-numeric: 'DXR Numeric', var(--font-sans);
 }
 
 [lang|='ko'] {
@@ -234,6 +294,25 @@ html[lang='zh-Hant'],
 :lang(ja) :is(h1, h2, h3) {
   word-break: auto-phrase;
 }
+/*
+ * Room around headers that stick to the top of the page, on iOS only. Safari 26+ treats a sticky or fixed element
+ * that runs right along the top edge as a toolbar. It then paints a flat band in the page colour under the status bar
+ * instead of letting the page scroll under it with its own soft fade. On the iOS 27 Simulator, a stuck header got the
+ * band when it was flush with or 2–4px below the top edge, or within 2px of the content width. It got the fade 8px
+ * below the edge, or inset 8px a side. 12px leaves a margin. Other browsers keep the headers flush.
+ */
+:root {
+  --sticky-top-gap: 0px;
+  --sticky-inline-inset: 0px;
+}
+
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --sticky-top-gap: 12px;
+    --sticky-inline-inset: 12px;
+  }
+}
+
 /*
  * Status-bar backdrop. With viewport-fit=cover the page runs under the iOS status bar, and the header scrolls away
  * with the page, so scrolled content (the navigation pill, cards) would show through behind the clock and battery.

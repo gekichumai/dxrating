@@ -1,8 +1,7 @@
 import { Dialog, Fade, Grow, IconButton, SwipeableDrawer, useMediaQuery } from '@mui/material'
 import clsx from 'clsx'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'motion/react'
 import { type FC, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import IconMdiAccount from '~icons/mdi/account-outline'
 import IconMdiClose from '~icons/mdi/close'
@@ -16,13 +15,16 @@ import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 import { ConnectedAccountsSection } from './ConnectedAccountsSection'
 import { ProfileSection } from './ProfileSection'
 import { SecuritySection } from './SecuritySection'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
 
 type Section = 'profile' | 'accounts' | 'security'
 
-const SECTIONS: { key: Section; icon: FC<{ className?: string }>; labelKey: string }[] = [
-  { key: 'profile', icon: IconMdiAccount, labelKey: 'auth:user-profile.profile' },
-  { key: 'accounts', icon: IconMdiLinkVariant, labelKey: 'auth:user-profile.accounts.title' },
-  { key: 'security', icon: IconMdiShield, labelKey: 'auth:user-profile.security' },
+const SECTIONS: { key: Section; icon: FC<{ className?: string }>; label: PlainMessage }[] = [
+  { key: 'profile', icon: IconMdiAccount, label: m.auth_userProfile_profile },
+  { key: 'accounts', icon: IconMdiLinkVariant, label: m.auth_userProfile_accounts_title },
+  { key: 'security', icon: IconMdiShield, label: m.auth_userProfile_security },
 ]
 
 // A section switch is a frequent interaction: short, on --ease-out. Under reduced motion MotionConfig (theme
@@ -37,7 +39,7 @@ const NAV_ITEM_CLASS =
   'relative flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] text-sm transition-colors duration-150 cursor-pointer border border-solid w-full text-left'
 
 const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { t } = useTranslation(['auth'])
+  const locale = useLocale()
   const [activeSection, setActiveSection] = useState<Section>('profile')
   const [direction, setDirection] = useState(0)
   const isLargeDevice = useIsLargeDevice()
@@ -58,13 +60,13 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
     // A cloud save sends what it still has while the session is valid (at most 3 s); the rest stays queued
     await activeSave.flushBeforeSignOut()
     await authClient.signOut()
-    toast.success(t('auth:logout.toast-success'), { id: 'logout-success' })
+    toast.success(m.auth_logout_toastSuccess({}, { locale }), { id: 'logout-success' })
     onClose()
   }
 
   const title = (
     <h2 id={USER_PROFILE_TITLE_ID} className="text-xl font-semibold leading-tight text-fg-1 m-0">
-      {t('auth:user-profile.title')}
+      {m.auth_userProfile_title({}, { locale })}
     </h2>
   )
 
@@ -72,8 +74,8 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
     <IconButton
       onClick={onClose}
       size="small"
-      aria-label={t('auth:user-profile.close')}
-      title={t('auth:user-profile.close')}
+      aria-label={m.auth_userProfile_close({}, { locale })}
+      title={m.auth_userProfile_close({}, { locale })}
       className="!text-fg-2 !shrink-0"
     >
       <IconMdiClose className="text-lg" aria-hidden="true" />
@@ -99,9 +101,9 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
             {closeButton}
           </div>
         )}
-        <nav aria-label={t('auth:user-profile.sections')}>
+        <nav aria-label={m.auth_userProfile_sections({}, { locale })}>
           <ul className={clsx('m-0 p-0 list-none flex flex-col gap-0.5', !isLargeDevice && 'flex-row gap-1')}>
-            {SECTIONS.map(({ key, icon: Icon, labelKey }) => {
+            {SECTIONS.map(({ key, icon: Icon, label }) => {
               const selected = activeSection === key
               return (
                 <li key={key} className={clsx(!isLargeDevice && 'flex-1 min-w-0')}>
@@ -126,7 +128,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
                       />
                     )}
                     <Icon className="text-base shrink-0" aria-hidden="true" />
-                    <span className="truncate">{t(labelKey)}</span>
+                    <span className="truncate">{label({}, { locale })}</span>
                   </button>
                 </li>
               )
@@ -146,7 +148,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
           )}
         >
           <IconMdiLogout className="text-base shrink-0" aria-hidden="true" />
-          <span>{t('auth:logout.label')}</span>
+          <span>{m.auth_logout_label({}, { locale })}</span>
         </button>
       )}
     </div>
@@ -186,10 +188,10 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
     <>
       <ConfirmDialog
         open={confirmLogout.open}
-        title={t('auth:logout.confirm-title')}
-        description={t('auth:logout.confirm-description')}
-        confirmLabel={t('auth:logout.confirm-button')}
-        cancelLabel={t('auth:user-profile.confirm-cancel')}
+        title={m.auth_logout_confirmTitle({}, { locale })}
+        description={m.auth_logout_confirmDescription({}, { locale })}
+        confirmLabel={m.auth_logout_confirmButton({}, { locale })}
+        cancelLabel={m.auth_userProfile_confirmCancel({}, { locale })}
         onConfirm={confirmLogout.onConfirm}
         onCancel={confirmLogout.onCancel}
       />
@@ -213,7 +215,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
               className={clsx(NAV_ITEM_CLASS, 'justify-center !gap-2 glass-inset text-fg-1 hover:bg-accent-subtle')}
             >
               <IconMdiLogout className="text-base" aria-hidden="true" />
-              <span>{t('auth:logout.label')}</span>
+              <span>{m.auth_logout_label({}, { locale })}</span>
             </button>
           </div>
         </div>
