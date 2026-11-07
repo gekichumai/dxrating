@@ -247,6 +247,7 @@
   "sheet_layout_list": "목록",
   "sheet_layout_grid": "그리드",
   "sheet_favorite_marked": "즐겨찾기",
+  "sheet_sortAndFilter_active": "{n}개 적용 중",
   "song_notFound_title": "곡을 찾을 수 없습니다",
   "song_notFound_description": "찾으시는 곡이 존재하지 않습니다.",
   "song_notFound_backToSearch": "검색으로 돌아가기",
