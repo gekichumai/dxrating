@@ -1,11 +1,12 @@
 import useSWR from 'swr'
-import { apiClient as client } from '../lib/orpc'
+import { loadCommunityLists } from '../catalog/communityOverlay'
 
+/** The aliases of every song, by public song ID, from the v2 community overlay */
 export const useServerAliases = () => {
   return useSWR(
     'aliases.list',
     async () => {
-      return await client.aliases.list({ idScheme: 'public' })
+      return (await loadCommunityLists()).aliases
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,
