@@ -127,6 +127,8 @@ function usePoliteAnnouncement(
   const [text, setText] = useState('')
   const announced = useRef(new Set<string>())
   const pending = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  /** Texts waiting for the delayed write, so a second update before it runs adds to them instead of replacing them */
+  const queued = useRef<string[]>([])
   useEffect(() => () => clearTimeout(pending.current), [])
   // The set of announced revisions keeps a re-render or a language switch from repeating a notice
   useEffect(() => {
@@ -136,19 +138,22 @@ function usePoliteAnnouncement(
     )
     if (fresh.length === 0) return
     for (const announcement of fresh) announced.current.add(`${announcement.id}:${announcement.revision}`)
-    const next = fresh
+    const texts = fresh
       .map((announcement) => {
         const { title, body } = localizeAnnouncement(announcement, locale, fallbacks)
         return title
           ? [`${severityLabel(announcement.severity, locale)}: ${title.value}`, body?.value].filter(Boolean).join('. ')
           : null
       })
-      .filter(Boolean)
-      .join('. ')
+      .filter((value): value is string => Boolean(value))
     // Empty the region first, so a revision whose text reads the same is still a change screen readers announce
     setText('')
     clearTimeout(pending.current)
-    pending.current = setTimeout(() => setText(next), 150)
+    queued.current.push(...texts)
+    pending.current = setTimeout(() => {
+      setText(queued.current.join('. '))
+      queued.current = []
+    }, 150)
   }, [visible, locale, fallbacks])
   return text
 }
