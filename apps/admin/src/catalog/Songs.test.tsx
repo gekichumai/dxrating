@@ -117,7 +117,53 @@ describe('SongSearch', () => {
   })
 })
 
+describe('SongSearch navigation', () => {
+  it('follows the URL query on Back/Forward', async () => {
+    stub(() => Response.json({ channel: 'production-v1', publication, total: 0, songs: [] }))
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const view = (q: string) => (
+      <MantineProvider>
+        <QueryClientProvider client={client}>
+          <SongSearch q={q} />
+        </QueryClientProvider>
+      </MantineProvider>
+    )
+    const { rerender } = render(view('one'))
+    expect((screen.getByLabelText(/Search by ID/) as HTMLInputElement).value).toBe('one')
+    rerender(view('two'))
+    expect((screen.getByLabelText(/Search by ID/) as HTMLInputElement).value).toBe('two')
+  })
+})
+
 describe('SongProvenance', () => {
+  it('carries a non-default channel into its queries and links, and keeps the picker on a 404', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: Request | string) => {
+        const url = new URL(input instanceof Request ? input.url : input, 'http://admin.test')
+        requests.push(url)
+        if (url.pathname === '/api/catalog/publications')
+          return Response.json({
+            channel: 'staging-v1',
+            channels: [],
+            publications: [{ ...publication, revision: 9, current: true }],
+            nextBefore: null,
+          })
+        return Response.json({ defined: false, code: 'NOT_FOUND', message: 'No song in revision 2' }, { status: 404 })
+      }),
+    )
+    mount(<SongProvenance channel="staging-v1" songId="dsng_demo000001" revision={2} />)
+    expect((await screen.findByRole('alert')).textContent).toContain('No song in revision 2')
+    expect(requests.every((url) => url.searchParams.get('channel') === 'staging-v1')).toBe(true)
+    const picker = (await screen.findByLabelText('Publication')) as HTMLSelectElement
+    // The revision asked for stays on screen even though the list (newest first) does not include it
+    expect(picker.value).toBe('2')
+    expect([...picker.options].map((o) => o.value)).toEqual(['9', '2'])
+    fireEvent.change(picker, { target: { value: '9' } })
+    expect(window.location.hash).toBe('#song?channel=staging-v1&songId=dsng_demo000001&revision=9')
+    expect(screen.getByText('Songs').getAttribute('href')).toBe('#songs?channel=staging-v1&revision=2')
+  })
+
   it('shows the song’s lineage, each value with its sources and transforms, and the build inputs', async () => {
     stub(() => Response.json(song))
     mount(<SongProvenance songId="demo-song-1" />)

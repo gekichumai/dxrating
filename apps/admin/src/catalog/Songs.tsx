@@ -17,7 +17,7 @@ import {
 } from '@mantine/core'
 import { ORPCError } from '@orpc/client'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { adminClient, adminOrpc } from '../api'
 import { routeHref } from '../route'
 import { showValue } from './Diff'
@@ -30,10 +30,12 @@ import { formatUtc } from './Publications'
 type SongDetail = Awaited<ReturnType<typeof adminClient.catalog.song>>
 type Field = SongDetail['fields'][number]
 
-export function SongSearch({ q, revision }: { q?: string; revision?: number }) {
+export function SongSearch({ channel, q, revision }: { channel?: string; q?: string; revision?: number }) {
   const [text, setText] = useState(q ?? '')
+  // Back/Forward changes the committed query; the box follows it
+  useEffect(() => setText(q ?? ''), [q])
   const query = useQuery({
-    ...adminOrpc.catalog.songs.queryOptions({ input: { q: q ?? '', revision, limit: 50 } }),
+    ...adminOrpc.catalog.songs.queryOptions({ input: { channel, q: q ?? '', revision, limit: 50 } }),
     placeholderData: keepPreviousData,
   })
   const data = query.data
@@ -46,7 +48,7 @@ export function SongSearch({ q, revision }: { q?: string; revision?: number }) {
       <form
         onSubmit={(event) => {
           event.preventDefault()
-          window.location.hash = routeHref('songs', { q: text.trim() || undefined, revision })
+          window.location.hash = routeHref('songs', { channel, q: text.trim() || undefined, revision })
         }}
       >
         <Group gap="xs" align="end" mb="md">
@@ -86,7 +88,7 @@ export function SongSearch({ q, revision }: { q?: string; revision?: number }) {
               {data.songs.map((song) => (
                 <Table.Tr key={song.songId}>
                   <Table.Td>
-                    <Anchor size="sm" href={routeHref('song', { songId: song.songId, revision })}>
+                    <Anchor size="sm" href={routeHref('song', { channel, songId: song.songId, revision })}>
                       {song.title}
                     </Anchor>
                   </Table.Td>
@@ -186,14 +188,30 @@ const LINEAGE_LABELS: Record<string, string> = {
   internalIds: 'Internal IDs',
 }
 
-export function SongProvenance({ songId, revision }: { songId: string; revision?: number }) {
-  const revisions = useQuery(adminOrpc.catalog.publications.queryOptions({ input: { limit: 100 } }))
+export function SongProvenance({ channel, songId, revision }: { channel?: string; songId: string; revision?: number }) {
+  const revisions = useQuery(adminOrpc.catalog.publications.queryOptions({ input: { channel, limit: 100 } }))
   const query = useQuery({
-    ...adminOrpc.catalog.song.queryOptions({ input: { songId, revision } }),
+    ...adminOrpc.catalog.song.queryOptions({ input: { channel, songId, revision } }),
     retry: false,
   })
   const data = query.data
   const missing = query.error instanceof ORPCError && query.error.code === 'NOT_FOUND'
+  // The newest 100, plus the one on screen (or asked for) when it is older than that
+  const listed = (revisions.data?.publications ?? []).map((p) => ({
+    value: String(p.revision),
+    label: `r${p.revision} · ${formatUtc(p.publishedAt)}`,
+  }))
+  const current = data?.publication.revision ?? revision
+  const pickerOptions =
+    current !== undefined && listed.length > 0 && !listed.some((option) => option.value === String(current))
+      ? [
+          ...listed,
+          {
+            value: String(current),
+            label: data ? `r${current} · ${formatUtc(data.publication.publishedAt)}` : `r${current}`,
+          },
+        ]
+      : listed
   const lineage =
     data?.lineage && typeof data.lineage === 'object' && !Array.isArray(data.lineage)
       ? (data.lineage as Record<string, unknown>)
@@ -211,7 +229,7 @@ export function SongProvenance({ songId, revision }: { songId: string; revision?
       <Group justify="space-between" mb="sm" wrap="wrap" align="end">
         <div>
           <Text size="xs" c="dimmed">
-            <Anchor size="xs" href={routeHref('songs', { revision })}>
+            <Anchor size="xs" href={routeHref('songs', { channel, revision })}>
               Songs
             </Anchor>{' '}
             ›
@@ -220,16 +238,16 @@ export function SongProvenance({ songId, revision }: { songId: string; revision?
             {data?.song.title ?? songId}
           </Title>
         </div>
-        {data && (revisions.data?.publications.length ?? 0) > 0 && (
+        {/* Independent of the song query: a revision without this song (404) must still let you pick another */}
+        {pickerOptions.length > 0 && (
           <NativeSelect
             aria-label="Publication"
             size="xs"
-            data={revisions.data!.publications.map((p) => ({
-              value: String(p.revision),
-              label: `r${p.revision} · ${formatUtc(p.publishedAt)}`,
-            }))}
-            value={String(data.publication.revision)}
-            onChange={(e) => (window.location.hash = routeHref('song', { songId, revision: e.currentTarget.value }))}
+            data={pickerOptions}
+            value={String(data?.publication.revision ?? revision ?? pickerOptions[0]!.value)}
+            onChange={(e) =>
+              (window.location.hash = routeHref('song', { channel, songId, revision: e.currentTarget.value }))
+            }
           />
         )}
       </Group>

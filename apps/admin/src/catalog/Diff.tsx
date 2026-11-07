@@ -232,7 +232,11 @@ export function Diff(params: DiffParams) {
                     <Anchor
                       size="sm"
                       fw={600}
-                      href={routeHref('song', { songId: song.songId, revision: data.to.revision })}
+                      href={routeHref('song', {
+                        channel: data.channel === 'production-v1' ? undefined : data.channel,
+                        songId: song.songId,
+                        revision: data.to.revision,
+                      })}
                     >
                       {song.title}
                     </Anchor>

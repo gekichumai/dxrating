@@ -95,7 +95,9 @@ describe('Diff', () => {
   it('shows the summary, field filters, list changes and each change with before and after', async () => {
     stub(() => Response.json(diff))
     mount()
-    expect(await screen.findByText('Synthetic Changed')).toBeTruthy()
+    expect((await screen.findByText('Synthetic Changed')).closest('a')?.getAttribute('href')).toBe(
+      '#song?songId=synthetic-changed&revision=3',
+    )
     expect(screen.getByText('+1 songs')).toBeTruthy()
     expect(screen.queryByText(/−0/)).toBeNull()
     expect(screen.getByText('sheets[].internalLevelValue · 1').closest('a')?.getAttribute('href')).toBe(
@@ -164,6 +166,14 @@ describe('Diff', () => {
     await waitFor(() => expect(screen.queryByText('Next 50')).toBeNull())
     release()
     expect(await screen.findByText('All changes')).toBeTruthy()
+  })
+
+  it('links a song on another channel to that channel’s publication', async () => {
+    stub(() => Response.json({ ...diff, channel: 'staging-v1' }))
+    mount({ channel: 'staging-v1' })
+    expect((await screen.findByText('Synthetic Changed')).closest('a')?.getAttribute('href')).toBe(
+      '#song?channel=staging-v1&songId=synthetic-changed&revision=3',
+    )
   })
 
   it('explains a missing revision apart from a failure', async () => {

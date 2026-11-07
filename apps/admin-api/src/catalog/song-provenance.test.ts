@@ -2,7 +2,13 @@ import { readFileSync } from 'node:fs'
 import * as path from 'node:path'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { clearSnapshotCache } from './provenance'
-import { clearCatalogFixture, createCatalogFixtureSchema, mapSongFixture, publishFixture } from './test-fixture'
+import {
+  clearCatalogFixture,
+  createCatalogFixtureSchema,
+  mapSongFixture,
+  publishFixture,
+  renameLegacySongFixture,
+} from './test-fixture'
 import { ANNOUNCEMENT_READER, CATALOG_READER, makeCatalogTestApp } from './test-harness'
 
 // Integration: a real Postgres (CI provides one; locally set ADMIN_API_TEST_DATABASE_URL). Synthetic catalog data only.
@@ -118,6 +124,13 @@ suite('song provenance (admin API)', () => {
     expect(body.fields.find((f: any) => f.path === 'reading').rule.sources).toEqual([
       { source: 'readingSource', resolved: ['title_readings'] },
     ])
+  })
+
+  it('keeps a publication’s lineage after the song’s legacy ID is renamed', async () => {
+    await renameLegacySongFixture(t.pool, 'dsng_synthetic1', 'synthetic-one-renamed')
+    const { body } = await json('/catalog/song?songId=dsng_synthetic1&revision=2')
+    expect(body.song.legacySongId).toBe('synthetic-one')
+    expect(body.lineage).toEqual(manifest.sources.assembly.songs['synthetic-one'])
   })
 
   it('shows an older revision’s values, with no rules when it has no manifest', async () => {

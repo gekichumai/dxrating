@@ -237,19 +237,42 @@ export const songProvenance = (input: { channel: string; revision?: number | und
       )
 
     const db = yield* AdminDatabase
-    // The manifest's per-song lineage is keyed by the legacy song ID; the catalog maps a public ID to it
-    const legacySongId =
+    // The manifest's per-song lineage is keyed by the legacy song ID the song had when it was published. A legacy ID
+    // can be renamed since, so try the current one first, then every one the catalog ever mapped to this song
+    // (song_source_mappings keeps inactive legacy_dxdata rows), and use the first this manifest has.
+    const candidates =
       typeof song.id === 'string'
-        ? (((yield* db.use('map public song ID', (d) =>
-            d.execute(sql`SELECT legacy_song_id FROM dxdata.canonical_songs WHERE id = ${song.id as string}`),
-          )).rows[0]?.legacy_song_id as string | null | undefined) ?? null)
-        : String(song.songId)
+        ? (yield* db.use('map public song ID', (d) =>
+            d.execute(sql`
+              SELECT legacy_song_id AS legacy_id, 0 AS rank FROM dxdata.canonical_songs
+              WHERE id = ${song.id as string} AND legacy_song_id IS NOT NULL
+              UNION ALL
+              SELECT external_id, CASE WHEN active THEN 1 ELSE 2 END FROM dxdata.song_source_mappings
+              WHERE song_id = ${song.id as string} AND source_id = 'legacy_dxdata'
+              ORDER BY rank
+            `),
+          )).rows.map((row) => String(row.legacy_id))
+        : [String(song.songId)]
+    const unique = [...new Set(candidates)]
     const manifestRows = yield* db.use('read provenance manifest', (d) =>
       d.execute(sql`
         SELECT manifest.schema_version, manifest.generated_at,
           manifest.manifest -> 'fieldRules' AS field_rules,
           manifest.manifest -> 'coverage' AS coverage,
-          manifest.manifest #> ${'{sources,assembly,songs}'}::text[] -> ${legacySongId} AS lineage,
+          (
+            SELECT jsonb_build_object('key', key, 'lineage', manifest.manifest #> ${'{sources,assembly,songs}'}::text[] -> key)
+            FROM unnest(${
+              unique.length
+                ? sql`ARRAY[${sql.join(
+                    unique.map((id) => sql`${id}`),
+                    sql`, `,
+                  )}]::text[]`
+                : sql`ARRAY[]::text[]`
+            }) WITH ORDINALITY AS candidate(key, position)
+            WHERE manifest.manifest #> ${'{sources,assembly,songs}'}::text[] ? key
+            ORDER BY position
+            LIMIT 1
+          ) AS lineage_match,
           manifest.manifest #> ${'{sources,assembly,sources}'}::text[] AS assembly_sources,
           manifest.manifest #> ${'{sources,runtime}'}::text[] AS runtime_sources
         FROM dxdata.catalog_publication_provenance_manifests AS manifest
@@ -265,7 +288,10 @@ export const songProvenance = (input: { channel: string; revision?: number | und
           transforms: Array.isArray(rule.transforms) ? rule.transforms.map(String) : [],
         }))
       : null
-    const lineage = isObject(row?.lineage) ? row.lineage : null
+    const match = isObject(row?.lineage_match) ? row.lineage_match : null
+    const lineage = match && isObject(match.lineage) ? match.lineage : null
+    /** The legacy ID this publication's manifest knows the song by, else the current one */
+    const legacySongId = match && typeof match.key === 'string' ? match.key : (unique[0] ?? null)
 
     return {
       channel: input.channel,

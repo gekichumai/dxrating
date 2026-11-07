@@ -139,6 +139,7 @@ export function App() {
           )}
           {principal && route.view === 'songs' && can(principal.scopes, 'catalog:read') && (
             <SongSearch
+              channel={route.params.get('channel') ?? undefined}
               q={route.params.get('q') ?? undefined}
               revision={Number(route.params.get('revision')) || undefined}
             />
@@ -149,6 +150,7 @@ export function App() {
             route.params.get('songId') && (
               <SongProvenance
                 key={route.params.get('songId')}
+                channel={route.params.get('channel') ?? undefined}
                 songId={route.params.get('songId')!}
                 revision={Number(route.params.get('revision')) || undefined}
               />
