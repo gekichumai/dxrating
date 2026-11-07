@@ -79,6 +79,19 @@ describe('config', () => {
   it('refuses the development identity outside development', () => {
     expect(() => envSchema.parse({ NODE_ENV: 'production', ADMIN_DEV_ACCESS_EMAIL: 'a@b.invalid' })).toThrow()
   })
+  it('treats blank values from the env template as unset', () => {
+    const env = envSchema.parse({
+      NODE_ENV: 'production',
+      ADMIN_ACCESS_TEAM_DOMAIN: 't',
+      ADMIN_ACCESS_AUD: 'a',
+      ADMIN_DEV_ACCESS_EMAIL: '',
+      ADMIN_HUMAN_EMAILS: '',
+    })
+    expect(env.ADMIN_DEV_ACCESS_EMAIL).toBeUndefined()
+    expect(() =>
+      envSchema.parse({ NODE_ENV: 'production', ADMIN_ACCESS_TEAM_DOMAIN: ' ', ADMIN_ACCESS_AUD: 'a' }),
+    ).toThrow()
+  })
   it('requires Access settings in production', () => {
     expect(() => envSchema.parse({ NODE_ENV: 'production' })).toThrow()
     expect(

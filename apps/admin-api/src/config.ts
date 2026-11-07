@@ -1,6 +1,10 @@
 import { Context, Layer } from 'effect'
 import { z } from 'zod'
 
+// An empty value (`NAME=` in an env file) means unset
+const blank = (value: unknown) => (typeof value === 'string' && value.trim() === '' ? undefined : value)
+const optionalString = z.preprocess(blank, z.string().optional())
+
 const list = z
   .string()
   .optional()
@@ -18,13 +22,13 @@ export const envSchema = z
     /** The admin host's own origin; a browser request from any other origin is refused */
     ADMIN_ORIGIN: z.string().url().default('http://localhost:5180'),
     /** Cloudflare Access team domain, e.g. `example.cloudflareaccess.com` */
-    ADMIN_ACCESS_TEAM_DOMAIN: z.string().optional(),
+    ADMIN_ACCESS_TEAM_DOMAIN: optionalString,
     /** The Access application's AUD tag */
-    ADMIN_ACCESS_AUD: z.string().optional(),
+    ADMIN_ACCESS_AUD: optionalString,
     /** Emails allowed in, repeating the Access policy inside the app. Empty means nobody. */
     ADMIN_HUMAN_EMAILS: list,
     /** Development only: treat every request as this Access identity. Refused outside development. */
-    ADMIN_DEV_ACCESS_EMAIL: z.string().email().optional(),
+    ADMIN_DEV_ACCESS_EMAIL: z.preprocess(blank, z.string().email().optional()),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== 'development' && env.ADMIN_DEV_ACCESS_EMAIL) {
