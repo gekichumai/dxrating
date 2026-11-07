@@ -1,6 +1,6 @@
 import { parse as parseCookie } from 'cookie'
 
-export const SUPPORTED_LOCALES = ['en', 'ja', 'ko', 'zh-Hans', 'zh-Hant', 'ms', 'id', 'fil', 'vi'] as const
+export const SUPPORTED_LOCALES = ['en', 'ja', 'ko', 'zh-Hans', 'zh-Hant', 'ms', 'id', 'fil', 'vi', 'th', 'my'] as const
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 
 export const DEFAULT_LOCALE: SupportedLocale = 'en'
@@ -17,6 +17,8 @@ const PRIMARY_LANGUAGE_LOCALES = new Map<string, SupportedLocale>([
   ['fil', 'fil'],
   ['tl', 'fil'],
   ['vi', 'vi'],
+  ['th', 'th'],
+  ['my', 'my'],
 ])
 
 export function toSupportedLocale(lng: string | null | undefined): SupportedLocale | null {
