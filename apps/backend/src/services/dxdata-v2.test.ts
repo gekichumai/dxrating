@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { fromV2Catalog, fromV2Community, toV2Catalog, toV2Community, type CatalogV1 } from '@gekichumai/dxdata/v2'
-import { Effect } from 'effect'
+import { Effect, Fiber } from 'effect'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { describe, expect, it } from 'vitest'
@@ -186,6 +186,24 @@ describe('dxdata v2 endpoint', () => {
     expect(responses.every((response) => response.status === 200)).toBe(true)
     expect(new Set(responses.map((response) => response.headers.get('etag'))).size).toBe(1)
     expect(reads).toBe(2)
+  })
+
+  it('finishes a shared build whose first request went away, so later requests are answered', async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    const store = createDxdataV2Store({
+      getPublishedMetadata: () => Effect.succeed(v1Metadata),
+      getSnapshotBody: () => Effect.promise(() => gate.then(() => v1Body)),
+    })
+
+    const first = Effect.runFork(store.getPublishedMetadata())
+    await new Promise((resolve) => setTimeout(resolve, 5))
+    // The build is uninterruptible: the interruption completes once the build has
+    const interrupted = Effect.runPromise(Fiber.interrupt(first))
+    const later = Effect.runPromise(store.getPublishedMetadata())
+    release()
+    await expect(later).resolves.toMatchObject({ catalogRunId: v1Metadata.catalogRunId })
+    await interrupted
   })
 
   it('builds again when a new catalog is published', async () => {
