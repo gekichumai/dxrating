@@ -449,14 +449,7 @@ import { netGatewayStatusEffect, withMaimaiNETClient, type NetGatewayStatus } fr
 import { recordNetFailure, recordNetSuccess } from './services/functions/fetch-net-records/telemetry'
 import * as lxnsService from './services/lxns/viewer'
 import { withViewer, type SessionViewer } from './proofs/viewer-is'
-import { requireAdmin } from './admin/require-admin'
-import {
-  createAnnouncement,
-  endAnnouncement,
-  listAdminAnnouncements,
-  listPublicAnnouncements,
-  updateAnnouncement,
-} from './services/announcements'
+import { listPublicAnnouncements } from './services/announcements'
 
 const TrendingSeriesSchema = Schema.Struct({
   breakdown_value: Schema.optional(Schema.Unknown),
@@ -1044,38 +1037,8 @@ const announcementsHandler = {
   ),
 }
 
-const adminHandler = {
-  announcements: {
-    list: os.admin.announcements.list.handler(
-      handlerGen(function* ({ context }) {
-        yield* requireAdmin(context)
-        return yield* listAdminAnnouncements()
-      }),
-    ),
-    create: os.admin.announcements.create.handler(
-      handlerGen(function* ({ input, context }) {
-        const admin = yield* requireAdmin(context)
-        return yield* createAnnouncement(admin, input)
-      }),
-    ),
-    update: os.admin.announcements.update.handler(
-      handlerGen(function* ({ input, context }) {
-        const admin = yield* requireAdmin(context)
-        return yield* updateAnnouncement(admin, input)
-      }),
-    ),
-    end: os.admin.announcements.end.handler(
-      handlerGen(function* ({ input, context }) {
-        const admin = yield* requireAdmin(context)
-        return yield* endAnnouncement(admin, input.id)
-      }),
-    ),
-  },
-}
-
 export const appRouter = os.router({
   announcements: announcementsHandler,
-  admin: adminHandler,
   tags: tagsHandler,
   comments: commentsHandler,
   aliases: aliasesHandler,

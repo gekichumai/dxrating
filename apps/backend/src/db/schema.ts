@@ -688,8 +688,9 @@ export const userExtraRelations = relations(user, ({ one, many }) => ({
 }))
 /**
  * Global announcements (gekichumai/meta#49). Text columns map language tags to text, so a new language needs no
- * migration; the API validates the tags against the shared list (`@gekichumai/api-contract` locales). Nothing is
- * deleted: ending an announcement sets `ends_at`.
+ * migration; the admin API validates the tags against the shared list (`@gekichumai/api-contract` locales) and is
+ * the only writer. This backend only reads them (GET /api/v1/announcements). Nothing is deleted: ending an
+ * announcement sets `ends_at`.
  */
 export const announcements = pgTable(
   'announcements',
@@ -714,8 +715,12 @@ export const announcements = pgTable(
     min_app_version: text('min_app_version'),
     max_app_version: text('max_app_version'),
     dismissible: boolean('dismissible').default(true).notNull(),
-    created_by: text('created_by').references(() => user.id, { onDelete: 'set null' }),
-    updated_by: text('updated_by').references(() => user.id, { onDelete: 'set null' }),
+    /**
+     * Who wrote it: `human:<user id>` or `agent:<token id>` (admin API principals). Text, not a foreign key, since
+     * agents are not users and authorship must outlive an account.
+     */
+    created_by: text('created_by').notNull(),
+    updated_by: text('updated_by').notNull(),
     created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
@@ -726,6 +731,8 @@ export const announcements = pgTable(
     check('announcements_window_check', sql`${table.ends_at} IS NULL OR ${table.ends_at} > ${table.starts_at}`),
     check('announcements_platforms_check', sql`${table.platforms} <@ ARRAY['web', 'ios']::text[]`),
     check('announcements_regions_check', sql`${table.regions} <@ ARRAY['jp', 'intl', 'cn']::text[]`),
+    check('announcements_created_by_check', sql`${table.created_by} ~ '^(human|agent):.+$'`),
+    check('announcements_updated_by_check', sql`${table.updated_by} ~ '^(human|agent):.+$'`),
     index('announcements_ends_at').on(table.ends_at),
   ],
 )

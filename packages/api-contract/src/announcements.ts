@@ -100,7 +100,10 @@ export const announcementsContract = {
     .output(AnnouncementsListResponseSchema),
 }
 
-// --- Writes (admin only) ---
+// --- Writes ---
+// The admin API (apps/admin, gekichumai/meta#50) is the only writer. These schemas are its validation of a write:
+// only languages of the shared list, `en` required, blank translations dropped, https or site-path links, and a
+// consistent window and version range.
 
 const localizedTextInput = (maxLength: number) =>
   z
@@ -175,65 +178,3 @@ export const AnnouncementUpdateInputSchema = withConsistentBounds(
   AnnouncementFieldsSchema.extend({ id: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER) }),
 )
 export type AnnouncementUpdateInput = z.infer<typeof AnnouncementUpdateInputSchema>
-
-export const AdminAnnouncementSchema = PublicAnnouncementSchema.extend({
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  createdBy: z.string().nullable(),
-  updatedBy: z.string().nullable(),
-  /** Stored languages that are no longer supported; ignored on read and dropped on the next save */
-  unsupportedLocales: z.array(z.string()),
-})
-export type AdminAnnouncement = z.infer<typeof AdminAnnouncementSchema>
-
-/** Every admin route carries these tags; `internal` keeps it out of `/spec.json` */
-export const ADMIN_ROUTE_TAGS = ['internal', 'admin']
-
-const AnnouncementIdInputSchema = z.object({ id: z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER) })
-
-export const adminAnnouncementsContract = {
-  list: oc
-    .meta(
-      openapi({
-        method: 'GET',
-        path: '/admin/announcements',
-        summary: 'List every announcement',
-        tags: ADMIN_ROUTE_TAGS,
-      }),
-    )
-    .output(z.object({ announcements: z.array(AdminAnnouncementSchema) })),
-  create: oc
-    .meta(
-      openapi({
-        method: 'POST',
-        path: '/admin/announcements',
-        summary: 'Create an announcement',
-        tags: ADMIN_ROUTE_TAGS,
-      }),
-    )
-    .input(AnnouncementCreateInputSchema)
-    .output(AdminAnnouncementSchema),
-  update: oc
-    .meta(
-      openapi({
-        // POST rather than PUT: the API's CORS policy allows GET and POST only
-        method: 'POST',
-        path: '/admin/announcements/{id}',
-        summary: 'Replace an announcement',
-        tags: ADMIN_ROUTE_TAGS,
-      }),
-    )
-    .input(AnnouncementUpdateInputSchema)
-    .output(AdminAnnouncementSchema),
-  end: oc
-    .meta(
-      openapi({
-        method: 'POST',
-        path: '/admin/announcements/{id}/end',
-        summary: 'End an announcement now',
-        tags: ADMIN_ROUTE_TAGS,
-      }),
-    )
-    .input(AnnouncementIdInputSchema)
-    .output(AdminAnnouncementSchema),
-}

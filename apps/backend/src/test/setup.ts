@@ -152,26 +152,3 @@ export async function cleanDatabase() {
   await pool.query('DELETE FROM "user"')
   await pool.end()
 }
-/**
- * Creates the user `ADMIN_USER_IDS` names in tests (its ID is fixed, so it cannot come from sign-up) with a password
- * account, and signs in as it. Returns the session cookie.
- */
-export async function seedAdminUser(email = 'admin@example.com', password = 'AdminPass123!') {
-  // the same hash auth.ts configures for email/password accounts
-  const bcrypt = await import('bcrypt')
-  const { TEST_ADMIN_USER_ID } = await import('./env')
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
-  await pool.query(
-    `INSERT INTO "user" (id, name, email, email_verified, updated_at) VALUES ($1, 'Admin', $2, true, now())`,
-    [TEST_ADMIN_USER_ID, email],
-  )
-  await pool.query(
-    `INSERT INTO account (id, account_id, provider_id, user_id, password, updated_at)
-     VALUES ($1, $2, 'credential', $2, $3, now())`,
-    [`${TEST_ADMIN_USER_ID}-credential`, TEST_ADMIN_USER_ID, await bcrypt.hash(password, 10)],
-  )
-  await pool.end()
-  const res = await signIn(email, password)
-  if (!res.ok) throw new Error(`Admin sign-in failed: ${res.status} ${await res.text()}`)
-  return extractSessionCookie(res)
-}

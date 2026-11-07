@@ -1,48 +1,70 @@
-// Global announcements (gekichumai/meta#49): the public list and the admin API behind requireAdmin.
+// Global announcements (gekichumai/meta#49): the public list. The admin API (apps/admin, meta#50) is the only writer,
+// so these tests write rows directly.
 import pg from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import {
-  authenticatedFetch,
-  cleanDatabase,
-  extractSessionCookie,
-  getBaseUrl,
-  seedAdminUser,
-  setupTestServer,
-  signUp,
-  teardownTestServer,
-} from './setup'
+import { cleanDatabase, getBaseUrl, setupTestServer, teardownTestServer } from './setup'
 
 const HOUR = 60 * 60 * 1000
 
-const fields = (overrides: Record<string, unknown> = {}) => ({
-  severity: 'warning',
-  title: { en: 'Scheduled maintenance', ja: 'メンテナンスのお知らせ' },
-  body: { en: 'Imports pause for an hour.', ja: 'インポートを1時間停止します。' },
-  link: { url: '/developers', label: { en: 'Details' } },
-  startsAt: null,
-  endsAt: null,
-  platforms: [],
-  regions: [],
-  minAppVersion: null,
-  maxAppVersion: null,
-  dismissible: true,
-  ...overrides,
-})
+interface Row {
+  severity?: string
+  title?: Record<string, string>
+  body?: Record<string, string>
+  link_url?: string | null
+  link_label?: Record<string, string> | null
+  starts_at?: Date
+  ends_at?: Date | null
+  platforms?: string[]
+  regions?: string[]
+  min_app_version?: string | null
+  max_app_version?: string | null
+  dismissible?: boolean
+  created_by?: string
+}
 
 describe('Announcements', () => {
-  let admin: string
+  let pool: pg.Pool
 
-  const adminFetch = (path: string, init: { method: string; body?: unknown }) =>
-    authenticatedFetch(`${getBaseUrl()}/api/v1${path}`, admin, {
-      method: init.method,
-      headers: { 'Content-Type': 'application/json' },
-      body: init.body === undefined ? undefined : JSON.stringify(init.body),
-    })
-  const create = async (overrides: Record<string, unknown> = {}) => {
-    const res = await adminFetch('/admin/announcements', { method: 'POST', body: fields(overrides) })
-    expect(res.status).toBe(200)
-    return res.json()
+  const insert = async (row: Row = {}): Promise<number> => {
+    const values = {
+      severity: 'warning',
+      title: { en: 'Scheduled maintenance', ja: 'メンテナンスのお知らせ' },
+      body: { en: 'Imports pause for an hour.', ja: 'インポートを1時間停止します。' },
+      link_url: '/developers',
+      link_label: { en: 'Details' },
+      starts_at: new Date(Date.now() - HOUR),
+      ends_at: null,
+      platforms: [],
+      regions: [],
+      min_app_version: null,
+      max_app_version: null,
+      dismissible: true,
+      created_by: 'human:demo-admin',
+      ...row,
+    }
+    const result = await pool.query<{ id: string }>(
+      `INSERT INTO announcements (severity, title, body, link_url, link_label, starts_at, ends_at, platforms, regions,
+         min_app_version, max_app_version, dismissible, created_by, updated_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $13) RETURNING id`,
+      [
+        values.severity,
+        values.title,
+        values.body,
+        values.link_url,
+        values.link_label,
+        values.starts_at,
+        values.ends_at,
+        values.platforms,
+        values.regions,
+        values.min_app_version,
+        values.max_app_version,
+        values.dismissible,
+        values.created_by,
+      ],
+    )
+    return Number(result.rows[0].id)
   }
+
   const publicList = async () => {
     const res = await fetch(`${getBaseUrl()}/api/v1/announcements`)
     expect(res.status).toBe(200)
@@ -51,19 +73,21 @@ describe('Announcements', () => {
 
   beforeAll(async () => {
     await setupTestServer()
+    pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
   })
   afterAll(async () => {
+    await pool.end()
     await teardownTestServer()
   })
   beforeEach(async () => {
     await cleanDatabase()
-    admin = await seedAdminUser()
   })
 
   it('serves an empty list with the shared locale table, cacheable at the edge', async () => {
     const res = await fetch(`${getBaseUrl()}/api/v1/announcements`, { headers: { Origin: 'https://dxrating.net' } })
     expect(res.status).toBe(200)
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(res.headers.get('Access-Control-Allow-Credentials')).toBeNull()
     expect(res.headers.get('Cache-Control')).toBe('public, no-cache')
     expect(res.headers.get('CDN-Cache-Control')).toMatch(/^public, max-age=60, stale-while-revalidate=/)
     expect(res.headers.get('Cache-Tag')).toBe('announcements')
@@ -75,22 +99,28 @@ describe('Announcements', () => {
 
     const revalidated = await fetch(`${getBaseUrl()}/api/v1/announcements`, { headers: { 'If-None-Match': tag! } })
     expect(revalidated.status).toBe(304)
+    expect(revalidated.headers.get('Cache-Tag')).toBe('announcements')
   })
 
-  it('publishes what an admin creates, with every language and target', async () => {
-    const created = await create({ platforms: ['ios'], regions: ['jp', 'intl'], minAppVersion: '0.2' })
-    expect(created).toMatchObject({ revision: 1, severity: 'warning', createdBy: 'test-admin-user' })
+  it('serves every language and target, and keeps authors private', async () => {
+    const startsAt = new Date(Date.now() - HOUR)
+    const id = await insert({
+      starts_at: startsAt,
+      platforms: ['ios'],
+      regions: ['jp', 'intl'],
+      min_app_version: '0.2',
+    })
 
     const { announcements } = await publicList()
     expect(announcements).toEqual([
       {
-        id: created.id,
+        id,
         revision: 1,
         severity: 'warning',
         title: { en: 'Scheduled maintenance', ja: 'メンテナンスのお知らせ' },
         body: { en: 'Imports pause for an hour.', ja: 'インポートを1時間停止します。' },
         link: { url: '/developers', label: { en: 'Details' } },
-        startsAt: created.startsAt,
+        startsAt: startsAt.toISOString(),
         endsAt: null,
         platforms: ['ios'],
         regions: ['jp', 'intl'],
@@ -99,144 +129,49 @@ describe('Announcements', () => {
         dismissible: true,
       },
     ])
-    // Authors are not public
-    expect(announcements[0]).not.toHaveProperty('createdBy')
+    expect(JSON.stringify(announcements)).not.toContain('demo-admin')
   })
 
   it('lists current and soon-starting announcements, most severe first, and leaves out ended and far-future ones', async () => {
     const now = Date.now()
-    const info = await create({ severity: 'info' })
-    const critical = await create({ severity: 'critical', dismissible: false })
-    const soon = await create({ startsAt: new Date(now + 2 * HOUR).toISOString() })
-    await create({ startsAt: new Date(now + 48 * HOUR).toISOString() })
-    const ended = await create({})
-    await adminFetch(`/admin/announcements/${ended.id}/end`, { method: 'POST' })
+    const info = await insert({ severity: 'info' })
+    const critical = await insert({ severity: 'critical', dismissible: false })
+    const soon = await insert({ starts_at: new Date(now + 2 * HOUR) })
+    await insert({ starts_at: new Date(now + 48 * HOUR) })
+    await insert({ starts_at: new Date(now - 2 * HOUR), ends_at: new Date(now - HOUR) })
 
     const ids = (await publicList()).announcements.map((a: { id: number }) => a.id)
-    expect(ids).toEqual([critical.id, soon.id, info.id])
+    expect(ids).toEqual([critical, soon, info])
   })
 
-  it('bumps the revision when the text changes, not for a new end date', async () => {
-    const created = await create()
-    const extended = await adminFetch(`/admin/announcements/${created.id}`, {
-      method: 'POST',
-      body: fields({ endsAt: new Date(Date.now() + HOUR).toISOString() }),
-    })
-    expect((await extended.json()).revision).toBe(1)
-
-    const reworded = await adminFetch(`/admin/announcements/${created.id}`, {
-      method: 'POST',
-      body: fields({ title: { en: 'Maintenance extended' } }),
-    })
-    const body = await reworded.json()
-    expect(body.revision).toBe(2)
-    expect(body.title).toEqual({ en: 'Maintenance extended' })
-    // A null start keeps the existing one
-    expect(body.startsAt).toBe(created.startsAt)
-  })
-
-  // jsonb stores keys in its own order, so a resubmitted map in another order is the same text
-  it('keeps the revision for the same translations sent in another key order', async () => {
-    const created = await create({ title: { ja: 'お知らせ', en: 'Notice' }, body: { ja: '本文', en: 'Body' } })
-    const res = await adminFetch(`/admin/announcements/${created.id}`, {
-      method: 'POST',
-      body: fields({
-        title: { ja: 'お知らせ', en: 'Notice' },
-        body: { ja: '本文', en: 'Body' },
-        endsAt: new Date(Date.now() + HOUR).toISOString(),
-      }),
-    })
-    expect((await res.json()).revision).toBe(1)
-  })
-
-  it('accepts a browser preflight for every admin route from the site', async () => {
-    const res = await fetch(`${getBaseUrl()}/api/v1/admin/announcements/1`, {
-      method: 'OPTIONS',
-      headers: {
-        Origin: 'https://dxrating.net',
-        'Access-Control-Request-Method': 'POST',
-        'Access-Control-Request-Headers': 'content-type',
-      },
-    })
-    expect(res.status).toBeLessThan(300)
-    expect(res.headers.get('Access-Control-Allow-Methods') ?? '').toContain('POST')
-  })
-
-  it('ends a scheduled announcement before it ever shows', async () => {
-    const scheduled = await create({ startsAt: new Date(Date.now() + HOUR).toISOString() })
-    const res = await adminFetch(`/admin/announcements/${scheduled.id}/end`, { method: 'POST' })
-    expect(res.status).toBe(200)
-    const ended = await res.json()
-    expect(Date.parse(ended.endsAt)).toBeLessThanOrEqual(Date.now())
-    expect(Date.parse(ended.startsAt)).toBeLessThan(Date.parse(ended.endsAt))
-    expect((await publicList()).announcements).toEqual([])
+  it('serves only the languages of the shared list', async () => {
+    await insert({ title: { en: 'Hi', tlh: 'Qapla' } })
+    expect((await publicList()).announcements[0].title).toEqual({ en: 'Hi' })
   })
 
   it.each([
     ['without English', { title: { ja: 'お知らせ' } }],
-    ['with an unknown language tag', { title: { en: 'Hi', 'xx-YY': 'Hi' } }],
-    ['with a script link', { link: { url: 'javascript:alert(1)', label: null } }],
-    ['with an http link', { link: { url: 'http://example.com', label: null } }],
-    ['ending before it starts', { startsAt: '2030-01-02T00:00:00Z', endsAt: '2030-01-01T00:00:00Z' }],
-    ['with inverted app versions', { minAppVersion: '1.10', maxAppVersion: '1.9' }],
     ['with an unknown platform', { platforms: ['android'] }],
-    ['with an unknown field', { createdBy: 'someone' }],
-  ])('rejects an announcement %s', async (_case, overrides) => {
-    const res = await adminFetch('/admin/announcements', { method: 'POST', body: fields(overrides) })
-    expect(res.status).toBe(400)
+    ['ending before it starts', { starts_at: new Date(2030, 0, 2), ends_at: new Date(2030, 0, 1) }],
+    ['with an author that is not a principal', { created_by: 'some-user-id' }],
+  ])('the table refuses a row %s', async (_case, row) => {
+    await expect(insert(row)).rejects.toThrow(/violates check constraint/)
   })
 
-  it('drops blank translations instead of storing them', async () => {
-    const created = await create({ title: { en: 'Hi', ja: '   ' }, body: { en: 'Body' } })
-    expect(created.title).toEqual({ en: 'Hi' })
+  it('records an agent as an author', async () => {
+    await expect(insert({ created_by: 'agent:token-123' })).resolves.toBeGreaterThan(0)
   })
 
-  it('serves only supported languages and tells the admin about stored ones that are not', async () => {
-    const created = await create()
-    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
-    await pool.query(`UPDATE announcements SET title = title || '{"tlh": "Qapla"}'::jsonb WHERE id = $1`, [created.id])
-    await pool.end()
-
-    expect((await publicList()).announcements[0].title).not.toHaveProperty('tlh')
-    const listed = await (await adminFetch('/admin/announcements', { method: 'GET' })).json()
-    expect(listed.announcements[0].unsupportedLocales).toEqual(['tlh'])
-  })
-
-  it('requires a session and an administrator for every admin route', async () => {
-    const created = await create()
-    const anonymous = await fetch(`${getBaseUrl()}/api/v1/admin/announcements`)
-    expect(anonymous.status).toBe(401)
-
-    const signUpRes = await signUp('viewer@example.com', 'ViewerPass123!', 'Viewer')
-    const viewer = extractSessionCookie(signUpRes)
-    const routes: Array<[string, string, unknown?]> = [
-      ['GET', '/admin/announcements'],
-      ['POST', '/admin/announcements', fields()],
-      ['POST', `/admin/announcements/${created.id}`, fields()],
-      ['POST', `/admin/announcements/${created.id}/end`],
-    ]
-    for (const [method, path, body] of routes) {
-      const res = await authenticatedFetch(`${getBaseUrl()}/api/v1${path}`, viewer, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: body === undefined ? undefined : JSON.stringify(body),
-      })
-      expect(res.status, `${method} ${path}`).toBe(403)
-    }
-    expect((await publicList()).announcements).toHaveLength(1)
-  })
-
-  it('answers 404 for an announcement that does not exist', async () => {
-    const res = await adminFetch('/admin/announcements/999999/end', { method: 'POST' })
-    expect(res.status).toBe(404)
-  })
-
-  it('keeps admin routes out of the public API document', async () => {
-    const specResponse = await fetch(`${getBaseUrl()}/spec.json`)
-    const spec = await specResponse.json()
-    if (!spec.paths) throw new Error(`spec: ${specResponse.status} ${JSON.stringify(spec).slice(0, 400)}`)
-    const paths = Object.keys(spec.paths)
-    expect(paths.some((path) => path.includes('/announcements') && !path.includes('admin'))).toBe(true)
-    expect(paths.some((path) => path.includes('admin'))).toBe(false)
+  it('has no write endpoints on this backend', async () => {
+    const res = await fetch(`${getBaseUrl()}/api/v1/announcements`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    })
+    expect(res.status).toBeGreaterThanOrEqual(400)
+    expect(res.status).toBeLessThan(500)
+    const spec = await (await fetch(`${getBaseUrl()}/spec.json`)).json()
+    expect(Object.keys(spec.paths['/announcements'])).toEqual(['get'])
+    expect(Object.keys(spec.paths).some((path) => path.includes('admin'))).toBe(false)
   })
 })
