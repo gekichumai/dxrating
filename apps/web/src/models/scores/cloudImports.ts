@@ -9,8 +9,10 @@ import {
 } from '@gekichumai/api-contract'
 import {
   type ClientImportSource,
+  comboFlagRank,
   compareScore,
   type SourceAccountKind,
+  syncFlagRank,
   PUBLIC_SHEET_ID_PATTERN,
   toAchievementInt,
 } from '@gekichumai/maimai-domain'
@@ -115,16 +117,29 @@ export function entriesToImportRecords(
     const record = parsed.data
     const existing = bySheetId.get(record.sheetId)
     if (existing) duplicates++
-    // The server's score order (achievement, then combo, then sync): an equal achievement with a better flag wins,
-    // whatever the order of the file. An equal score keeps a DX score only the other entry knows, as the server's
-    // merge backfills it
-    const order = existing ? compareScore(record, existing) : 1
-    if (order > 0) bySheetId.set(record.sheetId, record)
-    else if (order === 0 && existing!.dxScore == null && record.dxScore != null) {
-      bySheetId.set(record.sheetId, { ...existing!, dxScore: record.dxScore })
-    }
+    bySheetId.set(record.sheetId, existing ? collapseImportRecords(existing, record) : record)
   }
   return { records: [...bySheetId.values()], skipped, rejected, duplicates }
+}
+
+/**
+ * One record of a chart from two entries of it in a file, read the way the device reads them
+ * (`collapseScoreRecordList`): achievement, combo, sync and DX score each at their best independently, so a lower
+ * score keeps its AP or FDX. The rest (provider ID, claimed source, bucket) comes from the better score by the
+ * server's order (achievement, then combo, then sync), the first entry on a tie; a bucket hint never loses to none.
+ */
+function collapseImportRecords(existing: ImportRecord, record: ImportRecord): ImportRecord {
+  const [best, other] = compareScore(record, existing) > 0 ? [record, existing] : [existing, record]
+  const stronger = <T extends string>(rank: (flag: T | undefined) => number, a: T | null, b: T | null) =>
+    rank(b ?? undefined) > rank(a ?? undefined) ? b : a
+  return {
+    ...best,
+    comboFlag: stronger(comboFlagRank, best.comboFlag, other.comboFlag),
+    syncFlag: stronger(syncFlagRank, best.syncFlag, other.syncFlag),
+    dxScore:
+      best.dxScore == null || (other.dxScore != null && other.dxScore > best.dxScore) ? other.dxScore : best.dxScore,
+    best50Bucket: best.best50Bucket ?? other.best50Bucket,
+  }
 }
 
 /**
