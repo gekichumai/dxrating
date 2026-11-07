@@ -73,8 +73,15 @@ describe('path form', () => {
     expect(queryFromPath('/AC%2FDC/')).toBe('AC/DC')
     expect(queryFromPath('/a/b')).toBe('a/b')
   })
-  it('caps very long queries', () => {
-    expect(queryFromPath(`/${'あ'.repeat(500)}`)).toHaveLength(200)
+  it('caps queries at the 100 UTF-16 code units dxrating.net accepts', () => {
+    expect(queryFromPath(`/${'あ'.repeat(500)}`)).toHaveLength(100)
+    expect(queryFromPath(`/${'a'.repeat(101)}`)).toBe('a'.repeat(100))
+    expect(queryFromPath(`/${'a'.repeat(100)}`)).toBe('a'.repeat(100))
+  })
+  it('does not split a surrogate pair at the cap', () => {
+    const query = queryFromPath(`/${encodeURIComponent('a' + '😀'.repeat(60))}`)!
+    expect(query).toBe('a' + '😀'.repeat(49))
+    expect(query.length).toBeLessThanOrEqual(100)
   })
 })
 

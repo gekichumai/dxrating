@@ -20,12 +20,20 @@ export function targetUrl(query: string | null): string {
   return `${TARGET_ORIGIN}/?${params.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&')}`
 }
 
-/** Longer queries are cut (by code point) rather than refused; no alias comes near this */
-const MAX_QUERY_LENGTH = 200
+/**
+ * dxrating.net rejects a `q` longer than 100 UTF-16 code units (SEARCH_QUERY_MAX_LENGTH in apps/web), so longer queries
+ * are cut to fit, at a code point boundary. No alias comes near this.
+ */
+const MAX_QUERY_LENGTH = 100
 
 /** Collapses whitespace runs, trims and caps the length; null when nothing is left */
 function normalizeQuery(raw: string): string | null {
-  const query = [...raw.replace(/\s+/g, ' ').trim()].slice(0, MAX_QUERY_LENGTH).join('').trim()
+  let query = ''
+  for (const char of raw.replace(/\s+/g, ' ').trim()) {
+    if (query.length + char.length > MAX_QUERY_LENGTH) break
+    query += char
+  }
+  query = query.trim()
   return query === '' ? null : query
 }
 
