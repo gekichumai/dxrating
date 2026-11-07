@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "217b7180-58d3-4839-bc34-0d7025c8944d",
+  "id": "bac06631-793b-4fe0-81c8-f008b207a734",
   "prevIds": [
     "90a2b552-342f-4620-b6df-ee35c46bd5c3"
   ],
@@ -375,7 +375,7 @@
     {
       "type": "text",
       "typeSchema": null,
-      "notNull": false,
+      "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
@@ -388,7 +388,7 @@
     {
       "type": "text",
       "typeSchema": null,
-      "notNull": false,
+      "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
@@ -4797,40 +4797,6 @@
     {
       "nameExplicit": false,
       "columns": [
-        "created_by"
-      ],
-      "schemaTo": "public",
-      "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "SET NULL",
-      "name": "announcements_created_by_user_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "announcements"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
-        "updated_by"
-      ],
-      "schemaTo": "public",
-      "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
-      "onUpdate": "NO ACTION",
-      "onDelete": "SET NULL",
-      "name": "announcements_updated_by_user_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "announcements"
-    },
-    {
-      "nameExplicit": false,
-      "columns": [
         "game_id"
       ],
       "schemaTo": "arcade",
@@ -5990,6 +5956,20 @@
     {
       "value": "\"regions\" <@ ARRAY['jp', 'intl', 'cn']::text[]",
       "name": "announcements_regions_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "announcements"
+    },
+    {
+      "value": "\"created_by\" ~ '^(human|agent):.+$'",
+      "name": "announcements_created_by_check",
+      "entityType": "checks",
+      "schema": "public",
+      "table": "announcements"
+    },
+    {
+      "value": "\"updated_by\" ~ '^(human|agent):.+$'",
+      "name": "announcements_updated_by_check",
       "entityType": "checks",
       "schema": "public",
       "table": "announcements"

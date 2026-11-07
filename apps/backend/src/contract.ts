@@ -1,4 +1,4 @@
-import { adminAnnouncementsContract, publicContractRoutes } from '@gekichumai/api-contract'
+import { publicContractRoutes } from '@gekichumai/api-contract'
 import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
@@ -56,10 +56,6 @@ const ChartOgImageOutputSchema = z.object({
 
 export const appContract = oc.router({
   ...publicContractRoutes,
-  // Private: tagged `internal`, so outside /spec.json; every handler starts with requireAdmin
-  admin: {
-    announcements: adminAnnouncementsContract,
-  },
   maimai: {
     fetchRecords: oc
       .meta(

@@ -13,8 +13,8 @@ CREATE TABLE "announcements" (
 	"min_app_version" text,
 	"max_app_version" text,
 	"dismissible" boolean DEFAULT true NOT NULL,
-	"created_by" text,
-	"updated_by" text,
+	"created_by" text NOT NULL,
+	"updated_by" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "announcements_severity_check" CHECK ("severity" IN ('info', 'warning', 'critical')),
@@ -22,12 +22,12 @@ CREATE TABLE "announcements" (
 	CONSTRAINT "announcements_body_has_en" CHECK ("body" ? 'en'),
 	CONSTRAINT "announcements_window_check" CHECK ("ends_at" IS NULL OR "ends_at" > "starts_at"),
 	CONSTRAINT "announcements_platforms_check" CHECK ("platforms" <@ ARRAY['web', 'ios']::text[]),
-	CONSTRAINT "announcements_regions_check" CHECK ("regions" <@ ARRAY['jp', 'intl', 'cn']::text[])
+	CONSTRAINT "announcements_regions_check" CHECK ("regions" <@ ARRAY['jp', 'intl', 'cn']::text[]),
+	CONSTRAINT "announcements_created_by_check" CHECK ("created_by" ~ '^(human|agent):.+$'),
+	CONSTRAINT "announcements_updated_by_check" CHECK ("updated_by" ~ '^(human|agent):.+$')
 );
 --> statement-breakpoint
 CREATE INDEX "announcements_ends_at" ON "announcements" ("ends_at");--> statement-breakpoint
-ALTER TABLE "announcements" ADD CONSTRAINT "announcements_created_by_user_id_fkey" FOREIGN KEY ("created_by") REFERENCES "user"("id") ON DELETE SET NULL;--> statement-breakpoint
-ALTER TABLE "announcements" ADD CONSTRAINT "announcements_updated_by_user_id_fkey" FOREIGN KEY ("updated_by") REFERENCES "user"("id") ON DELETE SET NULL;--> statement-breakpoint
 ALTER TABLE "arcade"."chains" DROP CONSTRAINT "chains_country_codes_nonempty_check", ADD CONSTRAINT "chains_country_codes_nonempty_check" CHECK (cardinality("country_codes") > 0);--> statement-breakpoint
 ALTER TABLE "arcade"."crawl_runs" DROP CONSTRAINT "arcade_crawl_runs_status_check", ADD CONSTRAINT "arcade_crawl_runs_status_check" CHECK ("status" in ('running', 'succeeded', 'failed'));--> statement-breakpoint
 ALTER TABLE "arcade"."crawl_runs" DROP CONSTRAINT "arcade_crawl_runs_record_count_check", ADD CONSTRAINT "arcade_crawl_runs_record_count_check" CHECK ("record_count" >= 0);--> statement-breakpoint
