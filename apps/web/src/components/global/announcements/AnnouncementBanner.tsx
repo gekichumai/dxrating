@@ -119,7 +119,7 @@ export function AnnouncementBanners() {
 }
 
 /** The text of the info and warning notices that newly appeared (or were revised), for the polite live region */
-function usePoliteAnnouncement(
+export function usePoliteAnnouncement(
   visible: readonly PublicAnnouncement[],
   locale: SupportedLocale,
   fallbacks: Record<string, string[]> | undefined,
@@ -151,7 +151,7 @@ function usePoliteAnnouncement(
     clearTimeout(pending.current)
     queued.current.push(...texts)
     pending.current = setTimeout(() => {
-      setText(queued.current.join('. '))
+      setText(queued.current.join(' '))
       queued.current = []
     }, 150)
   }, [visible, locale, fallbacks])
