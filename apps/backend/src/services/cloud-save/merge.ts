@@ -112,6 +112,18 @@ export const shouldShortCircuit = (database: DatabaseService, job: ImportJobRow,
     )
   })
 
+/** Whether any of `sheetIds` is a tombstone deleted at or after `since` (a deletion made while a job ran) */
+const hasDeletionSince = (database: DatabaseService, saveId: string, since: Date, sheetIds: readonly string[]) =>
+  Effect.map(
+    database.raw<{ found: boolean }>(
+      'CloudSave.deletionSinceJobStart',
+      `SELECT EXISTS (SELECT 1 FROM score_records
+         WHERE save_id = $1 AND deleted_at >= $2 AND sheet_id = ANY($3::text[])) AS found`,
+      [saveId, since, [...sheetIds]],
+    ),
+    ({ rows }) => rows[0]?.found === true,
+  )
+
 /**
  * Completes a running import job: in one transaction, locks the save, merges `records` (or short-circuits an
  * unchanged payload on an unchanged save, which writes no record, event or revision) and marks the job `succeeded` with its counts.
@@ -141,10 +153,21 @@ export const completeImportJob = (
       if (!jobRow) return yield* new CloudSaveNotFound()
 
       let counts: ImportCountsDTO
+      // Whether the merge's decisions hold for a later identical job: not when it kept a deletion only because the
+      // deletion is newer than this job (§5.3 rule 2), since a job that starts after it decides by score instead
+      let reusable = true
       if (yield* shouldShortCircuit(database, jobRow, save.revision)) {
         counts = { ...EMPTY_COUNTS, fetched: input.records.length, unchanged: input.records.length }
       } else {
         counts = (yield* applyImportRecords(database, save, toMergeJob(jobRow), input.records)).counts
+        if (counts.skippedDeleted > 0) {
+          reusable = !(yield* hasDeletionSince(
+            database,
+            save.id,
+            jobRow.started_at,
+            input.records.map((record) => record.sheetId),
+          ))
+        }
       }
       for (const [key, value] of Object.entries(input.extraCounts ?? {})) {
         counts[key as keyof ImportCountsDTO] += value ?? 0
@@ -152,7 +175,8 @@ export const completeImportJob = (
       const finished = yield* finishImportJob(database, jobRow.id, {
         status: 'succeeded',
         counts,
-        saveRevision: save.revision,
+        // Without it, the next identical job runs the merge (see shouldShortCircuit)
+        saveRevision: reusable ? save.revision : null,
       })
       return { job: toImportJobDTO(finished!), revision: save.revision }
     }),
