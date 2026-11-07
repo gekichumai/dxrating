@@ -210,6 +210,34 @@ describe('parseRatingFile', () => {
     )
     const againEntries = again.success && 'cloudExport' in again ? again.cloudExport![0]!.entries : []
     expect(againEntries[0]?.providerConfig).toEqual({ divingFish: { ratingEligibility: 'b35' } })
+    // A better LXNS score a Diving-Fish import kept, with the bucket that import stored: restored as the cloud save
+    // reads it, and uploaded again with it, as a claim
+    const kept = parseRatingFile(
+      JSON.stringify({
+        ...file,
+        saves: [
+          {
+            id: 'dsav_d',
+            name: 'Main',
+            region: 'cn',
+            records: [
+              {
+                sheetId: 'dsht_e5nsvt8k2a',
+                achievementRate: 100.5,
+                comboFlag: 'ap',
+                best50Bucket: 'b35',
+                provenance: { source: 'lxns', fetchedBy: 'server', verification: 'verified' },
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    const keptEntries = kept.success && 'cloudExport' in kept ? kept.cloudExport![0]!.entries : []
+    expect(keptEntries[0]?.providerConfig).toEqual({ divingFish: { ratingEligibility: 'b35' } })
+    expect(
+      entriesToImportRecords(keptEntries, { source: 'dxrating-json', claimedSource: null }).records[0],
+    ).toMatchObject({ best50Bucket: 'b35' })
     expect(parseRatingFile(JSON.stringify({ ...file, saves: [] }))).toMatchObject({
       success: false,
       reason: 'invalid-structure',

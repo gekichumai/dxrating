@@ -138,14 +138,12 @@ function exportRecordToEntry(record: z.output<typeof CloudExportRecordSchema>): 
     if (record.providerRecordId) entry.source.providerId = record.providerRecordId
     if (record.best50Bucket) entry.source.best50Bucket = record.best50Bucket
   }
-  // The calculator reads the best 50 hint from `providerConfig` (as `cloudRecordToPlayEntry` writes it): a
-  // Diving-Fish record, or one a client uploaded (a backup, a rating file) that kept its device's hint without
-  // claiming a provider
+  // The calculator reads the best 50 hint from `providerConfig`, under the rule `cloudRecordToPlayEntry` reads it
+  // (`honoursBucketHint`): any record but a manual entry. That covers a Diving-Fish record, the bucket a Diving-Fish
+  // import stored on a better LXNS or NET score it kept, and a client upload that kept its device's hint. The
+  // provenance itself stays a claim
   const hint = record.provenance
-  if (
-    record.best50Bucket &&
-    (hint?.source === 'diving-fish' || hint?.source === 'legacy-local' || hint?.fetchedBy === 'client')
-  ) {
+  if (record.best50Bucket && hint && hint.source !== 'manual') {
     entry.providerConfig = { divingFish: { ratingEligibility: record.best50Bucket } }
   }
   return entry
