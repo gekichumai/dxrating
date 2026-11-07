@@ -40,6 +40,35 @@ describe('clientImportPlan', () => {
 })
 
 describe('entriesToImportRecords', () => {
+  it('uploads the bucket the calculator reads: the stored Diving-Fish eligibility, whatever the provider', () => {
+    const { records } = entriesToImportRecords(
+      [
+        // An older file with the hint only where the calculator reads it
+        {
+          sheetId: 'dsht_e5nsvt8k2a',
+          achievementRate: 100,
+          providerConfig: { divingFish: { ratingEligibility: 'b35' } },
+        },
+        // An LXNS score a Diving-Fish import stored a bucket on, as a cloud save exports it
+        {
+          sheetId: 'dsht_5mk3yr8gme',
+          achievementRate: 100.5,
+          comboFlag: 'ap',
+          source: { provider: 'lxns' },
+          providerConfig: { divingFish: { ratingEligibility: 'b35' } },
+        },
+        // A bucket the calculator ignores (not Diving-Fish) is not sent
+        { sheetId: 'dsht_kkx38yfx4t', achievementRate: 99, source: { provider: 'lxns', best50Bucket: 'b15' } },
+      ],
+      { source: 'dxrating-json', claimedSource: null },
+    )
+    expect(records.map((record) => [record.sheetId, record.best50Bucket])).toEqual([
+      ['dsht_e5nsvt8k2a', 'b35'],
+      ['dsht_5mk3yr8gme', 'b35'],
+      ['dsht_kkx38yfx4t', null],
+    ])
+  })
+
   it('keeps one record per chart (the best), public sheet IDs and valid achievements only', () => {
     const { records, skipped, duplicates } = entriesToImportRecords(
       [
@@ -207,7 +236,9 @@ describe('rawPayloadSha256 (cross-check with the server)', () => {
       achievementRate: 100.5,
       comboFlag: 'ap',
       dxScore: 2400,
-      source: { provider: 'lxns', providerId: '譜面-🎵-ß', best50Bucket: 'b15' },
+      source: { provider: 'lxns', providerId: '譜面-🎵-ß' },
+      // The hint where the calculator reads it (a Diving-Fish import stored it on this LXNS score)
+      providerConfig: { divingFish: { ratingEligibility: 'b15' } },
     },
     { sheetId: 'dsht_5mk3yr8gme', achievementRate: 98 },
   ]

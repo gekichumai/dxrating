@@ -99,7 +99,12 @@ export function entriesToImportRecords(
       comboFlag: entry.comboFlag ?? null,
       syncFlag: entry.syncFlag ?? null,
       dxScore: typeof entry.dxScore === 'number' && Number.isInteger(entry.dxScore) ? entry.dxScore : null,
-      best50Bucket: entry.source?.best50Bucket ?? null,
+      // The hint the calculator honours (`useRatingEntries`, `LocalScoreRepository`): the stored Diving-Fish
+      // eligibility, else a Diving-Fish source's bucket. A record never carries one the device ignored
+      best50Bucket:
+        entry.providerConfig?.divingFish?.ratingEligibility ??
+        (provider === 'diving-fish' ? entry.source?.best50Bucket : undefined) ??
+        null,
       providerRecordId: entry.source?.providerId ? String(entry.source.providerId).slice(0, 128) : null,
       claimedSource,
     } satisfies ImportRecord)
