@@ -32,7 +32,14 @@ import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc
 import { onError } from '@orpc/server'
 import { netErrorTags, Sentry, shouldCaptureSentryError } from './lib/functions/sentry'
 import { Database } from './db/index'
-import { createDxdataEffect, createPostgresDxdataEffects, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata'
+import {
+  compressCatalogBody,
+  createDxdataEffect,
+  createPostgresDxdataEffects,
+  DXDATA_CORS_OPTIONS,
+  DXDATA_PATH,
+} from './services/dxdata'
+import { createDxdataV2Store, DXDATA_V2_CACHE_TAG, DXDATA_V2_PATH } from './services/dxdata-v2'
 import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi'
 import { applyApiPolicyToOpenApi } from './services/api-policy'
 import { addPublicApiExamplesToOpenApi } from './services/openapi-examples'
@@ -86,7 +93,7 @@ const ARCADE_VENUES_RETAINED_304_HEADERS = [
   'access-control-allow-origin',
   'access-control-expose-headers',
 ]
-const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH])
+const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH, DXDATA_V2_PATH])
 // The tag and alias lists are public data that the edge shares between every caller. The edge ignores
 // `Vary: Origin`, so a cached copy must not carry one caller's reflected origin: reads answer `*` without
 // credentials, like the catalog. Writes on the same paths (POST /aliases) keep the credentialed API CORS.
@@ -638,17 +645,26 @@ app.get('/robots.txt', (c) => c.text('User-agent: *\\nDisallow: /'))
 export const dxdataStore = createPostgresDxdataEffects((text, values) =>
   Effect.flatMap(Database, (database) => database.raw('Read published catalog', text, values)),
 )
-const dxdataHandler = createDxdataEffect(dxdataStore, (error, c: Context<EvlogVariables>) => {
+const reportCatalogError = (error: unknown, c: Context<EvlogVariables>) => {
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
   log?.error(error instanceof Error ? error : new Error(String(error)))
   Sentry.captureException(error, { tags: { requestId } })
-})
+}
+const dxdataHandler = createDxdataEffect(dxdataStore, reportCatalogError)
+// v2 (gekichumai/meta#43): the same publication, transformed once per published body
+const dxdataV2Handler = createDxdataEffect(
+  createDxdataV2Store(dxdataStore),
+  reportCatalogError,
+  compressCatalogBody,
+  DXDATA_V2_CACHE_TAG,
+)
 
 // The producer atomically advances the production publication pointer. Read
 // its small metadata row first so HEAD and conditional requests never fetch
 // the potentially large snapshot body.
 app.on(['GET', 'HEAD'], DXDATA_PATH, (c) => runApp(dxdataHandler(c), { signal: c.req.raw.signal }))
+app.on(['GET', 'HEAD'], DXDATA_V2_PATH, (c) => runApp(dxdataV2Handler(c), { signal: c.req.raw.signal }))
 
 const arcadeVenuesCacheHeaders = createMiddleware((c, next) =>
   runApp(

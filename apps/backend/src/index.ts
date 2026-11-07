@@ -10,6 +10,7 @@ import { serve } from './lifecycle'
 import { appRuntime, shutdownApp } from './runtime'
 import { API_CLIENT_HEADER } from './services/api-usage'
 import { DXDATA_PATH } from './services/dxdata'
+import { DXDATA_V2_PATH } from './services/dxdata-v2'
 import { EdgeCacheError, requestEdgeCache, watchEdgeCache } from './services/edge-cache'
 import { HttpClientLive } from './services/http-client'
 
@@ -30,14 +31,17 @@ runMain(
         yield* Effect.forkScoped(
           watchEdgeCache({
             readPublishedSha256: Effect.map(dxdataStore.getPublishedMetadata(), (metadata) => metadata?.bodySha256),
-            // The same request the edge makes: it starts the catalog's Brotli compression before the edge refills
+            // The same requests the edge makes: they build the v2 catalog and start both Brotli compressions before
+            // the edge refills
             warmCatalog: Effect.tryPromise({
               try: async () => {
-                const response = await app.request(DXDATA_PATH, {
-                  headers: { 'Accept-Encoding': 'gzip, br', [API_CLIENT_HEADER]: 'dxrating-edge-cache' },
-                })
-                await response.arrayBuffer()
-                if (response.status !== 200) throw new Error(`Catalog warm-up answered ${response.status}`)
+                for (const path of [DXDATA_PATH, DXDATA_V2_PATH]) {
+                  const response = await app.request(path, {
+                    headers: { 'Accept-Encoding': 'gzip, br', [API_CLIENT_HEADER]: 'dxrating-edge-cache' },
+                  })
+                  await response.arrayBuffer()
+                  if (response.status !== 200) throw new Error(`Catalog warm-up of ${path} answered ${response.status}`)
+                }
               },
               catch: (cause) => new EdgeCacheError({ operation: 'Warm the catalog', cause }),
             }),

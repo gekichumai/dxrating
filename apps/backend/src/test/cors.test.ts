@@ -47,3 +47,18 @@ describe('CORS of the public tag and alias lists', () => {
     expect(response.headers.get('Access-Control-Allow-Credentials')).toBe('true')
   })
 })
+describe('CORS of the v2 catalog', () => {
+  it('answers a preflight for /api/v2/dxdata with * and no credentials, like v1', async () => {
+    const response = await app.request('/api/v2/dxdata', {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'https://dxrating.net',
+        'Access-Control-Request-Method': 'GET',
+        'Access-Control-Request-Headers': 'if-none-match',
+      },
+    })
+
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*')
+    expect(response.headers.get('Access-Control-Allow-Credentials')).toBeNull()
+  })
+})
