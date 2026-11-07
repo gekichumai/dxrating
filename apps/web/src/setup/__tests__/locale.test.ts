@@ -54,6 +54,8 @@ describe('locale detection', () => {
     expect(toSupportedLocale('fil-PH')).toBe('fil')
     expect(toSupportedLocale('tl')).toBe('fil')
     expect(toSupportedLocale('vi-VN')).toBe('vi')
+    expect(toSupportedLocale('th-TH')).toBe('th')
+    expect(toSupportedLocale('my-MM')).toBe('my')
     // A region subtag doesn't pick the language: Chinese in Malaysia stays Chinese, English in Malaysia stays English
     expect(toSupportedLocale('zh-MY')).toBe('zh-Hans')
     expect(toSupportedLocale('en-MY')).toBe('en')

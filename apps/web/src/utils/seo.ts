@@ -46,6 +46,8 @@ const OG_LOCALES: Record<SupportedLocale, string> = {
   id: 'id_ID',
   fil: 'fil_PH',
   vi: 'vi_VN',
+  th: 'th_TH',
+  my: 'my_MM',
 }
 
 function readLocaleFromContext(context: unknown): SupportedLocale | null {

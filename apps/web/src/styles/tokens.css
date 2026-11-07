@@ -246,6 +246,33 @@ html[lang|='vi'],
   font-family: var(--font-sans);
 }
 
+/* Thai and Burmese: Torus has neither script, so Latin words and numbers stay on Torus and the script falls back to
+   the platform's own face (macOS/iOS, Windows, Android/Linux in that order). System fonts only: no download for
+   anyone, and these rules apply only under these locales. Their stacked vowels and tone marks need taller lines */
+html[lang|='th'],
+[lang|='th'] {
+  --font-sans:
+    Torus, Thonburi, 'Sukhumvit Set', 'Leelawadee UI', Leelawadee, 'Noto Sans Thai', 'Noto Sans Thai UI', Tahoma,
+    system-ui, sans-serif;
+  font-family: var(--font-sans);
+}
+
+html[lang|='th'] {
+  line-height: 1.6;
+}
+
+html[lang|='my'],
+[lang|='my'] {
+  --font-sans:
+    Torus, 'Myanmar Sangam MN', 'Myanmar MN', 'Myanmar Text', 'Noto Sans Myanmar', 'Noto Sans Myanmar UI', Padauk,
+    system-ui, sans-serif;
+  font-family: var(--font-sans);
+}
+
+html[lang|='my'] {
+  line-height: 1.8;
+}
+
 /* Declared wherever --font-sans changes, so `num` falls back to that element's locale stack, not the root's */
 :root,
 [lang] {

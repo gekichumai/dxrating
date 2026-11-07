@@ -60,6 +60,8 @@ export const LOCALES = [
   { value: 'id', label: 'Bahasa Indonesia' },
   { value: 'fil', label: 'Filipino' },
   { value: 'vi', label: 'Tiếng Việt' },
+  { value: 'th', label: 'ไทย' },
+  { value: 'my', label: 'မြန်မာ' },
 ] as const satisfies readonly { value: SupportedLocale; label: string }[]
 
 /**
