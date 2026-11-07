@@ -16,7 +16,9 @@ import {
   type StateUpdateCallback,
 } from '../../lib/functions/client'
 import { HttpClient } from '../http-client'
-import { fetchPlayerWithScores, LxnsError } from '../lxns/index'
+import type { Named } from '@gdp-ts/core'
+import type { ViewerIs } from '../../proofs/viewer-is'
+import { fetchPlayerWithScores, LxnsError } from '../lxns/viewer'
 import { ServerImportFailure, type ServerImportErrorCode, type UpstreamFetch } from './server-imports'
 
 // --- maimai NET ---
@@ -87,9 +89,9 @@ const lxnsFailure = (error: unknown) => {
  * Fetches an LXNS import with the user's stored OAuth connection (refreshed as the LXNS service does): the player,
  * whose friend code is the source account, then every score, both with one access token.
  */
-export const fetchLxnsImport = (userId: string) =>
+export const fetchLxnsImport = <U>(viewer: Named<U, string>, proof: ViewerIs<U>) =>
   Effect.gen(function* () {
-    const { player, scores } = yield* fetchPlayerWithScores(userId)
+    const { player, scores } = yield* fetchPlayerWithScores(viewer, proof)
     return {
       payload: scores,
       normalize: (catalog) =>

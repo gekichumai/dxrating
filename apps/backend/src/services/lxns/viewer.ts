@@ -26,6 +26,10 @@ export const discardAuthorization = (code: string, state: string) => lxns.comple
 export const getConnectionStatus = <U>(viewer: Named<U, string>, proof: ViewerIs<U>) =>
   Effect.suspend(() => lxns.getConnectionStatus(viewerId(viewer, proof)))
 
+/** The player and every score, both with one access token (a server import into a cloud save) */
+export const fetchPlayerWithScores = <U>(viewer: Named<U, string>, proof: ViewerIs<U>) =>
+  Effect.suspend(() => lxns.fetchPlayerWithScores(viewerId(viewer, proof)))
+
 export const fetchPlayerScores = <U>(viewer: Named<U, string>, proof: ViewerIs<U>) =>
   Effect.suspend(() => lxns.fetchPlayerScores(viewerId(viewer, proof)))
 
