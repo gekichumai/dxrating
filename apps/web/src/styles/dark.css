@@ -28,6 +28,8 @@ html[data-theme='dark'] {
    */
   --status-positive: #34d399;
   --status-warning: #fbbf24;
+  /* The same hues lightened to >=4.5:1 on dark glass */
+  --dx-lettering: linear-gradient(90deg, #ff7a7a, #ffa94d, #8bd45a, #4fc3f7);
 
   /* What `bg-white/…` and `text-black/…` utilities resolve to (uno.config.ts postprocess) */
   --surface-rgb: 30 30 35;

@@ -397,3 +397,17 @@ label[data-shrink='false'] ~ .MuiInputBase-formControl .MuiInputBase-input::plac
     --scroll-fade-end: 0px;
   }
 }
+/* The DX chart type's multicolour lettering (--dx-lettering in tokens.css); forced colours keep the system text */
+.dx-lettering {
+  background-image: var(--dx-lettering);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (forced-colors: active) {
+  .dx-lettering {
+    background-image: none;
+    color: CanvasText;
+  }
+}

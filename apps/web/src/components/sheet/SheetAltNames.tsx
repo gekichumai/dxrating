@@ -3,6 +3,18 @@ import { type FC, useEffect, useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import type { SupportedLocale } from '@/setup/locale'
+import { aliasQuestion } from './aliasQuestion'
+
+/**
+ * What clicking an alias copies. Chinese-speaking players share an alias as "<alias>是什么歌" ("what song is
+ * <alias>?"), so zh-Hans and zh-Hant copy its 是什么歌 link (see aliasQuestion); other locales copy the alias itself.
+ */
+export function aliasCopyContent(altName: string, locale: SupportedLocale) {
+  if (locale === 'zh-Hans' || locale === 'zh-Hant') return aliasQuestion(altName)
+  const alias = altName.trim()
+  return { clipboard: alias, toastContent: alias }
+}
 
 const COLLAPSED_MASK = 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5rem, rgba(0,0,0,0) 100%)'
 
@@ -47,9 +59,9 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
               className="cursor-copy rounded-[var(--radius-xs)] border-0 bg-transparent p-0 text-inherit font-inherit text-left decoration-dotted underline-offset-2 hover:underline focus-visible:underline"
               title={m.sheet_aliases_copy({}, { locale })}
               onClick={() => {
-                const alias = altName.trim()
-                void navigator.clipboard?.writeText(alias)
-                toast.success(m.sheet_copyAltName_toastSuccess({ content: alias }, { locale }), {
+                const { clipboard, toastContent } = aliasCopyContent(altName, locale)
+                void navigator.clipboard?.writeText(clipboard)
+                toast.success(m.sheet_copyAltName_toastSuccess({ content: toastContent }, { locale }), {
                   id: `copy-sheet-alt-name-${altName}`,
                 })
               }}

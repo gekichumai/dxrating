@@ -47,6 +47,11 @@
   /* Status fills that carry white text (>=4.5:1): availability, unlock, success and warning badges */
   --status-positive: #047857;
   --status-warning: #b45309;
+  /*
+   * The DX chart type's multicolour lettering, from the official でらっくす plate as the iOS app draws it: red, orange,
+   * green and cyan, each stop deepened to >=4.5:1 on white (the plate's yellow cannot be, so it is skipped)
+   */
+  --dx-lettering: linear-gradient(90deg, #d32f2f, #b35600, #3e7d1c, #0277a8);
 
   /* What `bg-white/…` and `text-black/…` utilities resolve to; dark.css swaps them (uno.config.ts postprocess) */
   --surface-rgb: 255 255 255;

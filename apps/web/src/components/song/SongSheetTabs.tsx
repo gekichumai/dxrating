@@ -64,6 +64,22 @@ const TYPE_LABELS = {
 
 const typeShortLabel = (type: TypeEnum, label: string) => TYPE_SHORT_LABELS[type] ?? label
 
+/** A type's short label; DX takes the multicolour lettering of the game's でらっくす plate, as on iOS */
+const TypeShortLabel: FC<{ type: TypeEnum; label: string }> = ({ type, label }) =>
+  type === TypeEnum.DX ? (
+    <span className="dx-lettering font-bold">{typeShortLabel(type, label)}</span>
+  ) : (
+    <>{typeShortLabel(type, label)}</>
+  )
+
+/*
+ * The type control sits in the section's corner, concentric with it: the section is a 12px-radius panel with a 1px
+ * border, so an 8px-radius control goes 3px inside the border (12 = 8 + 3 + 1), on the top and on the side it hugs
+ * (the start on phones, the end from sm). The section's own padding is 12px, hence the -9px pull. Its selected
+ * segment is concentric with it in turn: 8 - 2px padding - 1px border = 5px.
+ */
+const TYPE_CONTROL_CORNER_CLASS = '!rounded-[var(--radius-md)] self-start shrink-0 -ml-[9px] sm:ml-0 sm:-mr-[9px]'
+
 /** A tab the visitor picked whose page is still on its way, and the chart shown when it was picked */
 interface PendingChart {
   type: TypeEnum
@@ -116,10 +132,10 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
 
   return (
     // Type then difficulty in reading order; from sm up they share a row, with the type control at the end
-    <div className="flex flex-col gap-2 sm:flex-row-reverse sm:items-center sm:gap-3 sm:border-b sm:border-solid sm:border-0 sm:border-black/8">
+    <div className="-mt-[9px] flex flex-col gap-2 sm:flex-row-reverse sm:items-start sm:gap-3 sm:border-b sm:border-solid sm:border-0 sm:border-black/8">
       {availableTypes.length > 1 ? (
         // A compact segmented control on a glass track; the selected segment is tinted, not filled
-        <div className="glass-inset !rounded-[var(--radius-md)] p-0.5 self-start sm:self-center shrink-0 max-w-full">
+        <div className={clsx('glass-inset p-0.5 max-w-full', TYPE_CONTROL_CORNER_CLASS)}>
           <Tabs
             value={tabsType}
             onChange={(event, v: TypeEnum) => {
@@ -136,7 +152,7 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
               root: '!min-h-8',
               scroller: 'scroll-fade-x',
               indicator:
-                '!h-full !rounded-[var(--radius-sm)] !bg-accent-subtle shadow-[inset_0_0_0_1px_var(--accent)] z-0',
+                '!h-full !rounded-[calc(var(--radius-md)-3px)] !bg-accent-subtle shadow-[inset_0_0_0_1px_var(--accent)] z-0',
             }}
           >
             {availableTypes.map((type) => {
@@ -152,10 +168,10 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
                   onKeyDown={activateOnSpace}
                   aria-label={label}
                   title={label}
-                  label={typeShortLabel(type, label)}
+                  label={<TypeShortLabel type={type} label={label} />}
                   classes={{
                     root: clsx(
-                      '!rounded-[var(--radius-sm)] z-1 !py-0 !px-3 !min-w-12 !min-h-8 !h-8 !text-xs !tracking-wide !normal-case',
+                      '!rounded-[calc(var(--radius-md)-3px)] z-1 !py-0 !px-3 !min-w-12 !min-h-8 !h-8 !text-xs !tracking-wide !normal-case',
                       selected ? '!text-accent-strong !font-semibold' : '!text-fg-2 !font-medium',
                     ),
                   }}
@@ -167,12 +183,16 @@ export const SongSheetTabs: FC<SongSheetTabsProps> = ({
       ) : (
         availableTypes[0] && (
           // One chart type: nothing to switch, so a plain badge says which one it is
+          // It takes the segmented control's place and size (38px, as tall as its track), so the corner reads the same
           <span
-            className="glass-inset !rounded-[var(--radius-sm)] self-start sm:self-center shrink-0 px-2 py-1 text-xs font-semibold tracking-wide text-fg-2"
+            className={clsx(
+              'glass-inset h-[38px] px-3 inline-flex items-center text-xs font-semibold tracking-wide text-fg-2',
+              TYPE_CONTROL_CORNER_CLASS,
+            )}
             title={TYPE_LABELS[availableTypes[0]]({}, { locale })}
           >
             <span aria-hidden="true">
-              {typeShortLabel(availableTypes[0], TYPE_LABELS[availableTypes[0]]({}, { locale }))}
+              <TypeShortLabel type={availableTypes[0]} label={TYPE_LABELS[availableTypes[0]]({}, { locale })} />
             </span>
             <span className="sr-only">{TYPE_LABELS[availableTypes[0]]({}, { locale })}</span>
           </span>
