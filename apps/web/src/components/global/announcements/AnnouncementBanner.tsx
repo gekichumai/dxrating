@@ -39,6 +39,9 @@ const severityLabel = (severity: PublicAnnouncement['severity'], locale: Support
     critical: m.announcement_severity_critical,
   })[severity]({}, { locale: locale })
 
+/** How often an open page checks for new announcements while it is visible */
+export const ANNOUNCEMENTS_REFETCH_INTERVAL_MS = 3 * 60_000
+
 /** Re-renders each minute, so a scheduled announcement appears and an ended one leaves without a refetch */
 function useMinuteClock(enabled: boolean) {
   const [now, setNow] = useState(() => Date.now())
@@ -74,6 +77,9 @@ export function AnnouncementBanners() {
     enabled,
     staleTime: 60_000,
     refetchOnWindowFocus: true,
+    // A tab that stays open also picks up a new, edited or ended announcement (the edge refreshes its copy each
+    // minute, so polling faster gains nothing)
+    refetchInterval: ANNOUNCEMENTS_REFETCH_INTERVAL_MS,
     retry: 1,
   })
   const now = useMinuteClock(enabled)
