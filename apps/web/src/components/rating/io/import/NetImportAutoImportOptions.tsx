@@ -1,9 +1,22 @@
 import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from '@mui/material'
 import { useId } from 'react'
-import { useTranslation } from 'react-i18next'
 import { toggleFocusRing } from '../../focusRing'
+import type { PlainMessage } from '@/i18n/message'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export type NetAutoImportMode = false | 'replace' | 'merge'
+
+const OPTION_TITLES = {
+  disabled: m.ratingCalculator_io_import_netRecords_dialog_autoImport_options_disabled_title,
+  replace: m.ratingCalculator_io_import_netRecords_dialog_autoImport_options_replace_title,
+  merge: m.ratingCalculator_io_import_netRecords_dialog_autoImport_options_merge_title,
+} satisfies Record<'disabled' | 'replace' | 'merge', PlainMessage>
+
+const OPTION_DESCRIPTIONS = {
+  replace: m.ratingCalculator_io_import_netRecords_dialog_autoImport_options_replace_description,
+  merge: m.ratingCalculator_io_import_netRecords_dialog_autoImport_options_merge_description,
+} satisfies Record<'replace' | 'merge', PlainMessage>
 
 export function NetImportAutoImportOptions({
   value,
@@ -14,16 +27,16 @@ export function NetImportAutoImportOptions({
   disabled: boolean
   onChange: (value: NetAutoImportMode) => void
 }) {
-  const { t } = useTranslation()
+  const locale = useLocale()
   const labelId = useId()
 
   return (
     <FormControl disabled={disabled} className="w-full">
       <FormLabel id={labelId}>
         <div className="flex flex-col gap-1">
-          <span>{t('rating-calculator:io.import.net-records.dialog.auto-import.label')}</span>
+          <span>{m.ratingCalculator_io_import_netRecords_dialog_autoImport_label({}, { locale })}</span>
           <span className="text-xs text-secondary">
-            {t('rating-calculator:io.import.net-records.dialog.auto-import.description')}
+            {m.ratingCalculator_io_import_netRecords_dialog_autoImport_description({}, { locale })}
           </span>
         </div>
       </FormLabel>
@@ -42,13 +55,9 @@ export function NetImportAutoImportOptions({
             className="min-h-11 !mr-0"
             label={
               <div className="flex flex-col py-1">
-                <span className="text-sm">
-                  {t(`rating-calculator:io.import.net-records.dialog.auto-import.options.${mode}.title`)}
-                </span>
+                <span className="text-sm">{OPTION_TITLES[mode]({}, { locale })}</span>
                 {mode !== 'disabled' && (
-                  <span className="text-xs text-secondary">
-                    {t(`rating-calculator:io.import.net-records.dialog.auto-import.options.${mode}.description`)}
-                  </span>
+                  <span className="text-xs text-secondary">{OPTION_DESCRIPTIONS[mode]({}, { locale })}</span>
                 )}
               </div>
             }

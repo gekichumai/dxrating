@@ -1,7 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TrendingPage, buildTrendingQueryOptions } from '../TrendingPage'
 
 const mocks = vi.hoisted(() => {
@@ -67,10 +66,6 @@ vi.mock('@/components/sheet/SheetListItem', () => ({
 }))
 
 describe('TrendingPage', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   beforeEach(() => {
     mocks.queryState.data = {
       dateFrom: '2026-05-01',

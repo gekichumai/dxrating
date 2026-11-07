@@ -2,10 +2,11 @@ import type { ComboFlag, SyncFlag } from '@gekichumai/maimai-domain'
 import { TypeEnum } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import type { CSSProperties, FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import { achievementRankLabel, COMBO_LABELS, SYNC_LABELS } from '@/components/completion/completion'
-import { getSheetTypeAltTextKey } from '@/components/sheet/sheetTypeAssets'
-import { DIFFICULTIES } from '@/models/difficulties'
+import { getSheetTypeAltText } from '@/components/sheet/sheetTypeAssets'
+import { FixedWidthText } from '@/components/global/FixedWidthText'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { DIFFICULTIES, DIFFICULTY_SHORT_TITLES } from '@/models/difficulties'
 
 /**
  * Score badges shared with the iOS app (DesignSystem/DXBadges.swift and ChartIndicators.swift): the same words and
@@ -80,8 +81,8 @@ const DX_LETTERING: CSSProperties = {
 }
 
 export const SheetTypeBadge: FC<{ type: TypeEnum; className?: string }> = ({ type, className }) => {
-  const { t } = useTranslation(['sheet'])
-  const label = t(getSheetTypeAltTextKey(type))
+  const locale = useLocale()
+  const label = getSheetTypeAltText(type, locale)
   if (type === TypeEnum.DX) {
     return (
       <span
@@ -106,17 +107,28 @@ export const SheetTypeBadge: FC<{ type: TypeEnum; className?: string }> = ({ typ
   )
 }
 
+/** Utage sheets carry their 【…】 label as the difficulty; the pill shows 宴 and keeps the label for screen readers */
+const UTAGE_SHORT_TITLE = '宴'
+/** The widest internal level, with tabular numbers: every constant segment takes this width */
+const LEVEL_WIDTH_SAMPLE = '00.0'
+
 /**
  * The difficulty name on its solid colour, followed by the internal level on a tint of the same colour, like the iOS
- * app's two-tone difficulty pill
+ * app's two-tone difficulty pill. Both halves have a fixed width (the longest short name, the widest level), so in a
+ * list the level and whatever follows the pill line up on every row. Short names (BAS … Re:MAS) keep it compact; the
+ * full name is in the title and read out to screen readers.
  */
-export const DifficultyLevelBadge: FC<{ difficulty: string; level: string; className?: string }> = ({
-  difficulty,
-  level,
-  className,
-}) => {
+export const DifficultyLevelBadge: FC<{
+  difficulty: string
+  level: string
+  className?: string
+  /** On the level half, e.g. to hide it where the level has a column of its own */
+  levelClassName?: string
+}> = ({ difficulty, level, className, levelClassName }) => {
   const entry = DIFFICULTIES[difficulty as keyof typeof DIFFICULTIES]
   const solid = entry?.solid ?? '#6B7280'
+  const fullTitle = entry?.title ?? difficulty
+  const shortTitle = entry?.shortTitle ?? UTAGE_SHORT_TITLE
   return (
     <span
       className={clsx(
@@ -125,13 +137,25 @@ export const DifficultyLevelBadge: FC<{ difficulty: string; level: string; class
         className,
       )}
       style={{ '--difficulty-solid': solid } as CSSProperties}
+      title={`${fullTitle} ${level}`}
     >
-      <span className="flex items-center bg-[var(--difficulty-solid)] px-1.5 tracking-[0.02em] text-white">
-        {entry?.title ?? difficulty}
+      <span aria-hidden className="flex items-center bg-[var(--difficulty-solid)] px-1.5 tracking-[0.02em] text-white">
+        <FixedWidthText
+          text={shortTitle}
+          sizers={[...DIFFICULTY_SHORT_TITLES, UTAGE_SHORT_TITLE]}
+          className="justify-items-center"
+        />
       </span>
-      <span className="flex items-center px-1.5 text-fg-1 num bg-[color-mix(in_oklab,var(--difficulty-solid)_14%,transparent)] dark:bg-[color-mix(in_oklab,var(--difficulty-solid)_30%,transparent)]">
-        {level}
+      <span
+        aria-hidden
+        className={clsx(
+          'flex items-center px-1.5 text-fg-1 num bg-[color-mix(in_oklab,var(--difficulty-solid)_14%,transparent)] dark:bg-[color-mix(in_oklab,var(--difficulty-solid)_30%,transparent)]',
+          levelClassName,
+        )}
+      >
+        <FixedWidthText text={level} sizers={[LEVEL_WIDTH_SAMPLE]} className="justify-items-end" />
       </span>
+      <span className="sr-only">{`${fullTitle} ${level}`}</span>
     </span>
   )
 }

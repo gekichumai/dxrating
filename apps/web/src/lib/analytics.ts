@@ -83,6 +83,9 @@ type AnalyticsEventProperties = {
     entry_count_before: number
     sheet_id: string
   }
+  rating_onboarding_action_clicked: {
+    action: 'maimai_net' | 'manual'
+  }
   rating_calculator_view_changed: {
     setting: 'show_only_b50' | 'ap50'
     enabled: boolean
@@ -133,6 +136,10 @@ type AnalyticsEventProperties = {
   sheet_search_clear_button_clicked: {
     previous_query_length: number
     result_count: number
+  }
+  sheet_list_layout_changed: {
+    layout: 'list' | 'grid'
+    previous_layout: 'list' | 'grid'
   }
   sheet_search_performed: {
     query_length: number

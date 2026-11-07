@@ -54,6 +54,9 @@ const DynamicSongSchema = z.strictObject({
   isLocked: z.boolean(),
   sheets: z.array(DynamicSheetSchema),
   searchAcronyms: z.array(z.string()),
+  // Hiragana reading of the title for search (gekichumai/meta#38). Only titles with kanji have one.
+  reading: z.string().min(1).optional(),
+  readingSource: z.enum(['override', 'verified', 'analyzer']).optional(),
 })
 
 const DynamicLocalizedStringSchema = z.record(z.string().min(1), z.string())
@@ -212,6 +215,8 @@ const publishedDxdataCatalogExample = {
         },
       ],
       searchAcronyms: [],
+      reading: 'ぜんせかいきょうつうりずむかんてすと',
+      readingSource: 'verified',
     },
     {
       id: 'dsng_phnye8rsgn',
@@ -392,7 +397,7 @@ export const addPublishedDxdataToOpenApi = (document: OpenAPI.OpenAPIObject): Op
         '',
         '**Caching.** The body changes only when a new catalog is published (usually once a day or less). Each ' +
           'response has a strong `ETag` (the SHA-256 of the body). Browsers may cache it for 5 minutes, shared ' +
-          'caches for 6 hours. Poll at most every few minutes, and send the last `ETag` as `If-None-Match`: an ' +
+          'caches for 1 minute before they revalidate. Poll at most every few minutes, and send the last `ETag` as `If-None-Match`: an ' +
           'unchanged catalog costs a bodiless `304`. `HEAD` returns the same headers without the ~4 MB body.',
         '',
         '```sh',

@@ -6,7 +6,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".output/**", ".wrangler/**"],
-      "env": ["VITE_*", "SENTRY_RELEASE"],
+      "env": ["VITE_*", "SENTRY_RELEASE", "CI"],
       "passThroughEnv": ["SENTRY_AUTH_TOKEN"]
     },
     "dev": {

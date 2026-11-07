@@ -1,0 +1,9 @@
+# Workers Static Assets response headers (https://developers.cloudflare.com/workers/static-assets/headers/).
+# Applies only to files served from dist/client; HTML and every other Worker response set their own headers
+# (src/server.ts, src/setup/html-cache.ts, src/setup/security-headers.ts).
+#
+# Vite writes only content-hashed file names into /assets (JS, CSS, fonts, images imported from src), so a
+# changed file gets a new URL and the old one can be cached for a year without revalidation. Anything without a
+# hash in its name, such as public/images, keeps the default `public, max-age=0, must-revalidate`.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

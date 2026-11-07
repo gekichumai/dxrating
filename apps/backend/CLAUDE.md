@@ -65,6 +65,7 @@ src/
 
 ### oRPC (`/api/v1/*`)
 
+- `GET /announcements` — Current and upcoming global announcements (every language and target; clients filter)
 - `GET /tags` — List tags, groups, and song associations
 - `POST /tags/attach` — Attach tag to song sheet (auth required)
 - `POST /comments` — Create comment (auth required)
@@ -110,6 +111,7 @@ Optional:
 - `CLOUD_SAVE_MODE` — `off` (default) | `allowlist` | `optin` | `on`; see "Feature flags" below
 - `CLOUD_SAVE_ALLOWLIST_EMAILS` — Comma-separated emails that get cloud save while the mode is not `off` (verified emails only; email/password sign-ups are unverified, so grant those with `flag:set`)
 - `SERVER_IMPORTS` — `off` (default) | `on`; server-side imports into cloud saves
+- `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_CACHE_PURGE_TOKEN` — purge the edge's public Cache-Tags at startup and invalidate `dxdata` on each new publication (see `src/services/edge-cache.ts`). The token needs only Zone → Cache Purge → Purge on dxrating.net
 
 ## Feature flags (cloud save, gekichumai/meta#17)
 
@@ -175,6 +177,7 @@ When working on Coolify deployment or integration, use context7 to query the Coo
 
 - API contracts defined in `contract.ts` using oRPC + Zod, implementations in `router.ts`
 - Auth context passed through oRPC handler context (`context.user`)
+- Authorization proofs (gdp-ts): functions that read or change one user's private data demand a proof about their exact arguments. See `src/proofs/README.md`.
 - Database schema changes go through Drizzle migrations (`drizzle-kit`)
 - ES modules with extensionless relative TypeScript imports. TypeScript uses `bundler` module resolution; esbuild resolves local modules into the production bundle. Keep extensions on actual output and asset paths.
 - CORS allows `localhost` for dev, `https://dxrating.net` for production, and `*.dxrating.pages.dev` for preview deployments

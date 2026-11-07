@@ -61,19 +61,48 @@ export const generateAuthorizationUrl = Effect.fn('Lxns.generateAuthorizationUrl
   return `${LXNS_BASE}/oauth/authorize?${params.toString()}`
 })
 
-// Once an upstream token is issued, finish persisting it even if the caller disconnects.
-export const exchangeCodeForTokens = Effect.fn('Lxns.exchangeCodeForTokens')(function* (code: string, state: string) {
+/** The OAuth state is unknown, already used, or expired: the authorization has to start over. */
+export class LxnsStateInvalid extends Data.TaggedError('LxnsStateInvalid')<{ readonly message: string }> {}
+
+/**
+ * The OAuth state was issued to another DXRating user than the one completing it (`signedIn: true`), or nobody is
+ * signed in (`signedIn: false`). The state is consumed either way and no token is saved.
+ */
+export class LxnsStateMismatch extends Data.TaggedError('LxnsStateMismatch')<{
+  readonly message: string
+  readonly signedIn: boolean
+}> {}
+
+/**
+ * Completes an LXNS authorization for the signed-in user `viewerId` (undefined without a session). The state is
+ * consumed first and exactly once; only when it was issued to `viewerId` is the code exchanged and the tokens saved.
+ * Once an upstream token is issued, finish persisting it even if the caller disconnects.
+ */
+export const completeAuthorization = Effect.fn('Lxns.completeAuthorization')(function* (
+  viewerId: string | undefined,
+  code: string,
+  state: string,
+) {
   const config = yield* configured
   const database = yield* Database
   const http = yield* HttpClient
-  // Delete/return atomically: concurrent callbacks must not exchange the same state twice.
+  // Delete/return atomically: concurrent completions must not exchange the same state twice.
   const [stateRow] = yield* database.query('Consume LXNS OAuth state', (db) =>
     db.delete(lxnsOauthStates).where(eq(lxnsOauthStates.state, state)).returning(),
   )
-  if (!stateRow) return yield* Effect.fail(new LxnsError({ message: 'Invalid or expired OAuth state' }))
+  if (!stateRow) return yield* new LxnsStateInvalid({ message: 'Invalid or expired OAuth state' })
   const timestamp = yield* Clock.currentTimeMillis
   if (timestamp - stateRow.created_at.getTime() > STATE_TTL_MS) {
-    return yield* Effect.fail(new LxnsError({ message: 'OAuth state expired' }))
+    return yield* new LxnsStateInvalid({ message: 'OAuth state expired' })
+  }
+  if (viewerId === undefined) {
+    return yield* new LxnsStateMismatch({ message: 'Sign in to finish connecting LXNS', signedIn: false })
+  }
+  if (viewerId !== stateRow.user_id) {
+    return yield* new LxnsStateMismatch({
+      message: 'This LXNS authorization was started by another account',
+      signedIn: true,
+    })
   }
   const tokenData = yield* Effect.gen(function* () {
     const response = yield* http.post(LXNS_TOKEN_URL, {

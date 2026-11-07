@@ -1,12 +1,12 @@
 import type { DifficultyEnum, Song } from '@gekichumai/dxdata'
 import type { SongCatalog, VersionedSheet } from '@gekichumai/maimai-domain'
-import * as Sentry from '@sentry/tanstackstart-react'
-import Fuse from 'fuse.js'
+import * as Sentry from '@/lib/telemetry'
 import uniq from 'lodash-es/uniq'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useCompleteCatalogDocument, useCompleteSongCatalog } from './catalog/CatalogContext'
 import { useCombinedTags, type CombinedTags } from './models/useCombinedTags'
 import { useServerAliases } from './models/useServerAliases'
+import { buildSheetsSearchIndex, searchSheetsIndex, type SheetsSearchIndex } from './search/sheetSearchIndex'
 
 export type FlattenedSheet = VersionedSheet & {
   difficulty: DifficultyEnum
@@ -121,131 +121,29 @@ type SheetsSearchEngineOptions = {
   serverAliases?: readonly ServerAlias[] | null
 }
 
-export const createSheetsSearchEngine = ({
-  songs,
-  sheets,
-  serverAliases,
-}: SheetsSearchEngineOptions): ((term: string) => FlattenedSheet[]) => {
+/** A search over the catalog's sheets; `prepare` builds its index ahead of the first query */
+export type SheetsSearch = ((term: string) => FlattenedSheet[]) & { prepare: () => void }
+
+export const createSheetsSearchEngine = ({ songs, sheets, serverAliases }: SheetsSearchEngineOptions): SheetsSearch => {
   const availableSheets = sheets ?? []
   // Building the index normalizes every sheet; defer it until the first real query so renders without a search term
   // (including every SSR of the default list) skip it entirely.
-  let index: ReturnType<typeof buildSheetsSearchIndex> | undefined
+  let index: SheetsSearchIndex | undefined
   let lastSearch: { term: string; results: FlattenedSheet[] } | undefined
 
-  return (term: string) => {
+  const prepare = () => {
+    index ??= buildSheetsSearchIndex(songs, availableSheets, serverAliases)
+  }
+  const search = (term: string) => {
     const trimmedTerm = term.trim()
     if (!trimmedTerm) return []
     if (lastSearch?.term === trimmedTerm) return lastSearch.results
-    index ??= buildSheetsSearchIndex(songs, availableSheets, serverAliases)
-    const results = searchSheetsIndex(index, availableSheets, trimmedTerm)
+    prepare()
+    const results = searchSheetsIndex(index!, trimmedTerm)
     lastSearch = { term: trimmedTerm, results }
     return results
   }
-}
-
-const normalizeSearchText = (value: string) => value.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
-
-function buildSheetsSearchIndex(
-  songs: readonly Song[] | null | undefined,
-  availableSheets: readonly FlattenedSheet[],
-  serverAliases: readonly ServerAlias[] | null | undefined,
-) {
-  const fuseInstance = new Fuse(
-    songs?.map((song) => ({
-      ...song,
-      searchAcronyms: getSearchAcronymsWithServerAliases(
-        {
-          songId: song.id,
-          searchAcronyms: song.searchAcronyms.filter((acronym) => acronym.length < 70),
-        },
-        serverAliases,
-      ),
-    })) ?? [],
-    {
-      keys: [
-        {
-          name: 'searchAcronyms',
-          weight: 2,
-        },
-        {
-          name: 'title',
-          weight: 1,
-        },
-      ],
-      shouldSort: true,
-      threshold: 0.4,
-    },
-  )
-
-  const songsById = new Map((songs ?? []).map((song) => [song.id, song]))
-  const indexedSheets = availableSheets.map((sheet) => {
-    const song = songsById.get(sheet.songId)
-    const aliases = song
-      ? getSearchAcronymsWithServerAliases({ songId: song.id, searchAcronyms: song.searchAcronyms }, serverAliases)
-      : sheet.searchAcronyms
-    const designer = sheet.noteDesigner?.trim()
-    return {
-      sheet,
-      fields: [sheet.title, song?.artist ?? sheet.artist, ...aliases, designer && designer !== '-' ? designer : ''].map(
-        normalizeSearchText,
-      ),
-    }
-  })
-
-  const sheetsByInternalId = new Map<number, FlattenedSheet[]>()
-
-  for (const sheet of availableSheets) {
-    if (sheet.internalId === undefined) {
-      continue
-    }
-
-    const existing = sheetsByInternalId.get(sheet.internalId) ?? []
-    existing.push(sheet)
-    sheetsByInternalId.set(sheet.internalId, existing)
-  }
-
-  return { fuseInstance, indexedSheets, sheetsByInternalId }
-}
-
-function searchSheetsIndex(
-  { fuseInstance, indexedSheets, sheetsByInternalId }: ReturnType<typeof buildSheetsSearchIndex>,
-  availableSheets: readonly FlattenedSheet[],
-  trimmedTerm: string,
-): FlattenedSheet[] {
-  const tokens = normalizeSearchText(trimmedTerm).split(/\s+/u)
-  const metadataResults = indexedSheets
-    .filter(({ fields }) => tokens.every((token) => fields.some((field) => field.includes(token))))
-    .map(({ sheet }) => sheet)
-
-  // Get Fuse search results (alias/title matches)
-  const titleResults = fuseInstance.search(trimmedTerm).flatMap((result) => {
-    return availableSheets.filter((sheet) => sheet.songId === result.item.id)
-  })
-
-  const seen = new Set<string>()
-  const fuseResults = [...titleResults, ...metadataResults].filter((sheet) => {
-    if (seen.has(sheet.id)) return false
-    seen.add(sheet.id)
-    return true
-  })
-
-  // Check for exact Music ID match
-  let internalIdResults: FlattenedSheet[] = []
-  if (/^\d+$/.test(trimmedTerm)) {
-    const targetInternalId = Number.parseInt(trimmedTerm, 10)
-    if (!Number.isNaN(targetInternalId)) {
-      internalIdResults = sheetsByInternalId.get(targetInternalId) ?? []
-    }
-  }
-
-  // If exact Music ID match exists, put it at the top, followed by other results
-  if (internalIdResults.length > 0) {
-    const internalIdSet = new Set(internalIdResults.map((sheet) => sheet.id))
-    const filteredFuseResults = fuseResults.filter((sheet) => !internalIdSet.has(sheet.id))
-    return [...internalIdResults, ...filteredFuseResults]
-  }
-
-  return fuseResults
+  return Object.assign(search, { prepare })
 }
 
 export const useSheetsSearchEngine = () => {
@@ -253,14 +151,31 @@ export const useSheetsSearchEngine = () => {
   const { data: sheets } = useSheets()
   const { data: serverAliases } = useServerAliases()
 
-  return useMemo(
+  const search = useMemo(
     () => (songs && sheets ? getSharedSheetsSearchEngine(songs, sheets, serverAliases) : searchNothing),
     [songs, sheets, serverAliases],
   )
+  // Building the index normalizes every title, alias and reading (about 0.1-0.4s on a phone). Done while the page is
+  // idle, the first keystroke no longer pays for it as input latency
+  useEffect(() => {
+    if (search === searchNothing) return undefined
+    return whenIdle(search.prepare)
+  }, [search])
+  return search
+}
+
+/** Runs `task` once the main thread is idle (or after 2s at the latest); returns a cancel function */
+const whenIdle = (task: () => void): (() => void) => {
+  if (typeof window.requestIdleCallback === 'function') {
+    const handle = window.requestIdleCallback(task, { timeout: 2_000 })
+    return () => window.cancelIdleCallback(handle)
+  }
+  const handle = window.setTimeout(task, 300)
+  return () => window.clearTimeout(handle)
 }
 
 // Until the complete catalog has loaded there is nothing to search
-const searchNothing = (_term: string): FlattenedSheet[] => []
+const searchNothing: SheetsSearch = Object.assign((_term: string): FlattenedSheet[] => [], { prepare: () => {} })
 
 // One engine per catalog snapshot, shared across components and (during SSR) across requests. The inputs are cached
 // references, so identity is enough to tell when the catalog or its remote metadata changed.
@@ -269,7 +184,7 @@ let sharedSearchEngine:
       songs: readonly Song[]
       sheets: readonly FlattenedSheet[]
       serverAliases: readonly ServerAlias[] | null | undefined
-      search: (term: string) => FlattenedSheet[]
+      search: SheetsSearch
     }
   | undefined
 

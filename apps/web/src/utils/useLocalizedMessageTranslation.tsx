@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { DEFAULT_LOCALE } from '@/setup/locale'
 
 // isAssumedRecord omits deep checks of the object's values but rather
 // only checks if the value is an object and not null.
@@ -9,7 +10,7 @@ function isAssumedRecord(value: unknown): value is Record<string, string> {
 }
 
 export const useLocalizedMessageTranslation = () => {
-  const { i18n } = useTranslation()
+  const locale = useLocale()
 
   return useCallback(
     (message?: Record<string, string> | any | null): string | null => {
@@ -17,21 +18,14 @@ export const useLocalizedMessageTranslation = () => {
       if (typeof message === 'string') return message
       if (!isAssumedRecord(message)) return null
 
-      if (message[i18n.language]) return message[i18n.language] ?? null
+      if (message[locale]) return message[locale] ?? null
 
-      if (i18n.options.fallbackLng) {
-        const fallbacks = Array.isArray(i18n.options.fallbackLng)
-          ? i18n.options.fallbackLng
-          : [i18n.options.fallbackLng]
-        for (const fallback of fallbacks) {
-          if (message[fallback]) return message[fallback] ?? null
-        }
-      }
+      if (message[DEFAULT_LOCALE]) return message[DEFAULT_LOCALE] ?? null
 
       if (Object.keys(message).length === 0) return null
 
       return message[Object.keys(message)[0]] ?? null
     },
-    [i18n.language, i18n.options.fallbackLng],
+    [locale],
   )
 }

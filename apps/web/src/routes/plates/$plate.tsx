@@ -35,5 +35,6 @@ export const Route = createFileRoute('/plates/$plate')({
 
 function PlateRouteComponent() {
   const { data } = Route.useLoaderData()
-  return <PlatePage data={data} />
+  const search = Route.useSearch()
+  return <PlatePage data={data} explicitRegion={search.region !== undefined} />
 }

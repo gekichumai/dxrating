@@ -1,14 +1,27 @@
-import type { DetectorOptions } from 'i18next-browser-languagedetector'
+import { SUPPORTED_LOCALES, type SupportedLocale } from '@gekichumai/api-contract'
 import { parse as parseCookie } from 'cookie'
 
-export const SUPPORTED_LOCALES = ['en', 'ja', 'ko', 'zh-Hans', 'zh-Hant'] as const
-export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
+// The one language list, shared with the backend and served to the iOS app (packages/api-contract/src/locales.ts).
+// Paraglide's project.inlang/settings.json must list the same tags; a test checks it.
+export { SUPPORTED_LOCALES, type SupportedLocale }
 
 export const DEFAULT_LOCALE: SupportedLocale = 'en'
 export const LOCALE_QUERY_PARAM = 'locale'
 export const LOCALE_COOKIE_NAME = 'dxrating.locale'
 export const LOCALE_STORAGE_KEY = 'dxrating-locale'
 export const LOCALE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
+
+/** A Map, not an object literal: `?locale=constructor` must not find Object.prototype */
+const PRIMARY_LANGUAGE_LOCALES = new Map<string, SupportedLocale>([
+  ['ms', 'ms'],
+  ['id', 'id'],
+  ['in', 'id'],
+  ['fil', 'fil'],
+  ['tl', 'fil'],
+  ['vi', 'vi'],
+  ['th', 'th'],
+  ['my', 'my'],
+])
 
 export function toSupportedLocale(lng: string | null | undefined): SupportedLocale | null {
   if (!lng) return null
@@ -23,7 +36,9 @@ export function toSupportedLocale(lng: string | null | undefined): SupportedLoca
   if (lower === 'zh-hant' || lower === 'zh-tw' || lower === 'zh-hk' || lower === 'zh-mo') return 'zh-Hant'
   if (lower === 'zh' || lower.startsWith('zh-')) return 'zh-Hans'
 
-  return null
+  // Languages of the maimai DX International countries (meta#51), matched on the primary language subtag so any
+  // region (ms-MY, ms-SG, en-MY…) resolves by language. `in` and `tl` are the legacy / ISO 639-1 tags browsers still send
+  return PRIMARY_LANGUAGE_LOCALES.get(lower.split('-')[0]) ?? null
 }
 
 /**
@@ -38,12 +53,18 @@ export function keepLocaleSearch(search: unknown): { search?: { locale: Supporte
   return locale ? { search: { locale } } : {}
 }
 
-export function normalizeDetectedLanguage(lng: string) {
-  return toSupportedLocale(lng) ?? DEFAULT_LOCALE
+/**
+ * `path` with the `?locale=` of a URL's search appended, for plain `href`s between pages of one language variant.
+ * Only the URL's own locale is carried (not the resolved one), so the markup depends on the URL alone and stays the
+ * same between the server render, the edge HTML cache and hydration.
+ */
+export function withLocaleQuery(path: string, search: unknown): string {
+  const kept = keepLocaleSearch(search).search
+  return kept ? `${path}?${LOCALE_QUERY_PARAM}=${encodeURIComponent(kept.locale)}` : path
 }
 
-export function convertDetectedLanguage(lng: string) {
-  return toSupportedLocale(lng) ?? lng
+export function normalizeDetectedLanguage(lng: string) {
+  return toSupportedLocale(lng) ?? DEFAULT_LOCALE
 }
 
 export function resolveSupportedLocale(candidates: string | readonly string[] | null | undefined) {
@@ -91,24 +112,6 @@ export function detectServerLocale(request: Request): SupportedLocale {
     detectLocaleFromAcceptLanguage(request.headers.get('accept-language')) ??
     DEFAULT_LOCALE
   )
-}
-
-export function getClientLanguageDetectionOptions(): DetectorOptions {
-  return {
-    order: ['querystring', 'cookie', 'htmlTag', 'localStorage', 'sessionStorage', 'navigator'],
-    lookupQuerystring: LOCALE_QUERY_PARAM,
-    lookupLocalStorage: LOCALE_STORAGE_KEY,
-    lookupSessionStorage: LOCALE_STORAGE_KEY,
-    lookupCookie: LOCALE_COOKIE_NAME,
-    caches: [],
-    excludeCacheFor: ['cimode'],
-    cookieOptions: {
-      path: '/',
-      sameSite: 'lax',
-      maxAge: LOCALE_COOKIE_MAX_AGE_SECONDS,
-    },
-    convertDetectedLanguage,
-  }
 }
 
 export function persistClientLocalePreference(locale: SupportedLocale) {

@@ -49,7 +49,17 @@ describe('groupUserRecords', () => {
       { sheetId, achievementRate: 99.9, comboFlag: 'ap', syncFlag: 'fsd' },
     ])
     expect(record.entry.achievementRate).toBe(100.1)
-    expect(record.best).toEqual({ achievementRate: 100.1, comboFlag: 'ap', syncFlag: 'fsd' })
+    expect(record.best).toEqual({ achievementRate: 100.1, comboFlag: 'ap', syncFlag: 'fsd', dxScore: null })
+  })
+
+  it('keeps the highest DX score across duplicates, wherever it was earned', () => {
+    const record = group([
+      { sheetId, achievementRate: 100.1, dxScore: 2300 },
+      { sheetId, achievementRate: 99.9, dxScore: 2350 },
+      { sheetId, achievementRate: 99.5 },
+    ])
+    expect(record.best.dxScore).toBe(2350)
+    expect(group([{ sheetId, achievementRate: 100 }]).best.dxScore).toBeNull()
   })
 
   it('merges flags of equal-score duplicates', () => {
@@ -57,7 +67,7 @@ describe('groupUserRecords', () => {
       { sheetId, achievementRate: 100, comboFlag: 'fcp', syncFlag: 'fsdp' },
       { sheetId, achievementRate: 100, comboFlag: 'app', syncFlag: 'fs' },
     ])
-    expect(record.best).toEqual({ achievementRate: 100, comboFlag: 'app', syncFlag: 'fsdp' })
+    expect(record.best).toEqual({ achievementRate: 100, comboFlag: 'app', syncFlag: 'fsdp', dxScore: null })
   })
 
   it('keeps a bucket hint carried by a lower-scoring duplicate', () => {
