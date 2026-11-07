@@ -387,21 +387,17 @@ const SheetListInnerContent: FC<{
   // synchronously, with the route and this list: done on every keystroke, it pulled the whole re-render back into
   // the input event, and a keystroke cost 300-400ms at 6x CPU
   const urlQueryTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  // The ?q= writes this list sent that the route has not reported yet, oldest first. Writes arrive in order, so when
-  // the route reports one of them, it is that write arriving (possibly after newer typing), not a navigation: it and
-  // any older ones retire, and the draft stays. Any other value is an outside change (Back, a link): it cancels a
-  // pending write and replaces both the results and the field's text
-  const pendingWrites = useRef<string[]>([])
+  // The ?q= writes this list has under way. While one is, the route reporting its query is that write arriving
+  // (possibly after newer typing), not a navigation, and the draft stays. Any other value is an outside change (Back,
+  // a link): it cancels a pending write and replaces both the results and the field's text. A write retires when its
+  // navigation settles, whether or not the route ever reports it
+  const pendingWrites = useRef<{ query: string }[]>([])
   const routeQuery = useRef(query)
   routeQuery.current = query
   useEffect(() => () => clearTimeout(urlQueryTimer.current), [])
 
   useUpdateEffect(() => {
-    const written = pendingWrites.current.indexOf(query)
-    if (written !== -1) {
-      pendingWrites.current = pendingWrites.current.slice(written + 1)
-      return
-    }
+    if (pendingWrites.current.some((write) => write.query === query)) return
     clearTimeout(urlQueryTimer.current)
     pendingWrites.current = []
     setResultsQuery(query)
@@ -421,16 +417,24 @@ const SheetListInnerContent: FC<{
         // The URL will already have it (typing returned to it): no write, and nothing would report one. That is
         // the newest outstanding write's query, or with none, the route's: while an older write waits for the
         // loader, the route still reports the query before it
-        if (nextQuery === (pendingWrites.current.at(-1) ?? routeQuery.current)) return
-        pendingWrites.current.push(nextQuery)
-        void navigate({
-          to: '/',
-          search: (prev: Record<string, unknown>) => ({
-            ...prev,
-            q: nextQuery || undefined,
+        if (nextQuery === (pendingWrites.current.at(-1)?.query ?? routeQuery.current)) return
+        const write = { query: nextQuery }
+        pendingWrites.current.push(write)
+        void Promise.resolve(
+          navigate({
+            to: '/',
+            search: (prev: Record<string, unknown>) => ({
+              ...prev,
+              q: nextQuery || undefined,
+            }),
+            replace: true,
+            resetScroll: false,
           }),
-          replace: true,
-          resetScroll: false,
+        ).finally(() => {
+          // After the route's render of it (and its effect above) has run
+          setTimeout(() => {
+            pendingWrites.current = pendingWrites.current.filter((pending) => pending !== write)
+          })
         })
       }, URL_QUERY_DELAY_MS)
     },

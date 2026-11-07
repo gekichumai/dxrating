@@ -17,9 +17,17 @@ const routeState = vi.hoisted(() => {
     syncSearchOnNavigate: boolean
     onNavigate?: () => void
     navigate: ReturnType<typeof vi.fn>
+    /** Finishes the navigations still loading: the route reports the newest one's search */
+    finishNavigations: () => void
+    settleNavigations: (() => void)[]
   } = {
     search: {},
     syncSearchOnNavigate: true,
+    settleNavigations: [],
+    finishNavigations: () => {
+      state.search = state.pendingSearch ?? state.search
+      for (const settle of state.settleNavigations.splice(0)) settle()
+    },
     navigate: vi.fn((options: { search?: Record<string, unknown> | ((prev: Record<string, unknown>) => unknown) }) => {
       let nextSearch = state.search
       if (typeof options.search === 'function') {
@@ -28,12 +36,13 @@ const routeState = vi.hoisted(() => {
         nextSearch = options.search
       }
 
+      state.onNavigate?.()
       if (state.syncSearchOnNavigate) {
         state.search = nextSearch
-      } else {
-        state.pendingSearch = nextSearch
+        return Promise.resolve()
       }
-      state.onNavigate?.()
+      state.pendingSearch = nextSearch
+      return new Promise<void>((resolve) => state.settleNavigations.push(resolve))
     }),
   }
 
@@ -142,6 +151,7 @@ describe('SheetList', () => {
     window.localStorage.clear()
     routeState.search = {}
     routeState.pendingSearch = undefined
+    routeState.settleNavigations = []
     routeState.syncSearchOnNavigate = true
     routeState.onNavigate = undefined
     routeState.navigate.mockClear()
@@ -277,7 +287,7 @@ describe('SheetList', () => {
 
       // Typing resumes before the 'a' navigation has finished
       fireEvent.change(input, { target: { value: 'ab' } })
-      routeState.search = routeState.pendingSearch ?? routeState.search
+      routeState.finishNavigations()
       view.rerender(<SheetList />)
       expect(input.value).toBe('ab')
 
@@ -309,7 +319,7 @@ describe('SheetList', () => {
       act(() => {
         vi.advanceTimersByTime(500)
       })
-      routeState.search = routeState.pendingSearch ?? routeState.search
+      routeState.finishNavigations()
       view.rerender(<SheetList />)
       act(() => {
         vi.advanceTimersByTime(500)
@@ -324,7 +334,40 @@ describe('SheetList', () => {
     }
   })
 
-  it('follows Back to a query this list wrote before', () => {
+  it('follows Back after typing returned to the reported query while a write was loading', async () => {
+    vi.useFakeTimers()
+    try {
+      routeState.search = {}
+      routeState.syncSearchOnNavigate = false
+      const view = render(<SheetList />, { wrapper: Providers })
+      const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+
+      fireEvent.change(input, { target: { value: 'a' } })
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      fireEvent.change(input, { target: { value: '' } })
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      // Both writes settle; the route ends where it started, so it never reports either of them
+      routeState.finishNavigations()
+      view.rerender(<SheetList />)
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500)
+      })
+
+      routeState.search = { q: 'a' }
+      view.rerender(<SheetList />)
+      expect(input.value).toBe('a')
+      expect(sheetMocks.filteredTerms.at(-1)).toBe('a')
+    } finally {
+      vi.useRealTimers()
+      routeState.syncSearchOnNavigate = true
+    }
+  })
+
+  it('follows Back to a query this list wrote before', async () => {
     vi.useFakeTimers()
     try {
       routeState.search = {}
@@ -332,8 +375,8 @@ describe('SheetList', () => {
       const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
       for (const value of ['a', 'ab']) {
         fireEvent.change(input, { target: { value } })
-        act(() => {
-          vi.advanceTimersByTime(500)
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(500)
         })
         view.rerender(<SheetList />)
       }
@@ -345,8 +388,8 @@ describe('SheetList', () => {
       expect(input.value).toBe('a')
       expect(sheetMocks.filteredTerms.at(-1)).toBe('a')
 
-      act(() => {
-        vi.advanceTimersByTime(500)
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500)
       })
       expect(routeState.search).toMatchObject({ q: 'a' })
       expect(input.value).toBe('a')
@@ -377,7 +420,7 @@ describe('SheetList', () => {
     expect(input.selectionStart).toBe(5)
     expect(input.selectionEnd).toBe(5)
 
-    routeState.search = routeState.pendingSearch ?? routeState.search
+    routeState.finishNavigations()
     view.rerender(<SheetList />)
 
     expect(input.value).toBe('abcd1ef')
