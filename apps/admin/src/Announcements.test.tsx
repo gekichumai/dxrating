@@ -207,6 +207,46 @@ describe('announcements page', () => {
     })
   })
 
+  it('a new draft opened after Cancel does not inherit a slow save', async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    const saved = { ...live, id: 42, updatedAt: '2026-01-01T00:00:00.000Z' }
+    stub((path, body) =>
+      path === '/api/announcements' && (body as { dryRun?: boolean } | undefined)?.dryRun === false
+        ? Response.json({
+            dryRun: false,
+            preview: { title: {}, body: {}, linkLabel: null },
+            announcement: saved,
+            edgeCache: 'invalidated',
+          })
+        : undefined,
+    )
+    const base = globalThis.fetch
+    vi.stubGlobal('fetch', async (input: Request | string, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(new URL(input, 'http://admin.test'), init)
+      if (request.method === 'POST' && calls.filter((c) => c.path === '/api/announcements').length === 0) await gate
+      return base(request)
+    })
+    mount()
+    fireEvent.click(await screen.findByRole('button', { name: 'New announcement' }))
+    fireEvent.change(screen.getByLabelText('Title (en)'), { target: { value: 'First' } })
+    fireEvent.change(screen.getByLabelText('Body (en)'), { target: { value: 'Body' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'New announcement' }))
+    fireEvent.change(screen.getByLabelText('Title (en)'), { target: { value: 'Second' } })
+    fireEvent.change(screen.getByLabelText('Body (en)'), { target: { value: 'Body' } })
+    release()
+    await new Promise((r) => setTimeout(r, 50))
+    calls.length = 0
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(calls.some((c) => c.path.startsWith('/api/announcements') && c.body)).toBe(true))
+    expect(calls.some((c) => c.path === '/api/announcements/update')).toBe(false)
+    expect(calls.find((c) => c.path === '/api/announcements')?.body).toMatchObject({
+      announcement: { title: { en: 'Second' } },
+    })
+  })
+
   it('offers no writes to a read-only principal', async () => {
     stub()
     mount(false)

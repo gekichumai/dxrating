@@ -19,6 +19,8 @@ type WriteResult = Awaited<ReturnType<typeof adminClient.announcements.create>>
 type Text = Record<string, string>
 
 interface Draft {
+  /** Which opening of the editor this draft belongs to; a save result only carries over within the same one */
+  session?: number
   id?: number
   /** The updatedAt this draft was read at; Save is refused (409) if someone saved since */
   updatedAt?: string
@@ -36,7 +38,9 @@ interface Draft {
   dismissible: boolean
 }
 
+let sessions = 0
 const emptyDraft = (): Draft => ({
+  session: ++sessions,
   severity: 'info',
   title: {},
   body: {},
@@ -60,6 +64,7 @@ const toLocalInput = (iso: string | null) => {
 const fromLocalInput = (value: string) => (value ? new Date(value).toISOString() : null)
 
 const draftFrom = (a: Announcement): Draft => ({
+  session: ++sessions,
   id: a.id,
   updatedAt: a.updatedAt,
   severity: a.severity as Draft['severity'],
@@ -145,7 +150,7 @@ export function Announcements({ canWrite }: { canWrite: boolean }) {
       else if (out.announcement) {
         const saved = out.announcement
         setDraft((current) =>
-          current && (current.id === submitted.id || current.id === saved.id)
+          current && current.session === submitted.session
             ? { ...current, id: saved.id, updatedAt: saved.updatedAt }
             : current,
         )
