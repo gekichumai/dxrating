@@ -30,6 +30,7 @@ import {
   getDefaultSheetSortFilterForm,
   SheetSortFilter,
   SheetSortFilterTrigger,
+  countActiveSortFilters,
   type SheetSortFilterForm,
 } from '../components/sheet/SheetSortFilter'
 import { SheetDetailsContextProvider } from '../models/context/SheetDetailsContext'
@@ -446,6 +447,7 @@ const SheetListInnerContent: FC<{
             expanded={sortFilterExpanded}
             contentId={sortFilterContentId}
             pending={sortFilterPending}
+            activeCount={countActiveSortFilters(sortFilterOptions)}
             onToggle={toggleSortFilter}
             className="self-stretch"
           />

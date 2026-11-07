@@ -102,6 +102,7 @@ vi.mock('@/components/sheet/SheetGridContainer', () => ({
 vi.mock('@/components/sheet/SheetSortFilter', async (importOriginal) => ({
   getDefaultSheetSortFilterForm: (await importOriginal<typeof import('@/components/sheet/SheetSortFilter')>())
     .getDefaultSheetSortFilterForm,
+  countActiveSortFilters: () => 0,
   SheetSortFilter: () => <div data-testid="sheet-sort-filter" />,
   SheetSortFilterTrigger: () => <button type="button">Filter Sort</button>,
 }))

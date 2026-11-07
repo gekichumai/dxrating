@@ -219,6 +219,7 @@
     }
   ],
   "sheet_aliases_showLess": "접기",
+  "sheet_aliases_copy": "별칭 복사",
   "sheet_aliases_dialogTitle": "별칭 추가",
   "sheet_aliases_inputLabel": "별칭",
   "sheet_aliases_adding": "추가 중…",
@@ -248,6 +249,7 @@
   "sheet_layout_grid": "그리드",
   "sheet_favorite_marked": "즐겨찾기",
   "sheet_chartPageLink": "채보 페이지 열기",
+  "sheet_sortAndFilter_active": "{n}개 적용 중",
   "song_notFound_title": "곡을 찾을 수 없습니다",
   "song_notFound_description": "찾으시는 곡이 존재하지 않습니다.",
   "song_notFound_backToSearch": "검색으로 돌아가기",

@@ -97,10 +97,13 @@ export const RatingCalculatorAddEntryForm: FC<{
     return null
   }, [selectedSheet, achievementRate, found])
 
+  // An empty field is not an error while typing or on blur (the Add button is disabled until it has a value): Add
+  // empties it, and a red "required" plus the helper line pushing the table down then followed the next blur. It is
+  // reported only when the form is submitted without one.
   const validate = useCallback(
-    (value: string) => {
+    (value: string, { submitting = false }: { submitting?: boolean } = {}) => {
       if (!value) {
-        setAchievementRateError(m.ratingCalculator_addEntry_validation_required({}, { locale }))
+        setAchievementRateError(submitting ? m.ratingCalculator_addEntry_validation_required({}, { locale }) : null)
         return
       }
       const parsed = Number.parseFloat(value)
@@ -129,7 +132,10 @@ export const RatingCalculatorAddEntryForm: FC<{
       className="rating-add-form"
       onSubmit={(event) => {
         event.preventDefault()
-        if (!canSubmit || !selectedSheet) return
+        if (!canSubmit || !selectedSheet) {
+          if (selectedSheet) validate(achievementRate, { submitting: true })
+          return
+        }
         onSubmit({ sheetId: selectedSheet.id, achievementRate: Number(achievementRate) })
         resetForm()
       }}
