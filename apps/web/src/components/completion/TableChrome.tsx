@@ -29,10 +29,11 @@ const SELECTED = 'bg-accent-strong text-on-accent'
 
 /** A track of 8px items at a 4px inset: 12px outer radius (8 + 4) */
 export const segmentedTrack = 'glass-thin flex flex-wrap gap-1 p-1'
+/** A segment without its selected or idle colours, for a control that styles those itself */
+export const segmentedItemBase =
+  'inline-flex items-center min-h-8 px-3 rounded-[var(--radius-md)] text-sm no-underline transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)]'
 export const segmentedItem = (current: boolean) =>
-  `inline-flex items-center min-h-8 px-3 rounded-[var(--radius-md)] text-sm no-underline transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] ${
-    current ? SELECTED : 'text-fg-1 hover:bg-surface/60'
-  }`
+  `${segmentedItemBase} ${current ? SELECTED : 'text-fg-1 hover:bg-surface/60'}`
 
 export const SegmentedNav: FC<{
   label?: string

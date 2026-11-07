@@ -137,6 +137,10 @@ type AnalyticsEventProperties = {
     previous_query_length: number
     result_count: number
   }
+  sheet_list_layout_changed: {
+    layout: 'list' | 'grid'
+    previous_layout: 'list' | 'grid'
+  }
   sheet_search_performed: {
     query_length: number
     result_count: number

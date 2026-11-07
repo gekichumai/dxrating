@@ -214,7 +214,11 @@
     "comments.safety.block-success": "작성자를 차단하고 댓글을 숨겼습니다.",
     "comments.safety.error": "저장하지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.",
     "dx-score.stars": "DX 스코어 별 {{stars}}개",
-    "dx-score.to-next-star": "✦{{stars}}까지 DX 스코어 {{remaining}} 남음"
+    "dx-score.to-next-star": "✦{{stars}}까지 DX 스코어 {{remaining}} 남음",
+    "layout.label": "레이아웃",
+    "layout.list": "목록",
+    "layout.grid": "그리드",
+    "favorite.marked": "즐겨찾기"
   },
   "song": {
     "not-found.title": "곡을 찾을 수 없습니다",

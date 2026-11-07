@@ -4,7 +4,7 @@ import { fireEvent, render, screen, type RenderResult } from '@testing-library/r
 import type { ReactNode } from 'react'
 import { renderToString } from 'react-dom/server'
 import type { FlattenedSheet } from '@/songs'
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import { initI18n } from '@/setup/init-i18n'
@@ -93,12 +93,32 @@ vi.mock('@/components/sheet/SheetListContainer', () => ({
   ),
 }))
 
+vi.mock('@/components/sheet/SheetGridContainer', () => ({
+  SheetGridContainer: ({ sheets }: { sheets: FlattenedSheet[] }) => (
+    <div data-testid="sheet-grid">{sheets.map((sheet) => sheet.id).join(',')}</div>
+  ),
+  SheetGridSkeleton: () => <div data-testid="sheet-grid-skeleton" />,
+}))
+
 vi.mock('@/components/sheet/SheetSortFilter', async (importOriginal) => ({
   getDefaultSheetSortFilterForm: (await importOriginal<typeof import('@/components/sheet/SheetSortFilter')>())
     .getDefaultSheetSortFilterForm,
   SheetSortFilter: () => <div data-testid="sheet-sort-filter" />,
   SheetSortFilterTrigger: () => <button type="button">Filter Sort</button>,
 }))
+
+/** Below lg (phones, tablets) or from lg, which decides the default layout (happy-dom's own window is 1024px wide) */
+const stubViewport = (wide: boolean) => {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches: wide,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  )
+}
 
 const Providers = ({ children }: { children: ReactNode }) => (
   <LocaleProvider initialLocale="en">{children}</LocaleProvider>
@@ -116,7 +136,13 @@ describe('SheetList', () => {
     initI18n()
   })
 
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   beforeEach(() => {
+    stubViewport(false)
+    window.localStorage.clear()
     routeState.search = {}
     routeState.pendingSearch = undefined
     routeState.syncSearchOnNavigate = true
@@ -211,5 +237,57 @@ describe('SheetList', () => {
     expect(input.value).toBe('abcd1ef')
     expect(input.selectionStart).toBe(5)
     expect(input.selectionEnd).toBe(5)
+  })
+
+  describe('list and grid layouts', () => {
+    const seedResults = async () => {
+      const { getFlattenedSheets } = await vi.importActual<typeof import('@/songs')>('@/songs')
+      const { catalogSnapshot } = await import('@gekichumai/dxdata/snapshot')
+      const { getSongCatalog } = await import('@gekichumai/maimai-domain')
+      const sheet = getFlattenedSheets(getSongCatalog(catalogSnapshot, VersionEnum.CiRCLEPLUS))[0]!
+      sheetMocks.results = [{ ...sheet, id: 'only', songId: 'only' }]
+    }
+
+    it('server-renders both layouts, each shown by CSS at the widths it is the default for', async () => {
+      await seedResults()
+      const html = renderPage()
+
+      expect(html).toMatch(/<div class="w-full lg:hidden"><div data-testid="sheet-list">only<\/div>/)
+      expect(html).toMatch(/<div class="w-full hidden lg:block"><div data-testid="sheet-grid">only<\/div>/)
+      // Neither segment claims to be pressed until the page knows the layout
+      expect(html).not.toContain('aria-pressed')
+    })
+
+    it('lists results below lg and shows the grid from lg until the visitor picks one', async () => {
+      await seedResults()
+      stubViewport(false)
+      const phone = render(<SheetList />, { wrapper: Providers })
+      expect(screen.getByTestId('sheet-list')).toBeTruthy()
+      expect(screen.queryByTestId('sheet-grid')).toBeNull()
+      expect(screen.getByRole('button', { name: 'List' }).getAttribute('aria-pressed')).toBe('true')
+      phone.unmount()
+
+      stubViewport(true)
+      render(<SheetList />, { wrapper: Providers })
+      expect(screen.getByTestId('sheet-grid')).toBeTruthy()
+      expect(screen.queryByTestId('sheet-list')).toBeNull()
+      expect(screen.getByRole('button', { name: 'Grid' }).getAttribute('aria-pressed')).toBe('true')
+    })
+
+    it('switches layout and remembers the choice over the default for the width', async () => {
+      await seedResults()
+      stubViewport(false)
+      const view = render(<SheetList />, { wrapper: Providers })
+
+      fireEvent.click(screen.getByRole('button', { name: 'Grid' }))
+
+      expect(screen.getByTestId('sheet-grid')).toBeTruthy()
+      expect(screen.queryByTestId('sheet-list')).toBeNull()
+      expect(window.localStorage.getItem('sheet-list-layout')).toBe('grid')
+
+      view.unmount()
+      render(<SheetList />, { wrapper: Providers })
+      expect(screen.getByTestId('sheet-grid')).toBeTruthy()
+    })
   })
 })
