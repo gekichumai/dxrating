@@ -164,8 +164,8 @@ function SafariTestPage() {
               <a
                 key={variant + theme}
                 href={href(variant, theme)}
-                className={`rounded px-2 py-1.5 text-center font-semibold no-underline ${
-                  variant === v && theme === t ? 'bg-zinc-900 text-white' : 'bg-zinc-200 text-zinc-900'
+                className={`rounded bg-zinc-200 px-2 py-1.5 text-center font-semibold text-zinc-900 no-underline ${
+                  variant === v && theme === t ? 'outline outline-2 outline-[#ff8a00]' : ''
                 }`}
               >
                 {variant} {theme}
