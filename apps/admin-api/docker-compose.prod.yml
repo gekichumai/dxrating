@@ -4,8 +4,14 @@ services:
     image: ghcr.io/gekichumai/dxrating/admin-api:${ADMIN_API_IMAGE_TAG:-latest}
     expose:
       - '3100'
-    env_file:
-      - .env.production
+    # Coolify shows every ${VAR} below in the service's Environment Variables; set them there (names in the L3 PR).
+    environment:
+      NODE_ENV: production
+      PORT: '3100'
+      ADMIN_ORIGIN: ${ADMIN_ORIGIN:-https://admin.dxrating.net}
+      ADMIN_ACCESS_TEAM_DOMAIN: ${ADMIN_ACCESS_TEAM_DOMAIN}
+      ADMIN_ACCESS_AUD: ${ADMIN_ACCESS_AUD}
+      ADMIN_HUMAN_EMAILS: ${ADMIN_HUMAN_EMAILS}
     restart: unless-stopped
     stop_grace_period: 15s
     networks:
