@@ -117,7 +117,15 @@ export const GameVersionSchema = z
 export const SaveNameSchema = z.string().trim().min(1).max(64).refine(isStorableText, STORABLE_TEXT_MESSAGE)
 export const ClientProfileKeySchema = z.string().regex(/^[\w.-]{1,64}$/)
 export const RevisionSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
-const TimestampSchema = z.iso.datetime({ offset: true })
+/**
+ * Years a timestamp keeps once normalized to UTC: PostgreSQL rejects year 0 as written (`0000-01-01T…`) and a
+ * 5-digit year, so either would fail the whole write instead of the one value
+ */
+const isStorableTimestamp = (value: string) => {
+  const year = new Date(value).getUTCFullYear()
+  return year >= 1 && year <= 9999
+}
+const TimestampSchema = z.iso.datetime({ offset: true }).refine(isStorableTimestamp, 'Out of the storable range')
 const CountSchema = z.number().int().nonnegative()
 /** A count the client sends that lands in a PostgreSQL `integer` column: out of range is a 400, not a 500 */
 const StoredCountSchema = CountSchema.max(2_147_483_647)
