@@ -88,7 +88,15 @@ export function SongSearch({ channel, q, revision }: { channel?: string; q?: str
               {data.songs.map((song) => (
                 <Table.Tr key={song.songId}>
                   <Table.Td>
-                    <Anchor size="sm" href={routeHref('song', { channel, songId: song.songId, revision })}>
+                    <Anchor
+                      size="sm"
+                      href={routeHref('song', {
+                        // The publication these rows came from, not the route's (it may still be loading, or be "latest")
+                        channel: data.channel === 'production-v1' ? undefined : data.channel,
+                        songId: song.songId,
+                        revision: data.publication.revision,
+                      })}
+                    >
                       {song.title}
                     </Anchor>
                   </Table.Td>

@@ -108,7 +108,8 @@ describe('SongSearch', () => {
       }),
     )
     mount(<SongSearch q="demo" />)
-    expect((await screen.findByText('Demo Song 1')).getAttribute('href')).toBe('#song?songId=demo-song-1')
+    // Pinned to the publication the results came from, so a newer publication can't change what opens
+    expect((await screen.findByText('Demo Song 1')).getAttribute('href')).toBe('#song?songId=demo-song-1&revision=8')
     expect(screen.getByText(/3 songs in r8/).textContent).toContain('first 1')
     expect(requests.find((u) => u.pathname === '/api/catalog/songs')!.searchParams.get('q')).toBe('demo')
     fireEvent.change(screen.getByLabelText(/Search by ID/), { target: { value: ' tune ' } })

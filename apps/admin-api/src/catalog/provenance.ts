@@ -83,7 +83,6 @@ export const resolveSources = (sources: readonly string[], lineage: Obj | null):
  * path whose rule covers it.
  */
 export const legacyPath = (outputPath: string) => {
-  if (outputPath === 'songs[].id') return 'songs[].songId'
   if (/^songs\[\]\.sheets\[\]\.serverIds(\[\])?$/.test(outputPath)) return 'songs[].sheets[].regions.jp'
   if (outputPath.startsWith('songs[].sheets[].serverOverrides'))
     return outputPath.replace('songs[].sheets[].serverOverrides', 'songs[].sheets[].regionOverrides')
@@ -94,6 +93,8 @@ export const legacyPath = (outputPath: string) => {
 
 /** Published fields the legacy output has no rule for, and what they are */
 const NOTES: Record<string, string> = {
+  // Not the legacy songId: a public ID is assigned and kept by the catalog, while songId is a renameable legacy key
+  'songs[].id': 'Public song ID, assigned and kept stable by the assembly line’s catalog (not the legacy songId)',
   'songs[].sheets[].id': 'Public sheet ID, kept stable by the assembly line’s catalog',
   'songs[].version': 'Song-level version of the published catalog; the manifest’s rules cover only sheet versions',
   'songs[].readingSource': 'Names the source of `reading`',
@@ -122,10 +123,7 @@ export const annotate = (
       rule: rule
         ? { outputPath: rule.outputPath, sources: resolveSources(rule.sources, lineage), transforms: rule.transforms }
         : self,
-      note:
-        field.outputPath === 'songs[].id'
-          ? 'Public song ID, kept stable by the assembly line’s catalog'
-          : (NOTES[field.outputPath] ?? null),
+      note: NOTES[field.outputPath] ?? null,
     }
   })
 

@@ -116,7 +116,11 @@ suite('song provenance (admin API)', () => {
     expect(sheet.fields.find((f: any) => f.path === 'serverOverrides.intl.level').rule.outputPath).toBe(
       'songs[].sheets[].regionOverrides.intl.*',
     )
-    expect(body.fields.find((f: any) => f.path === 'id').rule.outputPath).toBe('songs[].songId')
+    // A public ID is not the legacy songId, so it does not borrow that rule
+    expect(body.fields.find((f: any) => f.path === 'id')).toMatchObject({
+      rule: null,
+      note: expect.stringContaining('Public song ID'),
+    })
     expect(sheet.fields.find((f: any) => f.path === 'id')).toMatchObject({
       rule: null,
       note: expect.stringContaining('Public sheet ID'),
