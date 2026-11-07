@@ -418,8 +418,10 @@ const SheetListInnerContent: FC<{
       setResultsQuery(nextQuery)
       clearTimeout(urlQueryTimer.current)
       urlQueryTimer.current = setTimeout(() => {
-        // The URL already has it (typing returned to it): no write, and nothing will report one
-        if (nextQuery === routeQuery.current) return
+        // The URL will already have it (typing returned to it): no write, and nothing would report one. That is
+        // the newest outstanding write's query, or with none, the route's: while an older write waits for the
+        // loader, the route still reports the query before it
+        if (nextQuery === (pendingWrites.current.at(-1) ?? routeQuery.current)) return
         pendingWrites.current.push(nextQuery)
         void navigate({
           to: '/',

@@ -292,6 +292,38 @@ describe('SheetList', () => {
     }
   })
 
+  it('writes a return to the reported query while an older URL write is still loading', () => {
+    vi.useFakeTimers()
+    try {
+      routeState.search = {}
+      routeState.syncSearchOnNavigate = false
+      const view = render(<SheetList />, { wrapper: Providers })
+      const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+
+      fireEvent.change(input, { target: { value: 'a' } })
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      // Cleared before the 'a' navigation has finished: the route still reports no query
+      fireEvent.change(input, { target: { value: '' } })
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      routeState.search = routeState.pendingSearch ?? routeState.search
+      view.rerender(<SheetList />)
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+
+      expect(routeState.navigate).toHaveBeenCalledTimes(2)
+      expect(routeState.search.q).toBeUndefined()
+      expect(input.value).toBe('')
+    } finally {
+      vi.useRealTimers()
+      routeState.syncSearchOnNavigate = true
+    }
+  })
+
   it('follows Back to a query this list wrote before', () => {
     vi.useFakeTimers()
     try {
