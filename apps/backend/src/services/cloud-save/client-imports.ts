@@ -17,7 +17,7 @@ import {
   toMergeJob,
   type ImportJobRow,
 } from './jobs'
-import { applyImportRecords, shouldShortCircuit, type MergeRecord } from './merge'
+import { applyImportRecords, hasDeletionSince, shouldShortCircuit, type MergeRecord } from './merge'
 import { lockSave, saveTransaction } from './saves'
 
 type DatabaseService = typeof Database.Service
@@ -39,6 +39,11 @@ interface ChunkState {
   count: number
   /** sha256 of each received chunk's canonical records, by chunk index */
   received: Record<string, string>
+  /**
+   * A chunk kept a deletion only because it is newer than the job (§5.3 rule 2): the finished job then records no
+   * save revision, so a later identical import runs the merge (see shouldShortCircuit)
+   */
+  timeBound?: boolean
 }
 
 const chunkStateOf = (counts: unknown): ChunkState | null => {
@@ -128,6 +133,7 @@ export const applyClientImportChunk = (
       if (chunks.received[String(input.chunkIndex)] !== undefined) return replay()
 
       let counts: ImportCountsDTO
+      let timeBound = chunks.timeBound === true
       if (input.chunkCount === 1 && (yield* shouldShortCircuit(database, job, save.revision))) {
         counts = countsOf({ fetched: input.records.length, unchanged: records.length, rejected })
       } else {
@@ -138,6 +144,14 @@ export const applyClientImportChunk = (
           records,
         )
         counts = { ...merged.counts, fetched: input.records.length, rejected: merged.counts.rejected + rejected }
+        if (merged.counts.skippedDeleted > 0 && !timeBound) {
+          timeBound = yield* hasDeletionSince(
+            database,
+            save.id,
+            job.started_at,
+            records.map((record) => record.sheetId),
+          )
+        }
       }
       const previous = countsOf(job.counts)
       for (const key of Object.keys(counts) as (keyof ImportCountsDTO)[]) counts[key] += previous[key]
@@ -161,8 +175,8 @@ export const applyClientImportChunk = (
           // A finished job records the save revision it left behind, for the content short-circuit (§5.5)
           JSON.stringify({
             ...counts,
-            chunks: { count: chunks.count, received },
-            ...(complete ? { saveRevision: save.revision } : {}),
+            chunks: { count: chunks.count, received, ...(timeBound ? { timeBound } : {}) },
+            ...(complete && !timeBound ? { saveRevision: save.revision } : {}),
           }),
           complete,
           finalSha,
