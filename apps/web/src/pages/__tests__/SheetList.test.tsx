@@ -292,6 +292,37 @@ describe('SheetList', () => {
     }
   })
 
+  it('follows Back to a query this list wrote before', () => {
+    vi.useFakeTimers()
+    try {
+      routeState.search = {}
+      const view = render(<SheetList />, { wrapper: Providers })
+      const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+      for (const value of ['a', 'ab']) {
+        fireEvent.change(input, { target: { value } })
+        act(() => {
+          vi.advanceTimersByTime(500)
+        })
+        view.rerender(<SheetList />)
+      }
+      expect(routeState.search).toMatchObject({ q: 'ab' })
+
+      fireEvent.change(input, { target: { value: 'abc' } })
+      routeState.search = { q: 'a' }
+      view.rerender(<SheetList />)
+      expect(input.value).toBe('a')
+      expect(sheetMocks.filteredTerms.at(-1)).toBe('a')
+
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(routeState.search).toMatchObject({ q: 'a' })
+      expect(input.value).toBe('a')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('keeps an in-progress search edit when the route query update is pending', () => {
     routeState.search = { q: 'abcdef' }
     routeState.syncSearchOnNavigate = false

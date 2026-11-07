@@ -387,16 +387,23 @@ const SheetListInnerContent: FC<{
   // synchronously, with the route and this list: done on every keystroke, it pulled the whole re-render back into
   // the input event, and a keystroke cost 300-400ms at 6x CPU
   const urlQueryTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  // The ?q= values this list wrote: when the route reports one of them, it is that write arriving (possibly after
-  // newer typing), not a navigation, and the draft stays. Any other value is an outside change (Back, a link): it
-  // cancels a pending write and replaces both the results and the field's text
-  const writtenQueries = useRef(new Set<string>())
+  // The ?q= writes this list sent that the route has not reported yet, oldest first. Writes arrive in order, so when
+  // the route reports one of them, it is that write arriving (possibly after newer typing), not a navigation: it and
+  // any older ones retire, and the draft stays. Any other value is an outside change (Back, a link): it cancels a
+  // pending write and replaces both the results and the field's text
+  const pendingWrites = useRef<string[]>([])
+  const routeQuery = useRef(query)
+  routeQuery.current = query
   useEffect(() => () => clearTimeout(urlQueryTimer.current), [])
 
   useUpdateEffect(() => {
-    if (writtenQueries.current.has(query)) return
+    const written = pendingWrites.current.indexOf(query)
+    if (written !== -1) {
+      pendingWrites.current = pendingWrites.current.slice(written + 1)
+      return
+    }
     clearTimeout(urlQueryTimer.current)
-    writtenQueries.current.clear()
+    pendingWrites.current = []
     setResultsQuery(query)
     setExternalRevision((revision) => revision + 1)
   }, [query])
@@ -411,7 +418,9 @@ const SheetListInnerContent: FC<{
       setResultsQuery(nextQuery)
       clearTimeout(urlQueryTimer.current)
       urlQueryTimer.current = setTimeout(() => {
-        writtenQueries.current.add(nextQuery)
+        // The URL already has it (typing returned to it): no write, and nothing will report one
+        if (nextQuery === routeQuery.current) return
+        pendingWrites.current.push(nextQuery)
         void navigate({
           to: '/',
           search: (prev: Record<string, unknown>) => ({
