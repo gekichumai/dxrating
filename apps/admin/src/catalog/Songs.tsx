@@ -21,6 +21,7 @@ import { useEffect, useState } from 'react'
 import { adminClient, adminOrpc } from '../api'
 import { routeHref } from '../route'
 import { showValue } from './Diff'
+import { SongHistory } from './SongHistory'
 import { formatUtc } from './Publications'
 
 /**
@@ -335,6 +336,7 @@ export function SongProvenance({ channel, songId, revision }: { channel?: string
                   {sheet.type} {sheet.difficulty}
                 </Tabs.Tab>
               ))}
+              <Tabs.Tab value="history">History</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="song" pt="sm">
               <FieldTable fields={data.fields} label="song" />
@@ -344,6 +346,9 @@ export function SongProvenance({ channel, songId, revision }: { channel?: string
                 <FieldTable fields={sheet.fields} label={`${sheet.type}-${sheet.difficulty}`} />
               </Tabs.Panel>
             ))}
+            <Tabs.Panel value="history" pt="sm">
+              <SongHistory channel={channel} songId={data.song.songId} />
+            </Tabs.Panel>
           </Tabs>
 
           {inputs.length > 0 && (

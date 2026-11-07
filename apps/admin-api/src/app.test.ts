@@ -138,6 +138,7 @@ describe('admin API guard', () => {
       '/catalog/diff',
       '/catalog/publications',
       '/catalog/song',
+      '/catalog/song/history',
       '/catalog/songs',
       '/me',
     ])
