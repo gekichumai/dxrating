@@ -17,8 +17,19 @@ services:
       CLOUDFLARE_CACHE_PURGE_TOKEN: ${CLOUDFLARE_CACHE_PURGE_TOKEN:-}
       ADMIN_AGENT_TOKENS: ${ADMIN_AGENT_TOKENS:-}
       ADMIN_AGENT_RATE_LIMIT: ${ADMIN_AGENT_RATE_LIMIT:-60}
+    # Joins the backend stack's network so DATABASE_URL can name the backend's Postgres by its service name
+    # (`postgres:5432`), without publishing Postgres or changing the backend stack.
+    networks:
+      - backend
     restart: unless-stopped
     stop_grace_period: 15s
     # No hand-written Traefik labels: set the service's Domain in Coolify to https://admin-api.dxrating.net:3100 and
     # Coolify generates the HTTPS router and its certificate (Cloudflare SSL mode Full (strict) then works end to end).
 
+
+networks:
+  # Coolify puts every service of a Compose resource on a network named after the resource UUID. BACKEND_NETWORK is
+  # the backend resource's UUID (the id in its Coolify URL, also in its container names: `postgres-<uuid>`).
+  backend:
+    name: ${BACKEND_NETWORK:?set BACKEND_NETWORK to the backend Coolify resource UUID}
+    external: true
