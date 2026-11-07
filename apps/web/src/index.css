@@ -238,6 +238,13 @@ html {
   outline-offset: 2px;
 }
 
+/* An outlined field hides its placeholder while the label rests inside it (MUI: label[data-shrink=false] + the
+   input). In server-rendered HTML, Emotion puts a <style> between the label and the input, so that adjacent-sibling
+   rule misses until hydration and the label overlaps the placeholder; a general-sibling rule survives the <style> */
+label[data-shrink='false'] ~ .MuiInputBase-formControl .MuiInputBase-input::placeholder {
+  opacity: 0 !important;
+}
+
 /* Route changes move focus to <main> by script (it has tabIndex -1); it never takes keyboard focus, so no ring */
 #main-content:focus {
   outline: none;

@@ -222,23 +222,23 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
       <nav className="flex flex-col gap-2" aria-labelledby="home-features">
         <SectionTitle id="home-features">{m.home_features_title({}, { locale })}</SectionTitle>
         {/*
-          On phones two scrolling rows keep the search results near the top; wider screens get the full grid. The phone
-          scroller bleeds to the screen edges (-mx-4 against the page's 16px gutter) and snaps with a 16px scroll padding,
-          so a resting card lines up with the section title and the next column runs off the screen edge, not sliced
-          at the gutter, and the edge with more cards past it fades. A scroller clips on both axes, so 4px of vertical padding (offset by a negative margin) holds
-          the cards' border, shadow and 3px focus outline.
+          Every destination is on screen at every width: phones get a compact two-column grid of names (the hub is
+          not rendered while there is a query, so its height never pushes search results down), wider screens add
+          the descriptions and more columns.
         */}
-        <ul className="scroll-fade-x -mx-4 -my-1 grid list-none grid-flow-col grid-rows-2 auto-cols-[minmax(10.5rem,46%)] gap-2 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-4 px-4 py-1 pb-2 sm:scroll-fade-x-none sm:m-0 sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:grid-cols-3 sm:overflow-visible sm:p-0 lg:grid-cols-4 xl:grid-cols-6">
+        <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {HOME_FEATURES.map((feature) => {
             const Icon = FEATURE_ICONS[feature.id]
             return (
-              <li key={feature.id} className="snap-start">
+              <li key={feature.id}>
                 <Link to={feature.to} onClick={() => trackClick('feature', feature.id)} className={CARD_LINK}>
-                  <MaterialSurface className={`flex h-full items-start gap-2.5 px-3 py-2.5 ${CARD_SURFACE}`}>
+                  <MaterialSurface
+                    className={`flex h-full items-center gap-2 px-2.5 py-2 sm:items-start sm:gap-2.5 sm:px-3 sm:py-2.5 ${CARD_SURFACE}`}
+                  >
                     <Icon aria-hidden="true" className="size-5 shrink-0 text-accent-strong" />
                     <span className="flex min-w-0 flex-col">
                       <span className="text-sm font-semibold">{FEATURE_COPY[feature.id].title({}, { locale })}</span>
-                      <span className="text-xs text-fg-2 text-pretty">
+                      <span className="sr-only text-xs text-fg-2 text-pretty sm:not-sr-only">
                         {FEATURE_COPY[feature.id].description({}, { locale })}
                       </span>
                     </span>
