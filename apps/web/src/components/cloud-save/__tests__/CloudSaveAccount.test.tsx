@@ -559,7 +559,7 @@ describe('CloudSaveOptIn', () => {
     // Nothing promises a way out that does not exist yet
     expect(within(dialog).getByText(/can’t turn the beta off in the app yet/)).toBeTruthy()
     expect(within(dialog).getByRole('link', { name: 'privacy policy' }).getAttribute('href')).toBe(
-      '/privacy-policy#privacy-cloud',
+      '/privacy-policy?locale=en#privacy-cloud',
     )
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Agree and turn on' }))

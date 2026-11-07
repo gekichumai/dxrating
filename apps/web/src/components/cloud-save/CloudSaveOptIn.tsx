@@ -13,11 +13,20 @@ import { useLocale } from '@/i18n/LocaleProvider'
 import './cloud-save.css'
 
 /** The privacy policy, in a new tab so the consent stays open; its text comes from the translation */
-const PrivacyPolicyLink: FC<{ children?: ReactNode }> = ({ children }) => (
-  <a href="/privacy-policy#privacy-cloud" target="_blank" rel="noopener" className="link">
-    {children}
-  </a>
-)
+const PrivacyPolicyLink: FC<{ children?: ReactNode }> = ({ children }) => {
+  // In the consent's language: a `?locale=` the page was opened with sets no cookie, so the new tab would not know it
+  const locale = useLocale()
+  return (
+    <a
+      href={`/privacy-policy?locale=${encodeURIComponent(locale)}#privacy-cloud`}
+      target="_blank"
+      rel="noopener"
+      className="link"
+    >
+      {children}
+    </a>
+  )
+}
 
 /**
  * The consent text of the cloud save beta (§11.2): what is stored, for how long, that SEGA passwords never are, and
