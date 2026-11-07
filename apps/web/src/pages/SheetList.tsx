@@ -595,7 +595,9 @@ const SheetListInnerContent: FC<{
           contentId={sortFilterContentId}
           showDefaultTrigger={false}
           onChange={(v) => {
-            setSortFilterOptions(v)
+            // A filter chip or sort change re-filters and re-renders the whole list (~150-250ms at 4x CPU): in a
+            // transition, the control paints its new state first, and a newer change interrupts a stale render
+            startTransition(() => setSortFilterOptions(v))
           }}
         />
 
