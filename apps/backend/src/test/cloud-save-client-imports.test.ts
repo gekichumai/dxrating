@@ -7,8 +7,8 @@ vi.hoisted(() => {
   process.env.SERVER_IMPORTS = 'off'
 })
 
-import { canonicalSha256 } from '../services/cloud-save/jobs'
-import { api, session, sheetId } from './cloud-save-helpers'
+import { canonicalSha256, startImportJob } from '../services/cloud-save/jobs'
+import { api, deleteMutation, runDatabase, session, sheetId } from './cloud-save-helpers'
 import { cleanDatabase, setupTestServer, teardownTestServer } from './setup'
 
 let pool: pg.Pool
@@ -240,6 +240,44 @@ describe('client imports', () => {
     })
     expect(second.body.job.counts).toMatchObject({ fetched: 2, unchanged: 2, inserted: 0 })
     expect(second.body.revision).toBe(first.body.revision)
+  })
+
+  it('does not short-circuit past a deletion an earlier identical upload only kept by its start time', async () => {
+    const user = await newUser()
+    const first = await upload(user.cookie, user.saveId, {
+      idempotencyKey: `auto-${randomUUID()}`,
+      trigger: 'auto',
+      records: [record(1, 1000000)],
+    })
+    const better = [record(1, 1005000)]
+    // The upload's job starts, then the user deletes the record, then the upload is applied: the deletion is newer
+    // than the job and stays
+    const key = `auto-${randomUUID()}`
+    await runDatabase((database) =>
+      startImportJob(database, {
+        userId: user.userId,
+        saveId: user.saveId,
+        source: 'aqua-dx',
+        trigger: 'auto',
+        idempotencyKey: key,
+        fetchedAt: null,
+        rawPayloadSha256: null,
+      }),
+    )
+    const deleted = await api(user.cookie, 'POST', `/saves/${user.saveId}/mutations`, {
+      mutations: [deleteMutation(sheetId(1), first.body.revision)],
+    })
+    expect(deleted.body.results[0].status).toBe('applied')
+    const during = await upload(user.cookie, user.saveId, { idempotencyKey: key, trigger: 'auto', records: better })
+    expect(during.body.job.counts).toMatchObject({ skippedDeleted: 1 })
+
+    // The same upload again, started after the deletion: the merge runs and restores the strictly better score
+    const next = await upload(user.cookie, user.saveId, {
+      idempotencyKey: `auto-${randomUUID()}`,
+      trigger: 'auto',
+      records: better,
+    })
+    expect(next.body.job.counts).toMatchObject({ inserted: 1, skippedDeleted: 0 })
   })
 
   it('limits client imports to 10 an hour per user', async () => {
