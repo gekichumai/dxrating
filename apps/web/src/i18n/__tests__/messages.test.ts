@@ -28,6 +28,43 @@ describe('messages/*.json', () => {
     }
   })
 
+  it('keeps the count in `one` variants of locales whose `one` covers more than 1', () => {
+    // CLDR's `one` is not `count === 1` everywhere: Filipino's covers 0, 2, 3, 5, 10, 50… So a `one` variant that says
+    // "1 record" would misreport those counts there; it must print {count} whenever the `*` variant does
+    for (const locale of SUPPORTED_LOCALES) {
+      const rules = new Intl.PluralRules(locale)
+      if (![0, 2, 3, 5, 21].some((n) => rules.select(n) === 'one')) continue
+      const literal = Object.entries(read(locale))
+        .filter((entry): entry is [string, Variant[]] => Array.isArray(entry[1]))
+        .filter(([, variants]) =>
+          variants.some(
+            ({ match }) =>
+              match['countPlural=*']?.includes('{count}') && !match['countPlural=one']?.includes('{count}'),
+          ),
+        )
+        .map(([id]) => id)
+      expect(literal, `${locale} has \`one\` variants without {count}`).toEqual([])
+    }
+  })
+
+  it('uses only the placeholders and markup tags the English message has', () => {
+    const en = read('en')
+    const tokens = (pattern: string) => pattern.match(/\{[^}]*\}/g) ?? []
+    for (const locale of SUPPORTED_LOCALES) {
+      const file = read(locale)
+      const unknown = Object.entries(file)
+        .filter(([id]) => id !== '$schema')
+        .flatMap(([id, value]) => {
+          const known = new Set(patterns(en[id]).flatMap(tokens))
+          return patterns(value)
+            .flatMap(tokens)
+            .filter((token) => !known.has(token))
+            .map((token) => `${id}: ${token}`)
+        })
+      expect(unknown, `${locale} has placeholders or tags English doesn't`).toEqual([])
+    }
+  })
+
   it('uses reviewed Korean copy for creating and binding a SEGA ID', () => {
     expect(m.ratingCalculator_io_import_netRecords_dialog_help_register_title({}, { locale: 'ko' })).toBe(
       'SEGA ID가 아직 없어요',
