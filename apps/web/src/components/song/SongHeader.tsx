@@ -113,7 +113,7 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                 size="small"
                 aria-label={m.sheet_copyTitle_tooltip({}, { locale })}
                 onClick={copyTitle}
-                className="shrink-0 -mt-1 !text-fg-2"
+                className="shrink-0 !text-fg-2"
               >
                 <IconMdiContentCopy aria-hidden className="h-4 w-4" />
               </IconButton>

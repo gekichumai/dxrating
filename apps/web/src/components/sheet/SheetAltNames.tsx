@@ -3,6 +3,20 @@ import { type FC, useEffect, useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import type { SupportedLocale } from '@/setup/locale'
+
+/**
+ * What clicking an alias copies. Chinese-speaking players share an alias as "<alias>是什么歌" ("what song is
+ * <alias>?"), so in zh-Hans and zh-Hant a short alias copies as the https://<alias>.是什么歌.com link and a long one
+ * (over 50 characters) as the plain question; other locales copy the alias itself.
+ */
+export function aliasCopyContent(altName: string, locale: SupportedLocale) {
+  const alias = altName.trim()
+  if (locale !== 'zh-Hans' && locale !== 'zh-Hant') return { clipboard: alias, toastContent: alias }
+  if (altName.length > 50) return { clipboard: `${alias}是什么歌`, toastContent: `${alias}是什么歌` }
+  const host = alias.replace(/[\s|\n|，|。|！|@|；|《|》|？|：|【|】|（|）|、|·|~|!|#|%|&|*|(|)|{|}|\\[|\\]|\\|]/g, '-')
+  return { clipboard: `https://${host}.是什么歌.com`, toastContent: `${host}.是什么歌.com` }
+}
 
 const COLLAPSED_MASK = 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 5rem, rgba(0,0,0,0) 100%)'
 
@@ -47,9 +61,9 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
               className="cursor-copy rounded-[var(--radius-xs)] border-0 bg-transparent p-0 text-inherit font-inherit text-left decoration-dotted underline-offset-2 hover:underline focus-visible:underline"
               title={m.sheet_aliases_copy({}, { locale })}
               onClick={() => {
-                const alias = altName.trim()
-                void navigator.clipboard?.writeText(alias)
-                toast.success(m.sheet_copyAltName_toastSuccess({ content: alias }, { locale }), {
+                const { clipboard, toastContent } = aliasCopyContent(altName, locale)
+                void navigator.clipboard?.writeText(clipboard)
+                toast.success(m.sheet_copyAltName_toastSuccess({ content: toastContent }, { locale }), {
                   id: `copy-sheet-alt-name-${altName}`,
                 })
               }}
