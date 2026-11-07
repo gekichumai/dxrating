@@ -52,19 +52,19 @@ export const createDxdataV2Store = <E, R>(v1: DxdataStore<E, R>) => {
     Effect.gen(function* () {
       if (built?.v1Sha256 === v1Metadata.bodySha256) return built
       if (building?.v1Sha256 === v1Metadata.bodySha256) return yield* Deferred.await(building.result)
-      const result = yield* Deferred.make<Built | undefined, E | DxdataDecodeError>()
-      const entry = { v1Sha256: v1Metadata.bodySha256, result }
-      building = entry
-      // Finishes even if the request that started it goes away, so the others waiting on it are answered; a failure
-      // reaches them all, and the next request builds again
-      return yield* buildOnce(v1Metadata).pipe(
-        Effect.onExit((exit) =>
-          Effect.gen(function* () {
-            yield* Deferred.done(result, exit)
-            if (building === entry) building = undefined
-          }),
-        ),
-        Effect.uninterruptible,
+      // Publishing the shared build and running it are one uninterruptible step: a request that goes away cannot leave
+      // a published build that never finishes, so the others waiting on it are always answered. A failure reaches them
+      // all, and the next request builds again
+      return yield* Effect.uninterruptible(
+        Effect.gen(function* () {
+          const result = yield* Deferred.make<Built | undefined, E | DxdataDecodeError>()
+          const entry = { v1Sha256: v1Metadata.bodySha256, result }
+          building = entry
+          const exit = yield* Effect.exit(buildOnce(v1Metadata))
+          yield* Deferred.done(result, exit)
+          if (building === entry) building = undefined
+          return yield* exit
+        }),
       )
     })
 
