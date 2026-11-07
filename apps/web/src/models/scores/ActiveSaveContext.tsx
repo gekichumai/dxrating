@@ -81,20 +81,32 @@ const isNotFound = (error: unknown) =>
 
 const loadPrivateApi = () => import('../../lib/privateApi').then((module) => module.privateApiClient)
 
+/** Rejects unless the browser's session (asked of the server) is still `userId` */
+async function ensureSessionUser(userId: string) {
+  const { data } = await authClient.getSession({ query: { disableCookieCache: true } })
+  if (data?.user.id !== userId) throw new Error('The session belongs to another account now')
+}
+
 export const defaultActiveSaveDependencies: ActiveSaveDependencies = {
   useSessionUserId() {
     const { data, isPending } = authClient.useSession()
     if (data?.user.id) return data.user.id
     return isPending ? undefined : null
   },
-  async fetchFeatures() {
+  async fetchFeatures(userId) {
     const client = await loadPrivateApi()
+    // Asked of the server (not a cached session), right before and after the request: another tab may have signed
+    // another account in while the client loaded, and that account's features must never be cached as this one's
+    await ensureSessionUser(userId)
+    let features: UserFeatures | null
     try {
-      return (await client.features.get()) as UserFeatures
+      features = (await client.features.get()) as UserFeatures
     } catch (error) {
-      if (isNotFound(error)) return null
-      throw error
+      if (!isNotFound(error)) throw error
+      features = null
     }
+    await ensureSessionUser(userId)
+    return features
   },
   async listSaves() {
     const client = await loadPrivateApi()
