@@ -163,6 +163,50 @@ describe('announcements page', () => {
     expect((screen.getByLabelText('Title (ja)') as HTMLInputElement).value).toBe('まだ編集中')
   })
 
+  it('a kept draft adopts the saved id and updatedAt, so saving again updates instead of duplicating', async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    const saved = { ...live, id: 42, updatedAt: '2026-01-01T00:00:00.000Z' }
+    stub((path, body) =>
+      path === '/api/announcements' && (body as { dryRun?: boolean } | undefined)?.dryRun === false
+        ? Response.json({
+            dryRun: false,
+            preview: { title: {}, body: {}, linkLabel: null },
+            announcement: saved,
+            edgeCache: 'invalidated',
+          })
+        : path === '/api/announcements/update'
+          ? Response.json({
+              dryRun: false,
+              preview: { title: {}, body: {}, linkLabel: null },
+              announcement: saved,
+              edgeCache: 'invalidated',
+            })
+          : undefined,
+    )
+    const base = globalThis.fetch
+    vi.stubGlobal('fetch', async (input: Request | string, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(new URL(input, 'http://admin.test'), init)
+      if (request.method === 'POST' && calls.filter((c) => c.path === '/api/announcements').length === 0) await gate
+      return base(request)
+    })
+    mount()
+    fireEvent.click(await screen.findByRole('button', { name: 'New announcement' }))
+    fireEvent.change(screen.getByLabelText('Title (en)'), { target: { value: 'One' } })
+    fireEvent.change(screen.getByLabelText('Body (en)'), { target: { value: 'Body' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.change(screen.getByLabelText('Title (en)'), { target: { value: 'One, edited' } })
+    release()
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/announcements')).toBe(true))
+    await new Promise((r) => setTimeout(r, 50))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(calls.some((c) => c.path === '/api/announcements/update')).toBe(true))
+    expect(calls.find((c) => c.path === '/api/announcements/update')?.body).toMatchObject({
+      announcement: { id: 42, title: { en: 'One, edited' } },
+      ifUpdatedAt: '2026-01-01T00:00:00.000Z',
+    })
+  })
+
   it('offers no writes to a read-only principal', async () => {
     stub()
     mount(false)

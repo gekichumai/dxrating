@@ -138,8 +138,18 @@ export function Announcements({ canWrite }: { canWrite: boolean }) {
         if (unchanged) setResult(out)
         return
       }
-      // Close the editor only if it still holds the draft that was saved, never a newer one
+      // Close the editor only if it still holds the draft that was saved, never a newer one. A newer draft of the same
+      // announcement adopts the saved row's id and updatedAt, so saving it again updates (not duplicates) without a
+      // conflict against the user's own earlier save.
       if (unchanged) setDraft(null)
+      else if (out.announcement) {
+        const saved = out.announcement
+        setDraft((current) =>
+          current && (current.id === submitted.id || current.id === saved.id)
+            ? { ...current, id: saved.id, updatedAt: saved.updatedAt }
+            : current,
+        )
+      }
       setResult(out)
       void refresh()
     },
