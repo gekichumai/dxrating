@@ -1,6 +1,7 @@
 import type { ServerEnum } from '@gekichumai/dxdata'
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { fireEvent, render, screen, type RenderResult } from '@testing-library/react'
+import { act } from 'react'
 import type { ReactNode } from 'react'
 import { renderToString } from 'react-dom/server'
 import type { FlattenedSheet } from '@/songs'
@@ -203,6 +204,38 @@ describe('SheetList', () => {
     expect(sheetMocks.filteredTerms).toContain('螺旋')
     expect(screen.getByRole('link', { name: /ガラテアの螺旋/ }).getAttribute('href')).toBe('/songs/galatea/std/master')
     expect(screen.queryByTestId('sheet-list')).toBeNull()
+  })
+
+  it('writes the query to the URL once typing pauses, not on every keystroke', () => {
+    vi.useFakeTimers()
+    try {
+      routeState.search = {}
+      render(<SheetList />, { wrapper: Providers })
+      const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+      for (const value of ['s', 'sy', 'sys']) fireEvent.change(input, { target: { value } })
+
+      expect(input.value).toBe('sys')
+      expect(routeState.navigate).not.toHaveBeenCalled()
+
+      act(() => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(routeState.navigate).toHaveBeenCalledTimes(1)
+      expect(routeState.search).toMatchObject({ q: 'sys' })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('follows a query that changes from outside, such as Back', () => {
+    routeState.search = { q: 'first' }
+    const view = render(<SheetList />, { wrapper: Providers })
+    const input = screen.getByRole('textbox', { name: 'Search' }) as HTMLInputElement
+    expect(input.value).toBe('first')
+
+    routeState.search = { q: 'second' }
+    view.rerender(<SheetList />)
+    expect(input.value).toBe('second')
   })
 
   it('keeps an in-progress search edit when the route query update is pending', () => {

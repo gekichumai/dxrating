@@ -2,7 +2,7 @@ import type { DifficultyEnum, Song } from '@gekichumai/dxdata'
 import type { SongCatalog, VersionedSheet } from '@gekichumai/maimai-domain'
 import * as Sentry from '@sentry/tanstackstart-react'
 import uniq from 'lodash-es/uniq'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useCompleteCatalogDocument, useCompleteSongCatalog } from './catalog/CatalogContext'
 import { useCombinedTags, type CombinedTags } from './models/useCombinedTags'
 import { useServerAliases } from './models/useServerAliases'
@@ -121,26 +121,29 @@ type SheetsSearchEngineOptions = {
   serverAliases?: readonly ServerAlias[] | null
 }
 
-export const createSheetsSearchEngine = ({
-  songs,
-  sheets,
-  serverAliases,
-}: SheetsSearchEngineOptions): ((term: string) => FlattenedSheet[]) => {
+/** A search over the catalog's sheets; `prepare` builds its index ahead of the first query */
+export type SheetsSearch = ((term: string) => FlattenedSheet[]) & { prepare: () => void }
+
+export const createSheetsSearchEngine = ({ songs, sheets, serverAliases }: SheetsSearchEngineOptions): SheetsSearch => {
   const availableSheets = sheets ?? []
   // Building the index normalizes every sheet; defer it until the first real query so renders without a search term
   // (including every SSR of the default list) skip it entirely.
   let index: SheetsSearchIndex | undefined
   let lastSearch: { term: string; results: FlattenedSheet[] } | undefined
 
-  return (term: string) => {
+  const prepare = () => {
+    index ??= buildSheetsSearchIndex(songs, availableSheets, serverAliases)
+  }
+  const search = (term: string) => {
     const trimmedTerm = term.trim()
     if (!trimmedTerm) return []
     if (lastSearch?.term === trimmedTerm) return lastSearch.results
-    index ??= buildSheetsSearchIndex(songs, availableSheets, serverAliases)
-    const results = searchSheetsIndex(index, trimmedTerm)
+    prepare()
+    const results = searchSheetsIndex(index!, trimmedTerm)
     lastSearch = { term: trimmedTerm, results }
     return results
   }
+  return Object.assign(search, { prepare })
 }
 
 export const useSheetsSearchEngine = () => {
@@ -148,14 +151,31 @@ export const useSheetsSearchEngine = () => {
   const { data: sheets } = useSheets()
   const { data: serverAliases } = useServerAliases()
 
-  return useMemo(
+  const search = useMemo(
     () => (songs && sheets ? getSharedSheetsSearchEngine(songs, sheets, serverAliases) : searchNothing),
     [songs, sheets, serverAliases],
   )
+  // Building the index normalizes every title, alias and reading (about 0.1-0.4s on a phone). Done while the page is
+  // idle, the first keystroke no longer pays for it as input latency
+  useEffect(() => {
+    if (search === searchNothing) return undefined
+    return whenIdle(search.prepare)
+  }, [search])
+  return search
+}
+
+/** Runs `task` once the main thread is idle (or after 2s at the latest); returns a cancel function */
+const whenIdle = (task: () => void): (() => void) => {
+  if (typeof window.requestIdleCallback === 'function') {
+    const handle = window.requestIdleCallback(task, { timeout: 2_000 })
+    return () => window.cancelIdleCallback(handle)
+  }
+  const handle = window.setTimeout(task, 300)
+  return () => window.clearTimeout(handle)
 }
 
 // Until the complete catalog has loaded there is nothing to search
-const searchNothing = (_term: string): FlattenedSheet[] => []
+const searchNothing: SheetsSearch = Object.assign((_term: string): FlattenedSheet[] => [], { prepare: () => {} })
 
 // One engine per catalog snapshot, shared across components and (during SSR) across requests. The inputs are cached
 // references, so identity is enough to tell when the catalog or its remote metadata changed.
@@ -164,7 +184,7 @@ let sharedSearchEngine:
       songs: readonly Song[]
       sheets: readonly FlattenedSheet[]
       serverAliases: readonly ServerAlias[] | null | undefined
-      search: (term: string) => FlattenedSheet[]
+      search: SheetsSearch
     }
   | undefined
 
