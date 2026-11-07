@@ -1,8 +1,9 @@
 import {
   type AnnouncementCreateInput,
   type AnnouncementUpdateInput,
-  BASE_LOCALE,
+  ANNOUNCEMENT_SEVERITIES,
   LOCALE_FALLBACKS,
+  resolveLocalized,
   SUPPORTED_LOCALES,
 } from '@gekichumai/api-contract'
 import { announcements } from '@gekichumai/backend/db-schema'
@@ -52,15 +53,25 @@ export const columnsFrom = (fields: Fields, now: Date) => ({
   dismissible: fields.dismissible,
 })
 
-/** The text each language would see: its own, then its fallbacks, then English */
+/** The text each language would see, resolved exactly as the web and iOS clients do (shared resolveLocalized) */
 export const resolveText = (text: Record<string, string>) =>
   Object.fromEntries(
     SUPPORTED_LOCALES.map((locale) => {
-      const chain = [locale, ...(LOCALE_FALLBACKS[locale] ?? []), BASE_LOCALE]
-      const found = chain.find((tag) => typeof text[tag] === 'string')
-      return [locale, { text: text[found ?? BASE_LOCALE] ?? '', from: found ?? BASE_LOCALE }]
+      const found = resolveLocalized(text, locale, LOCALE_FALLBACKS)
+      return [locale, { text: found?.value ?? '', from: found?.locale ?? locale }]
     }),
   )
+
+const severityRank = (severity: string) => ANNOUNCEMENT_SEVERITIES.indexOf(severity as never)
+
+/**
+ * A new revision makes clients show the notice again to people who dismissed it: when the text or link changes, or
+ * when the severity rises (an info notice escalated to critical must reach those who dismissed the info one).
+ */
+export const needsNewRevision = (
+  next: { severity: string; title: unknown; body: unknown; link_url: string | null; link_label: unknown },
+  current: { severity: string; title: unknown; body: unknown; link_url: string | null; link_label: unknown },
+) => contentOf(next) !== contentOf(current) || severityRank(next.severity) > severityRank(current.severity)
 
 export const toAdminAnnouncement = (row: Row) => ({
   id: row.id,
@@ -133,14 +144,26 @@ export const createAnnouncement = (principal: Principal, input: AnnouncementCrea
 export const updateAnnouncement = (principal: Principal, input: AnnouncementUpdateInput, dryRun: boolean) =>
   Effect.gen(function* () {
     const db = yield* AdminDatabase
-    const [current] = yield* db.use('read announcement', (d) =>
-      d.select().from(announcements).where(eq(announcements.id, input.id)).limit(1),
-    )
-    if (!current) return null
     const at = yield* now
-    const columns = columnsFrom(input, input.startsAt ? at : current.starts_at)
-    const revision = contentOf(columns) === contentOf(current) ? current.revision : current.revision + 1
-    if (dryRun)
+    // One transaction with the row locked: two concurrent edits cannot both compute a revision from the same old row
+    const outcome = yield* db.use('update announcement', (d) =>
+      d.transaction(async (tx) => {
+        const [current] = await tx.select().from(announcements).where(eq(announcements.id, input.id)).for('update')
+        if (!current) return null
+        const columns = columnsFrom(input, input.startsAt ? at : current.starts_at)
+        const revision = needsNewRevision(columns, current) ? current.revision + 1 : current.revision
+        if (dryRun) return { columns, revision, row: null }
+        const [row] = await tx
+          .update(announcements)
+          .set({ ...columns, revision, updated_by: principal.actor, updated_at: at })
+          .where(eq(announcements.id, input.id))
+          .returning()
+        return { columns, revision, row: row! }
+      }),
+    )
+    if (!outcome) return null
+    const { columns, revision, row } = outcome
+    if (!row) {
       return {
         dryRun: true as const,
         preview: preview(columns),
@@ -148,19 +171,13 @@ export const updateAnnouncement = (principal: Principal, input: AnnouncementUpda
         announcement: null,
         edgeCache: 'skipped' as const,
       }
-    const [row] = yield* db.use('update announcement', (d) =>
-      d
-        .update(announcements)
-        .set({ ...columns, revision, updated_by: principal.actor, updated_at: at })
-        .where(eq(announcements.id, input.id))
-        .returning(),
-    )
+    }
     const edgeCache = yield* invalidateEdge
     return {
       dryRun: false as const,
       preview: preview(columns),
       revision,
-      announcement: toAdminAnnouncement(row!),
+      announcement: toAdminAnnouncement(row),
       edgeCache,
     }
   })
@@ -168,24 +185,25 @@ export const updateAnnouncement = (principal: Principal, input: AnnouncementUpda
 export const endAnnouncement = (principal: Principal, id: number) =>
   Effect.gen(function* () {
     const db = yield* AdminDatabase
-    const [current] = yield* db.use('read announcement', (d) =>
-      d.select().from(announcements).where(eq(announcements.id, id)).limit(1),
-    )
-    if (!current) return null
     const at = yield* now
-    if (current.ends_at && current.ends_at <= at)
-      return { announcement: toAdminAnnouncement(current), edgeCache: 'skipped' as const }
-    // ends_at must stay after starts_at (CHECK): a notice that has not started yet starts a moment before it ends
-    const startsAt = current.starts_at < at ? current.starts_at : new Date(at.getTime() - 1)
-    const [row] = yield* db.use('end announcement', (d) =>
-      d
-        .update(announcements)
-        .set({ starts_at: startsAt, ends_at: at, updated_by: principal.actor, updated_at: at })
-        .where(eq(announcements.id, id))
-        .returning(),
+    const outcome = yield* db.use('end announcement', (d) =>
+      d.transaction(async (tx) => {
+        const [current] = await tx.select().from(announcements).where(eq(announcements.id, id)).for('update')
+        if (!current) return null
+        if (current.ends_at && current.ends_at <= at) return { row: current, changed: false }
+        // ends_at must stay after starts_at (CHECK): a notice that has not started yet starts a moment before it ends
+        const startsAt = current.starts_at < at ? current.starts_at : new Date(at.getTime() - 1)
+        const [row] = await tx
+          .update(announcements)
+          .set({ starts_at: startsAt, ends_at: at, updated_by: principal.actor, updated_at: at })
+          .where(eq(announcements.id, id))
+          .returning()
+        return { row: row!, changed: true }
+      }),
     )
-    const edgeCache = yield* invalidateEdge
-    return { announcement: toAdminAnnouncement(row!), edgeCache }
+    if (!outcome) return null
+    const edgeCache = outcome.changed ? yield* invalidateEdge : ('skipped' as const)
+    return { announcement: toAdminAnnouncement(outcome.row), edgeCache }
   })
 
 export type AnnouncementServices = AdminDatabase | AdminApiConfigService | HttpClient

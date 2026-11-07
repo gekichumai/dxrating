@@ -104,7 +104,7 @@ suite('announcements (admin API)', () => {
   beforeEach(async () => {
     await pool.query('DELETE FROM announcements')
     purge.mockReset()
-    purge.mockResolvedValue(Response.json({ success: true }))
+    purge.mockImplementation(async () => Response.json({ success: true }))
   })
   afterAll(async () => {
     await runtime.dispose()
@@ -142,6 +142,36 @@ suite('announcements (admin API)', () => {
     expect(out.announcement.updatedBy).toBe('human:owner@example.invalid')
   })
 
+  it('bumps the revision when the severity rises, not when it falls or dismissible changes', async () => {
+    const created = (await (await post('/announcements', { announcement: fields() })).json()) as any
+    const id = created.announcement.id
+    const up = (await (
+      await post('/announcements/update', { announcement: { ...fields({ severity: 'critical' }), id } })
+    ).json()) as any
+    expect(up.revision).toBe(2)
+    const down = (await (
+      await post('/announcements/update', { announcement: { ...fields({ severity: 'info', dismissible: false }), id } })
+    ).json()) as any
+    expect(down.revision).toBe(2)
+  })
+
+  it('serialises concurrent edits: each content change gets its own revision', async () => {
+    const created = (await (await post('/announcements', { announcement: fields() })).json()) as any
+    const id = created.announcement.id
+    await Promise.all(
+      ['A', 'B', 'C'].map((text) =>
+        post('/announcements/update', { announcement: { ...fields({ body: { en: text } }), id } }),
+      ),
+    )
+    expect((await pool.query('SELECT revision FROM announcements WHERE id = $1', [id])).rows[0].revision).toBe(4)
+  })
+
+  it('previews blank translations as falling back, like the clients', async () => {
+    const out = (await (await post('/announcements', { announcement: fields(), dryRun: true })).json()) as any
+    expect(out.preview.title.ja).toEqual({ text: 'メンテナンス', from: 'ja' })
+    expect(out.preview.title['zh-Hans']).toEqual({ text: 'Maintenance', from: 'en' })
+  })
+
   it('ends a scheduled announcement by moving its start just before now', async () => {
     const future = new Date(Date.now() + 86_400_000).toISOString()
     const created = (await (await post('/announcements', { announcement: fields({ startsAt: future }) })).json()) as any
@@ -166,7 +196,7 @@ suite('announcements (admin API)', () => {
   })
 
   it('reports a failed purge without failing the write', async () => {
-    purge.mockResolvedValue(Response.json({ success: false }, { status: 500 }))
+    purge.mockImplementation(async () => Response.json({ success: false }, { status: 500 }))
     const out = (await (await post('/announcements', { announcement: fields() })).json()) as any
     expect(out.edgeCache).toBe('failed')
     expect(out.announcement.id).toBeGreaterThan(0)
