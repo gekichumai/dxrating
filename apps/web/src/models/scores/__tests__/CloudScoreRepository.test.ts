@@ -940,6 +940,38 @@ describe('CloudScoreRepository', () => {
     warn.mockRestore()
   })
 
+  it('keeps a sent change when the write recording its answer fails, and sends it again', async () => {
+    const repository = await openRepository()
+    await repository.sync()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const original = CloudScoreDatabase.prototype.write
+    let failed = false
+    const write = vi.spyOn(CloudScoreDatabase.prototype, 'write').mockImplementation(function (
+      this: CloudScoreDatabase,
+      ...args
+    ) {
+      // The transaction that records the server's answer fails once (quota, a closing tab…)
+      if (!failed && (args[0].deleteOutbox?.length ?? 0) > 0) {
+        failed = true
+        return Promise.reject(new DOMException('Quota exceeded', 'QuotaExceededError'))
+      }
+      return original.apply(this, args)
+    })
+
+    repository.setManual({ sheetId: SHEET_A, achievementRate: 99 }, 'typed')
+    await repository.sync().catch(() => {})
+    expect(failed).toBe(true)
+    // Not dropped: it waits for the next push
+    expect(repository.status.pendingCount).toBe(1)
+
+    // The next push (here: a flush, which skips the retry wait) sends it again; the server answers it the same
+    expect(await repository.flush()).toBe(true)
+    expect(server.mutateCalls).toHaveLength(2)
+    expect(repository.status.pendingCount).toBe(0)
+    write.mockRestore()
+    warn.mockRestore()
+  })
+
   it('keeps a change made while a reload runs on screen', async () => {
     let channel: ScoreBroadcastChannel | null = null
     const createChannel = () => {

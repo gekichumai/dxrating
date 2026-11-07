@@ -1021,7 +1021,9 @@ export class CloudScoreRepository implements WebScoreRepository {
 
       const done = new Set(acknowledged)
       if (done.size > 0) this.cycleChanged = true
-      this.outbox = this.outbox.filter((entry) => !done.has(entry.mutationId))
+      // The acknowledged entries leave memory only once the transaction that records their results has committed:
+      // an entry this tab never managed to store has no other copy, and a failed write keeps it for the next push
+      // (the server answers a mutation it already applied with the same result)
       const written = await this.persist(async (database) => {
         // Run in the write queue, so a write of this tab's unsaved entries has landed or not started. An entry only
         // this tab holds gets its issue as is (and is never written to the outbox now); a stored entry gets it only
@@ -1029,15 +1031,16 @@ export class CloudScoreRepository implements WebScoreRepository {
         // bring back an issue that tab's user dismissed or applied again
         const ownIssues = issues.filter((issue) => this.unsaved.has(issue.id))
         const sharedIssues = issues.filter((issue) => !this.unsaved.has(issue.id))
-        for (const mutationId of acknowledged) this.unsaved.delete(mutationId)
         const { acknowledgedIssues } = await database.write({
           putRecords,
           putIssues: ownIssues,
           acknowledgeIssues: sharedIssues,
           deleteOutbox: acknowledged,
         })
+        for (const mutationId of acknowledged) this.unsaved.delete(mutationId)
         return [...ownIssues, ...acknowledgedIssues]
       })
+      this.outbox = this.outbox.filter((entry) => !done.has(entry.mutationId))
       this.issues = [...this.issues, ...written]
       this.refresh()
     }
