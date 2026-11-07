@@ -1,0 +1,30 @@
+CREATE TABLE "announcements" (
+	"id" bigserial PRIMARY KEY,
+	"revision" integer DEFAULT 1 NOT NULL,
+	"severity" text NOT NULL,
+	"title" jsonb NOT NULL,
+	"body" jsonb NOT NULL,
+	"link_url" text,
+	"link_label" jsonb,
+	"starts_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"ends_at" timestamp with time zone,
+	"platforms" text[] DEFAULT '{}'::text[] NOT NULL,
+	"regions" text[] DEFAULT '{}'::text[] NOT NULL,
+	"min_app_version" text,
+	"max_app_version" text,
+	"dismissible" boolean DEFAULT true NOT NULL,
+	"created_by" text NOT NULL,
+	"updated_by" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "announcements_severity_check" CHECK ("severity" IN ('info', 'warning', 'critical')),
+	CONSTRAINT "announcements_title_has_en" CHECK ("title" ? 'en'),
+	CONSTRAINT "announcements_body_has_en" CHECK ("body" ? 'en'),
+	CONSTRAINT "announcements_window_check" CHECK ("ends_at" IS NULL OR "ends_at" > "starts_at"),
+	CONSTRAINT "announcements_platforms_check" CHECK ("platforms" <@ ARRAY['web', 'ios']::text[]),
+	CONSTRAINT "announcements_regions_check" CHECK ("regions" <@ ARRAY['jp', 'intl', 'cn']::text[]),
+	CONSTRAINT "announcements_created_by_check" CHECK ("created_by" ~ '^(human|agent):.+$'),
+	CONSTRAINT "announcements_updated_by_check" CHECK ("updated_by" ~ '^(human|agent):.+$')
+);
+--> statement-breakpoint
+CREATE INDEX "announcements_ends_at" ON "announcements" ("ends_at");
