@@ -2,11 +2,19 @@ import { fromAchievementInt } from '@gekichumai/maimai-domain'
 import { Button } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useSongCatalog } from '@/catalog/CatalogContext'
 import { useCloudSaveStatus, useCloudSaveUi } from '@/models/scores/CloudSaveUiContext'
 import type { SyncIssue } from '@/models/scores/ScoreRepository'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
 import './cloud-save.css'
+
+const METHOD_MESSAGES: Record<string, PlainMessage> = {
+  typed: m.ratingCalculator_cloudSave_issues_method_typed,
+  keypad: m.ratingCalculator_cloudSave_issues_method_keypad,
+  photo: m.ratingCalculator_cloudSave_issues_method_photo,
+}
 
 const FLAG_LABELS: Record<string, string> = {
   fc: 'FC',
@@ -21,14 +29,14 @@ const FLAG_LABELS: Record<string, string> = {
 }
 
 function useDateTimeFormat() {
-  const { i18n } = useTranslation()
+  const locale = useLocale()
   return useMemo(() => {
     try {
-      return new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' })
+      return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' })
     } catch {
       return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
     }
-  }, [i18n.language])
+  }, [locale])
 }
 
 const SyncIssueItem: FC<{ issue: SyncIssue; onReapply: () => void; onDismiss: () => void }> = ({
@@ -36,7 +44,7 @@ const SyncIssueItem: FC<{ issue: SyncIssue; onReapply: () => void; onDismiss: ()
   onReapply,
   onDismiss,
 }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const catalog = useSongCatalog()
   const format = useDateTimeFormat()
   const sheet = catalog.getById(issue.sheetId)
@@ -44,7 +52,7 @@ const SyncIssueItem: FC<{ issue: SyncIssue; onReapply: () => void; onDismiss: ()
 
   const value =
     intent.op === 'delete'
-      ? t('rating-calculator:cloud-save.issues.value-removed')
+      ? m.ratingCalculator_cloudSave_issues_valueRemoved({}, { locale })
       : intent.value
         ? [
             `${fromAchievementInt(intent.value.achievement).toFixed(4)}%`,
@@ -54,7 +62,10 @@ const SyncIssueItem: FC<{ issue: SyncIssue; onReapply: () => void; onDismiss: ()
             .filter(Boolean)
             .join(' ')
         : ''
-  const method = t(`rating-calculator:cloud-save.issues.method.${intent.entryMethod}`)
+  const method = (METHOD_MESSAGES[intent.entryMethod] ?? m.ratingCalculator_cloudSave_issues_method_typed)(
+    {},
+    { locale },
+  )
   const madeAt = intent.clientEditedAt ?? issue.createdAt
   const time = Number.isNaN(Date.parse(madeAt)) ? null : format.format(new Date(madeAt))
   const titleId = `sync-issue-${issue.id}`
@@ -75,7 +86,7 @@ const SyncIssueItem: FC<{ issue: SyncIssue; onReapply: () => void; onDismiss: ()
         )}
       </div>
       <div className="text-xs text-fg-2">
-        {t('rating-calculator:cloud-save.issues.your-value', { value })}
+        {m.ratingCalculator_cloudSave_issues_yourValue({ value }, { locale })}
         <span className="text-fg-2">
           {' · '}
           {method}
@@ -84,16 +95,16 @@ const SyncIssueItem: FC<{ issue: SyncIssue; onReapply: () => void; onDismiss: ()
       </div>
       <p className="m-0 text-xs text-fg-2 text-pretty">
         {issue.kind === 'superseded'
-          ? t('rating-calculator:cloud-save.issues.superseded')
-          : t('rating-calculator:cloud-save.issues.rejected')}
+          ? m.ratingCalculator_cloudSave_issues_superseded({}, { locale })
+          : m.ratingCalculator_cloudSave_issues_rejected({}, { locale })}
       </p>
       <div className="flex flex-wrap justify-end gap-1">
         <Button size="small" color="inherit" onClick={onDismiss}>
-          {t('rating-calculator:cloud-save.issues.dismiss')}
+          {m.ratingCalculator_cloudSave_issues_dismiss({}, { locale })}
         </Button>
         {issue.kind === 'superseded' && (
           <Button size="small" variant="outlined" onClick={onReapply}>
-            {t('rating-calculator:cloud-save.issues.use-mine')}
+            {m.ratingCalculator_cloudSave_issues_useMine({}, { locale })}
           </Button>
         )}
       </div>
@@ -103,17 +114,22 @@ const SyncIssueItem: FC<{ issue: SyncIssue; onReapply: () => void; onDismiss: ()
 
 /** The changes the server did not take (§5.4), each with what can be done about it; nothing on the local save */
 export const SyncIssuesList: FC<{ emptyClassName?: string }> = ({ emptyClassName }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const cloud = useCloudSaveUi()
   const status = useCloudSaveStatus()
   if (!cloud || !status) return null
   if (status.issues.length === 0) {
     return (
-      <p className={clsx('m-0 text-sm text-fg-2', emptyClassName)}>{t('rating-calculator:cloud-save.issues.empty')}</p>
+      <p className={clsx('m-0 text-sm text-fg-2', emptyClassName)}>
+        {m.ratingCalculator_cloudSave_issues_empty({}, { locale })}
+      </p>
     )
   }
   return (
-    <ul className="m-0 flex list-none flex-col gap-1.5 p-0" aria-label={t('rating-calculator:cloud-save.issues.title')}>
+    <ul
+      className="m-0 flex list-none flex-col gap-1.5 p-0"
+      aria-label={m.ratingCalculator_cloudSave_issues_title({}, { locale })}
+    >
       {status.issues.map((issue) => (
         <SyncIssueItem
           key={issue.id}

@@ -2,13 +2,11 @@ import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { getSongCatalog } from '@gekichumai/maimai-domain'
 import { VersionEnum } from '@gekichumai/dxdata'
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import i18n from 'i18next'
 import type { ReactNode } from 'react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { type CloudSaveUi, CloudSaveUiContext } from '@/models/scores/CloudSaveUiContext'
 import { createDemoCloudSave, type DemoCloudScoreRepository } from '@/models/scores/demoCloudSave'
 import type { ScoreRepositoryStatus } from '@/models/scores/ScoreRepository'
-import { initI18n } from '@/setup/init-i18n'
 import { CloudSaveSection } from '../CloudSaveSection'
 import { ImportHistoryList } from '../ImportHistoryList'
 import { RecordProvenanceBadge, RecordProvenanceIcon } from '../ProvenanceBadge'
@@ -16,6 +14,7 @@ import { SaveSelector } from '../SaveSelector'
 import { SyncIssuesList } from '../SyncIssuesList'
 import { SyncStatusIndicator } from '../SyncStatusIndicator'
 import { CloudImportConfirmDialog } from '../CloudImportConfirmDialog'
+import { m } from '@/paraglide/messages'
 
 const catalog = getSongCatalog(catalogSnapshot, VersionEnum.PRiSMPLUS)
 
@@ -33,11 +32,6 @@ function withCloud(ui: CloudSaveUi | null) {
 function sheetOf(repository: DemoCloudScoreRepository, index: number): string {
   return repository.entries()[index]!.sheetId
 }
-
-beforeAll(async () => {
-  initI18n()
-  await i18n.changeLanguage('en')
-})
 
 describe('cloud save surfaces on the local save', () => {
   it('render nothing at all', () => {

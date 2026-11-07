@@ -1,5 +1,4 @@
 import type { ImportJobDTO } from '@gekichumai/api-contract'
-import type { TFunction } from 'i18next'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { migrateLegacyImportEntries } from '@/catalog/savedDataMigration'
 import { cloudImportConfirm } from '@/components/cloud-save/cloudImportConfirm'
@@ -20,6 +19,8 @@ import type {
   ServerImportKind,
   WebScoreRepository,
 } from '@/models/scores/ScoreRepository'
+import { m } from '@/paraglide/messages'
+import type { Locale } from '@/paraglide/runtime'
 
 /**
  * How the import UI talks to the active save. The local save is unchanged: every importer calls `applyImport` as
@@ -100,27 +101,43 @@ export async function runServerImportToEnd<K extends ServerImportKind>(
   return job
 }
 
+/** The words of each count of an import job */
+export const IMPORT_COUNT_MESSAGES = {
+  inserted: m.ratingCalculator_cloudSave_history_counts_inserted,
+  improved: m.ratingCalculator_cloudSave_history_counts_improved,
+  provenanceUpgraded: m.ratingCalculator_cloudSave_history_counts_provenanceUpgraded,
+  unchanged: m.ratingCalculator_cloudSave_history_counts_unchanged,
+  keptUserEdit: m.ratingCalculator_cloudSave_history_counts_keptUserEdit,
+  skippedDeleted: m.ratingCalculator_cloudSave_history_counts_skippedDeleted,
+  skippedUnknownSheet: m.ratingCalculator_cloudSave_history_counts_skippedUnknownSheet,
+  rejected: m.ratingCalculator_cloudSave_history_counts_rejected,
+} satisfies Partial<
+  Record<keyof ImportJobDTO['counts'], (inputs: { count: number }, options: { locale: Locale }) => string>
+>
+
 /** "12 new · 30 improved · 400 unchanged": what a job changed, zeros left out */
-export function summarizeImportJob(job: ImportJobDTO, t: TFunction): string {
+export function summarizeImportJob(job: ImportJobDTO, locale: Locale): string {
   const keys = ['inserted', 'improved', 'provenanceUpgraded', 'unchanged', 'keptUserEdit'] as const
   const parts = keys
     .filter((key) => job.counts[key] > 0)
-    .map((key) => t(`rating-calculator:cloud-save.history.counts.${key}`, { count: job.counts[key] }))
-  return parts.length ? parts.join(' · ') : t('rating-calculator:cloud-save.history.counts.none')
+    .map((key) => IMPORT_COUNT_MESSAGES[key]({ count: job.counts[key] }, { locale }))
+  return parts.length ? parts.join(' · ') : m.ratingCalculator_cloudSave_history_counts_none({}, { locale })
 }
 /**
  * Toasts what a cloud file import left out: entries that match no chart, and entries the server's import schema
  * rejects (an out-of-range value…). Nothing for the local save.
  */
-export function announceImportLeftOut(result: ImportResult, t: TFunction, notify: (message: string) => void) {
-  if (result.skipped) notify(t('rating-calculator:cloud-save.import.skipped', { count: result.skipped }))
-  if (result.rejected) notify(t('rating-calculator:cloud-save.import.rejected', { count: result.rejected }))
+export function announceImportLeftOut(result: ImportResult, locale: Locale, notify: (message: string) => void) {
+  if (result.skipped) notify(m.ratingCalculator_cloudSave_import_skipped({ count: result.skipped }, { locale }))
+  if (result.rejected) notify(m.ratingCalculator_cloudSave_import_rejected({ count: result.rejected }, { locale }))
 }
 
 /** What to tell the user about a cloud import error they can act on; `null` for any other error */
-export function cloudImportErrorMessage(error: unknown, t: TFunction): string | null {
-  if (error instanceof NothingToImportError) return t('rating-calculator:cloud-save.import.errors.nothing-to-import')
-  if (error instanceof ImportAlreadyRunningError) return t('rating-calculator:cloud-save.import.errors.already-running')
-  if (error instanceof ImportTooLargeError) return t('rating-calculator:cloud-save.import.errors.too-large')
+export function cloudImportErrorMessage(error: unknown, locale: Locale): string | null {
+  if (error instanceof NothingToImportError)
+    return m.ratingCalculator_cloudSave_import_errors_nothingToImport({}, { locale })
+  if (error instanceof ImportAlreadyRunningError)
+    return m.ratingCalculator_cloudSave_import_errors_alreadyRunning({}, { locale })
+  if (error instanceof ImportTooLargeError) return m.ratingCalculator_cloudSave_import_errors_tooLarge({}, { locale })
   return null
 }

@@ -2,11 +2,12 @@ import type { SaveDTO } from '@gekichumai/api-contract'
 import { CircularProgress } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiCheck from '~icons/mdi/check'
 import { useCloudSaveStatus, useCloudSaveUi } from '@/models/scores/CloudSaveUiContext'
 import { LoadError } from './LoadError'
 import { formatLocalDate, labelSeparator } from './provenanceLabel'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
 import './cloud-save.css'
 
 const REGION_LABELS: Record<SaveDTO['region'], string> = {
@@ -23,12 +24,12 @@ type LoadState = { kind: 'loading' } | { kind: 'error' } | { kind: 'loaded'; sav
  * the latest snapshot. Choosing one switches the active save. Creating saves comes with the first sign-in migration.
  */
 export const SaveSelector: FC = () => {
-  const { t, i18n } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const cloud = useCloudSaveUi()
   // Re-render when the active save changes under the same controller (the demo)
   useCloudSaveStatus()
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
-  const numberFormat = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language])
+  const numberFormat = useMemo(() => new Intl.NumberFormat(locale), [locale])
 
   // Bumped by "Try again" after a failed load
   const [attempt, setAttempt] = useState(0)
@@ -51,37 +52,46 @@ export const SaveSelector: FC = () => {
     return (
       <output className="flex items-center gap-2 py-2 text-sm text-fg-2">
         <CircularProgress size="1rem" aria-hidden />
-        {t('rating-calculator:cloud-save.saves.loading')}
+        {m.ratingCalculator_cloudSave_saves_loading({}, { locale })}
       </output>
     )
   }
   if (state.kind === 'error') {
     return (
       <LoadError
-        message={t('rating-calculator:cloud-save.saves.error')}
+        message={m.ratingCalculator_cloudSave_saves_error({}, { locale })}
         onRetry={() => setAttempt((value) => value + 1)}
       />
     )
   }
   if (state.saves.length === 0) {
-    return <p className="m-0 text-sm text-fg-2">{t('rating-calculator:cloud-save.saves.empty')}</p>
+    return <p className="m-0 text-sm text-fg-2">{m.ratingCalculator_cloudSave_saves_empty({}, { locale })}</p>
   }
 
   const activeId = cloud.controller.saveId
-  const separator = labelSeparator(i18n.language)
+  const separator = labelSeparator(locale)
   return (
-    <ul className="m-0 flex list-none flex-col gap-1 p-0" aria-label={t('rating-calculator:cloud-save.saves.title')}>
+    <ul
+      className="m-0 flex list-none flex-col gap-1 p-0"
+      aria-label={m.ratingCalculator_cloudSave_saves_title({}, { locale })}
+    >
       {state.saves.map((save) => {
         const active = save.id === activeId
-        const region = REGION_LABELS[save.region] || t('rating-calculator:cloud-save.saves.region-any')
+        const region = REGION_LABELS[save.region] || m.ratingCalculator_cloudSave_saves_regionAny({}, { locale })
         const details = [
-          t('rating-calculator:cloud-save.saves.records', {
-            count: save.recordCount,
-            formatted: numberFormat.format(save.recordCount),
-          }),
+          m.ratingCalculator_cloudSave_saves_records(
+            {
+              count: save.recordCount,
+              formatted: numberFormat.format(save.recordCount),
+            },
+            { locale },
+          ),
           save.latestSnapshot &&
-            t('rating-calculator:cloud-save.saves.b50', { rating: numberFormat.format(save.latestSnapshot.b50Sum) }),
-          t('rating-calculator:cloud-save.saves.last-sync', { date: formatLocalDate(save.updatedAt) }),
+            m.ratingCalculator_cloudSave_saves_b50(
+              { rating: numberFormat.format(save.latestSnapshot.b50Sum) },
+              { locale },
+            ),
+          m.ratingCalculator_cloudSave_saves_lastSync({ date: formatLocalDate(save.updatedAt) }, { locale }),
         ].filter(Boolean)
         return (
           <li key={save.id}>

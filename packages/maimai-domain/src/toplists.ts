@@ -1,5 +1,6 @@
 /** Top-list helpers: AP / FC / FDX groupings, highest achievements and DX score stars */
 import type { NoteCounts } from '@gekichumai/dxdata'
+import { dxScoreStarCount, type DxScoreStars } from './dx-score.ts'
 import type { ComboFlag, SyncFlag } from './types'
 
 export type ToplistTier = 'app' | 'ap' | 'fcp' | 'fc' | 'fsdp' | 'fsd'
@@ -47,8 +48,7 @@ export function maxDxScore(noteCounts: NoteCounts | undefined): number | null {
 /** In-game DX score star thresholds (share of the maximum): ✦1 85%, ✦2 90%, ✦3 93%, ✦4 95%, ✦5 97% */
 export const DX_SCORE_STAR_THRESHOLDS = [0.85, 0.9, 0.93, 0.95, 0.97] as const
 
-export function dxScoreStars(dxScore: number, max: number): 0 | 1 | 2 | 3 | 4 | 5 {
-  if (max <= 0) return 0
-  const ratio = dxScore / max
-  return DX_SCORE_STAR_THRESHOLDS.filter((threshold) => ratio >= threshold).length as 0 | 1 | 2 | 3 | 4 | 5
+/** Stars for a DX score, using the game's whole-score borders (see `dx-score.ts`) */
+export function dxScoreStars(dxScore: number, max: number): DxScoreStars {
+  return dxScoreStarCount(dxScore, max)
 }

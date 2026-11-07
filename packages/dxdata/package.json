@@ -9,7 +9,8 @@
     ".": "./index.ts",
     "./snapshot": "./snapshot.ts",
     "./snapshot.json": "./snapshot.json",
-    "./legacy-song-ids": "./legacy-song-ids.ts"
+    "./legacy-song-ids": "./legacy-song-ids.ts",
+    "./v2": "./v2.ts"
   },
   "publishConfig": {
     "access": "public"

@@ -1,4 +1,6 @@
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
 
 export type NetImportErrorCode =
   | 'NET_MAINTENANCE'
@@ -9,17 +11,17 @@ export type NetImportErrorCode =
   | 'TOKEN_ERROR'
 
 /** The message of each maimai NET error code */
-export const NET_IMPORT_ERROR_I18N: Record<NetImportErrorCode, string> = {
-  NET_MAINTENANCE: 'rating-calculator:io.import.net-records.errors.maintenance',
-  INVALID_CREDENTIALS: 'rating-calculator:io.import.net-records.errors.invalid-credentials',
-  AIME_CARD_UNAVAILABLE: 'rating-calculator:io.import.net-records.errors.aime-card-unavailable',
-  UNKNOWN_ERROR: 'rating-calculator:io.import.net-records.errors.unknown',
-  INTERNAL_ERROR: 'rating-calculator:io.import.net-records.errors.internal',
-  TOKEN_ERROR: 'rating-calculator:io.import.net-records.errors.token',
+export const NET_IMPORT_ERROR_MESSAGES: Record<NetImportErrorCode, PlainMessage> = {
+  NET_MAINTENANCE: m.ratingCalculator_io_import_netRecords_errors_maintenance,
+  INVALID_CREDENTIALS: m.ratingCalculator_io_import_netRecords_errors_invalidCredentials,
+  AIME_CARD_UNAVAILABLE: m.ratingCalculator_io_import_netRecords_errors_aimeCardUnavailable,
+  UNKNOWN_ERROR: m.ratingCalculator_io_import_netRecords_errors_unknown,
+  INTERNAL_ERROR: m.ratingCalculator_io_import_netRecords_errors_internal,
+  TOKEN_ERROR: m.ratingCalculator_io_import_netRecords_errors_token,
 }
 
 export function isNetImportErrorCode(code: string): code is NetImportErrorCode {
-  return Object.hasOwn(NET_IMPORT_ERROR_I18N, code)
+  return Object.hasOwn(NET_IMPORT_ERROR_MESSAGES, code)
 }
 
 /**

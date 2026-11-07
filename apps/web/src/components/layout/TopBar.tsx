@@ -1,7 +1,6 @@
 import { ButtonBase, Divider, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material'
 import clsx from 'clsx'
 import { type ComponentType, type ReactNode, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import MdiChevronDown from '~icons/mdi/chevron-down'
 import MdiCodeBraces from '~icons/mdi/code-braces'
 import MdiAccountGroupOutline from '~icons/mdi/account-group-outline'
@@ -19,11 +18,16 @@ import { About } from '../global/site-meta/About'
 import { SyncStatusIndicator } from '../cloud-save/SyncStatusIndicator'
 import { useCloudSaveStatus } from '../../models/scores/CloudSaveUiContext'
 import { type HeaderTint, headerTintStyle } from './headerTints'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
+import { LinkBehavior } from '@/components/global/InternalLink'
 
 // Every header action keeps a hue of its own: a coloured glyph on a soft wash of it (styles/header-tints.css). The
 // community links are their solid brand discs with a white logo, as before the glass pill
 const COMMUNITY_LINKS: {
   key: 'discord' | 'qq' | 'github'
+  label: PlainMessage
   // Brand names stay untranslated; only the QQ group needs a localized short label.
   shortLabel?: string
   href: string
@@ -32,6 +36,7 @@ const COMMUNITY_LINKS: {
 }[] = [
   {
     key: 'discord',
+    label: m.root_externalLinks_discord,
     shortLabel: 'Discord',
     href: 'https://discord.gg/8CFgUPxyrU',
     Icon: DiscordLogo,
@@ -39,12 +44,14 @@ const COMMUNITY_LINKS: {
   },
   {
     key: 'qq',
+    label: m.root_externalLinks_qq,
     href: 'https://qun.qq.com/universal-share/share?ac=1&authKey=Msn1eQwZatECqVPNu99z7yM9encUTFgkQlCrknZJ3mLKemZ1g2JLHskeZctaBa1z&busi_data=eyJncm91cENvZGUiOiI3MTU2MDczNjAiLCJ0b2tlbiI6Ii8wMDM4NkpOdDVOanRzTVdSQm5tKzZHbXNONFczTTVHa0M3a3dtcWU1TUxkYjFuQ3U5VEMzQ0srVWlDQjkvQVMiLCJ1aW4iOiIyNDAzOTAxNTExIn0%3D&data=e0__RlsOEZs1-dsLtR44_xvw9lEyXAdlviDKcK_XqyeS6gjDkceHeVGEiuGDKodjINLGUGNIWdmb9IdEmcYeWw&svctype=4&tempid=h5_group_info',
     Icon: QqLogo,
     tint: 'qq',
   },
   {
     key: 'github',
+    label: m.root_externalLinks_github,
     shortLabel: 'GitHub',
     href: 'https://github.com/gekichumai/dxrating',
     Icon: MdiGithub,
@@ -78,15 +85,15 @@ const PILL_DIVIDER = <span className="mx-1 h-5 w-px shrink-0 bg-black/12" aria-h
 // Small screens fold the community and developer links into one menu so the header stays a single row. `compact` keeps
 // the single glyph on wider phones too, where the three brand discs would push the pill into the logo
 const CommunityMenu = ({ compact = false }: { compact?: boolean }) => {
-  const { t } = useTranslation(['root'])
+  const locale = useLocale()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
   return (
     <>
       <ButtonBase
         onClick={(e) => setAnchorEl(e.currentTarget)}
-        aria-label={t('root:external-links.community')}
-        title={t('root:external-links.community')}
+        aria-label={m.root_externalLinks_community({}, { locale })}
+        title={m.root_externalLinks_community({}, { locale })}
         aria-haspopup="menu"
         aria-expanded={anchorEl ? 'true' : undefined}
         className={clsx(
@@ -116,46 +123,46 @@ const CommunityMenu = ({ compact = false }: { compact?: boolean }) => {
       </ButtonBase>
 
       <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-        {COMMUNITY_LINKS.map(({ key, shortLabel, href, Icon, tint }) => (
+        {COMMUNITY_LINKS.map(({ key, label, shortLabel, href, Icon, tint }) => (
           <MenuItem
             key={key}
-            component="a"
+            component={LinkBehavior}
             href={href}
             target="_blank"
             rel="noopener"
-            title={t(`root:external-links.${key}`)}
+            title={label({}, { locale })}
             onClick={() => setAnchorEl(null)}
           >
             <ListItemIcon className="header-tint" style={headerTintStyle(tint)}>
               <Icon aria-hidden className="size-5 text-[var(--tint-ink)]" />
             </ListItemIcon>
-            <ListItemText>{shortLabel ?? t('root:external-links.qq-short')}</ListItemText>
+            <ListItemText>{shortLabel ?? m.root_externalLinks_qqShort({}, { locale })}</ListItemText>
           </MenuItem>
         ))}
         <Divider />
         <MenuItem
-          component="a"
+          component={LinkBehavior}
           href={MCP_GUIDE_URL}
           target="_blank"
           rel="noopener"
-          title={t('root:external-links.mcp')}
+          title={m.root_externalLinks_mcp({}, { locale })}
           onClick={() => setAnchorEl(null)}
         >
           <ListItemIcon className="header-tint" style={headerTintStyle('mcp')}>
             <McpLogo aria-hidden className="size-5 text-[var(--tint-ink)]" />
           </ListItemIcon>
-          <ListItemText>{t('root:external-links.mcp-short')}</ListItemText>
+          <ListItemText>{m.root_externalLinks_mcpShort({}, { locale })}</ListItemText>
         </MenuItem>
         <MenuItem
-          component="a"
+          component={LinkBehavior}
           href={DEVELOPERS_URL}
-          title={t('root:external-links.developers')}
+          title={m.root_externalLinks_developers({}, { locale })}
           onClick={() => setAnchorEl(null)}
         >
           <ListItemIcon className="header-tint" style={headerTintStyle('api')}>
             <MdiCodeBraces aria-hidden className="size-5 text-[var(--tint-ink)]" />
           </ListItemIcon>
-          <ListItemText>{t('root:external-links.developers-short')}</ListItemText>
+          <ListItemText>{m.root_externalLinks_developersShort({}, { locale })}</ListItemText>
         </MenuItem>
       </Menu>
     </>
@@ -164,7 +171,7 @@ const CommunityMenu = ({ compact = false }: { compact?: boolean }) => {
 
 /** The header's top row: the site name and build on the left, one glass pill of actions on the right. */
 export const TopBar = () => {
-  const { t } = useTranslation(['root'])
+  const locale = useLocale()
   // The sync pill only renders on a cloud save; without it the header is exactly the local-save layout
   const hasSyncPill = useCloudSaveStatus() != null
 
@@ -173,7 +180,7 @@ export const TopBar = () => {
       <div className="flex flex-col items-start justify-center gap-1 select-none relative min-w-0">
         <Logo />
         {/* fg-1, not fg-2: the header tint over the background art leaves fg-2 near 4.3:1 at this 12px size */}
-        <div className="text-xs text-fg-1 leading-none whitespace-nowrap num">
+        <div className="text-xs text-fg-1 leading-none whitespace-nowrap num max-w-full overflow-hidden text-ellipsis">
           {BUNDLE.version ?? 'unknown'} (<RelativeTime time={BUNDLE.buildTime} length="short" />)
         </div>
       </div>
@@ -181,12 +188,12 @@ export const TopBar = () => {
       <div className="glass-thin !rounded-full flex items-center shrink-0 p-[3px] gap-0.5 [&_.MuiIconButton-root]:size-9 [&_.MuiIconButton-root]:p-0 [&_.MuiIconButton-root]:text-xl">
         <div className="hidden sm:flex items-center gap-0.5">
           <ButtonBase
-            component="a"
+            component={LinkBehavior}
             href={MCP_GUIDE_URL}
             target="_blank"
             rel="noopener"
-            aria-label={t('root:external-links.mcp')}
-            title={t('root:external-links.mcp')}
+            aria-label={m.root_externalLinks_mcp({}, { locale })}
+            title={m.root_externalLinks_mcp({}, { locale })}
             className={clsx(DEVELOPER_PILL_SEGMENT_CLASS_NAME, 'header-tint')}
             style={headerTintStyle('mcp')}
           >
@@ -194,10 +201,10 @@ export const TopBar = () => {
             MCP
           </ButtonBase>
           <ButtonBase
-            component="a"
+            component={LinkBehavior}
             href={DEVELOPERS_URL}
-            aria-label={t('root:external-links.developers')}
-            title={t('root:external-links.developers')}
+            aria-label={m.root_externalLinks_developers({}, { locale })}
+            title={m.root_externalLinks_developers({}, { locale })}
             className={clsx(DEVELOPER_PILL_SEGMENT_CLASS_NAME, 'header-tint')}
             style={headerTintStyle('api')}
           >
@@ -205,15 +212,15 @@ export const TopBar = () => {
             API
           </ButtonBase>
           {PILL_DIVIDER}
-          {COMMUNITY_LINKS.map(({ key, href, Icon, tint }) => (
+          {COMMUNITY_LINKS.map(({ key, label, href, Icon, tint }) => (
             <ButtonBase
               key={key}
-              component="a"
+              component={LinkBehavior}
               href={href}
               target="_blank"
               rel="noopener"
-              aria-label={t(`root:external-links.${key}`)}
-              title={t(`root:external-links.${key}`)}
+              aria-label={label({}, { locale })}
+              title={label({}, { locale })}
               className={clsx(HEADER_ACTION_CLASS_NAME, 'header-brand-disc')}
               style={headerTintStyle(tint)}
             >

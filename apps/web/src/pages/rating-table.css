@@ -30,8 +30,16 @@
   width: 96px;
 }
 
+/* Raised by the sticky gap (tokens.css), so it leaves the viewport the moment the header sticks */
 .rating-table-sentinel {
+  position: relative;
+  top: calc(-1 * var(--sticky-top-gap));
   height: 0;
+}
+
+/* TableVirtuoso pins the header with an inline top: 0. On iOS it sticks a little below the edge (see --sticky-top-gap) */
+.rating-table thead {
+  top: var(--sticky-top-gap) !important;
 }
 
 /* The header is part of the records panel, like the form above it: no fill of its own, and one hairline under it as
@@ -112,6 +120,8 @@
   font-weight: 600;
   line-height: 1;
   vertical-align: super;
+  /* Same as the `num` utility (uno.config.ts) */
+  font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
 }
 
@@ -200,9 +210,12 @@
 
 .rating-chart-copy {
   display: flex;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  /* Sized by the cell, not its text: the difficulty pill below switches to its compact form by this width */
+  container: rating-chart-copy / inline-size;
 }
 
 .rating-chart-title {
@@ -210,7 +223,9 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  overflow-wrap: anywhere;
+  /* Wraps between words; a single word longer than the whole line (rare at these widths) still breaks, then the
+     clamp ellipsis ends the second line. The full title is the link's title attribute */
+  overflow-wrap: break-word;
   font-size: 0.875rem;
   line-height: 1.2;
   font-weight: 600;
@@ -219,6 +234,7 @@
 .rating-chart-meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   column-gap: 5px;
   font-size: 0.75rem;
   line-height: 1.33;
@@ -231,9 +247,46 @@
 .rating-mobile-action {
   display: none;
 }
+/* The bucket badge, and on phones the combo and sync lamps stacked under it */
+.rating-bucket-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
+}
 .rating-value-cell {
   font-size: 1.125rem;
   font-weight: 600;
+}
+/* The rating stays on the row's centre line like every other cell; the next step hangs under it */
+.rating-value-stack {
+  position: relative;
+  display: inline-block;
+}
+/* The next B50 step: quiet, desktop only (the phone rating column has no room) */
+.rating-next-target {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: -2px;
+  display: none;
+  align-items: center;
+  gap: 1px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+.rating-next-target-icon {
+  width: 0.95em;
+  height: 0.95em;
+  color: var(--accent-strong);
+}
+@media (min-width: 1024px) {
+  .rating-next-target {
+    display: inline-flex;
+  }
 }
 .rating-table .rating-row-remove {
   width: 44px;
@@ -254,13 +307,13 @@
     width: 58px;
     text-align: center;
   }
-  .rating-table td.rating-col--includedIn > span {
+  .rating-table td.rating-col--includedIn .rating-bucket-badge {
     width: 2.5rem;
     font-size: 0.75rem;
   }
 
   .rating-table .rating-col--achievementRate {
-    width: 86px;
+    width: 80px;
     text-align: end;
   }
   .rating-table .rating-col--rating {
@@ -291,15 +344,15 @@
     gap: 2px;
   }
   .rating-chart-meta {
-    column-gap: 4px;
+    gap: 2px 4px;
     font-size: 0.75rem;
     line-height: 1.33;
   }
   .rating-mobile-flags {
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 3px;
-    height: 16px;
   }
   .rating-table .rating-mobile-flags > * {
     width: auto;
@@ -357,9 +410,25 @@
   }
 }
 
+/* The level as text after the type badge: only where the two-tone difficulty pill is too wide for the column */
+.rating-chart-meta-narrow-level {
+  display: none;
+}
+
 @media (max-width: 359px) {
   .rating-chart-cover {
     display: none;
+  }
+}
+
+/* Too narrow for the whole two-tone pill (Re:MAS | 14.9 is about 86px): phones from 320 to 375px, and tablets once
+   the extra columns return. The pill keeps its difficulty half and the level moves next to the type badge */
+@container rating-chart-copy (max-width: 5.75rem) {
+  .rating-chart-meta .rating-chart-meta-level {
+    display: none;
+  }
+  .rating-chart-meta .rating-chart-meta-narrow-level {
+    display: inline;
   }
 }
 
@@ -379,6 +448,33 @@
   .rating-table .rating-col--includedIn {
     width: 96px;
   }
+}
+
+/* Tablets: the lamp, achievement, rating and action columns appear at their desktop widths, which left the chart
+   about 64px and broke titles mid-word ("Desperad/o"). The tighter widths of the sidebar layout (1280px) give the
+   chart column the rest */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .rating-table thead th {
+    padding-inline: 6px;
+    font-size: 0.8125rem;
+  }
+  .rating-table-row > td {
+    padding-inline: 6px;
+  }
+  .rating-table .rating-col--includedIn {
+    width: 88px;
+  }
+  .rating-table .rating-col--comboFlag,
+  .rating-table .rating-col--syncFlag {
+    width: 64px;
+  }
+  .rating-table .rating-col--achievementRate {
+    width: 112px;
+  }
+  .rating-table .rating-col--rating {
+    width: 128px;
+  }
+  /* The action column keeps its width: on a touch screen the remove button stays a 44px target */
 }
 
 /* The level and DX score columns need the desktop width; under it the level stays in the chart meta */
@@ -418,7 +514,8 @@
   .rating-chart-meta {
     flex-wrap: nowrap;
   }
-  .rating-chart-meta-level {
+  /* The level half of the difficulty pill: two classes, to win over its utility `flex` */
+  .rating-chart-meta .rating-chart-meta-level {
     display: none;
   }
   .rating-table .rating-row-remove {
@@ -473,12 +570,15 @@
 .rating-tools .MuiButton-root {
   max-width: 100%;
 }
-/* The OneShot label is too long for one line on the narrowest cards: break between phrases (文節), not mid-word */
+/* The primary action spans the card like the rows of buttons under it. Its label is too long for one line on the
+   narrowest cards: break between phrases (文節), not mid-word */
 .rating-oneshot .MuiButton-root {
+  width: 100%;
   word-break: auto-phrase;
 }
-/* Import, maimai NET settings, export and clear: whole buttons wrap, never their labels. Two equal columns by default;
-   a label wider than half the card takes the whole line. When the card has room for all four, they share one row */
+/* Import and maimai NET settings, then export and clear: whole buttons wrap, never their labels. Each takes its label's
+   width and the row shares out the rest, so pairs share a line instead of a short label stretching across one alone.
+   When the card has room for all four, they share one row in equal widths */
 .rating-tools > section {
   container-type: inline-size;
 }
@@ -488,7 +588,7 @@
   gap: 8px;
 }
 .rating-io-actions > .MuiButton-root {
-  flex: 1 1 calc(50% - 4px);
+  flex: 1 1 auto;
   min-width: max-content;
   white-space: nowrap;
 }
@@ -499,6 +599,68 @@
 }
 .rating-statistics {
   min-width: 0;
+}
+/* The empty state: what the page does, then the ways to get scores in. Steps sit side by side once each has room */
+.rating-onboarding {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  container-type: inline-size;
+}
+.rating-onboarding-steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rating-onboarding-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  gap: 8px 12px;
+  padding: 16px;
+}
+.rating-onboarding-step-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  font-size: 20px;
+  color: var(--accent-strong);
+  background-color: color-mix(in oklab, var(--accent) 16%, transparent);
+}
+.rating-onboarding-step-action {
+  grid-column: 2;
+  align-self: end;
+}
+.rating-onboarding-step-action .MuiButton-root {
+  max-width: 100%;
+}
+/* The recommended source: a hairline of the accent, never a solid fill */
+.rating-onboarding-step[data-recommended] {
+  border-color: color-mix(in oklab, var(--accent) 45%, transparent);
+}
+@container (min-width: 48rem) {
+  .rating-onboarding {
+    padding: 24px;
+  }
+  .rating-onboarding-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .rating-onboarding-step {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+  }
+  .rating-onboarding-step-action {
+    grid-column: 1;
+    padding-top: 4px;
+  }
 }
 .rating-table-controls {
   display: flex;
@@ -512,6 +674,10 @@
 }
 .rating-table-controls .MuiFormControlLabel-label {
   font-size: 0.875rem;
+}
+/* The view switches lead; the link to another page sits apart at the end of the row */
+.rating-table-controls > .MuiButton-root {
+  margin-inline-start: auto;
 }
 .rating-add-form {
   /* No rule under the form: the table header's hairline is the one separator between the form and the rows */
@@ -620,40 +786,6 @@
   .rating-overview {
     position: sticky;
     top: 16px;
-  }
-}
-@media (min-width: 1600px) {
-  .rating-calculator.flex-container {
-    max-width: 1536px;
-  }
-  .rating-table thead th {
-    padding-inline: 8px;
-    font-size: 0.875rem;
-  }
-  .rating-table-row > td {
-    padding-inline: 8px;
-  }
-  .rating-table .rating-col--includedIn {
-    width: 96px;
-  }
-  .rating-table .rating-col--internalLevel {
-    width: 64px;
-  }
-  .rating-table .rating-col--actions {
-    width: 64px;
-  }
-  .rating-table .rating-col--comboFlag,
-  .rating-table .rating-col--syncFlag {
-    width: 80px;
-  }
-  .rating-table .rating-col--dxScore {
-    width: 96px;
-  }
-  .rating-table .rating-col--achievementRate {
-    width: 156px;
-  }
-  .rating-table .rating-col--rating {
-    width: 136px;
   }
 }
 @media (max-width: 400px) {

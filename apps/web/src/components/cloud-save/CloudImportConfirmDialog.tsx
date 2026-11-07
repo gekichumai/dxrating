@@ -1,14 +1,15 @@
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material'
 import { type FC, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
-import { useTranslation } from 'react-i18next'
 import { cloudImportConfirm } from './cloudImportConfirm'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
 
 /**
  * Answers `cloudImportConfirm.request()`: a file import into a cloud save merges, or, after a second explicit
  * confirmation, clears the save first (§5.3 rule 5). Renders nothing until a cloud import asks.
  */
 export const CloudImportConfirmDialog: FC = () => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const request = useSyncExternalStore(
     cloudImportConfirm.subscribe,
     cloudImportConfirm.getSnapshot,
@@ -47,29 +48,29 @@ export const CloudImportConfirmDialog: FC = () => {
             tabIndex={-1}
             className="outline-none !text-lg !font-semibold !leading-snug !text-fg-1 !pb-2"
           >
-            {t('rating-calculator:cloud-save.import-confirm.title', { count: request.count })}
+            {m.ratingCalculator_cloudSave_importConfirm_title({ count: request.count }, { locale })}
           </DialogTitle>
           <DialogContent>
             <DialogContentText className="!text-sm !text-fg-2 text-pretty">
-              {t('rating-calculator:cloud-save.import-confirm.description')}
+              {m.ratingCalculator_cloudSave_importConfirm_description({}, { locale })}
             </DialogContentText>
             {request.leftOut > 0 && (
               <Alert severity="info" className="mt-3 text-pretty">
-                {t('rating-calculator:cloud-save.import-confirm.left-out', { count: request.leftOut })}
+                {m.ratingCalculator_cloudSave_importConfirm_leftOut({ count: request.leftOut }, { locale })}
               </Alert>
             )}
           </DialogContent>
           <DialogActions className="flex-wrap !px-4 !pb-4 !gap-1">
             {/* The destructive path away from the primary action */}
             <Button color="error" onClick={() => goTo('confirm-clear')}>
-              {t('rating-calculator:cloud-save.import-confirm.clear-first')}
+              {m.ratingCalculator_cloudSave_importConfirm_clearFirst({}, { locale })}
             </Button>
             <div className="flex-1" />
             <Button onClick={cancel} color="inherit">
-              {t('rating-calculator:cloud-save.import-confirm.cancel')}
+              {m.ratingCalculator_cloudSave_importConfirm_cancel({}, { locale })}
             </Button>
             <Button variant="contained" onClick={() => request.resolve('merge')}>
-              {t('rating-calculator:cloud-save.import-confirm.merge')}
+              {m.ratingCalculator_cloudSave_importConfirm_merge({}, { locale })}
             </Button>
           </DialogActions>
         </>
@@ -81,19 +82,19 @@ export const CloudImportConfirmDialog: FC = () => {
             tabIndex={-1}
             className="outline-none !text-lg !font-semibold !leading-snug !text-fg-1 !pb-2"
           >
-            {t('rating-calculator:cloud-save.import-confirm.clear-title')}
+            {m.ratingCalculator_cloudSave_importConfirm_clearTitle({}, { locale })}
           </DialogTitle>
           <DialogContent>
             <Alert severity="warning" className="text-pretty">
-              {t('rating-calculator:cloud-save.import-confirm.clear-description')}
+              {m.ratingCalculator_cloudSave_importConfirm_clearDescription({}, { locale })}
             </Alert>
           </DialogContent>
           <DialogActions className="!px-4 !pb-4 !gap-1">
             <Button onClick={() => goTo('choose')} color="inherit">
-              {t('rating-calculator:cloud-save.import-confirm.back')}
+              {m.ratingCalculator_cloudSave_importConfirm_back({}, { locale })}
             </Button>
             <Button color="error" variant="contained" onClick={() => request.resolve('replace')}>
-              {t('rating-calculator:cloud-save.import-confirm.clear-confirm')}
+              {m.ratingCalculator_cloudSave_importConfirm_clearConfirm({}, { locale })}
             </Button>
           </DialogActions>
         </>

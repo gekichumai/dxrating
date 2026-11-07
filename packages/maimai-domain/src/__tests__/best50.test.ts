@@ -386,6 +386,32 @@ describe('Best 50', () => {
     expect(result.b35[0]?.entry.source).toBeUndefined()
   })
 
+  it("reports the competing bucket a duplicate play's Diving Fish hint decides, for targets outside the cut", () => {
+    const catalog = buildSongCatalog(makeData(), VersionEnum.CiRCLEPLUS)
+    const result = calculateBest50({
+      catalog,
+      version: VersionEnum.CiRCLEPLUS,
+      region: 'cn',
+      entries: [entry(masterIdentity('current'), 100.5), entry(masterIdentity('current'), 99.5, 'b35')],
+    })
+
+    expect(result.allEntries).toHaveLength(1)
+    expect(result.allEntries[0]?.entry.source).toBeUndefined()
+    expect(result.allEntries[0]?.competingBucket).toBe('b35')
+  })
+
+  it('reports the version bucket as the competing bucket without a hint', () => {
+    const catalog = buildSongCatalog(makeData(), VersionEnum.CiRCLEPLUS)
+    const result = calculateBest50({
+      catalog,
+      version: VersionEnum.CiRCLEPLUS,
+      region: 'cn',
+      entries: [entry(masterIdentity('current'), 100.5)],
+    })
+
+    expect(result.allEntries[0]?.competingBucket).toBe(result.allEntries[0]?.bucket)
+  })
+
   it('preserves authoritative cn Diving Fish bucket hints when deduping equal-rated unhinted entries', () => {
     const catalog = buildSongCatalog(makeData(), VersionEnum.CiRCLEPLUS)
     const result = calculateBest50({

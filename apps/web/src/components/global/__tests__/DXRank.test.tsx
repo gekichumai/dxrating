@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { describe, expect, it, vi } from 'vitest'
 import { DXRank } from '../DXRank'
 
 vi.mock('@/models/context/useAppContext', () => ({
@@ -8,10 +7,6 @@ vi.mock('@/models/context/useAppContext', () => ({
 }))
 
 describe('DXRank', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('describes rank images without duplicating DX in the alt text', () => {
     render(<DXRank rank="SSS" />)
 

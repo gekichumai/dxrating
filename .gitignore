@@ -47,3 +47,7 @@ out/*
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# playwright
+test-results/
+playwright-report/

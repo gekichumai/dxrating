@@ -25,6 +25,12 @@ export interface Theme {
    * reaches at least 5.2:1 against dark glass, and 4.5:1 for the dark text that fills of it carry (--on-accent)
    */
   accentStrongDarkColor: string
+  /**
+   * The hover shade of dark-mode accent fills (MUI `primary.dark`, used by contained buttons): accentStrongDarkColor
+   * mixed 20% toward white. Fills carry dark text, so the shade has to get lighter; MUI's derived one darkens and
+   * drops to about 3.5:1 under that text
+   */
+  accentStrongDarkHoverColor: string
   disabled?: boolean
 }
 
@@ -36,6 +42,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     accentColor: '#178C72',
     accentStrongColor: '#00745b',
     accentStrongDarkColor: '#41a98e',
+    accentStrongDarkHoverColor: '#67baa5',
     canvasColor: '#bdebdc',
   },
   [VersionEnum.FESTiVALPLUS]: {
@@ -47,6 +54,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     accentColor: '#c8a8f9',
     accentStrongColor: '#7556a0',
     accentStrongDarkColor: '#c8a8f9',
+    accentStrongDarkHoverColor: '#d3b9fa',
   },
   [VersionEnum.BUDDiES]: {
     background: {
@@ -57,6 +65,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     accentColor: '#FAAE29',
     accentStrongColor: '#9a5400',
     accentStrongDarkColor: '#faae29',
+    accentStrongDarkHoverColor: '#fbbe54',
   },
   [VersionEnum.BUDDiESPLUS]: {
     background: {
@@ -67,6 +76,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     accentColor: '#FAAE29',
     accentStrongColor: '#9a5400',
     accentStrongDarkColor: '#faae29',
+    accentStrongDarkHoverColor: '#fbbe54',
   },
   [VersionEnum.PRiSM]: {
     background: {
@@ -78,6 +88,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     accentColor: '#6368C7',
     accentStrongColor: '#585cba',
     accentStrongDarkColor: '#8890f3',
+    accentStrongDarkHoverColor: '#a0a6f5',
   },
   [VersionEnum.PRiSMPLUS]: {
     background: {
@@ -89,6 +100,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     accentColor: '#6368C7',
     accentStrongColor: '#585cba',
     accentStrongDarkColor: '#8890f3',
+    accentStrongDarkHoverColor: '#a0a6f5',
   },
   [VersionEnum.CiRCLE]: {
     background: {
@@ -99,6 +111,7 @@ export const VERSION_THEME: Record<string, Theme> = {
     accentColor: '#EF67A4',
     accentStrongColor: '#b53172',
     accentStrongDarkColor: '#f169a6',
+    accentStrongDarkHoverColor: '#f487b8',
   },
   [VersionEnum.CiRCLEPLUS]: {
     background: {
@@ -109,5 +122,6 @@ export const VERSION_THEME: Record<string, Theme> = {
     accentColor: '#EF67A4',
     accentStrongColor: '#b53172',
     accentStrongDarkColor: '#f169a6',
+    accentStrongDarkHoverColor: '#f487b8',
   },
 }

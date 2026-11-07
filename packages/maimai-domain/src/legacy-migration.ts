@@ -44,7 +44,8 @@ export function migrateLegacySheetRecords<T extends SheetReferencingRecord>(
   let migrated = 0
   let unresolved = 0
   const result = records.map((record) => {
-    if (isPublicSheetId(record.sheetId)) return record
+    // Saved entries are not validated on load: one without a string sheetId is kept as it is, like other malformed ones
+    if (typeof record?.sheetId !== 'string' || isPublicSheetId(record.sheetId)) return record
     const identity = parseLegacySheetId(record.sheetId)
     if (!identity) return record
     const sheet = catalog.resolveReference({ kind: 'legacy', identity, legacySongIds })

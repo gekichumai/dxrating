@@ -1,6 +1,5 @@
 import clsx from 'clsx'
 import { type FC, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import MdiCheckCircle from '~icons/mdi/check-circle'
 import MdiViewGrid from '~icons/mdi/view-grid'
 import MdiViewList from '~icons/mdi/view-list'
@@ -24,7 +23,10 @@ import { CompletionToolbar } from '@/components/completion/CompletionToolbar'
 import { useCompletionOverlay } from '@/components/completion/useCompletionOverlay'
 import { getSheetTitleLabel } from '@/components/song/sheetDisplay'
 import { DIFFICULTIES } from '@/models/difficulties'
-import { DEFAULT_LOCALE, type SupportedLocale, toSupportedLocale } from '@/setup/locale'
+import type { SupportedLocale } from '@/setup/locale'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
+import { InternalLink } from '@/components/global/InternalLink'
 
 export const constantTableRange = (table: ConstantTable) => ({
   max: table.groups[0]?.constant ?? '-',
@@ -32,11 +34,11 @@ export const constantTableRange = (table: ConstantTable) => ({
 })
 
 const LevelNav: FC<{ current?: string }> = ({ current }) => {
-  const { t } = useTranslation(['constants'])
+  const locale = useLocale()
 
   return (
     <SegmentedNav
-      label={t('constants:other-levels')}
+      label={m.constants_otherLevels({}, { locale })}
       items={CONSTANT_TABLE_LEVELS.map((level) => ({
         key: level,
         href: constantTablePath(level),
@@ -59,8 +61,7 @@ const ConstantGroupTable: FC<{
   overlay: ReturnType<typeof useCompletionOverlay>
   locale: SupportedLocale
 }> = ({ constant, total, charts, overlay, locale }) => {
-  const { t } = useTranslation(['constants', 'completion'])
-  const { ref, overflowing, scrolled, fade } = useHorizontalOverflow<HTMLDivElement>()
+  const { ref, overflowing, scrolled } = useHorizontalOverflow<HTMLDivElement>()
   const number = useMemo(() => new Intl.NumberFormat(locale), [locale])
   // Only when the table actually scrolls: the song column stays put, on an opaque tint of the glass
   const sticky = overflowing
@@ -76,21 +77,27 @@ const ConstantGroupTable: FC<{
     >
       <div className="flex items-baseline justify-between gap-2 px-4 py-2 border-b border-b-solid border-[var(--glass-border)]">
         <h2 id={headingId} className="m-0 text-lg font-semibold text-fg-1">
-          {t('constants:group', { constant })}
+          {m.constants_group({ constant }, { locale })}
         </h2>
-        <span className="text-xs text-fg-2 num">{t('constants:group-count', { count: total })}</span>
+        <span className="text-xs text-fg-2 num">{m.constants_groupCount({ count: total }, { locale })}</span>
       </div>
-      <div ref={ref} className={`overflow-x-auto [overscroll-behavior-x:contain] ${fade}`}>
+      <div ref={ref} className="scroll-fade-x scroll-fade-x-end-only overflow-x-auto [overscroll-behavior-x:contain]">
         <table className="w-full text-sm border-collapse">
           <thead className="text-xs text-fg-2 text-left">
             <tr>
-              <th className={`px-4 py-1 font-normal ${sticky}`}>{t('constants:col.song')}</th>
-              <th className="px-2 py-1 font-normal hidden sm:table-cell">{t('constants:col.chart')}</th>
-              <th className="px-2 py-1 font-normal hidden sm:table-cell">{t('constants:col.version')}</th>
-              <th className="px-2 py-1 font-normal text-right hidden sm:table-cell">{t('constants:col.notes')}</th>
-              <th className="pl-2 pr-4 sm:pr-2 py-1 font-normal text-right">{t('constants:col.sssp')}</th>
-              <th className="px-4 py-1 font-normal text-right hidden sm:table-cell">{t('constants:col.sss')}</th>
-              {overlay.active && <th className="pl-2 pr-4 py-1 font-normal text-right">{t('completion:col-mine')}</th>}
+              <th className={`px-4 py-1 font-normal ${sticky}`}>{m.constants_col_song({}, { locale })}</th>
+              <th className="px-2 py-1 font-normal hidden sm:table-cell">{m.constants_col_chart({}, { locale })}</th>
+              <th className="px-2 py-1 font-normal hidden sm:table-cell">{m.constants_col_version({}, { locale })}</th>
+              <th className="px-2 py-1 font-normal text-right hidden sm:table-cell">
+                {m.constants_col_notes({}, { locale })}
+              </th>
+              <th className="pl-2 pr-4 sm:pr-2 py-1 font-normal text-right">{m.constants_col_sssp({}, { locale })}</th>
+              <th className="px-4 py-1 font-normal text-right hidden sm:table-cell">
+                {m.constants_col_sss({}, { locale })}
+              </th>
+              {overlay.active && (
+                <th className="pl-2 pr-4 py-1 font-normal text-right">{m.completion_colMine({}, { locale })}</th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-black/5">
@@ -103,13 +110,13 @@ const ConstantGroupTable: FC<{
                   className={done ? 'bg-[color-mix(in_oklab,var(--status-positive)_7%,transparent)]' : undefined}
                 >
                   <td className={`px-4 py-1.5 ${sticky}`}>
-                    <a
+                    <InternalLink
                       href={chart.href}
                       lang="ja"
                       className="text-fg-1 font-semibold no-underline hover:underline underline-offset-2 [overflow-wrap:anywhere]"
                     >
                       {chart.title}
-                    </a>
+                    </InternalLink>
                     <div lang="ja" className="text-xs text-fg-2 [overflow-wrap:anywhere]">
                       {chart.artist}
                     </div>
@@ -135,7 +142,7 @@ const ConstantGroupTable: FC<{
                         {done && (
                           <>
                             <MdiCheckCircle className="size-4 shrink-0 text-emerald-700" aria-hidden />
-                            <span className="sr-only">{t('completion:status-done-sr')}</span>
+                            <span className="sr-only">{m.completion_statusDoneSr({}, { locale })}</span>
                           </>
                         )}
                         <CompletionBadges record={overlay.records.get(chart.sheetId)?.best} />
@@ -184,7 +191,6 @@ const ConstantTile: FC<{
   overlay: ReturnType<typeof useCompletionOverlay>
   locale: SupportedLocale
 }> = ({ chart, overlay, locale }) => {
-  const { t } = useTranslation(['completion'])
   const done = overlay.active && overlay.statusOf(chart.sheetId) === 'done'
   const difficulty = DIFFICULTIES[chart.difficulty]
   const label = `${chart.title} · ${getSheetTitleLabel(chart, locale)} ${chart.internalLevelValue.toFixed(1)}`
@@ -192,7 +198,11 @@ const ConstantTile: FC<{
 
   return (
     <li className="min-w-0">
-      <a href={chart.href} title={label} className="group flex min-w-0 flex-col gap-1 no-underline text-fg-1">
+      <InternalLink
+        href={chart.href}
+        title={label}
+        className="group flex min-w-0 flex-col gap-1 no-underline text-fg-1"
+      >
         <span
           className={clsx(
             'relative block aspect-square overflow-hidden rounded-[var(--radius-md)] outline outline-1 -outline-offset-1 outline-black/10 bg-black/6',
@@ -235,14 +245,14 @@ const ConstantTile: FC<{
         </span>
         <span className="sr-only">
           {getSheetTitleLabel(chart, locale)} {chart.internalLevelValue.toFixed(1)}
-          {done && ` ${t('completion:status-done-sr')}`}
+          {done && ` ${m.completion_statusDoneSr({}, { locale })}`}
         </span>
         {overlay.active && (
           <span className="-mt-0.5 flex min-h-5 [&>span]:justify-start [&>span]:gap-0.5 [&_span]:text-[0.625rem]">
             <CompletionBadges record={record} />
           </span>
         )}
-      </a>
+      </InternalLink>
     </li>
   )
 }
@@ -254,7 +264,6 @@ const ConstantGroupGrid: FC<{
   overlay: ReturnType<typeof useCompletionOverlay>
   locale: SupportedLocale
 }> = ({ constant, total, charts, overlay, locale }) => {
-  const { t } = useTranslation(['constants'])
   const headingId = `constant-${constant}`
 
   return (
@@ -263,11 +272,11 @@ const ConstantGroupGrid: FC<{
       className="flex w-full flex-col gap-2 scroll-mt-2"
       id={constantAnchor(constant)}
     >
-      <div className="glass-thin sticky top-1 z-2 flex items-baseline justify-between gap-2 px-3 py-1.5">
+      <div className="glass-thin sticky top-1 z-2 mx-[var(--sticky-inline-inset)] flex items-baseline justify-between gap-2 px-3 py-1.5">
         <h2 id={headingId} className="m-0 text-base font-semibold text-fg-1 num">
-          {t('constants:group', { constant })}
+          {m.constants_group({ constant }, { locale })}
         </h2>
-        <span className="text-xs text-fg-2 num">{t('constants:group-count', { count: total })}</span>
+        <span className="text-xs text-fg-2 num">{m.constants_groupCount({ count: total }, { locale })}</span>
       </div>
       <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(4.75rem,1fr))] gap-x-2 gap-y-2.5 p-0 sm:grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(6rem,1fr))]">
         {charts.map((chart) => (
@@ -282,14 +291,14 @@ const ViewToggle: FC<{ view: ConstantTableView; onChange: (view: ConstantTableVi
   view,
   onChange,
 }) => {
-  const { t } = useTranslation(['constants'])
+  const locale = useLocale()
   const options = [
-    { value: 'grid' as const, icon: MdiViewGrid, label: t('constants:view.grid') },
-    { value: 'table' as const, icon: MdiViewList, label: t('constants:view.table') },
+    { value: 'grid' as const, icon: MdiViewGrid, label: m.constants_view_grid({}, { locale }) },
+    { value: 'table' as const, icon: MdiViewList, label: m.constants_view_table({}, { locale }) },
   ]
   return (
     <fieldset className={`${segmentedTrack} m-0 min-w-0 flex-nowrap`}>
-      <legend className="sr-only">{t('constants:view.label')}</legend>
+      <legend className="sr-only">{m.constants_view_label({}, { locale })}</legend>
       {options.map(({ value, icon: Icon, label }) => (
         <button
           key={value}
@@ -308,9 +317,9 @@ const ViewToggle: FC<{ view: ConstantTableView; onChange: (view: ConstantTableVi
 
 /** Jump links to each internal level, so a long level (13, 13+) is quick to move around */
 const ConstantJumpNav: FC<{ constants: string[] }> = ({ constants }) => {
-  const { t } = useTranslation(['constants'])
+  const locale = useLocale()
   return (
-    <nav aria-label={t('constants:jump-label')} className={`${segmentedTrack} min-w-0`}>
+    <nav aria-label={m.constants_jumpLabel({}, { locale })} className={`${segmentedTrack} min-w-0`}>
       {constants.map((constant) => (
         <a key={constant} href={`#${constantAnchor(constant)}`} className={clsx(segmentedItem(false), 'num !px-2')}>
           {constant}
@@ -321,8 +330,7 @@ const ConstantJumpNav: FC<{ constants: string[] }> = ({ constants }) => {
 }
 
 export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
-  const { i18n, t } = useTranslation(['constants', 'completion'])
-  const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
+  const locale = useLocale()
   const range = constantTableRange(table)
   // Client-only: the server HTML (edge-cached) never contains the visitor's records
   const overlay = useCompletionOverlay(table)
@@ -333,11 +341,16 @@ export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
       <div className="w-full flex flex-col gap-4">
         <header className="w-full flex flex-col gap-2">
           <Breadcrumb
-            items={[{ href: '/constants', label: t('constants:breadcrumb') }, { label: `Lv.${table.level}` }]}
+            items={[
+              { href: '/constants', label: m.constants_breadcrumb({}, { locale }) },
+              { label: `Lv.${table.level}` },
+            ]}
           />
-          <h1 className="page-title m-0 [word-break:auto-phrase]">{t('constants:title', { level: table.level })}</h1>
+          <h1 className="page-title m-0 [word-break:auto-phrase]">
+            {m.constants_title({ level: table.level }, { locale })}
+          </h1>
           <p className="page-description m-0">
-            {t('constants:intro', { level: table.level, count: table.chartCount, ...range })}
+            {m.constants_intro({ level: table.level, count: table.chartCount, ...range }, { locale })}
           </p>
           <LevelNav current={table.level} />
         </header>
@@ -377,30 +390,32 @@ export type ConstantTableSummary = {
 }
 
 export const ConstantTableIndexPage: FC<{ tables: ConstantTableSummary[] }> = ({ tables }) => {
-  const { t } = useTranslation(['constants'])
+  const locale = useLocale()
 
   return (
     <div className="flex-container w-full max-w-5xl px-4 pb-global">
       <div className="w-full flex flex-col gap-4">
         <header className="flex flex-col gap-2">
-          <Breadcrumb items={[{ label: t('constants:breadcrumb') }]} />
-          <h1 className="page-title m-0 [word-break:auto-phrase]">{t('constants:index.title')}</h1>
-          <p className="page-description m-0">{t('constants:index.intro')}</p>
+          <Breadcrumb items={[{ label: m.constants_breadcrumb({}, { locale }) }]} />
+          <h1 className="page-title m-0 [word-break:auto-phrase]">{m.constants_index_title({}, { locale })}</h1>
+          <p className="page-description m-0">{m.constants_index_intro({}, { locale })}</p>
         </header>
         <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 list-none p-0 m-0">
           {tables.map((table) => (
             <li key={table.level}>
-              <a
+              <InternalLink
                 href={constantTablePath(table.level)}
                 className="glass block h-full p-4 no-underline text-fg-1 transition-shadow duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:shadow-[var(--shadow-1-hover)]"
               >
-                <div className="text-xl font-semibold">{t('constants:index.level', { level: table.level })}</div>
+                <div className="text-xl font-semibold">
+                  {m.constants_index_level({ level: table.level }, { locale })}
+                </div>
                 <div className="text-xs text-fg-2 num">
                   {table.min === table.max
-                    ? t('constants:index.level-count-single', { count: table.count, value: table.min })
-                    : t('constants:index.level-count', table)}
+                    ? m.constants_index_levelCountSingle({ count: table.count, value: table.min }, { locale })
+                    : m.constants_index_levelCount(table, { locale })}
                 </div>
-              </a>
+              </InternalLink>
             </li>
           ))}
         </ul>

@@ -1,0 +1,14 @@
+{
+  "name": "@gekichumai/search-eval",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "generate": "node generate.ts"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "kuromoji": "^0.1.2"
+  }
+}

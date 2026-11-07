@@ -3,8 +3,7 @@ import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { VersionEnum } from '@gekichumai/dxdata'
 import { getSongCatalog } from '@gekichumai/maimai-domain'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import i18n from 'i18next'
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CloudImportConfirmDialog } from '@/components/cloud-save/CloudImportConfirmDialog'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { autoNetImportKey, ServerImportFailedError } from '@/models/scores/cloudImports'
@@ -16,11 +15,11 @@ import type {
   WebScoreRepository,
 } from '@/models/scores/ScoreRepository'
 import { importReviewController } from '@/models/scores/importReview'
-import { initI18n } from '@/setup/init-i18n'
 import { migrateLegacyImportEntries } from '@/catalog/savedDataMigration'
 import { importFallbackEntries, importFileEntries, importPath } from '../cloudImport'
 import { importFromNETRecords } from '../importFromNETRecords'
 import { netImportProgress } from '../netImportProgressStore'
+import { m } from '@/paraglide/messages'
 
 vi.mock('@microsoft/fetch-event-source', () => ({ fetchEventSource: vi.fn() }))
 
@@ -74,11 +73,6 @@ function fakeCloud(serverImportsEnabled = true, failure?: Error) {
   } as unknown as WebScoreRepository & { applyImport: ReturnType<typeof vi.fn> }
   return { repository, serverImports }
 }
-
-beforeAll(async () => {
-  initI18n()
-  await i18n.changeLanguage('en')
-})
 
 afterEach(() => {
   localStorage.clear()

@@ -1,8 +1,7 @@
 import type { ServerEnum } from '@gekichumai/dxdata'
 import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { render, screen } from '@testing-library/react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { describe, expect, it, vi } from 'vitest'
 import type { FlattenedSheet } from '@/songs'
 import { SheetListItemContent } from '../SheetListItem'
 import { SheetRowLayoutContext } from '../sheetRowLayout'
@@ -39,10 +38,6 @@ const sheet: FlattenedSheet = {
 }
 
 describe('SheetListItemContent in a table row', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('keeps one heading and adds the artist column and the full title on hover', () => {
     render(
       <SheetRowLayoutContext.Provider value="table">

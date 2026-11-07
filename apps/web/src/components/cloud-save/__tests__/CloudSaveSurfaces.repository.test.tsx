@@ -1,14 +1,13 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { IDBFactory } from 'fake-indexeddb'
-import i18n from 'i18next'
 import type { ReactNode } from 'react'
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { type CloudSaveUi, CloudSaveUiContext } from '@/models/scores/CloudSaveUiContext'
 import { CloudScoreRepository } from '@/models/scores/CloudScoreRepository'
 import { FakeCloudSaveServer, verifiedProvenance } from '@/models/scores/__tests__/fakeCloudSaveServer'
-import { initI18n } from '@/setup/init-i18n'
 import { SyncIssuesList } from '../SyncIssuesList'
 import { SyncStatusIndicator } from '../SyncStatusIndicator'
+import { m } from '@/paraglide/messages'
 
 /**
  * The sync surfaces over the real `CloudScoreRepository` (an in-memory server and IndexedDB): its issues, its
@@ -48,11 +47,6 @@ function renderSurfaces() {
 }
 
 const statusButton = () => screen.getByRole('button', { name: /^Cloud save/ })
-
-beforeAll(async () => {
-  initI18n()
-  await i18n.changeLanguage('en')
-})
 
 beforeEach(async () => {
   server = new FakeCloudSaveServer()

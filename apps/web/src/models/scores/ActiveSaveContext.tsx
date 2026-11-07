@@ -1,7 +1,8 @@
 import type { ImportJobDTO, SaveDTO, UserFeatures } from '@gekichumai/api-contract'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 import { authClient } from '../../lib/auth-client'
 import type { CloudScoreRepository, CloudScoreRepositoryOptions, CloudSyncStopReason } from './CloudScoreRepository'
 import { clearUserFeaturesCache, type FetchUserFeatures, getUserFeatures } from './userFeatures'
@@ -203,14 +204,14 @@ declare global {
 export function useActiveSaveDecision(): ActiveSave {
   const dependencies = useContext(ActiveSaveDependenciesContext)
   const userId = dependencies.useSessionUserId()
-  const { t } = useTranslation()
+  const locale = useLocale()
   const [cloudRepository, setCloudRepository] = useState<CloudScoreRepository | null>(null)
   const [selectionVersion, setSelectionVersion] = useState(0)
   const cloudRef = useRef<CloudScoreRepository | null>(null)
   cloudRef.current = cloudRepository
   // Read when a toast shows, not a reason to decide again
-  const tRef = useRef(t)
-  tRef.current = t
+  const localeRef = useRef(locale)
+  localeRef.current = locale
   // The decision this render shows is final for the session and selection (see `ActiveSave.decided`)
   const decisionKey = userId === undefined ? undefined : userId === null ? 'anonymous' : `${userId}:${selectionVersion}`
   const [decidedKey, setDecidedKey] = useState<string | null>(null)
@@ -246,7 +247,10 @@ export function useActiveSaveDecision(): ActiveSave {
         setDecidedKey(key)
         return
       }
-      toast(tRef.current('rating-calculator:cloud-save.unreachable'), { id: UNREACHABLE_TOAST_ID, duration: 8_000 })
+      toast(m.ratingCalculator_cloudSave_unreachable({}, { locale: localeRef.current }), {
+        id: UNREACHABLE_TOAST_ID,
+        duration: 8_000,
+      })
     }, dependencies.decisionTimeoutMs ?? DECISION_TIMEOUT_MS)
 
     void (async () => {
@@ -262,7 +266,7 @@ export function useActiveSaveDecision(): ActiveSave {
       if (cancelled) return
       if (!saves.some((save) => save.id === saveId)) {
         writeActiveSaveId(storage, userId, null)
-        toast(tRef.current('rating-calculator:cloud-save.save-missing'), { id: 'cloud-save-missing' })
+        toast(m.ratingCalculator_cloudSave_saveMissing({}, { locale: localeRef.current }), { id: 'cloud-save-missing' })
         return fallBackToLocal()
       }
 
@@ -278,7 +282,9 @@ export function useActiveSaveDecision(): ActiveSave {
           writeActiveSaveId(storage, userId, null)
           // The features may have been turned off: ask again on the next decision
           clearUserFeaturesCache()
-          toast(tRef.current('rating-calculator:cloud-save.save-missing'), { id: 'cloud-save-missing' })
+          toast(m.ratingCalculator_cloudSave_saveMissing({}, { locale: localeRef.current }), {
+            id: 'cloud-save-missing',
+          })
         }
         setCloudRepository((current) => (current === opened ? null : current))
       }

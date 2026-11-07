@@ -1,6 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
 import { SheetAltNames } from '../SheetAltNames'
 
 // happy-dom has no layout: the list is 300px tall, and 112px (7rem) while its collapsed max-height applies
@@ -30,7 +29,6 @@ describe('SheetAltNames disclosure', () => {
   const spies: { mockRestore: () => void }[] = []
 
   beforeAll(() => {
-    initI18n()
     globalThis.ResizeObserver = StubResizeObserver as unknown as typeof ResizeObserver
     spies.push(vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(() => CONTENT_HEIGHT))
     spies.push(

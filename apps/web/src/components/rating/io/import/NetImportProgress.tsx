@@ -1,14 +1,39 @@
 import { Button, ClickAwayListener } from '@mui/material'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useId, useRef, useState, useSyncExternalStore } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiCheck from '~icons/mdi/check'
 import IconMdiExclamation from '~icons/mdi/exclamation'
 import IconMdiCogOutline from '~icons/mdi/cog-outline'
+import type { PlainMessage } from '@/i18n/message'
+import type { FetchNetRecordProgressState } from './importFromNETRecords'
 import { useNetImportSettings } from './NetImportSettingsContext'
 import { netImportProgress, type NetImportProgress as Progress } from './netImportProgressStore'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
-const prefix = 'rating-calculator:io.import.net-records.'
+const STATUS_LABELS = {
+  running: m.ratingCalculator_io_import_netRecords_floating_running,
+  success: m.ratingCalculator_io_import_netRecords_floating_success,
+  error: m.ratingCalculator_io_import_netRecords_floating_error,
+} satisfies Record<Progress['status'], PlainMessage>
+
+const STAGE_LABELS = {
+  ready: m.ratingCalculator_io_import_netRecords_floating_stage_ready,
+  'auth:in-progress': m.ratingCalculator_io_import_netRecords_floating_stage_authInProgress,
+  'auth:succeeded': m.ratingCalculator_io_import_netRecords_floating_stage_authSucceeded,
+  'fetch:recent:in-progress': m.ratingCalculator_io_import_netRecords_floating_stage_fetchRecentInProgress,
+  'fetch:recent:completed': m.ratingCalculator_io_import_netRecords_floating_stage_fetchRecentCompleted,
+  'fetch:music:in-progress:basic': m.ratingCalculator_io_import_netRecords_floating_stage_fetchMusicInProgressBasic,
+  'fetch:music:in-progress:advanced':
+    m.ratingCalculator_io_import_netRecords_floating_stage_fetchMusicInProgressAdvanced,
+  'fetch:music:in-progress:expert': m.ratingCalculator_io_import_netRecords_floating_stage_fetchMusicInProgressExpert,
+  'fetch:music:in-progress:master': m.ratingCalculator_io_import_netRecords_floating_stage_fetchMusicInProgressMaster,
+  'fetch:music:in-progress:remaster':
+    m.ratingCalculator_io_import_netRecords_floating_stage_fetchMusicInProgressRemaster,
+  'fetch:music:in-progress:utage': m.ratingCalculator_io_import_netRecords_floating_stage_fetchMusicInProgressUtage,
+  'fetch:music:completed': m.ratingCalculator_io_import_netRecords_floating_stage_fetchMusicCompleted,
+  concluded: m.ratingCalculator_io_import_netRecords_floating_stage_concluded,
+} satisfies Record<FetchNetRecordProgressState, PlainMessage>
 
 export function NetImportProgress() {
   const progress = useSyncExternalStore(
@@ -20,7 +45,7 @@ export function NetImportProgress() {
 }
 
 function FloatingImportProgress({ progress }: { progress: Progress }) {
-  const { t } = useTranslation()
+  const locale = useLocale()
   const reducedMotion = useReducedMotion()
   const { openSettings } = useNetImportSettings()
   const [expanded, setExpanded] = useState(false)
@@ -29,7 +54,7 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
   const titleId = useId()
   const percent = Math.round(Math.min(1, Math.max(0, progress.progress)) * 100)
   const running = progress.status === 'running'
-  const statusText = t(`${prefix}floating.${progress.status}`)
+  const statusText = STATUS_LABELS[progress.status]({}, { locale })
   const transition = reducedMotion ? { duration: 0 } : { type: 'spring' as const, duration: 0.35, bounce: 0 }
   const collapse = () => {
     setExpanded(false)
@@ -92,7 +117,7 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
               transition={transition}
               type="button"
               onClick={() => setExpanded((value) => !value)}
-              aria-label={`${t(`${prefix}floating.${expanded ? 'collapse' : 'expand'}`)} — ${statusText}${running ? ` ${percent}%` : ''}`}
+              aria-label={`${expanded ? m.ratingCalculator_io_import_netRecords_floating_collapse({}, { locale }) : m.ratingCalculator_io_import_netRecords_floating_expand({}, { locale })} — ${statusText}${running ? ` ${percent}%` : ''}`}
               aria-expanded={expanded}
               aria-controls={expanded ? panelId : undefined}
               className={`relative flex shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent text-accent-strong hover:bg-accent-subtle focus-visible:outline-offset-[-4px] rounded-full ${expanded ? 'size-12' : 'size-14'}`}
@@ -153,10 +178,8 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
                 {running ? (
                   <div className="pb-4">
                     <div className="flex items-center justify-between gap-3 pb-3">
-                      <output className="text-sm text-secondary">
-                        {t(`${prefix}floating.stage.${progress.stage.replaceAll(':', '-')}`)}
-                      </output>
-                      <span className="shrink-0 text-xl leading-6 font-bold tabular-nums">
+                      <output className="text-sm text-secondary">{STAGE_LABELS[progress.stage]({}, { locale })}</output>
+                      <span className="shrink-0 text-xl leading-6 font-bold display-num">
                         {percent}
                         <span className="text-sm text-secondary">%</span>
                       </span>
@@ -193,11 +216,11 @@ function FloatingImportProgress({ progress }: { progress: Progress }) {
                     openSettings(triggerRef.current)
                   }}
                 >
-                  {t(`${prefix}settings.title`)}
+                  {m.ratingCalculator_io_import_netRecords_settings_title({}, { locale })}
                 </Button>
                 {!running && (
                   <Button fullWidth sx={{ mt: 1, minHeight: 44 }} onClick={() => netImportProgress.update(null)}>
-                    {t(`${prefix}dialog.actions.close`)}
+                    {m.ratingCalculator_io_import_netRecords_dialog_actions_close({}, { locale })}
                   </Button>
                 )}
               </motion.section>

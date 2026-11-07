@@ -5,7 +5,6 @@ import { identifyAnalyticsUser, registerAnalyticsContext, resetAnalyticsUser } f
 import type { DXVersion, Region } from '@/models/context/AppContext'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { type FC, memo, useEffect, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useEffectOnce } from 'react-use'
 import { useScoreRepository } from '../../models/scores/useScoreRepository'
 import { useActiveSave } from '../../models/scores/ActiveSaveContext'
@@ -18,6 +17,8 @@ import {
   NET_IMPORT_LAST_SUCCESS_KEY,
   importFromNETRecords,
 } from '../rating/io/import/importFromNETRecords'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const SideEffectorThemeMeta: FC = () => {
   const versionTheme = useVersionTheme()
@@ -31,11 +32,11 @@ const SideEffectorThemeMeta: FC = () => {
 }
 
 const SideEffectorLocaleMeta: FC = () => {
-  const { i18n } = useTranslation()
+  const locale = useLocale()
   useEffect(() => {
-    console.info(`[i18n] Language detected as ${i18n.language}`)
-    document.documentElement.lang = i18n.language
-  }, [i18n.language])
+    console.info(`[i18n] Language detected as ${locale}`)
+    document.documentElement.lang = locale
+  }, [locale])
 
   return null
 }
@@ -44,7 +45,7 @@ const SideEffectorLocaleMeta: FC = () => {
 export const SideEffectorAutoImportRating: FC = () => {
   const repository = useScoreRepository()
   const activeSave = useActiveSave()
-  const { t } = useTranslation()
+  const locale = useLocale()
   // An import resolves records against the catalog: run it once the complete catalog has loaded
   const catalog = useCompleteSongCatalog()
   // Into the save the visitor works on: wait until the choice of save is made. Once per catalog, as before
@@ -78,9 +79,9 @@ export const SideEffectorAutoImportRating: FC = () => {
         const minutes = Math.round(elapsed / 60_000)
         toast(
           <div className="flex flex-col">
-            <span className="font-bold">{t('rating-calculator:io.import.net-records.cached.title')}</span>
+            <span className="font-bold">{m.ratingCalculator_io_import_netRecords_cached_title({})}</span>
             <span className="text-sm text-zinc-500">
-              {t('rating-calculator:io.import.net-records.cached.description', { minutes: minutes || '<1' })}
+              {m.ratingCalculator_io_import_netRecords_cached_description({ minutes: minutes || '<1' })}
             </span>
           </div>,
           {
@@ -101,7 +102,7 @@ export const SideEffectorAutoImportRating: FC = () => {
         ? { trigger: 'auto' as const, idempotencyKey: autoNetImportKey(activeSave.saveId) }
         : undefined
     importFromNETRecords(catalog, repository, mode, undefined, undefined, cloud)
-  }, [catalog, activeSave.decided, activeSave.saveId, repository, t])
+  }, [catalog, activeSave.decided, activeSave.saveId, repository, locale])
 
   return null
 }
@@ -137,14 +138,14 @@ const SideEffectorAnalyticsContext: FC<{
 const SideEffectorAnalytics: FC = () => {
   const { data, isPending } = authClient.useSession()
   const { version, region } = useAppContext()
-  const { i18n } = useTranslation()
+  const locale = useLocale()
   const { isLoading: entriesLoading, statistics, allEntries } = useRatingEntries()
 
   const properties = {
     userId: data?.user.id,
     version,
     region,
-    language: i18n.language,
+    language: locale,
     rating: statistics.b50Sum,
     entryCount: allEntries.length,
   }

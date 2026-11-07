@@ -10,10 +10,10 @@ import {
   type PropsWithChildren,
   type ReactElement,
   useCallback,
+  useDeferredValue,
   useMemo,
   useState,
 } from 'react'
-import { useTranslation } from 'react-i18next'
 import { Virtuoso } from 'react-virtuoso'
 import IconMdiReplace from '~icons/mdi/find-replace'
 import IconMdiPlus from '~icons/mdi/plus'
@@ -21,6 +21,8 @@ import { type FlattenedSheet, formatSheetToString, useSheets, useSheetsSearchEng
 import { calculateRating } from '../../utils/rating'
 import { SheetListItemContent } from '../sheet/SheetListItem'
 import { useScoreEntries } from '@/models/scores/useScoreRepository'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export interface PlayEntryProviderConfig {
   divingFish?: {
@@ -64,7 +66,7 @@ export const RatingCalculatorAddEntryForm: FC<{
   const [selectedSheet, setSelectedSheet] = useState<FlattenedSheet | null>(null)
   const [achievementRate, setAchievementRate] = useState<string>('')
   const [achievementRateError, setAchievementRateError] = useState<string | null>(null)
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const resetForm = useCallback(() => {
     setSelectedSheet(null)
     setAchievementRate('')
@@ -96,22 +98,25 @@ export const RatingCalculatorAddEntryForm: FC<{
     return null
   }, [selectedSheet, achievementRate, found])
 
+  // An empty field is not an error while typing or on blur (the Add button is disabled until it has a value): Add
+  // empties it, and a red "required" plus the helper line pushing the table down then followed the next blur. It is
+  // reported only when the form is submitted without one.
   const validate = useCallback(
-    (value: string) => {
+    (value: string, { submitting = false }: { submitting?: boolean } = {}) => {
       if (!value) {
-        setAchievementRateError(t('rating-calculator:add-entry.validation.required'))
+        setAchievementRateError(submitting ? m.ratingCalculator_addEntry_validation_required({}, { locale }) : null)
         return
       }
       const parsed = Number.parseFloat(value)
       if (Number.isNaN(parsed)) {
-        setAchievementRateError(t('rating-calculator:add-entry.validation.invalid-number'))
+        setAchievementRateError(m.ratingCalculator_addEntry_validation_invalidNumber({}, { locale }))
       } else if (parsed < 0 || parsed > 101) {
-        setAchievementRateError(t('rating-calculator:add-entry.validation.range'))
+        setAchievementRateError(m.ratingCalculator_addEntry_validation_range({}, { locale }))
       } else {
         setAchievementRateError(null)
       }
     },
-    [t],
+    [locale],
   )
 
   const canSubmit =
@@ -128,7 +133,10 @@ export const RatingCalculatorAddEntryForm: FC<{
       className="rating-add-form"
       onSubmit={(event) => {
         event.preventDefault()
-        if (!canSubmit || !selectedSheet) return
+        if (!canSubmit || !selectedSheet) {
+          if (selectedSheet) validate(achievementRate, { submitting: true })
+          return
+        }
         onSubmit({ sheetId: selectedSheet.id, achievementRate: Number(achievementRate) })
         resetForm()
       }}
@@ -139,7 +147,7 @@ export const RatingCalculatorAddEntryForm: FC<{
         <TextField
           className="rating-add-achievement"
           size="small"
-          label={t('rating-calculator:add-entry.achievement-rate')}
+          label={m.ratingCalculator_addEntry_achievementRate({}, { locale })}
           variant="outlined"
           value={achievementRate}
           onChange={(e) => {
@@ -179,8 +187,8 @@ export const RatingCalculatorAddEntryForm: FC<{
           data-attr="manual-rating-add-submit"
         >
           {replacing
-            ? t('rating-calculator:add-entry.replace', { diff: replacing.diff })
-            : t('rating-calculator:add-entry.add')}
+            ? m.ratingCalculator_addEntry_replace({ diff: replacing.diff }, { locale })
+            : m.ratingCalculator_addEntry_add({}, { locale })}
         </Button>
       </div>
       {selectedSheet && (
@@ -194,17 +202,24 @@ export const RatingCalculatorAddEntryForm: FC<{
               <div className="flex flex-col items-start gap-0.5">
                 {found && (
                   <div className="num">
-                    {t('rating-calculator:add-entry.current-rating-value', {
-                      value: calculateRating(selectedSheet.internalLevelValue, found.achievementRate).ratingAwardValue,
-                    })}
+                    {m.ratingCalculator_addEntry_currentRatingValue(
+                      {
+                        value: calculateRating(selectedSheet.internalLevelValue, found.achievementRate)
+                          .ratingAwardValue,
+                      },
+                      { locale },
+                    )}
                   </div>
                 )}
                 {replacing ? (
                   <div className="flex flex-col items-start font-bold">
                     <div className="num">
-                      {t('rating-calculator:add-entry.new-rating-value', {
-                        value: replacing.newRating.ratingAwardValue,
-                      })}
+                      {m.ratingCalculator_addEntry_newRatingValue(
+                        {
+                          value: replacing.newRating.ratingAwardValue,
+                        },
+                        { locale },
+                      )}
                     </div>
                     <div className="glass-inset num text-sm text-accent-strong px-1.5 inline-flex">
                       +{replacing.diff}
@@ -213,10 +228,13 @@ export const RatingCalculatorAddEntryForm: FC<{
                 ) : (
                   achievementRate && (
                     <div className="num flex flex-col items-center gap-1">
-                      {t('rating-calculator:add-entry.rating-value', {
-                        value: calculateRating(selectedSheet.internalLevelValue, Number.parseFloat(achievementRate))
-                          .ratingAwardValue,
-                      })}
+                      {m.ratingCalculator_addEntry_ratingValue(
+                        {
+                          value: calculateRating(selectedSheet.internalLevelValue, Number.parseFloat(achievementRate))
+                            .ratingAwardValue,
+                        },
+                        { locale },
+                      )}
                     </div>
                   )
                 )}
@@ -234,9 +252,18 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
   onChange: (sheet: FlattenedSheet | null) => void
 }> = ({ value, onChange }) => {
   const { data: sheets } = useSheets()
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
 
   const search = useSheetsSearchEngine()
+  // What the visitor typed (none after a pick, as MUI shows every chart again then). The search runs on a deferred
+  // copy: a keystroke paints the field first, and the results follow in a render after it (the search took
+  // ~100-200ms of each keystroke at 4x CPU)
+  const [query, setQuery] = useState('')
+  const deferredQuery = useDeferredValue(query)
+  const results = useMemo(
+    () => (deferredQuery ? search(deferredQuery) : (sheets ?? [])),
+    [deferredQuery, search, sheets],
+  )
 
   const renderOption = useCallback(
     (attributes: HTMLAttributes<HTMLLIElement>, option: FlattenedSheet) => (
@@ -255,12 +282,10 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
       options={sheets}
       getOptionLabel={(sheet) => formatSheetToString(sheet)}
       renderInput={(params) => (
-        <TextField {...params} label={t('rating-calculator:add-entry.chart')} variant="outlined" />
+        <TextField {...params} label={m.ratingCalculator_addEntry_chart({}, { locale })} variant="outlined" />
       )}
-      filterOptions={(_, { inputValue }) => {
-        if (!inputValue) return sheets
-        return search(inputValue)
-      }}
+      onInputChange={(_, inputValue, reason) => setQuery(reason === 'input' ? inputValue : '')}
+      filterOptions={() => results}
       renderOption={renderOption}
       ListboxComponent={ListboxComponent}
       value={value}

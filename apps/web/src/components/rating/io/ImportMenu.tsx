@@ -2,7 +2,6 @@ import { useNetImportSettings } from './import/NetImportSettingsContext'
 import { CloudImportConfirmDialog } from '../../cloud-save/CloudImportConfirmDialog'
 import { Button, Divider, Menu } from '@mui/material'
 import { type FC, useId, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { ImportFromAquaDxButtonListItem } from './import/ImportFromAquaDxButtonListItem.tsx'
 import { ImportFromAquaSQLiteListItem } from './import/ImportFromAquaSQLiteListItem'
 import { ImportFromDivingFishButtonListItem } from './import/ImportFromDivingFishButtonListItem'
@@ -10,13 +9,18 @@ import { ImportFromJSONButtonListItem } from './import/ImportFromJSONButtonListI
 import { ImportFromLxnsButtonListItem } from './import/ImportFromLxnsButtonListItem'
 import { ImportFromMuNetButtonListItem } from './import/ImportFromMuNetButtonListItem'
 import { ImportFromNETRecordsListItem } from './import/ImportFromNETRecordsListItem'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
-export const ImportMenu: FC = () => {
+export const ImportMenu: FC<{
+  /** The button's label; the saved-records card uses the plain "Import…" */
+  label?: string
+}> = ({ label }) => {
   const { isOpen: settingsOpen, openSettings } = useNetImportSettings()
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const open = Boolean(anchorEl)
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget)
   }
@@ -39,7 +43,7 @@ export const ImportMenu: FC = () => {
         onClick={handleClick}
         variant="outlined"
       >
-        {t('rating-calculator:io.import.button')}
+        {label ?? m.ratingCalculator_io_import_button({}, { locale })}
       </Button>
 
       <Menu

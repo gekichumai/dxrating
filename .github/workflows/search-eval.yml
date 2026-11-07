@@ -1,0 +1,54 @@
+name: Search eval
+
+# Guards search recall: every bucket of the eval set must stay at or above apps/web/src/search-eval/baseline.json.
+# See scripts/search-eval/README.md and gekichumai/meta#38.
+
+on:
+  pull_request:
+    paths:
+      - 'apps/web/src/songs.ts'
+      - 'apps/web/src/search-eval/**'
+      - 'apps/web/src/models/useServerAliases.ts'
+      - 'apps/web/vitest.config.ts'
+      - 'packages/dxdata/**'
+      - 'packages/maimai-domain/**'
+      - 'scripts/search-eval/**'
+      - '.github/workflows/search-eval.yml'
+
+concurrency:
+  group: search-eval-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  search-eval:
+    name: Search recall
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run the eval against the baseline
+        run: pnpm --filter @gekichumai/dxrating-web search:eval
+
+      - name: Report
+        if: always()
+        run: |
+          if [ -f apps/web/search-eval.txt ]; then
+            { echo '```'; head -n 160 apps/web/search-eval.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi

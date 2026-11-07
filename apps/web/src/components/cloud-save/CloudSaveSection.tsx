@@ -1,10 +1,11 @@
 import type { FC, ReactNode } from 'react'
 import { useId } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useCloudSaveUi } from '@/models/scores/CloudSaveUiContext'
 import { ImportHistoryList } from './ImportHistoryList'
 import { SaveSelector } from './SaveSelector'
 import { SyncIssuesList } from './SyncIssuesList'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
 
 const Group: FC<{ title: string; description?: string; children: ReactNode }> = ({ title, description, children }) => {
   const id = useId()
@@ -23,25 +24,25 @@ const Group: FC<{ title: string; description?: string; children: ReactNode }> = 
 
 /** The account menu's cloud save section: saves, sync issues, import history. Only while a cloud save is active */
 export const CloudSaveSection: FC = () => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const cloud = useCloudSaveUi()
   if (!cloud) return null
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-lg font-bold m-0">{t('rating-calculator:cloud-save.title')}</h1>
-        <p className="text-sm text-fg-2 m-0">{t('rating-calculator:cloud-save.description')}</p>
+        <h1 className="text-lg font-bold m-0">{m.ratingCalculator_cloudSave_title({}, { locale })}</h1>
+        <p className="text-sm text-fg-2 m-0">{m.ratingCalculator_cloudSave_description({}, { locale })}</p>
       </div>
       <Group
-        title={t('rating-calculator:cloud-save.saves.title')}
-        description={t('rating-calculator:cloud-save.saves.description')}
+        title={m.ratingCalculator_cloudSave_saves_title({}, { locale })}
+        description={m.ratingCalculator_cloudSave_saves_description({}, { locale })}
       >
         <SaveSelector />
       </Group>
-      <Group title={t('rating-calculator:cloud-save.issues.title')}>
+      <Group title={m.ratingCalculator_cloudSave_issues_title({}, { locale })}>
         <SyncIssuesList />
       </Group>
-      <Group title={t('rating-calculator:cloud-save.history.title')}>
+      <Group title={m.ratingCalculator_cloudSave_history_title({}, { locale })}>
         <ImportHistoryList />
       </Group>
     </div>

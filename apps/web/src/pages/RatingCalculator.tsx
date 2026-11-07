@@ -1,3 +1,4 @@
+import { DifficultyLevelBadge, SheetTypeBadge } from '@/components/scores/ScoreBadges'
 import {
   Alert,
   Button,
@@ -30,7 +31,6 @@ import {
 } from '@tanstack/react-table'
 import clsx from 'clsx'
 import { type FC, type ReactNode, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import {
   type ItemProps,
   type ScrollerProps,
@@ -39,6 +39,7 @@ import {
   type TableProps,
   TableVirtuoso,
 } from 'react-virtuoso'
+import IconMdiArrowUp from '~icons/mdi/arrow-up'
 import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import IconMdiTrashCan from '~icons/mdi/trash-can'
 import { RecordProvenanceIcon } from '../components/cloud-save/ProvenanceBadge'
@@ -49,6 +50,7 @@ import {
   type SyncFlag,
 } from '../components/rating/RatingCalculatorAddEntryForm'
 import { RatingCalculatorStatistics } from '../components/rating/RatingCalculatorStatistics'
+import { RATING_ADD_ENTRY_ID, RatingOnboarding } from '../components/rating/RatingOnboarding'
 import { ClearButton } from '../components/rating/io/ClearButton'
 import { ExportMenu } from '../components/rating/io/ExportMenu'
 import { NetImportSettingsButton } from '../components/rating/io/import/NetImportSettingsButton'
@@ -57,15 +59,18 @@ import { ImportUndoBanner } from '../components/rating/io/import/ImportUndoBanne
 import { RenderToOneShotImageButton } from '../components/rating/io/export/RenderToOneShotImageButton'
 import { useRatingEntries, useRatingView } from '../components/rating/useRatingEntries'
 import { Link, useNavigate } from '@tanstack/react-router'
+import { DxScoreProgressText } from '../components/scores/DxScoreProgressText'
 import { SheetListItem, SheetListItemContent } from '../components/sheet/SheetListItem'
 import { useScoreEntries, useScoreRepository } from '../models/scores/useScoreRepository'
 import { achievementRateBand, captureAnalyticsEvent } from '../lib/analytics'
 import { type FlattenedSheet, useSheets } from '../songs'
 import type { Rating } from '../utils/rating'
-import { DIFFICULTIES } from '../models/difficulties'
-import './rating-table.css'
-import { difficultyInkClassName, difficultyInkStyle } from '@/utils/difficultyInk'
+import type { NextRatingTarget } from '@gekichumai/maimai-domain'
+import { COMPLETION_TARGET_LABELS } from '@/components/completion/completion'
 import { switchFocusRing } from '../components/rating/focusRing'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
+import type { LocalizedString } from '@/paraglide/runtime'
 
 export interface Entry {
   sheet: FlattenedSheet
@@ -77,6 +82,8 @@ export interface Entry {
   /** The DX score of the play, when the source reports one */
   dxScore?: number
   includedIn: 'b15' | 'b35' | null
+  /** The next step up in the B50 for this chart; null when nothing adds a point (or it is a duplicate play) */
+  nextTarget?: NextRatingTarget | null
 }
 
 /** Row heights in px: denser on desktop, where the table has the width to keep each row on one line */
@@ -104,7 +111,7 @@ const RatingCalculatorRowActions: FC<{
   const { data: sheets } = useSheets()
   const [dialogOpen, setDialogOpen] = useState(false)
   const entries = useScoreEntries()
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
 
   const handleClick = useCallback(() => {
     repository.delete([entry.sheetId])
@@ -115,10 +122,12 @@ const RatingCalculatorRowActions: FC<{
   return (
     <>
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>{t('rating-calculator:table.remove-dialog.title')}</DialogTitle>
+        <DialogTitle>{m.ratingCalculator_table_removeDialog_title({}, { locale })}</DialogTitle>
         <DialogContent>{sheet && <SheetListItemContent sheet={sheet} />}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>{t('rating-calculator:table.remove-dialog.cancel')}</Button>
+          <Button onClick={() => setDialogOpen(false)}>
+            {m.ratingCalculator_table_removeDialog_cancel({}, { locale })}
+          </Button>
 
           <Button
             color="error"
@@ -132,14 +141,14 @@ const RatingCalculatorRowActions: FC<{
               })
             }}
           >
-            {t('rating-calculator:table.remove-dialog.remove')}
+            {m.ratingCalculator_table_removeDialog_remove({}, { locale })}
           </Button>
         </DialogActions>
       </Dialog>
 
       <IconButton
         size="small"
-        aria-label={`${t('rating-calculator:table.remove-dialog.remove')} ${sheet?.title ?? ''}`}
+        aria-label={`${m.ratingCalculator_table_removeDialog_remove({}, { locale })} ${sheet?.title ?? ''}`}
         className="rating-row-remove"
         onClick={() => setDialogOpen(true)}
       >
@@ -161,7 +170,7 @@ export const RatingCalculator = () => {
   const [showOnlyB50, setShowOnlyB50] = useState(false)
   const ratingView = useRatingView()
   const navigate = useNavigate()
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
 
   const { allEntries } = useRatingEntries()
 
@@ -188,8 +197,24 @@ export const RatingCalculator = () => {
 
   if (!sheets) return null
 
+  // No saved record at all: one onboarding panel and the add form, without the zero-filled statistics or the export,
+  // delete and view controls, which need records. Everything comes back with the first record.
+  if (entries.length === 0 && allEntries.length === 0) {
+    return (
+      // No bottom padding of its own: the explainer below is the page's last content and carries pb-global
+      <div className="rating-calculator rating-calculator--empty page-gutter py-4">
+        <RatingOnboarding />
+        <ImportUndoBanner />
+        <div id={RATING_ADD_ENTRY_ID} className="glass rating-records w-full">
+          <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="rating-calculator flex-container w-full pb-global">
+    // No bottom padding of its own: the explainer below is the page's last content and carries pb-global
+    <div className="rating-calculator flex-container w-full">
       <div className="rating-overview">
         <section className="glass rating-summary px-4 py-3" aria-labelledby="rating-breakdown-title">
           <RatingCalculatorStatistics titleId="rating-breakdown-title" />
@@ -199,8 +224,8 @@ export const RatingCalculator = () => {
           <section className="glass w-full px-4 py-3" aria-labelledby="rating-records-title">
             <h2 id="rating-records-title" className="section-title m-0">
               {allEntries?.length
-                ? t('rating-calculator:auto-save.saved-records', { count: allEntries.length })
-                : t('rating-calculator:auto-save.title')}
+                ? m.ratingCalculator_autoSave_savedRecords({ count: allEntries.length }, { locale })
+                : m.ratingCalculator_autoSave_title({}, { locale })}
             </h2>
 
             <div className="rating-oneshot mt-2">
@@ -219,7 +244,11 @@ export const RatingCalculator = () => {
       </div>
 
       <div className="glass rating-records w-full">
-        <div className="rating-table-controls" role="group" aria-label={t('rating-calculator:quick-actions.title')}>
+        <div
+          className="rating-table-controls"
+          role="group"
+          aria-label={m.ratingCalculator_quickActions_title({}, { locale })}
+        >
           <FormControlLabel
             control={
               <Switch
@@ -235,7 +264,7 @@ export const RatingCalculator = () => {
                 }}
               />
             }
-            label={t('rating-calculator:quick-actions.show-only-b50')}
+            label={m.ratingCalculator_quickActions_showOnlyB50({}, { locale })}
           />
 
           <FormControlLabel
@@ -250,24 +279,27 @@ export const RatingCalculator = () => {
                 }}
               />
             }
-            label={t('rating-calculator:quick-actions.ap50')}
+            label={m.ratingCalculator_quickActions_ap50({}, { locale })}
           />
 
           <Button component={Link} to="/me/records" size="small" variant="text">
-            {t('toplists:entry-link')}
+            {m.toplists_entryLink({}, { locale })}
           </Button>
         </div>
         {ratingView === 'ap50' && (
           <Alert severity="info" className="mb-2">
-            {t('rating-calculator:quick-actions.ap50-hint')}
+            {m.ratingCalculator_quickActions_ap50Hint({}, { locale })}
           </Alert>
         )}
         <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
-        {/* With no records, the column headers would only frame an empty table */}
+        {/* Saved records whose charts the catalog no longer has resolve to no rows; the column headers would only
+            frame an empty table */}
         {allEntries.length > 0 ? (
           <RatingCalculatorTableContent showOnlyB50={showOnlyB50} />
         ) : (
-          <div className="w-full text-sm py-8 px-4 text-center">{t('rating-calculator:table.no-entries')}</div>
+          <div className="w-full text-sm py-8 px-4 text-center">
+            {m.ratingCalculator_table_noEntries({}, { locale })}
+          </div>
         )}
       </div>
     </div>
@@ -277,45 +309,59 @@ export const RatingCalculator = () => {
 const RatingCalculatorIncludedInCell: FC<{
   row: Row<Entry>
 }> = memo(({ row }) => {
-  const includedIn = row.original.includedIn
-  if (!includedIn) return null
+  const { includedIn, comboFlag, syncFlag } = row.original
+  if (!includedIn && !comboFlag && !syncFlag) return null
 
   return (
-    <span
-      className={clsx(
-        'inline-block num w-12 leading-none py-1.5 rounded-full text-center text-xs font-semibold select-none',
-        // A pale fill with a deep label of the same hue (>=4.5:1); both ends mirror on the dark theme
-        includedIn === 'b15' && 'bg-amber-100 text-amber-900',
-        includedIn === 'b35' && 'bg-cyan-100 text-cyan-900',
+    <span className="rating-bucket-stack">
+      {includedIn && (
+        <span
+          className={clsx(
+            'rating-bucket-badge inline-block num w-12 leading-none py-1.5 rounded-[var(--radius-sm)] text-center text-xs font-semibold select-none',
+            // A pale fill with a deep label of the same hue (>=4.5:1); both ends mirror on the dark theme
+            includedIn === 'b15' && 'bg-amber-100 text-amber-900',
+            includedIn === 'b35' && 'bg-cyan-100 text-cyan-900',
+          )}
+        >
+          {includedIn.toUpperCase()}
+        </span>
       )}
-    >
-      {includedIn.toUpperCase()}
+      {/* Phones have no combo and sync columns: the lamps stack under the bucket, which says how the record counts,
+          and the chart cell keeps its room for a two-line title */}
+      {(comboFlag || syncFlag) && (
+        <span className="rating-mobile-flags">
+          <RatingCalculatorComboFlagCell row={row} />
+          <RatingCalculatorSyncFlagCell row={row} />
+        </span>
+      )}
     </span>
   )
 })
 RatingCalculatorIncludedInCell.displayName = 'memo(RatingCalculatorIncludedInCell)'
 
-// Pale fills with deep labels of the same hue (>=4.5:1 at 12px); the adaptive palette mirrors both on the dark theme
+// Pale fills with deep labels of the same hue (>=4.5:1 at 12px); the adaptive palette mirrors both on the dark theme.
+// Labels are the shared ones (completion.ts), so a sync lamp reads FDX here as everywhere else
 const COMBO_FLAG_CONFIG: Record<NonNullable<ComboFlag>, { label: string; className: string; rank: number }> = {
-  fc: { label: 'FC', className: 'bg-green-100 text-green-800', rank: 1 },
-  fcp: { label: 'FC+', className: 'bg-green-200 text-green-900', rank: 2 },
-  ap: { label: 'AP', className: 'bg-amber-100 text-amber-800', rank: 3 },
-  app: { label: 'AP+', className: 'bg-amber-200 text-amber-900', rank: 4 },
+  fc: { label: COMPLETION_TARGET_LABELS.fc, className: 'bg-green-100 text-green-800', rank: 1 },
+  fcp: { label: COMPLETION_TARGET_LABELS.fcp, className: 'bg-green-200 text-green-900', rank: 2 },
+  ap: { label: COMPLETION_TARGET_LABELS.ap, className: 'bg-amber-100 text-amber-800', rank: 3 },
+  app: { label: COMPLETION_TARGET_LABELS.app, className: 'bg-amber-200 text-amber-900', rank: 4 },
 }
 
 const SYNC_FLAG_CONFIG: Record<NonNullable<SyncFlag>, { label: string; className: string; rank: number }> = {
   sync: { label: 'SYNC', className: 'bg-sky-100 text-sky-800', rank: 1 },
-  fs: { label: 'FS', className: 'bg-blue-100 text-blue-800', rank: 2 },
+  fs: { label: COMPLETION_TARGET_LABELS.fs, className: 'bg-blue-100 text-blue-800', rank: 2 },
   fsp: { label: 'FS+', className: 'bg-blue-200 text-blue-900', rank: 3 },
-  fsd: { label: 'FSD', className: 'bg-fuchsia-100 text-fuchsia-800', rank: 4 },
-  fsdp: { label: 'FSD+', className: 'bg-fuchsia-200 text-fuchsia-900', rank: 5 },
+  fsd: { label: COMPLETION_TARGET_LABELS.fsd, className: 'bg-fuchsia-100 text-fuchsia-800', rank: 4 },
+  fsdp: { label: COMPLETION_TARGET_LABELS.fsdp, className: 'bg-fuchsia-200 text-fuchsia-900', rank: 5 },
 }
 
-// The same 24px box as the B15/B35 pill, so the chips in a row share a height and a centre line
+// The same 24px box as the B15/B35 badge, so the badges in a row share a height and a centre line. Badges take the
+// --radius-sm token (tokens.css), not a pill
 const FlagPill: FC<{ label: string; className: string }> = ({ label, className }) => (
   <span
     className={clsx(
-      'inline-flex items-center justify-center h-6 min-w-12 px-2 rounded-full text-xs font-semibold leading-none select-none',
+      'inline-flex items-center justify-center h-6 min-w-12 px-2 rounded-[var(--radius-sm)] text-xs font-semibold leading-none select-none',
       className,
     )}
   >
@@ -343,7 +389,6 @@ RatingCalculatorSyncFlagCell.displayName = 'memo(RatingCalculatorSyncFlagCell)'
 
 const RatingChartCell: FC<{ row: Row<Entry> }> = ({ row }) => {
   const { sheet, achievementRate } = row.original
-  const difficulty = DIFFICULTIES[sheet.difficulty as keyof typeof DIFFICULTIES]
   return (
     <SheetListItem
       sheet={sheet}
@@ -363,19 +408,18 @@ const RatingChartCell: FC<{ row: Row<Entry> }> = ({ row }) => {
         <span className="rating-chart-title" title={sheet.title} lang="ja" translate="no">
           {sheet.title}
         </span>
+        {/* The shared two-tone pill (difficulty | level) and type badge, as on the top lists; desktop has a column of
+            its own for the level, so the pill keeps only its difficulty half there */}
         <span className="rating-chart-meta">
-          <span className={difficultyInkClassName} style={difficultyInkStyle(sheet.difficulty)}>
-            {difficulty?.title ?? sheet.difficulty}
+          <DifficultyLevelBadge
+            difficulty={sheet.difficulty}
+            level={sheetLevelLabel(sheet)}
+            levelClassName="rating-chart-meta-level"
+          />
+          <SheetTypeBadge type={sheet.type} />
+          <span aria-hidden className="rating-chart-meta-narrow-level num">
+            {sheetLevelLabel(sheet)}
           </span>
-          <span>
-            {sheet.type.toUpperCase()}
-            {/* Desktop has a column of its own for the level */}
-            <span className="rating-chart-meta-level"> · {sheetLevelLabel(sheet)}</span>
-          </span>
-        </span>
-        <span className="rating-mobile-flags">
-          <RatingCalculatorComboFlagCell row={row} />
-          <RatingCalculatorSyncFlagCell row={row} />
         </span>
       </span>
     </SheetListItem>
@@ -393,14 +437,8 @@ const RatingCalculatorDxScoreCell: FC<{
   row: Row<Entry>
 }> = ({ row }) => {
   const { dxScore, sheet } = row.original
-  if (dxScore === undefined) return <span className="text-secondary">—</span>
   const total = sheet.noteCounts.total
-  return (
-    <span className="num">
-      {dxScore}
-      {total ? <span className="text-xs text-secondary"> / {total * 3}</span> : null}
-    </span>
-  )
+  return <DxScoreProgressText dxScore={dxScore} max={total ? total * 3 : null} />
 }
 
 const RatingCalculatorAchievementRateCell: FC<{
@@ -446,7 +484,7 @@ function RatingCalculatorTableBody({ ref, ...props }: TableBodyProps & { ref?: R
 }
 
 const RatingCalculatorTableRow: FC<ItemProps<Row<Entry>>> = ({ item, ...props }) => (
-  <TableRow {...props} className="rating-table-row tabular-nums" data-bucket={item.original.includedIn ?? 'none'} />
+  <TableRow {...props} className="rating-table-row num" data-bucket={item.original.includedIn ?? 'none'} />
 )
 
 function RatingCalculatorScroller({ ref, ...props }: ScrollerProps & { ref?: React.Ref<HTMLDivElement> }) {
@@ -456,6 +494,47 @@ function RatingCalculatorScroller({ ref, ...props }: ScrollerProps & { ref?: Rea
 const RatingCalculatorRatingCell: FC<{
   row: Row<Entry>
 }> = ({ row }) => <span className="num">{row.original.rating ? row.original.rating.ratingAwardValue : '-'}</span>
+
+/**
+ * Desktop: under the rating, the lowest achievement that adds a point to the B50 total (or "AP" once the score is
+ * capped). The tooltip, also read out, spells out the step and the AP value.
+ */
+const RatingCalculatorNextTarget: FC<{
+  row: Row<Entry>
+}> = ({ row }) => {
+  const locale = useLocale()
+  const target = row.original.nextTarget
+  if (!target) return null
+  const parts = [
+    target.next
+      ? m.ratingCalculator_table_nextTarget_next(
+          {
+            achievement: target.next.achievement.toFixed(4),
+            rating: target.next.rating,
+            gain: target.next.gain,
+          },
+          { locale },
+        )
+      : null,
+    target.allPerfect
+      ? m.ratingCalculator_table_nextTarget_ap(
+          {
+            rating: target.allPerfect.rating,
+            gain: target.allPerfect.gain,
+          },
+          { locale },
+        )
+      : null,
+  ].filter((part): part is LocalizedString => part !== null)
+  const description = parts.join(' · ')
+  return (
+    <span className="rating-next-target num" title={description}>
+      <IconMdiArrowUp aria-hidden className="rating-next-target-icon" />
+      <span aria-hidden>{target.next ? `${target.next.achievement.toFixed(4)}%` : 'AP'}</span>
+      <span className="sr-only">{description}</span>
+    </span>
+  )
+}
 
 const RatingCalculatorTableRowContent: FC<{
   row: Row<Entry>
@@ -497,7 +576,7 @@ const RatingTableSortButton: FC<{
   quiet: boolean
   onClick?: (event: unknown) => void
 }> = ({ label, canSort, sorted, priority, showPriority, quiet, onClick }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const shownSorted = quiet ? false : sorted
   return (
     <button
@@ -517,7 +596,7 @@ const RatingTableSortButton: FC<{
         </span>
       )}
       {sorted && priority !== null && (
-        <span className="sr-only">{t('rating-calculator:table.sort-priority', { n: priority })}</span>
+        <span className="sr-only">{m.ratingCalculator_table_sortPriority({ n: priority }, { locale })}</span>
       )}
     </button>
   )
@@ -525,7 +604,7 @@ const RatingTableSortButton: FC<{
 
 function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean }) {
   const { allEntries } = useRatingEntries()
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
 
   const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING)
   const defaultSorting = isDefaultSorting(sorting)
@@ -534,7 +613,7 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
     () => [
       columnHelper.display({
         id: 'chart',
-        header: t('rating-calculator:table.headers.chart'),
+        header: m.ratingCalculator_table_headers_chart({}, { locale }),
         cell: ({ row }) => <RatingChartCell row={row} />,
         meta: {
           cellProps: {
@@ -544,13 +623,13 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
       }),
       columnHelper.accessor((entry) => entry.includedIn ?? undefined, {
         id: 'includedIn',
-        header: t('rating-calculator:table.headers.included-in'),
+        header: m.ratingCalculator_table_headers_includedIn({}, { locale }),
         cell: RatingCalculatorIncludedInCell,
         sortUndefined: 'last',
       }),
       columnHelper.accessor('comboFlag', {
         id: 'comboFlag',
-        header: t('rating-calculator:table.headers.combo'),
+        header: m.ratingCalculator_table_headers_combo({}, { locale }),
         cell: RatingCalculatorComboFlagCell,
         sortingFn: (a, b) => {
           const rankA = a.original.comboFlag ? COMBO_FLAG_CONFIG[a.original.comboFlag].rank : 0
@@ -560,7 +639,7 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
       }),
       columnHelper.accessor('syncFlag', {
         id: 'syncFlag',
-        header: t('rating-calculator:table.headers.sync'),
+        header: m.ratingCalculator_table_headers_sync({}, { locale }),
         cell: RatingCalculatorSyncFlagCell,
         sortingFn: (a, b) => {
           const rankA = a.original.syncFlag ? SYNC_FLAG_CONFIG[a.original.syncFlag].rank : 0
@@ -571,26 +650,29 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
       // Desktop only (hidden under 1024px in rating-table.css), like the combo and sync columns under 768px
       columnHelper.accessor((entry) => entry.sheet.internalLevelValue, {
         id: 'internalLevel',
-        header: t('rating-calculator:table.headers.internal-level'),
+        header: m.ratingCalculator_table_headers_internalLevel({}, { locale }),
         cell: RatingCalculatorInternalLevelCell,
       }),
       columnHelper.accessor((entry) => entry.dxScore, {
         id: 'dxScore',
-        header: t('rating-calculator:table.headers.dx-score'),
+        header: m.ratingCalculator_table_headers_dxScore({}, { locale }),
         cell: RatingCalculatorDxScoreCell,
         sortUndefined: 'last',
       }),
       columnHelper.accessor('achievementRate', {
         id: 'achievementRate',
-        header: t('rating-calculator:table.headers.achievement-rate'),
+        header: m.ratingCalculator_table_headers_achievementRate({}, { locale }),
         cell: RatingCalculatorAchievementRateCell,
       }),
       columnHelper.accessor('rating.ratingAwardValue', {
         id: 'rating',
-        header: t('rating-calculator:table.headers.rating'),
+        header: m.ratingCalculator_table_headers_rating({}, { locale }),
         cell: ({ row }) => (
           <div className="rating-value-cell">
-            <RatingCalculatorRatingCell row={row} />
+            <span className="rating-value-stack">
+              <RatingCalculatorRatingCell row={row} />
+              <RatingCalculatorNextTarget row={row} />
+            </span>
             <span className="rating-mobile-action">
               <RatingCalculatorRowActions entry={row.original} />
             </span>
@@ -604,11 +686,11 @@ function RatingCalculatorTableContent({ showOnlyB50 }: { showOnlyB50: boolean })
       }),
       columnHelper.display({
         id: 'actions',
-        header: t('rating-calculator:table.headers.actions'),
+        header: m.ratingCalculator_table_headers_actions({}, { locale }),
         cell: ({ row }) => <RatingCalculatorRowActions entry={row.original} />,
       }),
     ],
-    [t],
+    [locale],
   )
 
   const data = useMemo(() => {

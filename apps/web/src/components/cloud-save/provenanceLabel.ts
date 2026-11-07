@@ -1,5 +1,6 @@
 import type { Provenance } from '@gekichumai/maimai-domain'
-import type { TFunction } from 'i18next'
+import { m } from '@/paraglide/messages'
+import type { Locale } from '@/paraglide/runtime'
 
 /**
  * How a record's provenance reads (design §6.1, §8.4). Only `verification === 'verified'` reads as verified; a source
@@ -59,40 +60,42 @@ export function labelSeparator(language: string | undefined): string {
   return /^(ja|zh)(-|$)/i.test(language ?? '') ? '・' : ' · '
 }
 
-export function describeProvenance(provenance: Provenance, t: TFunction, language?: string): ProvenanceLabel {
-  const separator = labelSeparator(language)
+export function describeProvenance(provenance: Provenance, locale: Locale): ProvenanceLabel {
+  const separator = labelSeparator(locale)
   if (provenance.verification === 'verified') {
-    const parts = [t('rating-calculator:cloud-save.provenance.verified'), sourceName(provenance.source)]
+    const parts = [m.ratingCalculator_cloudSave_provenance_verified({}, { locale }), sourceName(provenance.source)]
     const account = shortAccountId(provenance.sourceAccountId)
     if (account) {
       parts.push(
         provenance.source === 'diving-fish'
-          ? t('rating-calculator:cloud-save.provenance.account', { id: account })
-          : t('rating-calculator:cloud-save.provenance.friend-code', { id: account }),
+          ? m.ratingCalculator_cloudSave_provenance_account({ id: account }, { locale })
+          : m.ratingCalculator_cloudSave_provenance_friendCode({ id: account }, { locale }),
       )
     }
     if (provenance.fetchedAt) {
-      parts.push(t('rating-calculator:cloud-save.provenance.fetched', { date: formatLocalDate(provenance.fetchedAt) }))
+      parts.push(
+        m.ratingCalculator_cloudSave_provenance_fetched({ date: formatLocalDate(provenance.fetchedAt) }, { locale }),
+      )
     }
     return { kind: 'verified', text: parts.join(separator) }
   }
   if (provenance.verification === 'user_edited') {
-    return { kind: 'edited', text: t('rating-calculator:cloud-save.provenance.edited') }
+    return { kind: 'edited', text: m.ratingCalculator_cloudSave_provenance_edited({}, { locale }) }
   }
   if (provenance.source === 'manual') {
-    return { kind: 'manual', text: t('rating-calculator:cloud-save.provenance.manual') }
+    return { kind: 'manual', text: m.ratingCalculator_cloudSave_provenance_manual({}, { locale }) }
   }
-  const notVerified = t('rating-calculator:cloud-save.provenance.not-verified')
+  const notVerified = m.ratingCalculator_cloudSave_provenance_notVerified({}, { locale })
   const fromDevice = provenance.source === 'legacy-local'
   const origin = provenance.claimedSource
-    ? t(
-        fromDevice
-          ? 'rating-calculator:cloud-save.provenance.from-device-claimed'
-          : 'rating-calculator:cloud-save.provenance.from-file-claimed',
+    ? (fromDevice
+        ? m.ratingCalculator_cloudSave_provenance_fromDeviceClaimed
+        : m.ratingCalculator_cloudSave_provenance_fromFileClaimed)(
         { source: sourceName(provenance.claimedSource) },
+        { locale },
       )
     : fromDevice
-      ? t('rating-calculator:cloud-save.provenance.from-device')
-      : t('rating-calculator:cloud-save.provenance.from-file', { source: sourceName(provenance.source) })
+      ? m.ratingCalculator_cloudSave_provenance_fromDevice({}, { locale })
+      : m.ratingCalculator_cloudSave_provenance_fromFile({ source: sourceName(provenance.source) }, { locale })
   return { kind: 'file', text: [origin, notVerified].join(separator) }
 }
