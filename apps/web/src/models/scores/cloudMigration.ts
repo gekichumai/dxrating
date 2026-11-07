@@ -1,5 +1,6 @@
 import { canonicalJson } from '@gekichumai/api-contract'
-import type { ImportJobDTO, ImportRecord, ImportResultDTO, SaveDTO } from '@gekichumai/api-contract'
+import type { ImportJobDTO, ImportRecord, ImportRecordInput, ImportResultDTO, SaveDTO } from '@gekichumai/api-contract'
+import { isPublicSheetId } from '@gekichumai/maimai-domain'
 import type { SheetIdentity } from '@gekichumai/maimai-domain'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
 import { migrateLegacyImportEntries, RATING_ENTRIES_STORAGE_KEY } from '../../catalog/savedDataMigration'
@@ -82,7 +83,8 @@ export interface CloudMigrationApi {
       ifRevision: number
       idempotencyKey: string
       source: 'legacy-local'
-      records: ImportRecord[]
+      /** Valid records, then `{ sheetId }` for each chart whose local entries could not be converted (`held`) */
+      records: ImportRecordInput[]
     },
     guard?: MigrationWriteGuard,
   ): Promise<ImportResultDTO>
@@ -295,15 +297,20 @@ const UNREAD_IDENTITY = Object.freeze({}) as SheetIdentity
 export function migrationImportRecords(
   entries: readonly PlayEntry[],
   resolveInternalLevel?: InternalLevelResolver | null,
-): { records: ImportRecord[]; skipped: number } {
+): { records: ImportRecord[]; skipped: number; held: string[] } {
   const plan = { source: 'legacy-local', claimedSource: null } as const
   const bySheetId = new Map<string, { entry: PlayEntry; record: ImportRecord }[]>()
   let skipped = 0
+  // Charts with a local entry that could not be converted (an out-of-range DX score…)
+  const droppedSheets = new Set<string>()
   for (const entry of entries) {
     const converted = entriesToImportRecords([entry], plan)
     skipped += converted.skipped + converted.rejected
     const record = converted.records[0]
-    if (!record) continue
+    if (!record) {
+      if (typeof entry.sheetId === 'string' && isPublicSheetId(entry.sheetId)) droppedSheets.add(entry.sheetId)
+      continue
+    }
     const rows = bySheetId.get(record.sheetId)
     if (rows) rows.push({ entry, record })
     else bySheetId.set(record.sheetId, [{ entry, record }])
@@ -346,7 +353,10 @@ export function migrationImportRecords(
       claimedSource: shared('claimedSource'),
     })
   }
-  return { records, skipped }
+  // A replace deletes every chart it does not name: these are named (and rejected by the server, which keeps a chart
+  // a rejected item names) so a local entry that could not be converted never deletes its chart from the cloud save
+  const held = [...droppedSheets].filter((sheetId) => !bySheetId.has(sheetId)).sort()
+  return { records, skipped, held }
 }
 
 // --- Running it ---
@@ -521,7 +531,7 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
   const migrateLegacy = options.migrateLegacyEntries ?? migrateLegacyImportEntries
   const entries = await migrateLegacy([...options.entries])
   ensureActive()
-  const { records, skipped } = migrationImportRecords(entries, options.resolveInternalLevel)
+  const { records, skipped, held } = migrationImportRecords(entries, options.resolveInternalLevel)
   if (records.length === 0) throw new NothingToImportError(skipped)
 
   // The same records in any order are the same upload: keys and chunks both use this one order, so a key always
@@ -531,7 +541,8 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
   if (mode === 'replace') {
     const target = options.target
     if (!target) throw new Error('No cloud save to replace')
-    const replaceTag = await migrationKeyTag(`${target.id}\n${canonicalJson(bySheetId)}`)
+    const replaceRecords: ImportRecordInput[] = [...bySheetId, ...held.map((sheetId) => ({ sheetId }))]
+    const replaceTag = await migrationKeyTag(`${target.id}\n${canonicalJson(replaceRecords)}`)
     try {
       const result = await withRetries(
         (guard) =>
@@ -541,7 +552,7 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
               ifRevision: target.revision,
               idempotencyKey: migrationReplaceKey(options.deviceId, replaceTag, target.revision),
               source: 'legacy-local',
-              records: bySheetId,
+              records: replaceRecords,
             },
             guard,
           ),
@@ -552,7 +563,8 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
       return {
         saveId: target.id,
         uploaded: importedCount(result.job.counts),
-        skipped: skipped + serverOmissions(result.job),
+        // The held charts were counted here already; the server's rejection of them is not a second omission
+        skipped: skipped + Math.max(0, serverOmissions(result.job) - held.length),
         job: result.job,
       }
     } catch (error) {

@@ -134,15 +134,21 @@ class FakeMigrationServer {
           data: { revision: save.revision },
         }
       }
-      const next = new Map(input.records.map((record) => [record.sheetId, record]))
       const current = this.records.get(input.id)!
+      // As the backend: an item it rejects (here: no achievement) keeps the chart it names
+      const accepted = input.records.filter((record): record is ImportRecord => typeof record.achievement === 'number')
+      const next = new Map(accepted.map((record) => [record.sheetId, record]))
+      for (const record of input.records) {
+        const kept = current.get(record.sheetId as string)
+        if (typeof record.achievement !== 'number' && kept) next.set(record.sheetId as string, kept)
+      }
       // As the backend: a replace that changes nothing writes nothing, and the revision stays
       const unchanged =
         current.size === next.size &&
         [...next].every(([sheetId, record]) => JSON.stringify(current.get(sheetId)) === JSON.stringify(record))
       this.records.set(input.id, next)
       if (!unchanged) save.revision++
-      save.recordCount = input.records.length
+      save.recordCount = next.size
       const job = this.job(input.id, 'legacy-local', 'user')
       job.status = 'succeeded'
       job.counts = unchanged
@@ -752,6 +758,37 @@ describe('runCloudMigration: a cloud save made on another device', () => {
 })
 
 describe('runCloudMigration: review fixes', () => {
+  it('never deletes a cloud chart whose local entry could not be converted', async () => {
+    const save = server.addSave({ clientProfileKey: 'web-local', revision: 2 })
+    const cloudB: ImportRecord = {
+      sheetId: SHEET_B,
+      achievement: 990000,
+      comboFlag: null,
+      syncFlag: null,
+      dxScore: null,
+      best50Bucket: null,
+      providerRecordId: null,
+      claimedSource: null,
+    }
+    server.records.get(save.id)!.set(SHEET_B, cloudB)
+    const entries: PlayEntry[] = [
+      { sheetId: SHEET_A, achievementRate: 100 },
+      // An out-of-range DX score: the entry cannot be sent
+      { sheetId: SHEET_B, achievementRate: 100.5, dxScore: 100001 },
+    ]
+
+    const outcome = await migrate({ mode: 'replace', target: save, entries })
+
+    // The replace names B (the server rejects it, which keeps the chart) instead of leaving it out
+    expect(server.calls.at(-1)!.input.records).toEqual([
+      expect.objectContaining({ sheetId: SHEET_A }),
+      { sheetId: SHEET_B },
+    ])
+    expect(server.records.get(save.id)!.get(SHEET_B)).toEqual(cloudB)
+    expect(server.records.get(save.id)!.has(SHEET_A)).toBe(true)
+    expect(outcome.skipped).toBe(1)
+  })
+
   it('applies other records confirmed at an unchanged revision after a no-op replace (its answer lost)', async () => {
     const save = server.addSave({ clientProfileKey: 'web-local', revision: 7 })
     await migrate({ mode: 'replace', target: save })
