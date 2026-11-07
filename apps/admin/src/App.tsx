@@ -18,10 +18,22 @@ import { ORPCError } from '@orpc/client'
 import { useQuery } from '@tanstack/react-query'
 import { Announcements } from './Announcements'
 import { adminOrpc } from './api'
+import { Publications } from './catalog/Publications'
+import { routeHref, useRoute, type View } from './route'
+
+const NAV: { view: View; label: string; scope?: string }[] = [
+  { view: 'overview', label: 'Overview' },
+  { view: 'announcements', label: 'Announcements', scope: 'announcements:read' },
+  { view: 'publications', label: 'Publications', scope: 'catalog:read' },
+]
+
+const can = (scopes: readonly string[] | undefined, scope: string | undefined) =>
+  scope === undefined || scopes?.includes('*') === true || scopes?.includes(scope) === true
 
 /** The admin shell (gekichumai/meta#50; Mantine per the owner). English only (meta#50 Q6). */
 export function App() {
-  const [navOpen, { toggle }] = useDisclosure()
+  const [navOpen, { toggle, close }] = useDisclosure()
+  const route = useRoute()
   const me = useQuery(adminOrpc.me.queryOptions({ retry: false }))
   // A failed refetch keeps the old data in the cache, so show the principal only while the latest request succeeded
   const principal = me.isError ? undefined : me.data
@@ -52,12 +64,20 @@ export function App() {
       </AppShell.Header>
 
       <AppShell.Navbar p="xs" className="admin-glass">
-        <NavLink label="Overview" href="#overview" />
-        <NavLink label="Announcements" href="#announcements" />
+        {NAV.filter((item) => can(principal?.scopes, item.scope)).map((item) => (
+          <NavLink
+            key={item.view}
+            label={item.label}
+            href={routeHref(item.view)}
+            active={route.view === item.view}
+            aria-current={route.view === item.view ? 'page' : undefined}
+            onClick={close}
+          />
+        ))}
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <Stack maw={960}>
+        <Stack maw={route.view === 'publications' ? 1200 : 960}>
           {me.isPending && <Skeleton h={120} radius="md" aria-busy="true" aria-label="Loading" />}
           {denied && (
             <Alert color="orange" title="No access" role="alert">
@@ -69,7 +89,7 @@ export function App() {
               The request failed. Try again in a moment.
             </Alert>
           )}
-          {principal && (
+          {principal && route.view === 'overview' && (
             <Card className="admin-glass" padding="lg" id="overview">
               <Group justify="space-between" mb="sm">
                 <Title order={2} size="h5">
@@ -101,12 +121,14 @@ export function App() {
               </Table>
             </Card>
           )}
-          {principal && (principal.scopes.includes('*') || principal.scopes.includes('announcements:read')) && (
-            <div id="announcements">
-              <Announcements
-                canWrite={principal.scopes.includes('*') || principal.scopes.includes('announcements:write')}
-              />
-            </div>
+          {principal && route.view === 'announcements' && can(principal.scopes, 'announcements:read') && (
+            <Announcements canWrite={can(principal.scopes, 'announcements:write')} />
+          )}
+          {principal && route.view === 'publications' && can(principal.scopes, 'catalog:read') && (
+            <Publications
+              channel={route.params.get('channel') ?? undefined}
+              before={Number(route.params.get('before')) || undefined}
+            />
           )}
         </Stack>
       </AppShell.Main>
