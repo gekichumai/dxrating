@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { localeRedirect } from '../locale-redirect'
+import { localeRedirect, sameOriginLocation } from '../locale-redirect'
 
 const get = (path: string, headers: Record<string, string> = {}, method = 'GET') =>
   localeRedirect(new Request(`https://dxrating.net${path}`, { method, headers }))
@@ -25,6 +25,19 @@ describe('?locale= (the old scheme) moves to the path permanently', () => {
     expectRedirect(get('/search?locale=zh-TW'), 301, '/zh-hant/search')
   })
 
+  it('records an explicit English choice, so the next hop does not send the visitor back to their language', () => {
+    for (const path of ['/rating?locale=en', '/ja/rating?locale=en']) {
+      const response = get(path, { cookie: 'dxrating.locale=ja', 'accept-language': 'ja-JP' })
+      expectRedirect(response, 301, '/rating')
+      expect(response?.headers.get('Set-Cookie')).toMatch(/^dxrating\.locale=en;/)
+      expect(response?.headers.get('Cache-Control')).toBe('private, no-store')
+      // The browser follows with the new cookie: English is served
+      expect(get('/rating', { cookie: 'dxrating.locale=en', 'accept-language': 'ja-JP' })).toBeNull()
+    }
+    // Another language needs no record: its prefix says it
+    expect(get('/rating?locale=ja')?.headers.get('Set-Cookie')).toBeNull()
+  })
+
   it('lets the parameter win over a prefix, as it did over the cookie', () => {
     expectRedirect(get('/ja/rating?locale=ko'), 301, '/ko/rating')
     expectRedirect(get('/ja/rating?locale=en'), 301, '/rating')
@@ -39,6 +52,17 @@ describe('?locale= (the old scheme) moves to the path permanently', () => {
     expect(get('/sitemap.xml?locale=ja')).toBeNull()
     expect(get('/.well-known/apple-app-site-association?locale=ja')).toBeNull()
     expect(get('/_serverFn/abc?locale=ja')).toBeNull()
+  })
+})
+
+describe('redirect targets stay on this site', () => {
+  it('never emits a protocol-relative Location, whatever the path holds after the prefix', () => {
+    expectRedirect(get('/en//example.org/path'), 301, '/example.org/path')
+    expectRedirect(get('/ja//example.org/path?locale=en'), 301, '/example.org/path')
+    expectRedirect(get('/EN/%5Cexample.org'), 301, '/%5Cexample.org')
+    expect(sameOriginLocation('//example.org')).toBe('/example.org')
+    expect(sameOriginLocation('/\\example.org')).toBe('/example.org')
+    expect(sameOriginLocation('/')).toBe('/')
   })
 })
 
