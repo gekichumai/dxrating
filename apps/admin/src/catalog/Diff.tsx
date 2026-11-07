@@ -6,15 +6,16 @@ import {
   Card,
   Code,
   Group,
-  NativeSelect,
   Skeleton,
   Stack,
   Table,
   Text,
+  TextInput,
   Title,
 } from '@mantine/core'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { ORPCError } from '@orpc/client'
+import { useState } from 'react'
 import { adminClient, adminOrpc } from '../api'
 import { routeHref } from '../route'
 import { formatUtc } from './Publications'
@@ -51,6 +52,60 @@ export const showValue = (value: unknown, present: boolean) =>
 
 const has = (change: Change, side: 'before' | 'after') => Object.hasOwn(change, side)
 
+/**
+ * Any two revisions: typed, so a revision older than the newest 100 is as reachable as a recent one; the recent ones
+ * are offered as suggestions with their dates.
+ */
+function RevisionPair(props: {
+  from: number
+  to: number
+  suggestions: { value: string; label: string }[]
+  onCompare: (pair: { from: number; to: number }) => void
+}) {
+  const [from, setFrom] = useState(String(props.from))
+  const [to, setTo] = useState(String(props.to))
+  const valid = (value: string) => /^[1-9]\d*$/.test(value)
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault()
+        if (valid(from) && valid(to)) props.onCompare({ from: Number(from), to: Number(to) })
+      }}
+    >
+      <Group gap="xs" wrap="wrap" align="end">
+        <TextInput
+          label="Older revision"
+          size="xs"
+          w={110}
+          inputMode="numeric"
+          list="diff-revisions"
+          value={from}
+          error={!valid(from)}
+          onChange={(e) => setFrom(e.currentTarget.value.trim())}
+        />
+        <TextInput
+          label="Newer revision"
+          size="xs"
+          w={110}
+          inputMode="numeric"
+          list="diff-revisions"
+          value={to}
+          error={!valid(to)}
+          onChange={(e) => setTo(e.currentTarget.value.trim())}
+        />
+        <Button type="submit" size="xs" variant="default" disabled={!valid(from) || !valid(to)}>
+          Compare
+        </Button>
+        <datalist id="diff-revisions">
+          {props.suggestions.map((option) => (
+            <option key={option.value} value={option.value} label={option.label} />
+          ))}
+        </datalist>
+      </Group>
+    </form>
+  )
+}
+
 export function Diff(params: DiffParams) {
   const { channel, from, to, path, offset = 0 } = params
   const revisions = useQuery(adminOrpc.catalog.publications.queryOptions({ input: { channel, limit: 100 } }))
@@ -78,26 +133,14 @@ export function Diff(params: DiffParams) {
         <Title order={2} size="h5" id="diff-heading">
           Changes between publications
         </Title>
-        {options.length > 0 && data && (
-          <Group gap="xs" wrap="wrap">
-            <NativeSelect
-              aria-label="Older publication"
-              size="xs"
-              data={options}
-              value={String(data.from.revision)}
-              onChange={(e) => (window.location.hash = href({ from: Number(e.currentTarget.value) }))}
-            />
-            <Text size="xs" c="dimmed">
-              →
-            </Text>
-            <NativeSelect
-              aria-label="Newer publication"
-              size="xs"
-              data={options}
-              value={String(data.to.revision)}
-              onChange={(e) => (window.location.hash = href({ to: Number(e.currentTarget.value) }))}
-            />
-          </Group>
+        {data && (
+          <RevisionPair
+            key={`${data.from.revision}:${data.to.revision}`}
+            from={data.from.revision}
+            to={data.to.revision}
+            suggestions={options}
+            onCompare={(next) => (window.location.hash = href({ ...next, path: undefined }))}
+          />
         )}
       </Group>
 

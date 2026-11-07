@@ -136,8 +136,15 @@ export function Publications({ channel, before }: { channel?: string; before?: n
                     )}
                   </Table.Td>
                   <Table.Td>
+                    {/* data.channel, not the prop: while another channel loads, these rows are still the old one's */}
                     {(index < data.publications.length - 1 || data.nextBefore !== null) && (
-                      <Anchor size="sm" href={routeHref('diff', { channel, to: p.revision })}>
+                      <Anchor
+                        size="sm"
+                        href={routeHref('diff', {
+                          channel: data.channel === 'production-v1' ? undefined : data.channel,
+                          to: p.revision,
+                        })}
+                      >
                         vs previous
                       </Anchor>
                     )}

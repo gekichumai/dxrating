@@ -111,11 +111,15 @@ describe('Diff', () => {
     expect(screen.getByText('versions').closest('p')?.textContent).toContain('CiRCLE')
     // Opened without revisions, links keep the pair the API resolved, so a new publication can't switch the comparison
     expect(screen.getByText('Next 50').closest('a')?.getAttribute('href')).toBe('#diff?from=2&to=3&offset=50')
-    // Both revisions on screen are selectable even when the publication list does not include them
-    expect((screen.getByLabelText('Older publication') as HTMLSelectElement).value).toBe('2')
-    expect((screen.getByLabelText('Newer publication') as HTMLSelectElement).value).toBe('3')
-    fireEvent.change(screen.getByLabelText('Newer publication'), { target: { value: '2' } })
-    expect(window.location.hash).toBe('#diff?from=2&to=2')
+    // Any revision can be typed, including ones older than the newest 100 the suggestions cover
+    expect((screen.getByLabelText('Older revision') as HTMLInputElement).value).toBe('2')
+    expect((screen.getByLabelText('Newer revision') as HTMLInputElement).value).toBe('3')
+    fireEvent.change(screen.getByLabelText('Older revision'), { target: { value: '40' } })
+    fireEvent.change(screen.getByLabelText('Newer revision'), { target: { value: '50' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Compare' }))
+    expect(window.location.hash).toBe('#diff?from=40&to=50')
+    fireEvent.change(screen.getByLabelText('Older revision'), { target: { value: 'r4' } })
+    expect((screen.getByRole('button', { name: 'Compare' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('sends the revisions, path and page it was opened with, and offers to clear the filter', async () => {
