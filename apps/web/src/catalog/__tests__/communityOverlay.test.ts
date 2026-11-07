@@ -76,6 +76,23 @@ describe('community overlay loading', () => {
     expect(fetchMock).toHaveBeenCalledOnce()
   })
 
+  it('resolves a pending overlay against a catalog published while it was in flight', async () => {
+    const newSheet = { ...sheet, id: 'dsht_newsheet01' }
+    let respond!: (response: Response) => void
+    fetchMock.mockReturnValueOnce(new Promise<Response>((resolve) => (respond = resolve)))
+    const pending = loadCommunityLists()
+
+    setLoadedCatalogDocumentForTests({
+      ...catalogSnapshot,
+      updatedAt: '2099-01-03T00:00:00Z',
+      songs: [{ ...song, sheets: [...song.sheets, newSheet] }, ...catalogSnapshot.songs.slice(1)],
+    })
+    respond(
+      Response.json(toV2Community({ tagGroups: [], tags: [], tagSongs: [{ tag_id: 3, sheet_id: newSheet.id }] }, [])),
+    )
+    expect((await pending).tagSongs.map((tagSong) => tagSong.sheet_id)).toEqual([newSheet.id])
+  })
+
   it('tries again after a failed load, and refuses a document of another schema', async () => {
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 503 }))
     await expect(loadCommunityLists()).rejects.toThrow('HTTP 503')

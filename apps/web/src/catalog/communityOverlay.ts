@@ -55,7 +55,10 @@ export async function loadCommunityLists(consumer?: string): Promise<CommunityLi
       if (shared === entry) shared = undefined
     })
   }
-  const [community, catalog] = await Promise.all([shared.community, loadClientCatalogDocument()])
+  const [community, loaded] = await Promise.all([shared.community, loadClientCatalogDocument()])
+  // The latest catalog, not the one loaded when this call began: a background revalidation can publish a newer one
+  // while the overlay request is in flight, and nothing would notify this call again
+  const catalog = getLoadedCatalogDocument() ?? loaded
   if (consumer) resolvedAgainst.set(consumer, catalog.updatedAt)
   return fromV2Community(community, catalog)
 }
