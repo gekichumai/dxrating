@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { Effect, Layer, ManagedRuntime } from 'effect'
+import net from 'node:net'
 import pg from 'pg'
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import { HttpClientLive } from '@gekichumai/backend/http-client'
@@ -49,10 +50,14 @@ describe('describeCause', () => {
       address: '10.0.0.2',
       port: 5432,
     })
-    expect(describeCause(new AggregateError([refused]))).toMatchObject({
+    // Node's own shape: the aggregate also carries the code, with an empty message
+    const aggregate = Object.assign(new AggregateError([refused], ''), { code: 'ECONNREFUSED' })
+    expect(describeCause(aggregate)).toMatchObject({
       code: 'ECONNREFUSED',
       syscall: 'connect',
+      address: '10.0.0.2',
       port: 5432,
+      message: 'connect ECONNREFUSED 10.0.0.2:5432',
     })
   })
 
@@ -68,7 +73,7 @@ describe('describeCause', () => {
 describe('AdminDatabase', () => {
   const pool = new pg.Pool({ connectionString: URL_WITH_SECRET, connectionTimeoutMillis: 5_000 })
   afterAll(() => pool.end())
-  const layer = adminDatabaseFromPool(pool, passwordOf(URL_WITH_SECRET))
+  const layer = adminDatabaseFromPool(pool, { connectionString: URL_WITH_SECRET })
 
   it('logs one JSON line with the operation and cause when a query fails, without the URL or password', async () => {
     const lines = logged()
@@ -88,6 +93,32 @@ describe('AdminDatabase', () => {
     })
     expect(line).not.toContain('synthetic-secret-pw')
     expect(line).not.toContain('postgres://')
+  })
+
+  it('gives up on a server that accepts the connection and never answers, without using the pool', async () => {
+    const sockets: net.Socket[] = []
+    const silent = net.createServer((socket) => void sockets.push(socket))
+    await new Promise<void>((resolve) => silent.listen(0, '127.0.0.1', resolve))
+    const { port } = silent.address() as net.AddressInfo
+    const stalledPool = new pg.Pool({ max: 1 })
+    const runtime = ManagedRuntime.make(
+      adminDatabaseFromPool(stalledPool, {
+        connectionString: `postgres://u:synthetic-secret-pw@127.0.0.1:${port}/x`,
+        pingTimeoutMs: 200,
+      }),
+    )
+    const lines = logged()
+    const started = Date.now()
+    const exit = await runtime.runPromiseExit(Effect.flatMap(AdminDatabase, (db) => db.ping))
+    expect(exit._tag).toBe('Failure')
+    expect(Date.now() - started).toBeLessThan(2_000)
+    expect(stalledPool.totalCount).toBe(0)
+    expect(JSON.parse(lines()[0]!)).toMatchObject({ event: 'db_error', operation: 'ping' })
+    expect(lines()[0]).not.toContain('synthetic-secret-pw')
+    await runtime.dispose()
+    await stalledPool.end()
+    for (const socket of sockets) socket.destroy()
+    await new Promise((resolve) => silent.close(resolve))
   })
 
   it('answers /health?db=1 with 503 when the database is unreachable, and /health without touching it', async () => {
