@@ -12,5 +12,5 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src/**/*", "vite.config.ts", "uno.config.ts", "worker/**/*"]
+  "include": ["src/**/*", "vite.config.ts", "worker/**/*"]
 }
