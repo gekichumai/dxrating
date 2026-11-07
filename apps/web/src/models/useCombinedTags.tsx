@@ -1,7 +1,7 @@
 import useSWR from 'swr'
 import type { z } from 'zod'
 import type { TagsListResponseSchema } from '../lib/contract'
-import { apiClient as client } from '../lib/orpc'
+import { loadCommunityLists, useRefreshOnCatalogChange } from '../catalog/communityOverlay'
 
 export type CombinedTags = z.infer<typeof TagsListResponseSchema>
 export type Tag = CombinedTags['tags'][number]
@@ -9,10 +9,12 @@ export type TagGroup = CombinedTags['tagGroups'][number]
 export type TagSong = CombinedTags['tagSongs'][number]
 
 export const useCombinedTags = () => {
-  return useSWR(
+  const combinedTags = useSWR(
     'tags.list',
     async () => {
-      return (await client.tags.list({ idScheme: 'public' })) as CombinedTags
+      // From the v2 community overlay: the tag-sheet associations it keeps visible, resolved against the catalog
+      const { tags, tagGroups, tagSongs } = await loadCommunityLists('tags.list')
+      return { tags, tagGroups, tagSongs } as CombinedTags
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,
@@ -23,6 +25,9 @@ export const useCombinedTags = () => {
       suspense: false,
     },
   )
+  // The dedupe window above does not hold back this revalidation
+  useRefreshOnCatalogChange('tags.list', combinedTags.mutate)
+  return combinedTags
 }
 
 /**

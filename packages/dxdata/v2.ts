@@ -119,13 +119,17 @@ export const fromV2Catalog = (catalog: CatalogV2Document): CatalogV1 => {
 
 /** The overlay from the v1 tag list (already filtered to visible associations) and alias list */
 export const toV2Community = (
-  tags: { tagGroups: CatalogTagGroup[]; tags: CatalogTag[]; tagSongs: readonly Pick<CatalogTagSong, 'tag_id'>[] },
+  tags: {
+    tagGroups: CatalogTagGroup[]
+    tags: CatalogTag[]
+    tagSongs: readonly (Pick<CatalogTagSong, 'tag_id'> & Partial<CatalogTagSong>)[]
+  },
   aliases: readonly CatalogAlias[],
 ): CommunityV2Document => {
   const sheetTags: Record<string, string[]> = {}
-  for (const { tag_id, sheet_id } of tags.tagSongs as readonly Partial<CatalogTagSong>[]) {
+  for (const { tag_id, sheet_id } of tags.tagSongs) {
     // Only public sheet IDs can be addressed in v2
-    if (tag_id === undefined || sheet_id === undefined) continue
+    if (sheet_id === undefined) continue
     const sheets = (sheetTags[String(tag_id)] ??= [])
     if (!sheets.includes(sheet_id)) sheets.push(sheet_id)
   }
