@@ -449,6 +449,7 @@ import { netGatewayStatusEffect, withMaimaiNETClient, type NetGatewayStatus } fr
 import { recordNetFailure, recordNetSuccess } from './services/functions/fetch-net-records/telemetry'
 import * as lxnsService from './services/lxns/viewer'
 import { withViewer, type SessionViewer } from './proofs/viewer-is'
+import { listPublicAnnouncements } from './services/announcements'
 
 const TrendingSeriesSchema = Schema.Struct({
   breakdown_value: Schema.optional(Schema.Unknown),
@@ -1028,7 +1029,16 @@ const lxnsHandler = {
   ),
 }
 
+const announcementsHandler = {
+  list: os.announcements.list.handler(
+    handlerGen(function* () {
+      return yield* listPublicAnnouncements()
+    }),
+  ),
+}
+
 export const appRouter = os.router({
+  announcements: announcementsHandler,
   tags: tagsHandler,
   comments: commentsHandler,
   aliases: aliasesHandler,

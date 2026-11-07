@@ -1,16 +1,18 @@
 import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
+import { announcementsContract } from './announcements.ts'
+import { SUPPORTED_LOCALES } from './locales.ts'
 
 const oc = contractBuilder.errors({})
 
 /**
  * A localized string is an object mapping language codes to translated strings.
- * Supported language codes: "en", "ja", "zh-Hans", "zh-Hant"
+ * Keys are the tags of `SUPPORTED_LOCALES` (locales.ts).
  */
 export const LocalizedStringSchema = z
   .record(z.string(), z.string())
-  .describe('Localized string. Keys are language codes: "en", "ja", "zh-Hans", "zh-Hant"')
+  .describe(`Localized string. Keys are language codes: ${SUPPORTED_LOCALES.map((tag) => `"${tag}"`).join(', ')}`)
 
 export const MaimaiNetRegionStatusSchema = z.object({
   status: z.enum(['ok', 'maintenance', 'unknown']),
@@ -262,6 +264,7 @@ export const ArcadeVenueDetailInputSchema = z.object({
 })
 
 export const publicContractRoutes = {
+  announcements: announcementsContract,
   tags: {
     list: oc
       .meta(

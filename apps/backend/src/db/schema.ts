@@ -686,3 +686,51 @@ export const userExtraRelations = relations(user, ({ one, many }) => ({
   songAliases: many(songAliases),
   lxnsOauthToken: one(lxnsOauthTokens),
 }))
+/**
+ * Global announcements (gekichumai/meta#49). Text columns map language tags to text, so a new language needs no
+ * migration; the admin API validates the tags against the shared list (`@gekichumai/api-contract` locales) and is
+ * the only writer. This backend only reads them (GET /api/v1/announcements). Nothing is deleted: ending an
+ * announcement sets `ends_at`.
+ */
+export const announcements = pgTable(
+  'announcements',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    revision: integer('revision').default(1).notNull(),
+    severity: text('severity', { enum: ['info', 'warning', 'critical'] }).notNull(),
+    title: jsonb('title').$type<Record<string, string>>().notNull(),
+    body: jsonb('body').$type<Record<string, string>>().notNull(),
+    link_url: text('link_url'),
+    link_label: jsonb('link_label').$type<Record<string, string>>(),
+    starts_at: timestamp('starts_at', { withTimezone: true }).defaultNow().notNull(),
+    ends_at: timestamp('ends_at', { withTimezone: true }),
+    platforms: text('platforms')
+      .array()
+      .default(sql`'{}'::text[]`)
+      .notNull(),
+    regions: text('regions')
+      .array()
+      .default(sql`'{}'::text[]`)
+      .notNull(),
+    min_app_version: text('min_app_version'),
+    max_app_version: text('max_app_version'),
+    dismissible: boolean('dismissible').default(true).notNull(),
+    /**
+     * Who wrote it: `human:<user id>` or `agent:<token id>` (admin API principals). Text, not a foreign key, since
+     * agents are not users and authorship must outlive an account.
+     */
+    created_by: text('created_by').notNull(),
+    updated_by: text('updated_by').notNull(),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check('announcements_severity_check', sql`${table.severity} IN ('info', 'warning', 'critical')`),
+    check('announcements_title_has_en', sql`${table.title} ? 'en'`),
+    check('announcements_body_has_en', sql`${table.body} ? 'en'`),
+    check('announcements_window_check', sql`${table.ends_at} IS NULL OR ${table.ends_at} > ${table.starts_at}`),
+    check('announcements_created_by_check', sql`${table.created_by} ~ '^(human|agent):.+$'`),
+    check('announcements_updated_by_check', sql`${table.updated_by} ~ '^(human|agent):.+$'`),
+    index('announcements_ends_at').on(table.ends_at),
+  ],
+)

@@ -65,6 +65,7 @@ src/
 
 ### oRPC (`/api/v1/*`)
 
+- `GET /announcements` — Current and upcoming global announcements (every language and target; clients filter)
 - `GET /tags` — List tags, groups, and song associations
 - `POST /tags/attach` — Attach tag to song sheet (auth required)
 - `POST /comments` — Create comment (auth required)
