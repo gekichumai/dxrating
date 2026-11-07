@@ -8,7 +8,7 @@ import {
   type RatingEntry,
   type SongCatalog,
 } from '@gekichumai/maimai-domain'
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@/lib/telemetry'
 import { useSongCatalog } from '../../catalog/CatalogContext'
 import { createContext, useContext, useMemo } from 'react'
 import type { Region } from '../../models/context/AppContext'

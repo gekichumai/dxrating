@@ -6,7 +6,7 @@ import {
   type LegacyMigrationResult,
   type SheetReferencingRecord,
 } from '@gekichumai/maimai-domain'
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@/lib/telemetry'
 import { FAVORITE_SHEETS_STORAGE_KEY, writeFavoriteSheetIds } from '@/models/favorite'
 import { loadLegacySongIds } from './legacySongIds'
 

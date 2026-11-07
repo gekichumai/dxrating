@@ -1,6 +1,6 @@
 import type { DifficultyEnum, Song } from '@gekichumai/dxdata'
 import type { SongCatalog, VersionedSheet } from '@gekichumai/maimai-domain'
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@/lib/telemetry'
 import uniq from 'lodash-es/uniq'
 import { useEffect, useMemo } from 'react'
 import { useCompleteCatalogDocument, useCompleteSongCatalog } from './catalog/CatalogContext'

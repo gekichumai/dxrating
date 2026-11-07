@@ -83,6 +83,7 @@
     "@iconify-json/simple-icons": "^1.2.82",
     "@inlang/paraglide-js": "2.29.3",
     "@inlang/plugin-message-format": "4.5.0",
+    "@playwright/test": "1.59.1",
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@types/d3": "^7.4.3",

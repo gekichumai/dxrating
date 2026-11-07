@@ -9,7 +9,7 @@ import {
 } from '@gekichumai/dxdata'
 import { getSongCatalog } from '@gekichumai/maimai-domain'
 import { IconButton, TextField } from '@mui/material'
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@/lib/telemetry'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import clsx from 'clsx'
 import {
