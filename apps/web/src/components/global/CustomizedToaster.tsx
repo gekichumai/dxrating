@@ -1,19 +1,40 @@
 import { IconButton, useMediaQuery } from '@mui/material'
 import IconMdiClose from '~icons/mdi/close'
-import type { FC } from 'react'
+import { type FC, useEffect, useState } from 'react'
 import toast, { ToastBar, Toaster } from 'react-hot-toast'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+
+/**
+ * Whether a dialog is open. MUI portals each dialog to <body> and marks a closed, still-mounted one MuiModal-hidden.
+ * False on the server and the first client render; toasts only show after mount anyway.
+ */
+const useDialogOpen = () => {
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    const check = () => setOpen(document.querySelector('body > .MuiDialog-root:not(.MuiModal-hidden)') !== null)
+    check()
+    const observer = new MutationObserver(check)
+    observer.observe(document.body, { childList: true, attributes: true, attributeFilter: ['class'], subtree: false })
+    return () => observer.disconnect()
+  }, [])
+  return open
+}
 
 export const CustomizedToaster: FC = () => {
   const locale = useLocale()
   // Same 768px breakpoint as useIsLargeDevice; false on the server and the first client render, so SSR markup matches
   const isLargeDevice = useMediaQuery('(min-width: 768px)')
+  // Top-right sits on a dialog's own buttons (copy link, favourite, close), so toasts move to the bottom while one is
+  // open. Phones already show them at the bottom, where the chart sheet has no buttons.
+  const dialogOpen = useDialogOpen()
+  const atTop = isLargeDevice && !dialogOpen
 
   return (
     <Toaster
-      // Phones: at the bottom, clear of the header's sign-in button. Larger screens: top-right, below the header
-      position={isLargeDevice ? 'top-right' : 'bottom-center'}
+      // Phones, and any screen with a dialog open: at the bottom, clear of the header's sign-in button and the
+      // dialog's buttons. Larger screens otherwise: top-right, below the header
+      position={atTop ? 'top-right' : 'bottom-center'}
       toastOptions={{
         // Glass overlay material (src/styles/tokens.css); inline so it wins over react-hot-toast's own styles
         style: {
@@ -38,7 +59,7 @@ export const CustomizedToaster: FC = () => {
         },
       }}
       containerStyle={
-        isLargeDevice
+        atTop
           ? { top: 'calc(env(safe-area-inset-top) + 5rem)', right: 'calc(env(safe-area-inset-right) + 1rem)' }
           : { bottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }
       }

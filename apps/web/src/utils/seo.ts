@@ -268,7 +268,7 @@ export function buildRatingSeo(locale: SupportedLocale) {
   }
 }
 
-type SongSheetSeoSheet = {
+export type SongSheetSeoSheet = {
   type: TypeEnum
   difficulty: DifficultyEnum | string
 } & Partial<Pick<Sheet, 'internalLevelValue' | 'level' | 'noteCounts' | 'noteDesigner' | 'version'>>
@@ -280,7 +280,7 @@ const formatConstant = (sheet: SongSheetSeoSheet) =>
  * Chart page titles lead with what people search for: the song, the chart and its internal level (譜面定数).
  * Sheets without level data (tests, partial catalog slices) keep the plain `<title> [<chart>]` form.
  */
-function buildSongSheetTitle(song: { title: string }, sheet: SongSheetSeoSheet, locale: SupportedLocale) {
+export function buildSongSheetTitle(song: { title: string }, sheet: SongSheetSeoSheet, locale: SupportedLocale) {
   if (!sheet.level) return getSheetPageTitle(song, sheet, locale)
 
   const constant = formatConstant(sheet)

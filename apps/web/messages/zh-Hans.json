@@ -219,6 +219,7 @@
     }
   ],
   "sheet_aliases_showLess": "收起",
+  "sheet_aliases_copy": "复制别名",
   "sheet_aliases_dialogTitle": "添加别名",
   "sheet_aliases_inputLabel": "别名",
   "sheet_aliases_adding": "添加中…",
