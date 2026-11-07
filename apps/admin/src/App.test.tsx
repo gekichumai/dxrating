@@ -62,7 +62,11 @@ describe('admin shell', () => {
       actor: 'human:owner@example.invalid',
       scopes: ['*'],
     }
-    const fetchMock = vi.fn(async () => Response.json(principal))
+    const fetchMock = vi.fn(async (input: Request | string) =>
+      new URL(input instanceof Request ? input.url : input, 'http://admin.test').pathname === '/api/announcements'
+        ? Response.json({ announcements: [] })
+        : Response.json(principal),
+    )
     vi.stubGlobal('fetch', fetchMock)
     const client = new QueryClient()
     mount(client)
@@ -71,7 +75,7 @@ describe('admin shell', () => {
       Response.json({ defined: false, code: 'FORBIDDEN', message: 'Forbidden' }, { status: 403 }),
     )
     await act(() => client.refetchQueries())
-    expect((await screen.findByRole('alert')).textContent).toContain('No access')
+    expect((await screen.findByText('No access')).closest('[role=alert]')).toBeTruthy()
     expect(screen.queryByText('human:owner@example.invalid')).toBeNull()
     expect(screen.queryByText('owner@example.invalid')).toBeNull()
   })
