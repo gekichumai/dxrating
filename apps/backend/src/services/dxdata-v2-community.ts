@@ -59,18 +59,18 @@ export const createCommunityOverlayHandler = <E, R, H extends Env = Env>(
   const overlay = Effect.gen(function* () {
     if (built && now() - built.at < COMMUNITY_REUSE_MS) return built
     if (building) return yield* Deferred.await(building)
-    const result = yield* Deferred.make<Built, E | CommunityOverlayError>()
-    building = result
-    // Finishes even if the request that started it goes away, so the others waiting on it are answered; a failure
-    // reaches them all, and the next request rebuilds
-    return yield* rebuild.pipe(
-      Effect.onExit((exit) =>
-        Effect.gen(function* () {
-          yield* Deferred.done(result, exit)
-          if (building === result) building = undefined
-        }),
-      ),
-      Effect.uninterruptible,
+    // Publishing the shared rebuild and running it are one uninterruptible step: a request that goes away cannot leave
+    // a published rebuild that never finishes, so the others waiting on it are always answered. A failure reaches them
+    // all, and the next request rebuilds
+    return yield* Effect.uninterruptible(
+      Effect.gen(function* () {
+        const result = yield* Deferred.make<Built, E | CommunityOverlayError>()
+        building = result
+        const exit = yield* Effect.exit(rebuild)
+        yield* Deferred.done(result, exit)
+        if (building === result) building = undefined
+        return yield* exit
+      }),
     )
   })
 
