@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "ef993d6d-b976-4e4f-abec-7a4df544d851",
+  "id": "ee3c14dc-9690-462a-9945-49b0d387a5b0",
   "prevIds": [
     "4e8dd5ad-ae67-4db9-b41e-290f06c7d12d"
   ],
@@ -5942,20 +5942,6 @@
     {
       "value": "\"ends_at\" IS NULL OR \"ends_at\" > \"starts_at\"",
       "name": "announcements_window_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "announcements"
-    },
-    {
-      "value": "\"platforms\" <@ ARRAY['web', 'ios']::text[]",
-      "name": "announcements_platforms_check",
-      "entityType": "checks",
-      "schema": "public",
-      "table": "announcements"
-    },
-    {
-      "value": "\"regions\" <@ ARRAY['jp', 'intl', 'cn']::text[]",
-      "name": "announcements_regions_check",
       "entityType": "checks",
       "schema": "public",
       "table": "announcements"

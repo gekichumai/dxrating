@@ -23,6 +23,13 @@ describe('announcement write schemas', () => {
     expect(AnnouncementUpdateInputSchema.safeParse({ ...fields(), id: 3 }).success).toBe(true)
   })
 
+  it('targets every dxdata server, USA included', () => {
+    const parsed = AnnouncementCreateInputSchema.parse(
+      fields({ regions: ['jp', 'intl', 'usa', 'cn'], platforms: ['ios'] }),
+    )
+    expect(parsed.regions).toEqual(['jp', 'intl', 'usa', 'cn'])
+  })
+
   it('drops blank translations and trims the rest', () => {
     const parsed = AnnouncementCreateInputSchema.parse(fields({ title: { en: ' Hi ', ja: '   ' } }))
     expect(parsed.title).toEqual({ en: 'Hi' })
@@ -39,6 +46,7 @@ describe('announcement write schemas', () => {
     ['with inverted app versions', { minAppVersion: '1.10', maxAppVersion: '1.9' }],
     ['with a malformed version', { minAppVersion: '1.x' }],
     ['with an unknown platform', { platforms: ['android'] }],
+    ['with an unknown region', { regions: ['eu'] }],
     ['with an unknown field', { createdBy: 'someone' }],
     ['with a title too long', { title: { en: 'x'.repeat(81) } }],
   ])('rejects one %s', (_case, overrides) => {
