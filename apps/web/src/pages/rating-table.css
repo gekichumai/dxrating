@@ -202,9 +202,12 @@
 
 .rating-chart-copy {
   display: flex;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  /* Sized by the cell, not its text: the difficulty pill below switches to its compact form by this width */
+  container: rating-chart-copy / inline-size;
 }
 
 .rating-chart-title {
@@ -221,6 +224,7 @@
 .rating-chart-meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   column-gap: 5px;
   font-size: 0.75rem;
   line-height: 1.33;
@@ -392,9 +396,25 @@
   }
 }
 
+/* The level as text after the type badge: only where the two-tone difficulty pill is too wide for the column */
+.rating-chart-meta-narrow-level {
+  display: none;
+}
+
 @media (max-width: 359px) {
   .rating-chart-cover {
     display: none;
+  }
+}
+
+/* Too narrow for the whole two-tone pill (Re:MAS | 14.9 is about 86px): phones from 320 to 375px, and tablets once
+   the extra columns return. The pill keeps its difficulty half and the level moves next to the type badge */
+@container rating-chart-copy (max-width: 5.75rem) {
+  .rating-chart-meta .rating-chart-meta-level {
+    display: none;
+  }
+  .rating-chart-meta .rating-chart-meta-narrow-level {
+    display: inline;
   }
 }
 
@@ -453,7 +473,8 @@
   .rating-chart-meta {
     flex-wrap: nowrap;
   }
-  .rating-chart-meta-level {
+  /* The level half of the difficulty pill: two classes, to win over its utility `flex` */
+  .rating-chart-meta .rating-chart-meta-level {
     display: none;
   }
   .rating-table .rating-row-remove {
