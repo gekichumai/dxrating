@@ -45,6 +45,10 @@ CREATE TABLE IF NOT EXISTS dxdata.catalog_publication_receipts (
   PRIMARY KEY (channel, publication_fingerprint_sha256),
   UNIQUE (channel, revision)
 );
+CREATE TABLE IF NOT EXISTS dxdata.canonical_songs (
+  id TEXT PRIMARY KEY,
+  legacy_song_id TEXT UNIQUE
+);
 CREATE TABLE IF NOT EXISTS dxdata.catalog_publication_provenance_manifests (
   channel TEXT NOT NULL,
   publication_fingerprint_sha256 TEXT NOT NULL,
@@ -64,10 +68,14 @@ export const createCatalogFixtureSchema = async (pool: pg.Pool) => {
 
 export const clearCatalogFixture = async (pool: pg.Pool) => {
   await pool.query(`
-    TRUNCATE dxdata.catalog_publication_provenance_manifests, dxdata.catalog_publication_receipts,
+    TRUNCATE dxdata.catalog_publication_provenance_manifests, dxdata.catalog_publication_receipts, dxdata.canonical_songs,
       dxdata.catalog_publications, dxdata.catalog_snapshots, dxdata.catalog_build_runs RESTART IDENTITY
   `)
 }
+
+/** Maps a public song ID to its legacy songId, as the catalog's canonical_songs does (other columns left out) */
+export const mapSongFixture = (pool: pg.Pool, id: string, legacySongId: string) =>
+  pool.query('INSERT INTO dxdata.canonical_songs (id, legacy_song_id) VALUES ($1, $2)', [id, legacySongId])
 
 /** Publishes a synthetic catalog `body` as the next revision of `channel`, the way the assembly line records it */
 export const publishFixture = async (

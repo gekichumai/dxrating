@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
  * The admin's views, addressed by the URL hash (`#publications?channel=…`), so a view and its parameters survive a
  * reload and can be linked. The hash keeps the Worker's SPA fallback out of it.
  */
-export const VIEWS = ['overview', 'announcements', 'publications', 'diff'] as const
+export const VIEWS = ['overview', 'announcements', 'publications', 'diff', 'songs', 'song'] as const
 export type View = (typeof VIEWS)[number]
 
 export interface Route {

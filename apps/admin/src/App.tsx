@@ -20,6 +20,7 @@ import { Announcements } from './Announcements'
 import { adminOrpc } from './api'
 import { Diff } from './catalog/Diff'
 import { Publications } from './catalog/Publications'
+import { SongProvenance, SongSearch } from './catalog/Songs'
 import { routeHref, useRoute, type View } from './route'
 
 const NAV: { view: View; label: string; scope?: string }[] = [
@@ -27,6 +28,7 @@ const NAV: { view: View; label: string; scope?: string }[] = [
   { view: 'announcements', label: 'Announcements', scope: 'announcements:read' },
   { view: 'publications', label: 'Publications', scope: 'catalog:read' },
   { view: 'diff', label: 'Changes', scope: 'catalog:read' },
+  { view: 'songs', label: 'Songs', scope: 'catalog:read' },
 ]
 
 const can = (scopes: readonly string[] | undefined, scope: string | undefined) =>
@@ -71,7 +73,7 @@ export function App() {
             key={item.view}
             label={item.label}
             href={routeHref(item.view)}
-            active={route.view === item.view}
+            active={route.view === item.view || (item.view === 'songs' && route.view === 'song')}
             aria-current={route.view === item.view ? 'page' : undefined}
             onClick={close}
           />
@@ -79,7 +81,7 @@ export function App() {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <Stack maw={route.view === 'publications' || route.view === 'diff' ? 1200 : 960}>
+        <Stack maw={route.view === 'overview' || route.view === 'announcements' ? 960 : 1200}>
           {me.isPending && <Skeleton h={120} radius="md" aria-busy="true" aria-label="Loading" />}
           {denied && (
             <Alert color="orange" title="No access" role="alert">
@@ -135,6 +137,22 @@ export function App() {
               offset={Number(route.params.get('offset')) || undefined}
             />
           )}
+          {principal && route.view === 'songs' && can(principal.scopes, 'catalog:read') && (
+            <SongSearch
+              q={route.params.get('q') ?? undefined}
+              revision={Number(route.params.get('revision')) || undefined}
+            />
+          )}
+          {principal &&
+            route.view === 'song' &&
+            can(principal.scopes, 'catalog:read') &&
+            route.params.get('songId') && (
+              <SongProvenance
+                key={route.params.get('songId')}
+                songId={route.params.get('songId')!}
+                revision={Number(route.params.get('revision')) || undefined}
+              />
+            )}
           {principal && route.view === 'publications' && can(principal.scopes, 'catalog:read') && (
             <Publications
               channel={route.params.get('channel') ?? undefined}
