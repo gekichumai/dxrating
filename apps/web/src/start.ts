@@ -36,13 +36,15 @@ const agentDiscoveryHeadersMiddleware = createMiddleware().server(async ({ next 
 
 export function buildStartOptions() {
   return {
+    // Server only. In the browser these are empty stubs, and importing them would put the Sentry SDK on the
+    // hydration path, where an ad blocker that blocks it stops the page from hydrating.
     requestMiddleware: [
-      sentryGlobalRequestMiddleware,
+      ...(import.meta.env.SSR ? [sentryGlobalRequestMiddleware] : []),
       localeMiddleware,
       securityHeadersMiddleware,
       agentDiscoveryHeadersMiddleware,
     ],
-    functionMiddleware: [sentryGlobalFunctionMiddleware],
+    functionMiddleware: import.meta.env.SSR ? [sentryGlobalFunctionMiddleware] : [],
   }
 }
 

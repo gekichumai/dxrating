@@ -15,7 +15,7 @@ import {
 import { type FC, useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import CarbonCloud from '~icons/carbon/cloud'
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@/lib/telemetry'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { useAuth } from '../../../../hooks/useAuth'
 import { apiClient } from '../../../../lib/orpc'

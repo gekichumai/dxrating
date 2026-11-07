@@ -88,8 +88,9 @@ const VENDOR_GROUPS: [name: string, pkgs: string[]][] = [
       'seroval-plugins',
     ],
   ],
+  // Not named after the SDK: ad-block lists that block every URL containing "sentry" would block the chunk
   [
-    'vendor-sentry',
+    'vendor-reporting',
     [
       '@sentry/core',
       '@sentry/browser',
