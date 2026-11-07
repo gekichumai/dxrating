@@ -126,6 +126,8 @@ function usePoliteAnnouncement(
 ) {
   const [text, setText] = useState('')
   const announced = useRef(new Set<string>())
+  const pending = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  useEffect(() => () => clearTimeout(pending.current), [])
   // The set of announced revisions keeps a re-render or a language switch from repeating a notice
   useEffect(() => {
     const fresh = visible.filter(
@@ -134,15 +136,19 @@ function usePoliteAnnouncement(
     )
     if (fresh.length === 0) return
     for (const announcement of fresh) announced.current.add(`${announcement.id}:${announcement.revision}`)
-    setText(
-      fresh
-        .map((announcement) => {
-          const { title } = localizeAnnouncement(announcement, locale, fallbacks)
-          return title ? `${severityLabel(announcement.severity, locale)}: ${title.value}` : null
-        })
-        .filter(Boolean)
-        .join('. '),
-    )
+    const next = fresh
+      .map((announcement) => {
+        const { title, body } = localizeAnnouncement(announcement, locale, fallbacks)
+        return title
+          ? [`${severityLabel(announcement.severity, locale)}: ${title.value}`, body?.value].filter(Boolean).join('. ')
+          : null
+      })
+      .filter(Boolean)
+      .join('. ')
+    // Empty the region first, so a revision whose text reads the same is still a change screen readers announce
+    setText('')
+    clearTimeout(pending.current)
+    pending.current = setTimeout(() => setText(next), 150)
   }, [visible, locale, fallbacks])
   return text
 }
