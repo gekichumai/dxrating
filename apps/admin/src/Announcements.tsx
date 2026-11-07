@@ -50,6 +50,9 @@ interface Draft {
   linkLabel: Text
   startsAt: string
   endsAt: string
+  /** The stored timestamps the draft was read from, sent back unchanged unless their field is edited */
+  storedStartsAt?: string | null
+  storedEndsAt?: string | null
   platforms: string[]
   regions: string[]
   minAppVersion: string
@@ -93,12 +96,21 @@ const draftFrom = (a: Announcement): Draft => ({
   linkLabel: a.link?.label ?? {},
   startsAt: toLocalInput(a.startsAt),
   endsAt: toLocalInput(a.endsAt),
+  storedStartsAt: a.startsAt,
+  storedEndsAt: a.endsAt,
   platforms: a.platforms,
   regions: a.regions,
   minAppVersion: a.minAppVersion ?? '',
   maxAppVersion: a.maxAppVersion ?? '',
   dismissible: a.dismissible,
 })
+
+/**
+ * datetime-local holds minutes only. A field the user left alone sends back the stored timestamp with its full
+ * precision, so editing the text never moves (or collapses) a window set to the second or millisecond.
+ */
+const keepStored = (value: string, stored: string | null | undefined) =>
+  stored && value === toLocalInput(stored) ? stored : fromLocalInput(value)
 
 export const toInput = (draft: Draft) => ({
   severity: draft.severity,
@@ -110,8 +122,8 @@ export const toInput = (draft: Draft) => ({
         label: Object.values(draft.linkLabel).some((v) => v.trim()) ? draft.linkLabel : null,
       }
     : null,
-  startsAt: fromLocalInput(draft.startsAt),
-  endsAt: fromLocalInput(draft.endsAt),
+  startsAt: keepStored(draft.startsAt, draft.storedStartsAt),
+  endsAt: keepStored(draft.endsAt, draft.storedEndsAt),
   platforms: draft.platforms as (typeof ANNOUNCEMENT_PLATFORMS)[number][],
   regions: draft.regions as (typeof ANNOUNCEMENT_REGIONS)[number][],
   minAppVersion: draft.minAppVersion.trim() || null,

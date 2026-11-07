@@ -260,6 +260,44 @@ describe('announcements page', () => {
 })
 
 describe('helpers', () => {
+  it('sends untouched stored timestamps back with full precision, and edited ones from the field', () => {
+    const base = {
+      severity: 'info' as const,
+      title: { en: 'a' },
+      body: { en: 'b' },
+      linkUrl: '',
+      linkLabel: {},
+      platforms: [],
+      regions: [],
+      minAppVersion: '',
+      maxAppVersion: '',
+      dismissible: true,
+    }
+    const start = '2026-03-01T12:00:10.123Z'
+    const end = '2026-03-01T12:00:50.456Z'
+    const local = (iso: string) => {
+      const d = new Date(iso)
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+    }
+    const untouched = toInput({
+      ...base,
+      startsAt: local(start),
+      endsAt: local(end),
+      storedStartsAt: start,
+      storedEndsAt: end,
+    })
+    expect(untouched).toMatchObject({ startsAt: start, endsAt: end })
+    const edited = toInput({
+      ...base,
+      startsAt: local(start),
+      endsAt: local('2026-03-02T00:00:00Z'),
+      storedStartsAt: start,
+      storedEndsAt: end,
+    })
+    expect(edited.startsAt).toBe(start)
+    expect(edited.endsAt).toBe(new Date(local('2026-03-02T00:00:00Z')).toISOString())
+  })
+
   it('drops an empty link and blank versions', () => {
     const input = toInput({
       severity: 'info',
