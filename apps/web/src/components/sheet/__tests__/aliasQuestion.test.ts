@@ -25,12 +25,35 @@ describe('aliasHostLabel', () => {
     ['what?! song...', 'what-song'],
     ['-- edge --', 'edge'],
     ['快乐断手器', '快乐断手器'],
+    ['Re:End', 'reend'],
+    ['fate/stay/night', 'fatestaynight'],
+    ['a ﾟb', 'a-b'],
+    ['❤️love', 'love'],
+    ['café', 'café'],
   ])('%s → %s', (alias, label) => {
     expect(aliasHostLabel(alias)).toBe(label)
   })
 
-  it.each(['', '   ', '!!!', '...', '（）'])('makes no label from %j', (alias) => {
+  it.each(['', '   ', '!!!', '...', '（）', '⚔️🍎', '(ﾟ∀ﾟ)'])('makes no label from %j', (alias) => {
     expect(aliasHostLabel(alias)).toBeNull()
+  })
+
+  it('makes only labels the URL parser accepts as one label, for every alias shape above', () => {
+    for (const alias of [
+      'Re:End',
+      'fate/stay/night',
+      'track 4/3',
+      '⚔️🍎',
+      '(ﾟ∀ﾟ)',
+      'a ﾟb',
+      '❤️love',
+      'café',
+      '我的 歌（DX）',
+    ]) {
+      const label = aliasHostLabel(alias)
+      if (label === null) continue
+      expect(new URL(`https://${label}.是什么歌.com`).hostname).toBe(`${toAsciiLabel(label)}.xn--6iq3kq43dxve.com`)
+    }
   })
 
   it('allows 63 bytes and no more', () => {

@@ -6,12 +6,17 @@
  *   2. turn every run of whitespace and dots (. 。 ． ｡) into one "-": a dot would add a subdomain level, which the
  *      wildcard TLS certificate does not cover
  *   3. drop every character that is not a letter, a digit, a combining mark or "-"
- *   4. collapse runs of "-" and trim "-" from both ends (a label cannot start or end with one)
- *   5. the label must be non-empty and at most 63 bytes once punycoded (xn--…); otherwise use the question form
+ *   4. drop variation selectors (U+FE00–FE0F, U+E0100–E01EF), which hostname processing ignores, and every combining
+ *      mark that no longer follows a letter or digit (at the start, or after "-"): IDNA rejects a label or part that
+ *      starts with one, e.g. what is left of "⚔️🍎" (U+FE0F) or "(ﾟ∀ﾟ)" (two U+309A)
+ *   5. collapse runs of "-" and trim "-" from both ends (a label cannot start or end with one)
+ *   6. the label must be non-empty and at most 63 bytes once punycoded (xn--…); otherwise use the question form
  */
 
 const SEPARATORS = /[\s.。．｡]+/gu
 const INVALID = /[^\p{L}\p{N}\p{M}-]/gu
+const VARIATION_SELECTORS = /[\u{FE00}-\u{FE0F}\u{E0100}-\u{E01EF}]/gu
+const STRANDED_MARKS = /(^|-)\p{M}+/gu
 
 /** The hostname label for an alias, or null when it makes none (empty, or longer than 63 bytes as punycode) */
 export function aliasHostLabel(alias: string): string | null {
@@ -21,6 +26,8 @@ export function aliasHostLabel(alias: string): string | null {
     .toLowerCase()
     .replace(SEPARATORS, '-')
     .replace(INVALID, '')
+    .replace(VARIATION_SELECTORS, '')
+    .replace(STRANDED_MARKS, '$1')
     .replace(/-{2,}/g, '-')
     .replace(/^-+|-+$/g, '')
   if (!label) return null
