@@ -80,9 +80,9 @@ export function App() {
               <Table variant="vertical" layout="fixed" withRowBorders={false}>
                 <Table.Tbody>
                   <Table.Tr>
-                    <Table.Th w={120}>Principal</Table.Th>
+                    <Table.Th w={88}>Principal</Table.Th>
                     <Table.Td>
-                      <Code>{principal.actor}</Code>
+                      <Code style={{ overflowWrap: 'anywhere', whiteSpace: 'normal' }}>{principal.actor}</Code>
                     </Table.Td>
                   </Table.Tr>
                   <Table.Tr>
