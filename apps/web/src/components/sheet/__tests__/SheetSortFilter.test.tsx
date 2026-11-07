@@ -3,6 +3,7 @@ import { act, useState } from 'react'
 import { renderToString } from 'react-dom/server'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initI18n } from '@/setup/init-i18n'
+import { VERSION_SORT_ORDER } from '@gekichumai/dxdata'
 import { SheetSortFilter, SheetSortFilterTrigger } from '../SheetSortFilter'
 
 vi.mock('@hookform/devtools', () => ({
@@ -108,3 +109,82 @@ describe('SheetSortFilter', () => {
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
   })
 })
+describe('countActiveSortFilters', () => {
+  it('counts each filter group and the sort that differ from the defaults', async () => {
+    const { countActiveSortFilters, getDefaultSheetSortFilterForm } = await import('../SheetSortFilter')
+    const form = getDefaultSheetSortFilterForm()
+    expect(countActiveSortFilters(form)).toBe(0)
+    expect(countActiveSortFilters(undefined)).toBe(0)
+
+    form.filters.favoritesOnly = true
+    form.filters.difficulties = form.filters.difficulties.slice(0, 2)
+    form.filters.internalLevelValue = { min: 13, max: 15 }
+    expect(countActiveSortFilters(form)).toBe(3)
+
+    form.sorts = [{ descriptor: 'internalLevelValue', direction: 'desc' }]
+    expect(countActiveSortFilters(form)).toBe(4)
+
+    // The same members in another order are still the defaults
+    form.filters.categories = [...getDefaultSheetSortFilterForm().filters.categories].reverse()
+    expect(countActiveSortFilters(form)).toBe(4)
+  })
+})
+
+describe('SheetSortFilterTrigger active count', () => {
+  beforeAll(() => {
+    initI18n()
+  })
+
+  it('shows how many filters are active and says so in its name', () => {
+    render(
+      <SheetSortFilterTrigger variant="compact" expanded={false} contentId="x" onToggle={() => {}} activeCount={2} />,
+    )
+    const button = screen.getByRole('button')
+    expect(button.getAttribute('aria-label')).toMatch(/2 active/)
+    expect(button.textContent).toContain('2')
+  })
+
+  it('shows no count with the defaults', () => {
+    render(<SheetSortFilterTrigger variant="compact" expanded={false} contentId="x" onToggle={() => {}} />)
+    expect(screen.getByRole('button').getAttribute('aria-label')).not.toMatch(/active/)
+  })
+})
+
+describe('sort and filter persistence', () => {
+  it('keeps the choice in sessionStorage without an expiry, and drops the old localStorage copy', async () => {
+    const session = new Map<string, string>()
+    const removeLocal = vi.fn()
+    Object.defineProperty(window, 'sessionStorage', {
+      configurable: true,
+      value: {
+        getItem: (k: string) => session.get(k) ?? null,
+        setItem: (k: string, v: string) => session.set(k, v),
+        removeItem: (k: string) => session.delete(k),
+      },
+    })
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: vi.fn((k: string) => (k === 'dxrating-known-latest-game-version' ? latestVersion() : null)),
+        setItem: vi.fn(),
+        removeItem: removeLocal,
+      },
+    })
+    const { getDefaultSheetSortFilterForm } = await import('../SheetSortFilter')
+    const saved = getDefaultSheetSortFilterForm()
+    saved.filters.favoritesOnly = true
+    session.set('dxrating-sheet-sort-filter', JSON.stringify({ version: 1, payload: saved }))
+
+    const onChange = vi.fn()
+    render(<SheetSortFilter onChange={onChange} />)
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ filters: expect.objectContaining({ favoritesOnly: true }) }),
+    )
+    expect(removeLocal).toHaveBeenCalledWith('dxrating-sheet-sort-filter')
+  })
+})
+
+const latestVersion = () => {
+  // The newest version the build knows: an unchanged one keeps the saved filters
+  return VERSION_SORT_ORDER[VERSION_SORT_ORDER.length - 1]!
+}

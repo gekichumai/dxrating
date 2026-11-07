@@ -218,7 +218,8 @@
     "layout.label": "レイアウト",
     "layout.list": "リスト",
     "layout.grid": "グリッド",
-    "favorite.marked": "お気に入り"
+    "favorite.marked": "お気に入り",
+    "sort-and-filter.active": "{{n}} 件適用中"
   },
   "song": {
     "not-found.title": "楽曲が見つかりません",

@@ -218,7 +218,8 @@
     "layout.label": "Layout",
     "layout.list": "List",
     "layout.grid": "Grid",
-    "favorite.marked": "Favorite"
+    "favorite.marked": "Favorite",
+    "sort-and-filter.active": "{{n}} active"
   },
   "song": {
     "not-found.title": "Song not found",

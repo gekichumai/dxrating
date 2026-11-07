@@ -75,12 +75,50 @@ export const getDefaultSheetSortFilterForm = (): SheetSortFilterForm => ({
 const CURRENT_SCHEMA_VERSION = 1
 const SHEET_SORT_FILTER_STORAGE_KEY = 'dxrating-sheet-sort-filter'
 const LATEST_VERSION_KEY = 'dxrating-known-latest-game-version'
-const SHEET_SORT_FILTER_TTL = 5 * 60 * 1000
+
+/**
+ * The sort and filters last until the tab is closed (sessionStorage): they survive opening a chart and coming back,
+ * or a reload, and a new visit starts from the defaults. They used to expire 5 minutes after the last change, which
+ * reset them without a word; the trigger now shows how many are active, so a kept filter is never a surprise.
+ */
+const sortFilterStorage = (): Storage | null => {
+  try {
+    return typeof window === 'undefined' ? null : window.sessionStorage
+  } catch {
+    return null
+  }
+}
 
 const clearPersistedSheetSortFilter = () => {
-  if (typeof window !== 'undefined') {
+  if (typeof window === 'undefined') return
+  try {
+    sortFilterStorage()?.removeItem(SHEET_SORT_FILTER_STORAGE_KEY)
+    // The 5-minute copy older builds kept in localStorage
     window.localStorage.removeItem(SHEET_SORT_FILTER_STORAGE_KEY)
+  } catch {
+    // Storage blocked: nothing persisted to clear
   }
+}
+
+const sameMembers = <T,>(a: readonly T[] | undefined, b: readonly T[]) =>
+  (a ?? []).length === b.length && b.every((value) => (a ?? []).includes(value))
+
+/** How many filter groups (and the sort, as one) differ from the defaults: the number on the trigger */
+export const countActiveSortFilters = (form: SheetSortFilterForm | undefined): number => {
+  if (!form) return 0
+  const defaults = getDefaultSheetSortFilterForm()
+  const { filters } = form
+  const level = filters.internalLevelValue
+  const defaultLevel = defaults.filters.internalLevelValue!
+  return [
+    !sameMembers(filters.versions, defaults.filters.versions),
+    !!level && (level.min !== defaultLevel.min || level.max !== defaultLevel.max),
+    (filters.tags ?? []).length > 0,
+    !sameMembers(filters.categories, defaults.filters.categories),
+    !sameMembers(filters.difficulties, defaults.filters.difficulties),
+    !!filters.favoritesOnly,
+    JSON.stringify(form.sorts ?? []) !== JSON.stringify(defaults.sorts),
+  ].filter(Boolean).length
 }
 
 type SchemaFilterFormVersionZero = SheetSortFilterForm
@@ -189,17 +227,20 @@ const loadSavedSheetSortFilterForm = (): SheetSortFilterForm | null => {
     return null
   }
 
-  const alreadySaved = window.localStorage.getItem(SHEET_SORT_FILTER_STORAGE_KEY)
+  let alreadySaved: string | null = null
+  try {
+    alreadySaved = sortFilterStorage()?.getItem(SHEET_SORT_FILTER_STORAGE_KEY) ?? null
+    // A copy an older build left in localStorage is not carried over: it would come back on every visit
+    window.localStorage.removeItem(SHEET_SORT_FILTER_STORAGE_KEY)
+  } catch {
+    return null
+  }
   if (!alreadySaved) {
     return null
   }
 
   try {
     const parsed = JSON.parse(alreadySaved)
-    if (typeof parsed.expiresAt !== 'number' || parsed.expiresAt < Date.now()) {
-      clearPersistedSheetSortFilter()
-      return null
-    }
     return validateAndMigrate(parsed)
   } catch (e) {
     console.warn('Failed to parse saved sort filter', e)
@@ -254,16 +295,14 @@ const SheetSortFilterFormListener: FC<{
     const subscription = watch((data) => {
       if (data.filters || data.sorts) {
         onChange?.(data as SheetSortFilterForm)
-        const lastActiveAt = Date.now()
-
-        window.localStorage.setItem(
-          SHEET_SORT_FILTER_STORAGE_KEY,
-          JSON.stringify({
-            version: CURRENT_SCHEMA_VERSION,
-            payload: data,
-            expiresAt: lastActiveAt + SHEET_SORT_FILTER_TTL,
-          }),
-        )
+        try {
+          sortFilterStorage()?.setItem(
+            SHEET_SORT_FILTER_STORAGE_KEY,
+            JSON.stringify({ version: CURRENT_SCHEMA_VERSION, payload: data }),
+          )
+        } catch {
+          // Storage full or blocked: the choice still applies to this page
+        }
       }
     })
 
@@ -327,10 +366,22 @@ export const SheetSortFilterTrigger: FC<{
   contentId: string
   onToggle: () => void
   pending?: boolean
+  /** Filter groups (and the sort) changed from the defaults: shown as a count, so a kept filter is visible */
+  activeCount?: number
   variant?: 'bar' | 'compact'
   className?: string
-}> = ({ expanded, contentId, onToggle, pending = false, variant = 'bar', className }) => {
+}> = ({ expanded, contentId, onToggle, pending = false, activeCount = 0, variant = 'bar', className }) => {
   const { t } = useTranslation(['sheet'])
+  const activeLabel = activeCount > 0 ? t('sheet:sort-and-filter.active', { n: activeCount }) : null
+  const activeBadge = activeLabel && (
+    <span
+      aria-hidden
+      className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent-strong px-1 text-[11px] leading-none font-bold text-[var(--on-accent)] num"
+      title={activeLabel}
+    >
+      {activeCount}
+    </span>
+  )
 
   if (variant === 'compact') {
     return (
@@ -343,10 +394,12 @@ export const SheetSortFilterTrigger: FC<{
           // Same material and edge as the search field beside it; open, it takes the accent tint and edge
           expanded
             ? '!border-accent-strong !bg-accent-subtle'
-            : '!border-black/25 !bg-[var(--glass-thin-bg)] hover:!border-black/60',
+            : activeCount > 0
+              ? '!border-accent-strong !bg-[var(--glass-thin-bg)]'
+              : '!border-black/25 !bg-[var(--glass-thin-bg)] hover:!border-black/60',
           className,
         )}
-        aria-label={t('sheet:sort-and-filter.title')}
+        aria-label={[t('sheet:sort-and-filter.title'), activeLabel].filter(Boolean).join(', ')}
         aria-controls={contentId}
         aria-expanded={expanded}
         onClick={onToggle}
@@ -363,6 +416,7 @@ export const SheetSortFilterTrigger: FC<{
             expanded && 'transform rotate-180',
           )}
         />
+        {activeBadge && <span className="absolute -right-1.5 -top-1.5">{activeBadge}</span>}
         {pending && <CircularProgress disableShrink className="absolute right-1 top-1 !h-3 !w-3" />}
       </Button>
     )
@@ -380,6 +434,8 @@ export const SheetSortFilterTrigger: FC<{
       onClick={onToggle}
     >
       <div className="text-xl font-semibold leading-none">{t('sheet:sort-and-filter.title')}</div>
+      {activeBadge && <span className="ml-2">{activeBadge}</span>}
+      {activeLabel && <span className="sr-only">{activeLabel}</span>}
       {pending && <CircularProgress disableShrink className="ml-2 !h-4 !w-4" />}
       <div className="flex-1" />
       <MdiChevronDownIcon

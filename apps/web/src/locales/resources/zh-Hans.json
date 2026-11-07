@@ -218,7 +218,8 @@
     "layout.label": "布局",
     "layout.list": "列表",
     "layout.grid": "网格",
-    "favorite.marked": "已收藏"
+    "favorite.marked": "已收藏",
+    "sort-and-filter.active": "{{n}} 项已启用"
   },
   "song": {
     "not-found.title": "未找到歌曲",
