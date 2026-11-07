@@ -9,6 +9,7 @@ import {
 } from '@gekichumai/api-contract'
 import {
   type ClientImportSource,
+  calculateRatingAward,
   comboFlagRank,
   compareScore,
   type SourceAccountKind,
@@ -18,7 +19,7 @@ import {
 } from '@gekichumai/maimai-domain'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
 import type { ImportEntrySource } from './ScoreRepository'
-import { preferHint, type HintCandidate } from './collapseScoreRecords'
+import { preferHint, type HintCandidate, type InternalLevelResolver } from './collapseScoreRecords'
 
 /**
  * Imports into a cloud save (meta#17, design §5.5, §7.3, §7.4, §8.3): what goes over the wire and how failures are
@@ -80,10 +81,14 @@ const CLAIMED_SOURCE_PATTERN = /^[\w.-]{1,64}$/
  *   claimed source it does not accept…). They are never sent, so a "clear, then import" only clears for records that
  *   can be imported;
  * - `duplicates` counts the valid entries folded into another of the same chart.
+ *
+ * Duplicates are collapsed as the device reads them (`collapseScoreRecordList`); `resolveInternalLevel` (the
+ * calculator's) lets bucket hints be ranked by rating, AP bonus included, as there.
  */
 export function entriesToImportRecords(
   entries: readonly PlayEntry[],
   plan: ClientImportPlan,
+  resolveInternalLevel?: InternalLevelResolver | null,
 ): { records: ImportRecord[]; skipped: number; rejected: number; duplicates: number } {
   const bySheetId = new Map<string, ImportRecord>()
   // Each chart's bucket hint, ranked by the entry that carries it, as the device ranks it, not by the collapsed fields
@@ -128,16 +133,33 @@ export function entriesToImportRecords(
     const existing = bySheetId.get(record.sheetId)
     if (existing) duplicates++
     bySheetId.set(record.sheetId, existing ? collapseImportRecords(existing, record) : record)
-    const hint: HintCandidate | null = record.best50Bucket
-      ? { bucket: record.best50Bucket, achievement: record.achievement, comboFlag: record.comboFlag, domainHint: null }
-      : null
-    hints.set(record.sheetId, preferHint(hints.get(record.sheetId) ?? null, hint))
+    hints.set(record.sheetId, preferHint(hints.get(record.sheetId) ?? null, hintOf(record, resolveInternalLevel)))
   }
   const records = [...bySheetId.values()].map((record) => {
     const best50Bucket = hints.get(record.sheetId)?.bucket ?? null
     return record.best50Bucket === best50Bucket ? record : { ...record, best50Bucket }
   })
   return { records, skipped, rejected, duplicates }
+}
+
+/** A record's own bucket hint, ranked as `collapseScoreRecordList` ranks it: by rating when the level is known */
+function hintOf(record: ImportRecord, resolveInternalLevel?: InternalLevelResolver | null): HintCandidate | null {
+  if (!record.best50Bucket) return null
+  const internalLevel = resolveInternalLevel?.(record.sheetId) ?? null
+  const achievementRate = record.achievement / 10000
+  return {
+    bucket: record.best50Bucket,
+    achievement: record.achievement,
+    comboFlag: record.comboFlag,
+    domainHint:
+      internalLevel === null
+        ? null
+        : {
+            bucket: record.best50Bucket,
+            rating: calculateRatingAward(internalLevel, achievementRate, record.comboFlag),
+            achievementRate,
+          },
+  }
 }
 
 /**

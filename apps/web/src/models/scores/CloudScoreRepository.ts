@@ -55,6 +55,7 @@ import {
   UnsupportedScoreOperationError,
   type WebScoreRepository,
 } from './ScoreRepository'
+import type { InternalLevelResolver } from './collapseScoreRecords'
 import { uuidv7 } from './uuidv7'
 
 /**
@@ -280,6 +281,7 @@ export class CloudScoreRepository implements WebScoreRepository {
   private recordsBySheetId: Map<string, ScoreRecord> | null = null
   private playEntries: readonly PlayEntry[] | null = null
   private resolveIdentity: SheetIdentityResolver | null = null
+  private resolveInternalLevel: InternalLevelResolver | null = null
 
   private currentStatus: ScoreRepositoryStatus
   private state: ScoreRepositoryStatus['state'] = 'idle'
@@ -397,8 +399,10 @@ export class CloudScoreRepository implements WebScoreRepository {
     this.notify()
   }
 
-  /** A cloud save holds one record per chart, so there are no duplicates to rank; kept for interface parity */
-  setInternalLevelResolver(_resolveInternalLevel: unknown) {}
+  /** The calculator's internal levels: an uploaded file's duplicate bucket hints are ranked by rating with them */
+  setInternalLevelResolver(resolveInternalLevel: InternalLevelResolver | null) {
+    this.resolveInternalLevel = resolveInternalLevel
+  }
 
   // --- Writes ---
 
@@ -466,7 +470,7 @@ export class CloudScoreRepository implements WebScoreRepository {
     const plan = clientImportPlan(meta.source, this.serverImportsEnabled, meta.claimedSource)
     if (!plan) throw new UnsupportedScoreOperationError(`Uploading records from ${meta.source}`, this.kind)
     const imports = this.requireImports()
-    const { records, skipped, rejected } = entriesToImportRecords(entries, plan)
+    const { records, skipped, rejected } = entriesToImportRecords(entries, plan, this.resolveInternalLevel)
     // Checked before the clear: an import none of whose records the server accepts never empties the save
     if (records.length === 0) {
       if (entries.length > 0) throw new NothingToImportError(skipped, rejected)
