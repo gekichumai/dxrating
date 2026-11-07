@@ -12,7 +12,7 @@ import { adminApiConfigLayer, envSchema } from './config'
 import { adminDatabaseFromPool } from './db'
 import { RateLimiterLive } from './rate-limit'
 import { makeAdminApiRuntime } from './runtime'
-import { stableJson } from './announcements'
+import { advance, stableJson } from './announcements'
 
 // Integration: a real Postgres with apps/backend's migrations (CI provides one; locally set ADMIN_API_TEST_DATABASE_URL)
 const url = process.env.ADMIN_API_TEST_DATABASE_URL
@@ -246,6 +246,15 @@ suite('announcements (admin API)', () => {
     const out = (await (await post('/announcements', { announcement: fields() })).json()) as any
     expect(out.edgeCache).toBe('failed')
     expect(out.announcement.id).toBeGreaterThan(0)
+  })
+})
+
+describe('advance', () => {
+  it('always moves past the stored timestamp, even within the same millisecond', () => {
+    const t = new Date('2026-01-01T00:00:00.000Z')
+    expect(advance(t, t).getTime()).toBe(t.getTime() + 1)
+    expect(advance(t, new Date(t.getTime() - 5)).getTime()).toBe(t.getTime() + 1)
+    expect(advance(t, new Date(t.getTime() + 50)).getTime()).toBe(t.getTime() + 50)
   })
 })
 

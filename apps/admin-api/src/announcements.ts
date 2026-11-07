@@ -132,6 +132,12 @@ const checkWindow = (columns: { starts_at: Date; ends_at: Date | null }) =>
       )
     : Effect.void
 
+/**
+ * The next updated_at: now, but always strictly after the stored value, so every write changes the ifUpdatedAt token
+ * even when two writes land in the same millisecond.
+ */
+export const advance = (stored: Date, at: Date) => new Date(Math.max(at.getTime(), stored.getTime() + 1))
+
 const now = Effect.map(Clock.currentTimeMillis, (ms) => new Date(ms))
 
 export const listAnnouncements = Effect.gen(function* () {
@@ -184,7 +190,7 @@ export const updateAnnouncement = (
         if (dryRun) return { columns, revision, row: null }
         const [row] = await tx
           .update(announcements)
-          .set({ ...columns, revision, updated_by: principal.actor, updated_at: at })
+          .set({ ...columns, revision, updated_by: principal.actor, updated_at: advance(current.updated_at, at) })
           .where(eq(announcements.id, input.id))
           .returning()
         return { columns, revision, row: row! }
@@ -231,7 +237,12 @@ export const endAnnouncement = (principal: Principal, id: number) =>
         const startsAt = current.starts_at < at ? current.starts_at : new Date(at.getTime() - 1)
         const [row] = await tx
           .update(announcements)
-          .set({ starts_at: startsAt, ends_at: at, updated_by: principal.actor, updated_at: at })
+          .set({
+            starts_at: startsAt,
+            ends_at: at,
+            updated_by: principal.actor,
+            updated_at: advance(current.updated_at, at),
+          })
           .where(eq(announcements.id, id))
           .returning()
         return { row: row!, changed: true }
