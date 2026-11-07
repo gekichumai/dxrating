@@ -43,6 +43,14 @@ describe('Tags API', () => {
     expect(res.headers.get('ETag')).toBeTruthy()
   })
 
+  it('GET /api/v2/dxdata/community reads the public lists through the app, uncached when they fail', async () => {
+    // The test database has no published catalog, so the public-ID lists answer 503 and so does the overlay
+    const res = await fetch(`${getBaseUrl()}/api/v2/dxdata/community`, { headers: { Origin: 'https://dxrating.net' } })
+    expect(res.status).toBe(503)
+    expect(res.headers.get('Cache-Control')).toBe('no-store')
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*')
+  })
+
   it('POST /api/v1/tags/attach requires authentication', async () => {
     const res = await fetch(`${getBaseUrl()}/api/v1/tags/attach`, {
       method: 'POST',
