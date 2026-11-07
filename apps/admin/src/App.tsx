@@ -18,6 +18,7 @@ import { ORPCError } from '@orpc/client'
 import { useQuery } from '@tanstack/react-query'
 import { Announcements } from './Announcements'
 import { adminOrpc } from './api'
+import { Diff } from './catalog/Diff'
 import { Publications } from './catalog/Publications'
 import { routeHref, useRoute, type View } from './route'
 
@@ -25,6 +26,7 @@ const NAV: { view: View; label: string; scope?: string }[] = [
   { view: 'overview', label: 'Overview' },
   { view: 'announcements', label: 'Announcements', scope: 'announcements:read' },
   { view: 'publications', label: 'Publications', scope: 'catalog:read' },
+  { view: 'diff', label: 'Changes', scope: 'catalog:read' },
 ]
 
 const can = (scopes: readonly string[] | undefined, scope: string | undefined) =>
@@ -77,7 +79,7 @@ export function App() {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <Stack maw={route.view === 'publications' ? 1200 : 960}>
+        <Stack maw={route.view === 'publications' || route.view === 'diff' ? 1200 : 960}>
           {me.isPending && <Skeleton h={120} radius="md" aria-busy="true" aria-label="Loading" />}
           {denied && (
             <Alert color="orange" title="No access" role="alert">
@@ -123,6 +125,15 @@ export function App() {
           )}
           {principal && route.view === 'announcements' && can(principal.scopes, 'announcements:read') && (
             <Announcements canWrite={can(principal.scopes, 'announcements:write')} />
+          )}
+          {principal && route.view === 'diff' && can(principal.scopes, 'catalog:read') && (
+            <Diff
+              channel={route.params.get('channel') ?? undefined}
+              from={Number(route.params.get('from')) || undefined}
+              to={Number(route.params.get('to')) || undefined}
+              path={route.params.get('path') ?? undefined}
+              offset={Number(route.params.get('offset')) || undefined}
+            />
           )}
           {principal && route.view === 'publications' && can(principal.scopes, 'catalog:read') && (
             <Publications

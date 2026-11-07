@@ -10,6 +10,7 @@ import {
   listAnnouncements,
   updateAnnouncement,
 } from './announcements'
+import { diffPublications } from './catalog/publication-diff'
 import { listPublications } from './catalog/publications'
 import { requireAdmin, requireScope } from './require-admin'
 import type { DatabaseError } from './db'
@@ -75,6 +76,13 @@ export const adminApiRouter = os.router({
         const principal = yield* requireAdmin(headersOf(context))
         yield* requireScope(principal, 'catalog:read')
         return yield* listPublications(input).pipe(Effect.orDie)
+      }),
+    ),
+    diff: os.catalog.diff.handler(
+      handlerGen(function* ({ context, input }) {
+        const principal = yield* requireAdmin(headersOf(context))
+        yield* requireScope(principal, 'catalog:read')
+        return yield* diffPublications(input).pipe(Effect.catchTag('DatabaseError', (error) => Effect.die(error)))
       }),
     ),
   },
