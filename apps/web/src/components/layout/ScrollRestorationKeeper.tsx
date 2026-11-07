@@ -29,11 +29,48 @@ export const createScrollPositions = () => {
 }
 
 /**
+ * Keeps the window at `top` for a moment: every frame, re-applies it if the page has drifted (it was clamped while
+ * the page was short, or scroll anchoring moved it as content grew). A frame check rather than a ResizeObserver,
+ * because the document's own boxes keep the viewport's height (`height: 100%`) while the routed content overflows.
+ * Scroll anchoring is off meanwhile. The visitor's first wheel, touch, pointer or key input ends it, as does
+ * {@link HOLD_MS}. Returns the function that ends it early.
+ */
+export const holdScrollPosition = (top: number): (() => void) => {
+  const root = document.documentElement
+  const previousAnchor = root.style.overflowAnchor
+  root.style.overflowAnchor = 'none'
+  const started = performance.now()
+  let frame = 0
+  let ended = false
+  const inputs = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const
+
+  const end = () => {
+    if (ended) return
+    ended = true
+    cancelAnimationFrame(frame)
+    for (const type of inputs) window.removeEventListener(type, end, { capture: true })
+    root.style.overflowAnchor = previousAnchor
+  }
+  const tick = () => {
+    if (ended) return
+    if (performance.now() - started >= HOLD_MS) {
+      end()
+      return
+    }
+    if (Math.abs(window.scrollY - top) > 1) window.scrollTo({ top, left: window.scrollX })
+    frame = requestAnimationFrame(tick)
+  }
+
+  for (const type of inputs) window.addEventListener(type, end, { passive: true, capture: true })
+  tick()
+  return end
+}
+
+/**
  * Holds the position the router restores on Back/Forward while the page is still growing. The router restores in
  * `onRendered`, when a long page (Home's chart list, its search results) has only rendered its first screen: the
  * browser clamps the position to that short page, and scroll anchoring then shifts it as the list grows above the
- * anchor. So, for a moment after a revisit, the position is re-applied whenever the page resizes, with scroll
- * anchoring off. The first scroll, wheel, touch or key from the visitor ends it, as does {@link HOLD_MS}.
+ * anchor. So, for a moment after a revisit, {@link holdScrollPosition} keeps the position the entry was left at.
  */
 export const ScrollRestorationKeeper = () => {
   const router = useRouter()
@@ -42,37 +79,15 @@ export const ScrollRestorationKeeper = () => {
     const positions = createScrollPositions()
     let release: (() => void) | undefined
 
-    const hold = (top: number) => {
-      release?.()
-      const root = document.documentElement
-      const previousAnchor = root.style.overflowAnchor
-      root.style.overflowAnchor = 'none'
-      const apply = () => {
-        if (Math.abs(window.scrollY - top) > 1) window.scrollTo({ top, left: window.scrollX })
-      }
-      const observer = new ResizeObserver(apply)
-      observer.observe(document.body)
-      const inputs = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const
-      const stop = () => release?.()
-      for (const type of inputs) window.addEventListener(type, stop, { passive: true, capture: true })
-      const timer = window.setTimeout(stop, HOLD_MS)
-      apply()
-      release = () => {
-        observer.disconnect()
-        window.clearTimeout(timer)
-        for (const type of inputs) window.removeEventListener(type, stop, { capture: true })
-        root.style.overflowAnchor = previousAnchor
-        release = undefined
-      }
-    }
-
     const unsubscribeLeave = router.subscribe('onBeforeLoad', ({ fromLocation }) => {
       release?.()
       positions.leave(fromLocation, window.scrollY)
     })
     const unsubscribeRendered = router.subscribe('onRendered', ({ toLocation }) => {
       const top = positions.revisit(toLocation)
-      if (top !== undefined) hold(top)
+      if (top === undefined) return
+      release?.()
+      release = holdScrollPosition(top)
     })
 
     return () => {
