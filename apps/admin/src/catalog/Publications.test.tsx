@@ -1,6 +1,6 @@
 import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { parseRoute, routeHref } from '../route'
 import { formatBytes, formatUtc, Publications } from './Publications'
@@ -81,6 +81,41 @@ describe('Publications', () => {
     expect(requests[0]!.searchParams.get('channel')).toBe('staging-v1')
     expect(requests[0]!.searchParams.get('before')).toBe('5')
     expect(screen.getByText('Newest').closest('a')?.getAttribute('href')).toBe('#publications?channel=staging-v1')
+  })
+
+  it('offers no paging while another channel loads, so the old cursor never pairs with the new channel', async () => {
+    let release: () => void = () => {}
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: Request | string) => {
+        const url = new URL(input instanceof Request ? input.url : input, 'http://admin.test')
+        const channel = url.searchParams.get('channel') ?? 'production-v1'
+        if (channel === 'staging-v1') await new Promise<void>((resolve) => (release = resolve))
+        return Response.json({
+          channel,
+          channels: ['production-v1', 'staging-v1'],
+          publications: [publication(channel === 'staging-v1' ? 4 : 3)],
+          nextBefore: channel === 'staging-v1' ? 4 : 3,
+        })
+      }),
+    )
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const view = (channel?: string) => (
+      <MantineProvider>
+        <QueryClientProvider client={client}>
+          <Publications channel={channel} />
+        </QueryClientProvider>
+      </MantineProvider>
+    )
+    const { rerender } = render(view())
+    expect((await screen.findByText('Older')).closest('a')?.getAttribute('href')).toBe('#publications?before=3')
+    rerender(view('staging-v1'))
+    await waitFor(() => expect(screen.queryByText('Older')).toBeNull())
+    expect(screen.getByText('r3')).toBeTruthy()
+    release()
+    expect((await screen.findByText('Older')).closest('a')?.getAttribute('href')).toBe(
+      '#publications?channel=staging-v1&before=4',
+    )
   })
 
   it('says when the API fails', async () => {

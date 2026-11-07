@@ -140,7 +140,8 @@ export function Publications({ channel, before }: { channel?: string; before?: n
           </Table>
         </Table.ScrollContainer>
       )}
-      {data && (before !== undefined || data.nextBefore !== null) && (
+      {/* While another channel or page loads, the rows (and their cursor) are the previous query's: no paging until it lands */}
+      {data && !query.isPlaceholderData && (before !== undefined || data.nextBefore !== null) && (
         <Group mt="md" gap="xs">
           {before !== undefined && (
             <Button component="a" size="xs" variant="default" href={routeHref('publications', { channel })}>
