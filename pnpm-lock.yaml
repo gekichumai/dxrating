@@ -105,6 +105,9 @@ importers:
       '@gekichumai/admin-api':
         specifier: workspace:*
         version: link:../admin-api
+      '@gekichumai/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
       '@mantine/core':
         specifier: 9.7.3
         version: 9.7.3(@mantine/hooks@9.7.3(react@19.2.6))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
