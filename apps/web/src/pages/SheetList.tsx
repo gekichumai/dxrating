@@ -52,6 +52,7 @@ import { readFavoriteSheetIds } from '../models/favorite'
 import { useCatalogDocument, useSongCatalog } from '../catalog/CatalogContext'
 import { type FlattenedSheet, getFlattenedSheets, useFilteredSheets, useSheets } from '../songs'
 import { sheetReleaseDateTimestamp } from '../utils/dateFormatting'
+import { afterNextPaint } from '../utils/afterNextPaint'
 import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
 import { compareSheetsBySorts, getSongCatalogPositions } from './sheetSorting'
 import { useLocale } from '@/i18n/LocaleProvider'
@@ -468,7 +469,7 @@ const SheetListInnerContent: FC<{
   }, [search, catalog])
   const activeSheetId = activeSheet?.id ?? null
 
-  const handleSheetDialogChange = useCallback(
+  const navigateSheetDialog = useCallback(
     (sheet: FlattenedSheet | null) => {
       if (sheet) {
         navigate({
@@ -497,6 +498,17 @@ const SheetListInnerContent: FC<{
       }
     },
     [navigate],
+  )
+  // Opening or closing the chart dialog is a navigation (?songId&type&difficulty), and the router's update renders the
+  // whole route synchronously: it runs after the tap (or Escape) has painted, not in its event (~150-300ms at 4x CPU)
+  const cancelDialogNavigation = useRef<() => void>(undefined)
+  useEffect(() => () => cancelDialogNavigation.current?.(), [])
+  const handleSheetDialogChange = useCallback(
+    (sheet: FlattenedSheet | null) => {
+      cancelDialogNavigation.current?.()
+      cancelDialogNavigation.current = afterNextPaint(() => navigateSheetDialog(sheet))
+    },
+    [navigateSheetDialog],
   )
 
   const { filteredResults, elapsed: filteringElapsed } = useMemo(() => {
