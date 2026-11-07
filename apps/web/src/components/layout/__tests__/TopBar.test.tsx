@@ -1,7 +1,6 @@
 import { AppContextProvider } from '@/models/context/AppContext'
-import { initI18n } from '@/setup/init-i18n'
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { TopBar } from '../TopBar'
 
 vi.mock('~icons/mdi/github', () => ({
@@ -58,10 +57,6 @@ vi.mock('../../../utils/bundle', () => ({
 }))
 
 describe('TopBar', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('names icon-only community links for assistive technology', () => {
     render(
       <AppContextProvider>
