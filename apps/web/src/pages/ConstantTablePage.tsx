@@ -272,7 +272,7 @@ const ConstantGroupGrid: FC<{
       className="flex w-full flex-col gap-2 scroll-mt-2"
       id={constantAnchor(constant)}
     >
-      <div className="glass-thin sticky top-1 z-2 flex items-baseline justify-between gap-2 px-3 py-1.5">
+      <div className="glass-thin sticky top-1 z-2 mx-[var(--sticky-inline-inset)] flex items-baseline justify-between gap-2 px-3 py-1.5">
         <h2 id={headingId} className="m-0 text-base font-semibold text-fg-1 num">
           {m.constants_group({ constant }, { locale })}
         </h2>
