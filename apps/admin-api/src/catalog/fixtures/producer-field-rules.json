@@ -1,0 +1,324 @@
+[
+  {
+    "outputPath": "songs",
+    "sources": ["assembly.songs.*.catalog", "assembly.songs.*.enrichment", "viscum_json"],
+    "transforms": ["normalize_song_identity", "merge_live_catalog_with_history"]
+  },
+  {
+    "outputPath": "songs[].songId",
+    "sources": ["assembly.songs.*.catalog", "assembly.songs.*.enrichment", "viscum_json"],
+    "transforms": ["normalize_song_identity", "merge_live_catalog_with_history"]
+  },
+  {
+    "outputPath": "songs[].category",
+    "sources": ["assembly.songs.*.catalog", "assembly.songs.*.enrichment", "viscum_json"],
+    "transforms": ["normalize_song_identity", "merge_live_catalog_with_history"]
+  },
+  {
+    "outputPath": "songs[].title",
+    "sources": ["assembly.songs.*.catalog", "assembly.songs.*.enrichment", "viscum_json"],
+    "transforms": ["normalize_song_identity", "merge_live_catalog_with_history"]
+  },
+  {
+    "outputPath": "songs[].artist",
+    "sources": ["assembly.songs.*.catalog", "assembly.songs.*.enrichment", "viscum_json"],
+    "transforms": ["normalize_song_identity", "merge_live_catalog_with_history"]
+  },
+  {
+    "outputPath": "songs[].bpm",
+    "sources": ["assembly.songs.*.catalog", "assembly.songs.*.enrichment", "viscum_json"],
+    "transforms": ["normalize_song_identity", "merge_live_catalog_with_history"]
+  },
+  {
+    "outputPath": "songs[].isNew",
+    "sources": ["assembly.songs.*.catalog", "assembly.songs.*.enrichment", "viscum_json"],
+    "transforms": ["normalize_song_identity", "merge_live_catalog_with_history"]
+  },
+  {
+    "outputPath": "songs[].isLocked",
+    "sources": ["assembly.songs.*.catalog", "assembly.songs.*.enrichment", "viscum_json"],
+    "transforms": ["normalize_song_identity", "merge_live_catalog_with_history"]
+  },
+  {
+    "outputPath": "songs[].imageName",
+    "sources": ["sega_official.image_url", "sega_announcements"],
+    "transforms": ["absolute_music_image_url", "sha256", "strip_png_extension"]
+  },
+  {
+    "outputPath": "songs[].sheets",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].type",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].difficulty",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].level",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].internalLevelValue",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].noteDesigner",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].noteCounts.tap",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].noteCounts.hold",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].noteCounts.slide",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].noteCounts.touch",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].noteCounts.break",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].noteCounts.total",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].isSpecial",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].version",
+    "sources": ["sega_official", "sega_announcements", "otoge_db_gamerch", "viscum_json", "legacy_bootstrap"],
+    "transforms": ["extract_chart", "parse_level", "merge_enrichment"]
+  },
+  {
+    "outputPath": "songs[].sheets[].regions.jp",
+    "sources": [
+      "sega_official_jp",
+      "sega_announcements",
+      "otoge_intl",
+      "maimai_cn",
+      "usa_derived_from_intl",
+      "catalog_history"
+    ],
+    "transforms": ["match_chart_availability", "derive_usa_from_intl"]
+  },
+  {
+    "outputPath": "songs[].sheets[].regions.intl",
+    "sources": [
+      "sega_official_jp",
+      "sega_announcements",
+      "otoge_intl",
+      "maimai_cn",
+      "usa_derived_from_intl",
+      "catalog_history"
+    ],
+    "transforms": ["match_chart_availability", "derive_usa_from_intl"]
+  },
+  {
+    "outputPath": "songs[].sheets[].regions.usa",
+    "sources": [
+      "sega_official_jp",
+      "sega_announcements",
+      "otoge_intl",
+      "maimai_cn",
+      "usa_derived_from_intl",
+      "catalog_history"
+    ],
+    "transforms": ["match_chart_availability", "derive_usa_from_intl"]
+  },
+  {
+    "outputPath": "songs[].sheets[].regions.cn",
+    "sources": [
+      "sega_official_jp",
+      "sega_announcements",
+      "otoge_intl",
+      "maimai_cn",
+      "usa_derived_from_intl",
+      "catalog_history"
+    ],
+    "transforms": ["match_chart_availability", "derive_usa_from_intl"]
+  },
+  {
+    "outputPath": "songs[].sheets[].regionOverrides.intl",
+    "sources": [
+      "sega_official_jp",
+      "sega_announcements",
+      "otoge_intl",
+      "maimai_cn",
+      "usa_derived_from_intl",
+      "catalog_history"
+    ],
+    "transforms": ["match_chart_availability", "derive_usa_from_intl"]
+  },
+  {
+    "outputPath": "songs[].sheets[].regionOverrides.intl.*",
+    "sources": [
+      "sega_official_jp",
+      "sega_announcements",
+      "otoge_intl",
+      "maimai_cn",
+      "usa_derived_from_intl",
+      "catalog_history"
+    ],
+    "transforms": ["match_chart_availability", "derive_usa_from_intl"]
+  },
+  {
+    "outputPath": "songs[].sheets[].internalId",
+    "sources": ["MusicSort.xml", "lxns_song_list", "viscum_json"],
+    "transforms": ["match_title_and_chart_type"]
+  },
+  {
+    "outputPath": "songs[].sheets[].releaseDate",
+    "sources": ["sega_official.release", "sega_announcements", "postgres.SheetExtras", "google_sheets"],
+    "transforms": ["resolve_release_date", "merge_multiversion_internal_levels"]
+  },
+  {
+    "outputPath": "songs[].sheets[].multiverInternalLevelValue",
+    "sources": ["sega_official.release", "sega_announcements", "postgres.SheetExtras", "google_sheets"],
+    "transforms": ["resolve_release_date", "merge_multiversion_internal_levels"]
+  },
+  {
+    "outputPath": "songs[].sheets[].multiverInternalLevelValue.*",
+    "sources": ["sega_official.release", "sega_announcements", "postgres.SheetExtras", "google_sheets"],
+    "transforms": ["resolve_release_date", "merge_multiversion_internal_levels"]
+  },
+  {
+    "outputPath": "songs[].sheets[].comment",
+    "sources": ["sega_official.comment", "sega_official.utage_comment"],
+    "transforms": ["attach_utage_comment"]
+  },
+  {
+    "outputPath": "songs[].searchAcronyms",
+    "sources": ["gcm_bot", "yuzuchan", "lxns", "local_aliases"],
+    "transforms": ["normalize_alias", "deduplicate", "sort"]
+  },
+  {
+    "outputPath": "songs[].searchAcronyms[]",
+    "sources": ["gcm_bot", "yuzuchan", "lxns", "local_aliases"],
+    "transforms": ["normalize_alias", "deduplicate", "sort"]
+  },
+  {
+    "outputPath": "categories",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "categories[].category",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "versions",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "versions[].version",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "versions[].abbr",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "versions[].releaseDate",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "types",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "types[].type",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "types[].name",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "types[].abbr",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "types[].iconUrl",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "types[].iconHeight",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "difficulties",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "difficulties[].difficulty",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "difficulties[].name",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "difficulties[].color",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "regions",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "regions[].region",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "regions[].name",
+    "sources": ["legacy_bootstrap.metadata"],
+    "transforms": ["preserve_output_contract_metadata"]
+  },
+  {
+    "outputPath": "updateTime",
+    "sources": ["pipeline_clock"],
+    "transforms": ["rfc3339_utc"]
+  }
+]

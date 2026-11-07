@@ -226,7 +226,21 @@ export function Diff(params: DiffParams) {
             <div key={`${song.kind}:${song.songId}`}>
               <Group gap="xs" mb={4} wrap="wrap">
                 <Text fw={600} size="sm">
-                  {song.title}
+                  {song.kind === 'removed' ? (
+                    song.title
+                  ) : (
+                    <Anchor
+                      size="sm"
+                      fw={600}
+                      href={routeHref('song', {
+                        channel: data.channel === 'production-v1' ? undefined : data.channel,
+                        songId: song.songId,
+                        revision: data.to.revision,
+                      })}
+                    >
+                      {song.title}
+                    </Anchor>
+                  )}
                 </Text>
                 <Code>{song.songId}</Code>
                 <Badge size="xs" variant="light" color={KIND_COLOR[song.kind]}>

@@ -193,6 +193,54 @@ export const CatalogDiffSchema = z.object({
   nextOffset: z.number().int().nullable(),
 })
 
+const ResolvedSourceSchema = z.object({
+  source: z.string().describe('As the producer rule names it'),
+  resolved: z
+    .array(z.string())
+    .nullable()
+    .describe('For a per-song lineage reference (assembly.songs.*.x), the source(s) this song names; else null'),
+})
+const ProvenanceFieldSchema = z.object({
+  path: z.string(),
+  outputPath: z.string().describe('The producer leaf path its rules match'),
+  value: z.json(),
+  rule: z
+    .object({ outputPath: z.string(), sources: z.array(ResolvedSourceSchema), transforms: z.array(z.string()) })
+    .nullable()
+    .describe('null when the publication has no manifest, or the published field has no legacy rule (see note)'),
+  note: z.string().nullable().describe('What a published-only field is, when no rule covers it'),
+})
+const revisionInput = z.coerce.number().int().positive().optional().describe('Default: the latest publication')
+const channelInput = z
+  .string()
+  .regex(/^[a-z][a-z0-9_-]*$/)
+  .default('production-v1')
+
+export const SongProvenanceSchema = z.object({
+  channel: z.string(),
+  publication: DiffSideSchema,
+  song: z.object({
+    songId: z.string().describe('The public song ID (dsng_…), or the legacy songId in a legacy-shaped snapshot'),
+    legacySongId: z.string().nullable().describe('The legacy songId the manifest’s per-song lineage is keyed by'),
+    title: z.string(),
+    artist: z.string(),
+  }),
+  manifest: z
+    .object({
+      schemaVersion: z.number().int(),
+      generatedAt: z.string(),
+      coverage: z.json(),
+      sources: z.json().describe('Input artifacts of the build: name → { path, sha256, recordCount }'),
+      runtime: z.json(),
+    })
+    .nullable(),
+  lineage: z.json().describe('manifest.sources.assembly.songs[songId]: catalog, enrichment, regions, internalIds'),
+  fields: z.array(ProvenanceFieldSchema),
+  sheets: z.array(
+    z.object({ id: z.string(), type: z.string(), difficulty: z.string(), fields: z.array(ProvenanceFieldSchema) }),
+  ),
+})
+
 /** dxdata publications and provenance, read-only (gekichumai/meta#50 Phase 3). Scope catalog:read. */
 export const adminCatalogContract = {
   publications: oc
@@ -251,6 +299,56 @@ export const adminCatalogContract = {
         .strict(),
     )
     .output(CatalogDiffSchema),
+  songs: oc
+    .meta(
+      openapi({
+        method: 'GET',
+        path: '/catalog/songs',
+        summary: 'Search a publication’s songs by ID, title, artist or acronym (scope catalog:read)',
+        tags: ['catalog'],
+      }),
+    )
+    .input(
+      z
+        .object({
+          channel: channelInput,
+          revision: revisionInput,
+          q: z.string().max(100).default(''),
+          limit: z.coerce.number().int().min(1).max(100).default(50),
+        })
+        .strict(),
+    )
+    .output(
+      z.object({
+        channel: z.string(),
+        publication: DiffSideSchema,
+        total: z.number().int(),
+        songs: z.array(
+          z.object({ songId: z.string(), title: z.string(), artist: z.string(), sheetCount: z.number().int() }),
+        ),
+      }),
+    ),
+  song: oc
+    .meta(
+      openapi({
+        method: 'GET',
+        path: '/catalog/song',
+        summary: 'A song’s published values with their rule-level provenance (scope catalog:read)',
+        description:
+          'Each field: its value, the producer rule (sources and transforms) and, for per-song lineage sources, the source this song actually came from.',
+        tags: ['catalog'],
+      }),
+    )
+    .input(
+      z
+        .object({
+          channel: channelInput,
+          revision: revisionInput,
+          songId: z.string().min(1).max(300).describe('The public song ID (dsng_…)'),
+        })
+        .strict(),
+    )
+    .output(SongProvenanceSchema),
 }
 
 export const adminApiContract = {
