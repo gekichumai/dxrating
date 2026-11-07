@@ -14,9 +14,8 @@ import {
 } from '@mui/material'
 import { type FC, useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import CarbonCloud from '~icons/carbon/cloud'
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@/lib/telemetry'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { useAuth } from '../../../../hooks/useAuth'
 import { apiClient } from '../../../../lib/orpc'
@@ -25,6 +24,8 @@ import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const haptics = new WebHaptics()
 
@@ -33,7 +34,7 @@ type ConnectionState = 'loading' | 'not-connected' | 'connected' | 'connecting' 
 const LxnsImportDialogContent: FC<{
   onClose: () => void
 }> = ({ onClose }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const repository = useScoreRepository()
   const loadCatalog = useSongCatalogLoader()
   const [state, setState] = useState<ConnectionState>('loading')
@@ -58,7 +59,7 @@ const LxnsImportDialogContent: FC<{
       const result = await apiClient.lxns.authorize()
       window.location.href = result.url
     } catch (error) {
-      toast.error(t('rating-calculator:io.import.lxns.error', { error: formatErrorMessage(error) }))
+      toast.error(m.ratingCalculator_io_import_lxns_error({ error: formatErrorMessage(error) }, { locale }))
       setState('not-connected')
     }
   }
@@ -89,7 +90,7 @@ const LxnsImportDialogContent: FC<{
       }
       analytics.succeeded(entries.length, importResult.warnings.length)
       haptics.trigger('success')
-      toast.success(t('rating-calculator:io.import.lxns.success', { count: entries.length }))
+      toast.success(m.ratingCalculator_io_import_lxns_success({ count: entries.length }, { locale }))
 
       Sentry.metrics.distribution('lxns_import.duration', performance.now() - importStart, {
         unit: 'millisecond',
@@ -101,11 +102,11 @@ const LxnsImportDialogContent: FC<{
       const msg = String(formatErrorMessage(error))
       if (msg.includes('expired') || msg.includes('reconnect') || msg.includes('authorize')) {
         analytics.failed('reconnect_required')
-        toast.error(t('rating-calculator:io.import.lxns.reconnect-required'))
+        toast.error(m.ratingCalculator_io_import_lxns_reconnectRequired({}, { locale }))
         setState('not-connected')
       } else {
         analytics.failed('provider_error')
-        toast.error(t('rating-calculator:io.import.lxns.error', { error: msg }))
+        toast.error(m.ratingCalculator_io_import_lxns_error({ error: msg }, { locale }))
         setState('connected')
       }
     }
@@ -114,16 +115,16 @@ const LxnsImportDialogContent: FC<{
   const handleDisconnect = async () => {
     try {
       await apiClient.lxns.disconnect()
-      toast.success(t('rating-calculator:io.import.lxns.disconnected'))
+      toast.success(m.ratingCalculator_io_import_lxns_disconnected({}, { locale }))
       setState('not-connected')
     } catch (error) {
-      toast.error(t('rating-calculator:io.import.lxns.error', { error: formatErrorMessage(error) }))
+      toast.error(m.ratingCalculator_io_import_lxns_error({ error: formatErrorMessage(error) }, { locale }))
     }
   }
 
   return (
     <>
-      <DialogTitle>{t('rating-calculator:io.import.lxns.title')}</DialogTitle>
+      <DialogTitle>{m.ratingCalculator_io_import_lxns_title({}, { locale })}</DialogTitle>
       <DialogContent className="flex flex-col items-start gap-3">
         {state === 'loading' && (
           <div className="w-full flex justify-center py-4">
@@ -133,25 +134,29 @@ const LxnsImportDialogContent: FC<{
 
         {state === 'not-connected' && (
           <>
-            <p className="text-sm text-secondary">{t('rating-calculator:io.import.lxns.description')}</p>
+            <p className="text-sm text-secondary">{m.ratingCalculator_io_import_lxns_description({}, { locale })}</p>
           </>
         )}
 
         {state === 'connected' && (
-          <p className="text-sm text-green-700">{t('rating-calculator:io.import.lxns.connected')}</p>
+          <p className="text-sm text-green-700">{m.ratingCalculator_io_import_lxns_connected({}, { locale })}</p>
         )}
 
         {state === 'connecting' && (
           <div className="w-full flex justify-center items-center gap-2 py-4">
             <CircularProgress size="1rem" />
-            <span className="text-sm text-secondary">{t('rating-calculator:io.import.lxns.connecting')}</span>
+            <span className="text-sm text-secondary">
+              {m.ratingCalculator_io_import_lxns_connecting({}, { locale })}
+            </span>
           </div>
         )}
 
         {state === 'importing' && (
           <div className="w-full flex justify-center items-center gap-2 py-4">
             <CircularProgress size="1rem" />
-            <span className="text-sm text-secondary">{t('rating-calculator:io.import.lxns.importing')}</span>
+            <span className="text-sm text-secondary">
+              {m.ratingCalculator_io_import_lxns_importing({}, { locale })}
+            </span>
           </div>
         )}
       </DialogContent>
@@ -159,23 +164,23 @@ const LxnsImportDialogContent: FC<{
       <DialogActions>
         {state === 'connected' && (
           <Button onClick={handleDisconnect} color="inherit" size="small">
-            {t('rating-calculator:io.import.lxns.disconnect')}
+            {m.ratingCalculator_io_import_lxns_disconnect({}, { locale })}
           </Button>
         )}
 
         <div className="flex-1" />
 
-        <Button onClick={onClose}>{t('rating-calculator:io.import.lxns.close')}</Button>
+        <Button onClick={onClose}>{m.ratingCalculator_io_import_lxns_close({}, { locale })}</Button>
 
         {state === 'not-connected' && (
           <Button onClick={handleConnect} variant="contained">
-            {t('rating-calculator:io.import.lxns.connect')}
+            {m.ratingCalculator_io_import_lxns_connect({}, { locale })}
           </Button>
         )}
 
         {state === 'connected' && (
           <Button onClick={handleImport} variant="contained">
-            {t('rating-calculator:io.import.lxns.import')}
+            {m.ratingCalculator_io_import_lxns_import({}, { locale })}
           </Button>
         )}
       </DialogActions>
@@ -186,8 +191,8 @@ const LxnsImportDialogContent: FC<{
 export const ImportFromLxnsButtonListItem: FC<{
   onClose: () => void
 }> = ({ onClose }) => {
-  const { t } = useTranslation(['rating-calculator'])
-  const { isAuthenticated } = useAuth()
+  const locale = useLocale()
+  const { isAuthenticated, openLoginDialog, LoginDialog } = useAuth()
   const [open, setOpen] = useState(false)
 
   const handleClose = () => {
@@ -197,29 +202,38 @@ export const ImportFromLxnsButtonListItem: FC<{
 
   return (
     <>
+      {/* Signed out, the item opens sign-in instead of being a dead end; the menu stays open, so the item is ready
+          to use once signed in */}
       <MenuItem
-        disabled={!isAuthenticated}
         onClick={() => {
-          setOpen(true)
+          if (isAuthenticated) setOpen(true)
+          else openLoginDialog()
         }}
       >
         <ListItemIcon>
           <CarbonCloud />
         </ListItemIcon>
         <ListItemText
-          primary={t('rating-calculator:io.import.lxns.title')}
+          primary={m.ratingCalculator_io_import_lxns_title({}, { locale })}
           secondary={
             isAuthenticated ? (
               <span className="flex gap-1">
                 <ImportRegionSupportTag region="cn" />
               </span>
             ) : (
-              t('rating-calculator:io.import.lxns.login-required')
+              m.ratingCalculator_io_import_lxns_loginRequired({}, { locale })
             )
           }
         />
       </MenuItem>
 
+      {/* The dialog is portalled, but its React events still bubble to the open import Menu, which closes on Tab
+          and would unmount the form mid-sign-in */}
+      {!isAuthenticated && (
+        <span className="contents" onKeyDown={(event) => event.stopPropagation()}>
+          <LoginDialog />
+        </span>
+      )}
       {open && (
         <Dialog open={open} onClose={handleClose}>
           <LxnsImportDialogContent onClose={handleClose} />

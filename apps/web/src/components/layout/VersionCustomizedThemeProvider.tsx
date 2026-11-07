@@ -3,9 +3,10 @@ import {
   Experimental_CssVarsProvider as CssVarsProvider,
   experimental_extendTheme as extendTheme,
 } from '@mui/material/styles'
-import { MotionConfig } from 'framer-motion'
+import { MotionConfig } from 'motion/react'
 import { type FC, type PropsWithChildren, useMemo } from 'react'
 import { useVersionTheme } from '../../utils/useVersionTheme'
+import { LinkBehavior } from '@/components/global/InternalLink'
 import { THEME_ATTRIBUTE, THEME_COLOR_SCHEME_STORAGE_KEY, THEME_MODE_STORAGE_KEY } from '@/setup/theme-script'
 
 // MUI surfaces on the tinted-glass tokens in src/styles/tokens.css, so dialogs, menus, popovers, drawers, tooltips
@@ -26,7 +27,7 @@ const alertTint = (color: string) => ({
 
 export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ children }) => {
   const versionTheme = useVersionTheme()
-  // Under reduced motion, overlays fade instead of scaling or sliding; framer-motion follows the same preference
+  // Under reduced motion, overlays fade instead of scaling or sliding; Motion follows the same preference
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)', { noSsr: false })
 
   const theme = useMemo(() => {
@@ -57,6 +58,11 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ 
               main: versionTheme.accentStrongColor,
               contrastText: '#fff',
             },
+            // --danger (tokens.css): MUI's default red reaches only 4.2:1 as text on glass
+            error: {
+              main: '#b91c1c',
+              contrastText: '#fff',
+            },
             text: {
               primary: '#18181b',
               secondary: '#52525b',
@@ -68,6 +74,16 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ 
             primary: {
               // Lightened for dark glass; fills of it carry dark text (--on-accent), ≥4.5:1 in every version
               main: versionTheme.accentStrongDarkColor,
+              // The hover shade of contained buttons: lighter, not MUI's darkened default, which fell to ~3.5:1 under
+              // the dark text
+              dark: versionTheme.accentStrongDarkHoverColor,
+              contrastText: '#111114',
+            },
+            // --danger (dark.css). Fills carry dark text, so the hover shade (`dark`, contained buttons) is set rather
+            // than derived: MUI's darkened #f87171 is rgb(173 79 79), 3.6:1 under #111114; #ef4444 keeps 5.0:1
+            error: {
+              main: '#f87171',
+              dark: '#ef4444',
               contrastText: '#111114',
             },
             text: {
@@ -82,6 +98,14 @@ export const VersionCustomizedThemeProvider: FC<PropsWithChildren<object>> = ({ 
         },
       },
       components: {
+        // An MUI `href` (Link, Button, IconButton, MenuItem, ListItemButton, Tab, ...) navigates through the router,
+        // so internal links stay real anchors without reloading the page
+        MuiLink: {
+          defaultProps: { component: LinkBehavior },
+        },
+        MuiButtonBase: {
+          defaultProps: { LinkComponent: LinkBehavior },
+        },
         MuiPaper: {
           styleOverrides: {
             root: glassOverlay,

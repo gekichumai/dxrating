@@ -152,6 +152,34 @@ export const publicApiOperationExamples = {
       },
     ],
   },
+  'announcements.list': {
+    response: {
+      locales: {
+        supported: ['en', 'ja', 'zh-Hant'],
+        fallbacks: { 'zh-Hant': ['zh-Hans'] },
+      },
+      announcements: [
+        {
+          id: 1,
+          revision: 1,
+          severity: 'warning',
+          title: { en: 'Scheduled maintenance', ja: 'メンテナンスのお知らせ' },
+          body: {
+            en: 'Score imports pause on Sunday from 02:00 to 03:00 UTC.',
+            ja: '日曜 02:00〜03:00 (UTC) はスコアのインポートを停止します。',
+          },
+          link: { url: '/developers', label: { en: 'Details', ja: '詳細' } },
+          startsAt: '2026-11-08T00:00:00.000Z',
+          endsAt: '2026-11-09T03:00:00.000Z',
+          platforms: [],
+          regions: ['intl'],
+          minAppVersion: null,
+          maxAppVersion: null,
+          dismissible: true,
+        },
+      ],
+    },
+  },
   'aliases.list': {
     parameters: { idScheme: 'public' },
     response: [
@@ -208,6 +236,10 @@ export const publicApiOperationExamples = {
   },
   'lxns.authorize': {
     response: { url: lxnsAuthorizationUrl },
+  },
+  'lxns.complete': {
+    request: { code: 'example-authorization-code', state: '550e8400-e29b-41d4-a716-446655440000' },
+    response: { success: true },
   },
   'lxns.status': {
     response: { connected: true },

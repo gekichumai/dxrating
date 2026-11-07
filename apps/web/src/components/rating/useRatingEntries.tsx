@@ -2,12 +2,13 @@ import type { VersionEnum } from '@gekichumai/dxdata'
 import {
   calculateBest50,
   calculateRatingAward,
+  nextRatingTarget,
   type Best50Result,
   type RatingAward,
   type RatingEntry,
   type SongCatalog,
 } from '@gekichumai/maimai-domain'
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@/lib/telemetry'
 import { useSongCatalog } from '../../catalog/CatalogContext'
 import { createContext, useContext, useMemo } from 'react'
 import type { Region } from '../../models/context/AppContext'
@@ -107,13 +108,28 @@ export const calculateWebRatingEntries = ({
   })
 
   const resultByRatingEntry = new Map(result.allEntries.map((entry) => [entry.entry, entry]))
+  const floors = { b15: bucketFloor(result.b15, 15), b35: bucketFloor(result.b35, 35) }
   const webEntries = normalizedEntries.map(({ originalEntry, sheet, ratingEntry }) => {
     const calculatedEntry = ratingEntry ? resultByRatingEntry.get(ratingEntry) : undefined
+    // A chart in the B50 has to beat its own rating; one outside it, the floor of the bucket it competes in, as
+    // `calculateBest50` resolved it (with a Diving-Fish hint kept from another play of the chart). A duplicate play of
+    // a chart has no calculated entry, and no target of its own.
+    const bucket = calculatedEntry ? (calculatedEntry.bucket ?? calculatedEntry.competingBucket ?? null) : null
+    const baseline = calculatedEntry?.bucket ? calculatedEntry.rating.ratingAwardValue : bucket ? floors[bucket] : null
     return {
       ...originalEntry,
       sheet,
       rating: calculatedEntry?.rating ?? calculateFallbackRating(sheet, originalEntry),
       includedIn: calculatedEntry?.bucket ?? null,
+      nextTarget:
+        calculatedEntry && baseline !== null
+          ? nextRatingTarget({
+              internalLevel: sheet.internalLevelValue,
+              achievementRate: originalEntry.achievementRate,
+              comboFlag: originalEntry.comboFlag,
+              baseline,
+            })
+          : null,
     }
   })
 
@@ -125,6 +141,11 @@ export const calculateWebRatingEntries = ({
     b35Entries,
     statistics: toWebStatistics(result.statistics, b15Entries.length, b35Entries.length),
   }
+}
+
+/** The rating a chart has to beat to enter a full bucket; 0 while the bucket still has room */
+function bucketFloor(bucket: Best50Result['b15'], size: number): number {
+  return bucket.length < size ? 0 : Math.min(...bucket.map((entry) => entry.rating.ratingAwardValue))
 }
 
 function calculateFallbackRating(sheet: FlattenedSheet, entry: PlayEntry): RatingAward | null {

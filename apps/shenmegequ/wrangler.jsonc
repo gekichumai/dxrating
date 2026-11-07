@@ -1,0 +1,16 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  // 是什么歌.com (xn--6iq3kq43dxve.com): turns `<alias>.是什么歌.com` and `是什么歌.com/<alias>` into a dxrating.net search.
+  // The name is the Worker that already serves the domain, so a deploy replaces it in place and `wrangler rollback`
+  // can return to any earlier version. Deployed by .github/workflows/shenmegequ.yml.
+  "name": "shishenmege",
+  "main": "./src/index.ts",
+  "compatibility_date": "2026-05-13",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "*.xn--6iq3kq43dxve.com/*", "zone_name": "xn--6iq3kq43dxve.com" },
+    { "pattern": "xn--6iq3kq43dxve.com/*", "zone_name": "xn--6iq3kq43dxve.com" },
+  ],
+}

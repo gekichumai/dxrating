@@ -93,6 +93,7 @@ describe('calculate_best50', () => {
           { song: UMIYURI_UTAGE, achievement: 1_000_000 },
           { song: 'no such song', achievement: 1_000_000 },
         ],
+        version: 'PRiSM',
       }),
     )
     expect(content).toMatchObject({ server: 'jp', version: 'PRiSM' })
@@ -106,6 +107,18 @@ describe('calculate_best50', () => {
     expect(content.b35.entries[0]).toMatchObject({ sheetId: UMIYURI_MASTER, achievement: 1_005_000 })
     expect(content.rating).toBe(content.b15.total + content.b35.total)
     expect(content.unmatched.map((u: { index: number }) => u.index)).toEqual([3, 4, 5])
+  })
+
+  it.each([
+    ['jp', 'MAGiCAL'],
+    ['intl', 'CiRCLE PLUS'],
+    ['usa', 'CiRCLE PLUS'],
+    ['cn', 'PRiSM PLUS'],
+  ])('defaults %s to its current version, %s', async (server, version) => {
+    const content = structured(
+      await call('calculate_best50', { server, scores: [{ song: UMIYURI_MASTER, achievement: 1_005_000 }] }),
+    )
+    expect(content).toMatchObject({ server, version })
   })
 
   it('suggests the next rank that raises the rating', async () => {

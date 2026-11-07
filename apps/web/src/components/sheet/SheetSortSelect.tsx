@@ -1,10 +1,11 @@
 import { FormControl, IconButton, InputLabel, MenuItem, Select } from '@mui/material'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence } from 'motion/react'
 import { type FC, useContext, useMemo } from 'react'
 import { type Control, Controller, useFieldArray } from 'react-hook-form'
-import { useTranslation } from 'react-i18next'
 import MdiAdd from '~icons/mdi/add'
 import MdiClose from '~icons/mdi/close'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 import { SheetDetailsContext } from '../../models/context/SheetDetailsContext'
 import { MotionButton } from '../../utils/motion'
 import type { SheetSortFilterForm, SortPredicate } from './SheetSortFilter'
@@ -26,7 +27,7 @@ export const SheetSortSelect: FC<{
   control: Control<SheetSortFilterForm>
 }> = ({ control }) => {
   const { queryActive } = useContext(SheetDetailsContext)
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const { fields, append, remove } = useFieldArray<SheetSortFilterForm>({
     control,
     name: 'sorts',
@@ -50,10 +51,10 @@ export const SheetSortSelect: FC<{
           render={({ field }) => (
             <FormControl>
               <InputLabel id={`sorts.${index}.label`}>
-                {t(index === 0 ? 'sheet:sort.by' : 'sheet:sort.then-by')}
+                {index === 0 ? m.sheet_sort_by({}, { locale }) : m.sheet_sort_thenBy({}, { locale })}
               </InputLabel>
               <Select
-                label={t(index === 0 ? 'sheet:sort.by' : 'sheet:sort.then-by')}
+                label={index === 0 ? m.sheet_sort_by({}, { locale }) : m.sheet_sort_thenBy({}, { locale })}
                 labelId={`sorts.${index}.label`}
                 id={`sorts.${index}`}
                 value={SortPredicateTransformer.from(field.value)}
@@ -66,7 +67,7 @@ export const SheetSortSelect: FC<{
                   endAdornment: (
                     <IconButton
                       size="small"
-                      aria-label={t('sheet:sort.remove', { index: index + 1 })}
+                      aria-label={m.sheet_sort_remove({ index: index + 1 }, { locale })}
                       disabled={queryActive}
                       onClick={() => remove(index)}
                     >
@@ -75,10 +76,14 @@ export const SheetSortSelect: FC<{
                   ),
                 })}
               >
-                <MenuItem value="releaseDate_desc">{t('sheet:sort.release-date.desc')}</MenuItem>
-                <MenuItem value="releaseDate_asc">{t('sheet:sort.release-date.asc')}</MenuItem>
-                <MenuItem value="internalLevelValue_desc">{t('sheet:sort.internal-level-value.desc')}</MenuItem>
-                <MenuItem value="internalLevelValue_asc">{t('sheet:sort.internal-level-value.asc')}</MenuItem>
+                <MenuItem value="releaseDate_desc">{m.sheet_sort_releaseDate_desc({}, { locale })}</MenuItem>
+                <MenuItem value="releaseDate_asc">{m.sheet_sort_releaseDate_asc({}, { locale })}</MenuItem>
+                <MenuItem value="internalLevelValue_desc">
+                  {m.sheet_sort_internalLevelValue_desc({}, { locale })}
+                </MenuItem>
+                <MenuItem value="internalLevelValue_asc">
+                  {m.sheet_sort_internalLevelValue_asc({}, { locale })}
+                </MenuItem>
               </Select>
             </FormControl>
           )}
@@ -97,7 +102,7 @@ export const SheetSortSelect: FC<{
             exit="exit"
             disabled={queryActive}
           >
-            {t('sheet:sort.add')}
+            {m.sheet_sort_add({}, { locale })}
           </MotionButton>
         )}
       </AnimatePresence>

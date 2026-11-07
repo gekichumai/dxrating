@@ -1,6 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
 
 // The site key is read when LoginForm's module loads, so stub it before importing the form
 vi.stubEnv('VITE_TURNSTILE_SITE_KEY', 'test-site-key')
@@ -67,9 +66,11 @@ vi.mock('@marsidev/react-turnstile', () => {
 })
 
 describe('LoginForm Turnstile across a widget replacement', () => {
-  beforeAll(() => {
-    initI18n()
-  })
+  // The first import of LoginForm transforms its whole module graph, which takes seconds when the full suite runs in
+  // parallel; do it once here instead of inside the 5s per-test timeout
+  beforeAll(async () => {
+    await import('../LoginForm')
+  }, 60_000)
   afterEach(() => {
     page.theme = 'light'
     viewport.narrow = false

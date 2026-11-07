@@ -1,6 +1,5 @@
 import { CircularProgress, IconButton } from '@mui/material'
 import { type FC, useCallback, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useAsync } from 'react-use'
 import MdiAccountCheck from '~icons/mdi/account-check'
 import MdiLogin from '~icons/mdi/login'
@@ -8,6 +7,8 @@ import { authClient } from '../../../lib/auth-client'
 import { LoginForm, loginFormTitleId } from '../../auth/LoginForm'
 import { ResponsiveDialog } from '../ResponsiveDialog'
 import { UserProfileModal } from './UserProfileModal'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 async function sha256(message: string) {
   const msgBuffer = new TextEncoder().encode(message)
@@ -53,7 +54,7 @@ export const ProfileImage: FC<{
 const AUTH_FORM_TITLE_ID = loginFormTitleId('account-dialog')
 
 export const UserChip: FC = () => {
-  const { t } = useTranslation(['auth'])
+  const locale = useLocale()
   const [open, setOpen] = useState<'auth' | 'profile' | null>(null)
   const [authPending, setAuthPending] = useState(false)
   const { data: sessionData, isPending: pending } = authClient.useSession()
@@ -80,15 +81,20 @@ export const UserChip: FC = () => {
 
       {pending ? (
         <div className="flex size-9 items-center justify-center text-fg-2">
-          <CircularProgress disableShrink size="1.125rem" color="inherit" aria-label={t('auth:user-menu.loading')} />
+          <CircularProgress
+            disableShrink
+            size="1.125rem"
+            color="inherit"
+            aria-label={m.auth_userMenu_loading({}, { locale })}
+          />
         </div>
       ) : (
         <IconButton
           onClick={() => {
             setOpen(session ? 'profile' : 'auth')
           }}
-          aria-label={t(session ? 'auth:user-menu.open-profile' : 'auth:user-menu.sign-in')}
-          title={t(session ? 'auth:user-menu.open-profile' : 'auth:user-menu.sign-in')}
+          aria-label={session ? m.auth_userMenu_openProfile({}, { locale }) : m.auth_userMenu_signIn({}, { locale })}
+          title={session ? m.auth_userMenu_openProfile({}, { locale }) : m.auth_userMenu_signIn({}, { locale })}
         >
           {session ? (
             <ProfileImage email={user?.email} image={user?.image} size="1.2em" />

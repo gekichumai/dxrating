@@ -4,7 +4,15 @@ import { z } from 'zod'
 import type { McpCatalog } from './catalog'
 import { catalogInfo, catalogInfoSchema, sheetTypeSchema, structured, toolError } from './output'
 import { achievementSchema, comboSchema, RANK_THRESHOLDS, ratingOf } from './rating'
-import { currentVersion, isRatingEligible, parseServer, resolveSheets, sheetOnServer, versionOrder } from './sheets'
+import {
+  currentVersion,
+  isRatingEligible,
+  parseServer,
+  resolveSheets,
+  serverRegion,
+  sheetOnServer,
+  versionOrder,
+} from './sheets'
 
 const MAX_SCORES = 300
 const BUCKET_SIZES = { b15: 15, b35: 35 } as const
@@ -146,9 +154,9 @@ export function runCalculateBest50(
       version === latest
         ? onServer.internalLevel
         : (sheet.multiverInternalLevelValue?.[version] ?? onServer.internalLevel)
-    const bucket = isB15Sheet(onServer.version as VersionEnum, version as VersionEnum, 'jp')
+    const bucket = isB15Sheet(onServer.version as VersionEnum, version as VersionEnum, serverRegion(server) ?? 'jp')
       ? 'b15'
-      : isB35Sheet(onServer.version as VersionEnum, version as VersionEnum, 'jp')
+      : isB35Sheet(onServer.version as VersionEnum, version as VersionEnum, serverRegion(server) ?? 'jp')
         ? 'b35'
         : undefined
     if (!bucket) return skip(`The chart is of ${onServer.version}, newer than ${version}.`)

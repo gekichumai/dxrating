@@ -19,7 +19,6 @@ import {
 } from '@mui/material'
 import { type FC, useCallback, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import sqljs, { type Database } from 'sql.js'
 // The binary of the installed sql.js, served with the app: sql.js.org only hosts the latest build, under another
 // name than the browser build of the package asks for (sql-wasm-browser.wasm), and the versions must match.
@@ -36,11 +35,13 @@ import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const ImportFromAquaSQLiteListItem: FC<{
   onClose: () => void
 }> = ({ onClose }) => {
-  const { t } = useTranslation(['rating-calculator', 'global'])
+  const locale = useLocale()
   const [db, setDb] = useState<Database | null>(null)
   const handleClose = useCallback(() => {
     setDb(null)
@@ -108,9 +109,9 @@ export const ImportFromAquaSQLiteListItem: FC<{
               fileInput.click()
             }),
             {
-              loading: t('rating-calculator:io.import.aqua-sqlite.loading-db'),
-              success: t('rating-calculator:io.import.aqua-sqlite.loaded-db'),
-              error: t('rating-calculator:io.import.aqua-sqlite.load-db-failed'),
+              loading: m.ratingCalculator_io_import_aquaSqlite_loadingDb({}, { locale }),
+              success: m.ratingCalculator_io_import_aquaSqlite_loadedDb({}, { locale }),
+              error: m.ratingCalculator_io_import_aquaSqlite_loadDbFailed({}, { locale }),
             },
           )
         }}
@@ -118,7 +119,10 @@ export const ImportFromAquaSQLiteListItem: FC<{
         <ListItemIcon>
           <IconMdiDatabase />
         </ListItemIcon>
-        <ListItemText primary={t('rating-calculator:io.import.aqua-sqlite.title')} secondary={t('global:deprecated')} />
+        <ListItemText
+          primary={m.ratingCalculator_io_import_aquaSqlite_title({}, { locale })}
+          secondary={m.global_deprecated({}, { locale })}
+        />
       </MenuItem>
     </>
   )
@@ -133,18 +137,18 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   db: Database
   onClose?: () => void
 }> = ({ db, onClose }) => {
-  const { t } = useTranslation(['rating-calculator', 'global'])
+  const locale = useLocale()
   const repository = useScoreRepository()
   const haptic = useWebHaptics()
   const users = useMemo(() => {
     try {
       return readAquaUsers(db)
     } catch (e) {
-      toast.error(t('rating-calculator:io.import.aqua-sqlite.read-users-failed', { error: formatErrorMessage(e) }))
+      toast.error(m.ratingCalculator_io_import_aquaSqlite_readUsersFailed({ error: formatErrorMessage(e) }, { locale }))
       console.error('Failed to read users from Aqua SQLite database', e)
       return []
     }
-  }, [db])
+  }, [db, locale])
   const [selectedUser, setSelectedUser] = useState<AquaUser | null>(null)
   const { data: sheets } = useSheets()
   const catalog = useCompleteSongCatalog()
@@ -160,11 +164,11 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   return (
     <>
       <DialogTitle className="flex flex-col items-start">
-        <div>{t('rating-calculator:io.import.aqua-sqlite.dialog-title')}</div>
+        <div>{m.ratingCalculator_io_import_aquaSqlite_dialogTitle({}, { locale })}</div>
         <div className="text-sm text-secondary">
           {mode === 'select-user'
-            ? t('rating-calculator:io.import.aqua-sqlite.select-user')
-            : t('rating-calculator:io.import.aqua-sqlite.confirm-import')}
+            ? m.ratingCalculator_io_import_aquaSqlite_selectUser({}, { locale })
+            : m.ratingCalculator_io_import_aquaSqlite_confirmImport({}, { locale })}
         </div>
       </DialogTitle>
 
@@ -176,13 +180,13 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
                 <ListItemAvatar>
                   <FadedImage
                     src={`https://shama.dxrating.net/assetbundle/icon/ui_icon_${String(user.icon_id).padStart(6, '0')}.png`}
-                    alt={t('rating-calculator:io.import.aqua-sqlite.user-icon-alt', { name: user.user_name })}
+                    alt={m.ratingCalculator_io_import_aquaSqlite_userIconAlt({ name: user.user_name }, { locale })}
                     className="w-16 h-16 rounded-md bg-gray-400"
                   />
                 </ListItemAvatar>
                 <ListItemText
                   primary={user.user_name}
-                  secondary={`${t('rating-calculator:table.headers.rating')} ${user.highest_rating}`}
+                  secondary={`${m.ratingCalculator_table_headers_rating({}, { locale })} ${user.highest_rating}`}
                   secondaryTypographyProps={{ className: 'num' }}
                 />
               </ListItemButton>,
@@ -194,13 +198,13 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
           <div className="flex flex-col">
             {warnings.length > 0 && (
               <Alert severity="warning" className="mb-4">
-                <AlertTitle>{t('global:warnings')}</AlertTitle>
+                <AlertTitle>{m.global_warnings({}, { locale })}</AlertTitle>
 
                 <ul className="list-disc list-inside">
                   {warnings.map((warning, index) => (
                     <li key={`${warning.code}-${index}`}>
                       {warning.code === 'sheet-not-found'
-                        ? t('rating-calculator:io.import.aqua-sqlite.sheet-not-found')
+                        ? m.ratingCalculator_io_import_aquaSqlite_sheetNotFound({}, { locale })
                         : warning.message}{' '}
                       <code className="bg-gray-2 px-1 py-0.5 rounded-sm b-1 b-solid b-gray-3">
                         {formatAquaWarningRow(warning)}
@@ -228,7 +232,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
 
       {mode === 'confirm-import' && (
         <DialogActions>
-          <Button onClick={() => setSelectedUser(null)}>{t('global:back')}</Button>
+          <Button onClick={() => setSelectedUser(null)}>{m.global_back({}, { locale })}</Button>
           <Button
             color="primary"
             variant="contained"
@@ -247,12 +251,12 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
               analytics.succeeded(records.length, warnings.length)
 
               haptic.trigger('success')
-              toast.success(t('rating-calculator:io.import.aqua-sqlite.success', { count: records.length }))
+              toast.success(m.ratingCalculator_io_import_aquaSqlite_success({ count: records.length }, { locale }))
 
               onClose?.()
             }}
           >
-            {t('rating-calculator:io.import.aqua-sqlite.import-action')}
+            {m.ratingCalculator_io_import_aquaSqlite_importAction({}, { locale })}
           </Button>
         </DialogActions>
       )}

@@ -6,9 +6,12 @@ import { cors } from 'hono/cors'
 import { etag, RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { Authentication } from './auth'
+import { viewerFromSession } from './proofs/viewer-is'
 import { Clock, Data, Effect, Option } from 'effect'
 import { HttpBody } from 'effect/http'
 import { appRuntime, runApp, superviseApp } from './runtime'
+import { refuseWhileDraining } from './lifecycle'
+import { ClientClosedRequestError, isExpectedRequestEnd } from './request-runner'
 import { HttpClient } from './services/http-client'
 import { getBuildInfo } from './version'
 import type { SongCatalogSource } from '@gekichumai/maimai-domain'
@@ -21,7 +24,6 @@ import { evlog, type EvlogVariables } from 'evlog/hono'
 import type { MiddlewareHandler } from 'hono'
 import { drain } from './logger'
 import { appRouter, type ApiContext } from './router'
-import { exchangeCodeForTokens } from './services/lxns/index'
 import { AppConfig } from './config'
 import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
@@ -30,7 +32,19 @@ import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc
 import { onError, ORPCError } from '@orpc/server'
 import { netErrorTags, Sentry, shouldCaptureSentryError } from './lib/functions/sentry'
 import { Database } from './db/index'
-import { createDxdataEffect, createPostgresDxdataEffects, DXDATA_CORS_OPTIONS, DXDATA_PATH } from './services/dxdata'
+import {
+  compressCatalogBody,
+  createDxdataEffect,
+  createPostgresDxdataEffects,
+  DXDATA_CORS_OPTIONS,
+  DXDATA_PATH,
+} from './services/dxdata'
+import { createDxdataV2Store, DXDATA_V2_CACHE_TAG, DXDATA_V2_PATH } from './services/dxdata-v2'
+import {
+  createCommunityOverlayHandler,
+  DXDATA_V2_COMMUNITY_PATH,
+  readListsThrough,
+} from './services/dxdata-v2-community'
 import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi'
 import { applyApiPolicyToOpenApi } from './services/api-policy'
 import { addPublicApiExamplesToOpenApi } from './services/openapi-examples'
@@ -143,7 +157,9 @@ const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
 const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATALOG_PROFILE_URL}"`
 const ARCADE_VENUES_PATH = '/api/v1/arcades/venues'
 const ARCADE_VENUES_BROWSER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400'
-const ARCADE_VENUES_CDN_CACHE_CONTROL = 'public, max-age=21600, stale-while-revalidate=86400, stale-if-error=604800'
+// Nothing purges the edge when venues change, so it revalidates every 5 minutes in the background with the ETag.
+// Longer than dxdata's 60s because each revalidation rebuilds and hashes the full body to compare ETags.
+const ARCADE_VENUES_CDN_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=86400, stale-if-error=604800'
 const ARCADE_VENUES_RETAINED_304_HEADERS = [
   ...RETAINED_304_HEADERS,
   'last-modified',
@@ -153,7 +169,36 @@ const ARCADE_VENUES_RETAINED_304_HEADERS = [
   'access-control-allow-origin',
   'access-control-expose-headers',
 ]
-const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH])
+const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH, DXDATA_V2_PATH, DXDATA_V2_COMMUNITY_PATH])
+// The tag and alias lists are public data that the edge shares between every caller. The edge ignores
+// `Vary: Origin`, so a cached copy must not carry one caller's reflected origin: reads answer `*` without
+// credentials, like the catalog. Writes on the same paths (POST /aliases) keep the credentialed API CORS.
+const PUBLIC_LIST_PATHS = new Set(['/api/v1/tags', '/api/v1/aliases', '/api/v1/announcements'])
+const PUBLIC_LIST_CACHE_TAGS: Record<string, string> = {
+  '/api/v1/tags': 'tags',
+  '/api/v1/aliases': 'aliases',
+  '/api/v1/announcements': 'announcements',
+}
+// Browsers always revalidate, which the edge answers with a 304, so a client that refetches right after its own
+// write is never held on a copy in its own cache. The edge keeps a copy for a minute and then revalidates it in the
+// background, so a new tag or alias reaches everyone within a few minutes; mutations also clear the server cache.
+const PUBLIC_LIST_BROWSER_CACHE_CONTROL = 'public, no-cache'
+const PUBLIC_LIST_CDN_CACHE_CONTROL = 'public, max-age=60, stale-while-revalidate=300, stale-if-error=86400'
+const PUBLIC_LIST_RETAINED_304_HEADERS = [
+  ...RETAINED_304_HEADERS,
+  'cdn-cache-control',
+  'cloudflare-cdn-cache-control',
+  'cache-tag',
+  'access-control-allow-origin',
+  'access-control-expose-headers',
+]
+const isPublicListRead = (c: Context) => {
+  if (!PUBLIC_LIST_PATHS.has(c.req.path)) return false
+  if (c.req.method === 'GET' || c.req.method === 'HEAD') return true
+  if (c.req.method !== 'OPTIONS') return false
+  const requested = c.req.header('Access-Control-Request-Method')?.toUpperCase()
+  return requested === undefined || requested === 'GET' || requested === 'HEAD'
+}
 
 const getFirstHeaderValue = (value: string | undefined) => value?.split(',')[0]?.trim() || undefined
 
@@ -236,6 +281,18 @@ const setApiCatalogHeaders = (c: Context) => {
   )
 }
 
+/**
+ * A request that ended because the client closed the connection (nobody reads this response; 499 is nginx's code
+ * for it) or because the server is shutting down (503, so the proxy retries elsewhere). Logged at info, not sent to
+ * Sentry: neither is a server fault.
+ */
+const expectedRequestEnd = (c: Context, error: Error) => {
+  c.get('log')?.info({ request_end: error.name })
+  if (error instanceof ClientClosedRequestError) return c.body(null, 499 as 400)
+  c.header('Connection', 'close')
+  return c.json({ status: 'shutting_down' }, 503)
+}
+
 // Error handler
 app.onError((err, c) => {
   const log = c.get('log')
@@ -244,6 +301,9 @@ app.onError((err, c) => {
   if (err instanceof z.ZodError) {
     return c.json({ error: 'Validation error', details: err.issues, requestId }, 400)
   }
+
+  // The client left before the response finished, or shutdown stopped the request: expected, not reported.
+  if (isExpectedRequestEnd(err)) return expectedRequestEnd(c, err)
 
   log?.error(err)
   Sentry.captureException(err, { tags: { requestId } })
@@ -282,7 +342,18 @@ const apiCors = cors({
 })
 
 const publicStaticCatalogCors = cors(DXDATA_CORS_OPTIONS)
+const publicListCors = cors({
+  origin: '*',
+  // The web sends Sentry trace headers to the API (router.tsx tracePropagationTargets)
+  allowHeaders: ['Content-Type', 'If-None-Match', 'sentry-trace', 'baggage', API_CLIENT_HEADER],
+  allowMethods: ['GET', 'HEAD', 'OPTIONS'],
+  exposeHeaders: ['Content-Length', 'ETag', 'X-DXRating-Request-ID'],
+  maxAge: 86400,
+})
 const mcpCors = cors(MCP_CORS_OPTIONS)
+
+// While the server drains on shutdown, readiness (/health) fails and new requests are refused; in-flight ones finish.
+app.use('*', refuseWhileDraining)
 
 // Static catalog responses are credential-independent, allowing one public
 // representation per URL to be safely shared by browsers and the CDN. The MCP
@@ -290,9 +361,11 @@ const mcpCors = cors(MCP_CORS_OPTIONS)
 app.use('*', (c, next) =>
   PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)
     ? publicStaticCatalogCors(c, next)
-    : c.req.path === MCP_PATH || c.req.path === MCP_SERVER_CARD_PATH
-      ? mcpCors(c, next)
-      : apiCors(c, next),
+    : isPublicListRead(c)
+      ? publicListCors(c, next)
+      : c.req.path === MCP_PATH || c.req.path === MCP_SERVER_CARD_PATH
+        ? mcpCors(c, next)
+        : apiCors(c, next),
 )
 
 // Request logging
@@ -607,15 +680,9 @@ app.get('/api/v1/io/import/lxns/oauth_callback', (c) =>
       if (error || !code || !state) {
         return c.redirect(`${frontendCallback}?status=error&error=${encodeURIComponent(error || 'missing_params')}`)
       }
-      return yield* exchangeCodeForTokens(code, state).pipe(
-        Effect.map(() => c.redirect(`${frontendCallback}?status=success`)),
-        Effect.catch((error) =>
-          Effect.sync(() => {
-            c.get('log')?.error(error)
-            return c.redirect(`${frontendCallback}?status=error&error=exchange_failed`)
-          }),
-        ),
-      )
+      // Completing needs the session of the user who started the authorization, which this redirect from LXNS may
+      // not carry (the iOS app signs in with its own cookie store). The web page or the app calls lxns.complete.
+      return c.redirect(`${frontendCallback}?${new URLSearchParams({ code, state }).toString()}`)
     }),
     { signal: c.req.raw.signal },
   ),
@@ -652,20 +719,38 @@ const openAPIGenerator = new OpenAPIGenerator({
 
 app.get('/robots.txt', (c) => c.text('User-agent: *\\nDisallow: /'))
 
-const dxdataStore = createPostgresDxdataEffects((text, values) =>
+export const dxdataStore = createPostgresDxdataEffects((text, values) =>
   Effect.flatMap(Database, (database) => database.raw('Read published catalog', text, values)),
 )
-const dxdataHandler = createDxdataEffect(dxdataStore, (error, c: Context<EvlogVariables>) => {
+const reportCatalogError = (error: unknown, c: Context<EvlogVariables>) => {
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
   log?.error(error instanceof Error ? error : new Error(String(error)))
   Sentry.captureException(error, { tags: { requestId } })
-})
+}
+const dxdataHandler = createDxdataEffect(dxdataStore, reportCatalogError)
+// v2 (gekichumai/meta#43): the same publication, transformed once per published body
+const dxdataV2Handler = createDxdataEffect(
+  createDxdataV2Store(dxdataStore),
+  reportCatalogError,
+  compressCatalogBody,
+  DXDATA_V2_CACHE_TAG,
+)
 
 // The producer atomically advances the production publication pointer. Read
 // its small metadata row first so HEAD and conditional requests never fetch
 // the potentially large snapshot body.
 app.on(['GET', 'HEAD'], DXDATA_PATH, (c) => runApp(dxdataHandler(c), { signal: c.req.raw.signal }))
+app.on(['GET', 'HEAD'], DXDATA_V2_PATH, (c) => runApp(dxdataV2Handler(c), { signal: c.req.raw.signal }))
+
+// The v2 community overlay, built from the public v1 tag and alias routes themselves, so it follows their rules
+const communityOverlayHandler = createCommunityOverlayHandler(
+  readListsThrough((path) => app.request(path, { headers: { [API_CLIENT_HEADER]: 'dxrating-v2-community' } })),
+  reportCatalogError,
+)
+app.on(['GET', 'HEAD'], DXDATA_V2_COMMUNITY_PATH, (c) =>
+  runApp(communityOverlayHandler(c), { signal: c.req.raw.signal }),
+)
 
 const arcadeVenuesCacheHeaders = createMiddleware((c, next) =>
   runApp(
@@ -760,6 +845,7 @@ const arcadeVenuesEtag = createMiddleware((c, next) =>
 // compatibility requests still receive validators, while the CDN Cache Rule
 // only marks the canonical query-less catalog eligible for edge storage.
 const reportApiError = (c: Context, error: unknown) => {
+  if (isExpectedRequestEnd(error)) return expectedRequestEnd(c, error as Error)
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
   log?.error(error instanceof Error ? error : new Error(String(error)))
@@ -790,10 +876,19 @@ app.get(ARCADE_VENUES_PATH, arcadeVenuesEtag, arcadeVenuesCacheHeaders, (c) =>
 )
 
 // The tag and alias lists are the same for every viewer, and bots poll them; an ETag lets a poller revalidate with
-// If-None-Match and get a 304 instead of the whole list. The API stability policy asks clients to do so.
-const publicListEtag = etag()
-for (const path of ['/api/v1/tags', '/api/v1/aliases']) {
-  app.on(['GET', 'HEAD'], path, publicListEtag)
+// If-None-Match and get a 304 instead of the whole list. The API stability policy asks clients to do so. The edge
+// keeps them as well (see PUBLIC_LIST_CDN_CACHE_CONTROL), so the 304 keeps the headers it needs to renew its copy.
+const publicListEtag = etag({ retainedHeaders: PUBLIC_LIST_RETAINED_304_HEADERS })
+const publicListCacheHeaders = createMiddleware(async (c, next) => {
+  await next()
+  if (c.res.status !== 200) return
+  c.header('Cache-Control', PUBLIC_LIST_BROWSER_CACHE_CONTROL)
+  c.header('CDN-Cache-Control', PUBLIC_LIST_CDN_CACHE_CONTROL)
+  c.header('Cloudflare-CDN-Cache-Control', PUBLIC_LIST_CDN_CACHE_CONTROL)
+  c.header('Cache-Tag', PUBLIC_LIST_CACHE_TAGS[c.req.path] ?? 'aliases')
+})
+for (const path of PUBLIC_LIST_PATHS) {
+  app.on(['GET', 'HEAD'], path, publicListEtag, publicListCacheHeaders)
 }
 
 // Comment and /me responses depend on the signed-in viewer and must never enter a shared cache.
@@ -888,6 +983,7 @@ app.all('/api/v1/*', (c) =>
               'effect/context': effectContext,
               'effect/wrap': superviseApi,
               user: session?.user,
+              viewer: session?.user ? viewerFromSession(session.user) : undefined,
               signal: c.req.raw.signal,
             },
           }),

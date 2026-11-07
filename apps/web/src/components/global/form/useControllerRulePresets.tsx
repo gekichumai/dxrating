@@ -1,20 +1,21 @@
 import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const useControllerRulePresets = () => {
-  const { t } = useTranslation(['form'])
+  const locale = useLocale()
   return useMemo(() => {
     return {
-      min: (fieldName: string, value: number) =>
+      min: (_fieldName: string, value: number) =>
         ({
           value,
-          message: t('form:validation.min.message', { fieldName, value }),
+          message: m.form_validation_min_message({ value }, { locale }),
         }) as const,
-      max: (fieldName: string, value: number) =>
+      max: (_fieldName: string, value: number) =>
         ({
           value,
-          message: t('form:validation.max.message', { fieldName, value }),
+          message: m.form_validation_max_message({ value }, { locale }),
         }) as const,
     }
-  }, [t])
+  }, [locale])
 }

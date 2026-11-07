@@ -1,13 +1,15 @@
 import { Button, CircularProgress } from '@mui/material'
 import { type FC, useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import IconLogosGithub from '~icons/logos/github-icon'
 import IconLogosGoogle from '~icons/logos/google-icon'
 import IconMdiLinkVariant from '~icons/mdi/link-variant'
 import { authClient } from '../../../lib/auth-client'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
 
 interface AccountItem {
   id: string
@@ -18,14 +20,14 @@ interface AccountItem {
 const PROVIDERS: {
   id: string
   icon: FC<{ className?: string }>
-  labelKey: string
+  label: PlainMessage
 }[] = [
-  { id: 'google', icon: IconLogosGoogle, labelKey: 'auth:user-profile.accounts.google' },
-  { id: 'github', icon: IconLogosGithub, labelKey: 'auth:user-profile.accounts.github' },
+  { id: 'google', icon: IconLogosGoogle, label: m.auth_userProfile_accounts_google },
+  { id: 'github', icon: IconLogosGithub, label: m.auth_userProfile_accounts_github },
 ]
 
 export const ConnectedAccountsSection: FC = () => {
-  const { t } = useTranslation(['auth'])
+  const locale = useLocale()
   const [accounts, setAccounts] = useState<AccountItem[]>([])
   const [loading, setLoading] = useState(true)
   const [connectingProvider, setConnectingProvider] = useState<string | null>(null)
@@ -71,10 +73,10 @@ export const ConnectedAccountsSection: FC = () => {
     setDisconnectingProvider(providerId)
     try {
       await authClient.unlinkAccount({ accountId: account.id })
-      toast.success(t('auth:user-profile.accounts.disconnected'))
+      toast.success(m.auth_userProfile_accounts_disconnected({}, { locale }))
       setAccounts((prev) => prev.filter((a) => a.providerId !== providerId))
     } catch (e: unknown) {
-      toast.error(t('auth:user-profile.accounts.error', { error: formatErrorMessage(e) }))
+      toast.error(m.auth_userProfile_accounts_error({ error: formatErrorMessage(e) }, { locale }))
     } finally {
       setDisconnectingProvider(null)
     }
@@ -84,18 +86,20 @@ export const ConnectedAccountsSection: FC = () => {
     <div className="flex flex-col gap-8">
       <ConfirmDialog
         open={confirmDisconnect.open}
-        title={t('auth:user-profile.accounts.confirm-disconnect-title')}
-        description={t('auth:user-profile.accounts.confirm-disconnect-description')}
-        confirmLabel={t('auth:user-profile.accounts.confirm-disconnect-button')}
+        title={m.auth_userProfile_accounts_confirmDisconnectTitle({}, { locale })}
+        description={m.auth_userProfile_accounts_confirmDisconnectDescription({}, { locale })}
+        confirmLabel={m.auth_userProfile_accounts_confirmDisconnectButton({}, { locale })}
         confirmColor="error"
-        cancelLabel={t('auth:user-profile.confirm-cancel')}
+        cancelLabel={m.auth_userProfile_confirmCancel({}, { locale })}
         onConfirm={confirmDisconnect.onConfirm}
         onCancel={confirmDisconnect.onCancel}
       />
 
       <div className="flex flex-col gap-1">
-        <h3 className="text-lg font-semibold leading-snug text-fg-1 m-0">{t('auth:user-profile.accounts.title')}</h3>
-        <p className="text-sm text-fg-2 m-0">{t('auth:user-profile.accounts.description')}</p>
+        <h3 className="text-lg font-semibold leading-snug text-fg-1 m-0">
+          {m.auth_userProfile_accounts_title({}, { locale })}
+        </h3>
+        <p className="text-sm text-fg-2 m-0">{m.auth_userProfile_accounts_description({}, { locale })}</p>
       </div>
 
       {loading ? (
@@ -104,7 +108,7 @@ export const ConnectedAccountsSection: FC = () => {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {PROVIDERS.map(({ id, icon: Icon, labelKey }) => {
+          {PROVIDERS.map(({ id, icon: Icon, label }) => {
             const connected = socialAccounts.find((a) => a.providerId === id)
             const canDisconnect = totalMethods > 1
             const statusId = `connected-account-${id}-status`
@@ -113,13 +117,13 @@ export const ConnectedAccountsSection: FC = () => {
               <div key={id} className="glass-inset flex items-center gap-3 py-3 px-4">
                 <Icon className="w-5 h-5 shrink-0" aria-hidden="true" />
                 <div className="flex flex-col flex-1 min-w-0">
-                  <span className="text-sm font-semibold text-fg-1">{t(labelKey)}</span>
+                  <span className="text-sm font-semibold text-fg-1">{label({}, { locale })}</span>
                   <span id={statusId} className="text-xs text-fg-2 text-pretty">
                     {connected
                       ? canDisconnect
-                        ? t('auth:user-profile.accounts.connected')
-                        : t('auth:user-profile.accounts.disconnect-unavailable')
-                      : t('auth:user-profile.accounts.not-connected')}
+                        ? m.auth_userProfile_accounts_connected({}, { locale })
+                        : m.auth_userProfile_accounts_disconnectUnavailable({}, { locale })
+                      : m.auth_userProfile_accounts_notConnected({}, { locale })}
                   </span>
                 </div>
                 {connected ? (
@@ -135,7 +139,7 @@ export const ConnectedAccountsSection: FC = () => {
                     {disconnectingProvider === id ? (
                       <CircularProgress size={16} />
                     ) : (
-                      t('auth:user-profile.accounts.disconnect')
+                      m.auth_userProfile_accounts_disconnect({}, { locale })
                     )}
                   </Button>
                 ) : (
@@ -149,7 +153,7 @@ export const ConnectedAccountsSection: FC = () => {
                     {connectingProvider === id ? (
                       <CircularProgress size={16} />
                     ) : (
-                      t('auth:user-profile.accounts.connect')
+                      m.auth_userProfile_accounts_connect({}, { locale })
                     )}
                   </Button>
                 )}
@@ -161,11 +165,13 @@ export const ConnectedAccountsSection: FC = () => {
           <div className="glass-inset flex items-center gap-3 py-3 px-4">
             <IconMdiLinkVariant className="w-5 h-5 shrink-0 text-fg-2" aria-hidden="true" />
             <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-sm font-semibold text-fg-1">{t('auth:user-profile.accounts.email-password')}</span>
+              <span className="text-sm font-semibold text-fg-1">
+                {m.auth_userProfile_accounts_emailPassword({}, { locale })}
+              </span>
               <span className="text-xs text-fg-2">
                 {hasCredentialAccount
-                  ? t('auth:user-profile.accounts.connected')
-                  : t('auth:user-profile.accounts.not-connected')}
+                  ? m.auth_userProfile_accounts_connected({}, { locale })
+                  : m.auth_userProfile_accounts_notConnected({}, { locale })}
               </span>
             </div>
           </div>

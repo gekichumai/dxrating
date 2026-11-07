@@ -10,6 +10,7 @@ import {
 describe('publicAppContract', () => {
   it('exposes browser-callable routes without backend-only routes', () => {
     expect(Object.keys(publicAppContract)).toEqual([
+      'announcements',
       'tags',
       'comments',
       'aliases',
@@ -21,6 +22,7 @@ describe('publicAppContract', () => {
     expect('maimai' in publicAppContract).toBe(false)
     expect('chartOgImage' in publicAppContract).toBe(false)
     expect('monitoring' in publicAppContract).toBe(false)
+    expect('admin' in publicAppContract).toBe(false)
   })
 
   it('owns shared route payload schemas', () => {

@@ -64,6 +64,9 @@ const envSchema = z.object({
   CLOUD_SAVE_ALLOWLIST_EMAILS: optionalString,
   // Server-side imports write into cloud saves; off until they are explicitly enabled.
   SERVER_IMPORTS: z.preprocess(emptyStringToUndefined, z.enum(['on', 'off']).default('off')),
+  // Cloudflare edge cache purge (services/edge-cache.ts); both unset disables it
+  CLOUDFLARE_ZONE_ID: optionalString,
+  CLOUDFLARE_CACHE_PURGE_TOKEN: optionalString,
 })
 
 export const parseEmailAllowlist = (value: string | undefined): readonly string[] => [
@@ -142,6 +145,10 @@ export const config = {
     cloudSaveAllowlistEmails: parseEmailAllowlist(env.CLOUD_SAVE_ALLOWLIST_EMAILS),
     serverImports: env.SERVER_IMPORTS === 'on',
   },
+  edgeCache:
+    env.CLOUDFLARE_ZONE_ID && env.CLOUDFLARE_CACHE_PURGE_TOKEN
+      ? { zoneId: env.CLOUDFLARE_ZONE_ID, token: env.CLOUDFLARE_CACHE_PURGE_TOKEN }
+      : undefined,
 } as const
 
 export class AppConfig extends Context.Service<AppConfig, typeof config>()('dxrating/AppConfig') {}

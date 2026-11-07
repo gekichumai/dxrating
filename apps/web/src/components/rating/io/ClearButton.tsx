@@ -1,24 +1,29 @@
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import { type FC, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useScoreEntries, useScoreRepository } from '@/models/scores/useScoreRepository'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const ClearButton: FC = () => {
   const repository = useScoreRepository()
   const [dialogOpen, setDialogOpen] = useState(false)
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const entries = useScoreEntries()
 
   return (
     <>
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-        <DialogTitle>{t('rating-calculator:io.clear.dialog.title')}</DialogTitle>
+        <DialogTitle>{m.ratingCalculator_io_clear_dialog_title({}, { locale })}</DialogTitle>
         <DialogContent className="min-w-[20rem]">
-          <Alert severity="warning">{t('rating-calculator:io.clear.dialog.message', { count: entries.length })}</Alert>
+          <Alert severity="warning">
+            {m.ratingCalculator_io_clear_dialog_message({ count: entries.length }, { locale })}
+          </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>{t('rating-calculator:io.clear.dialog.cancel')}</Button>
+          <Button onClick={() => setDialogOpen(false)}>
+            {m.ratingCalculator_io_clear_dialog_cancel({}, { locale })}
+          </Button>
 
           <Button
             color="error"
@@ -31,7 +36,7 @@ export const ClearButton: FC = () => {
               repository.clear()
             }}
           >
-            {t('rating-calculator:io.clear.dialog.confirm')}
+            {m.ratingCalculator_io_clear_dialog_confirm({}, { locale })}
           </Button>
         </DialogActions>
       </Dialog>
@@ -43,7 +48,7 @@ export const ClearButton: FC = () => {
           setDialogOpen(true)
         }}
       >
-        {t('rating-calculator:io.clear.button')}
+        {m.ratingCalculator_io_clear_button({}, { locale })}
       </Button>
     </>
   )
