@@ -185,9 +185,7 @@ describe('舞ReMASTER membership on the bundled snapshot', () => {
           sheet.serverIds.includes('jp') &&
           sheet.releaseDate !== undefined &&
           sheet.releaseDate < '2019-07-11' &&
-          ['maimai', 'MiLK PLUS', 'FiNALE'].includes(sheet.version) &&
-          // ジングルベル: on the 舞 exclusion list (meta#58)
-          sheet.internalId !== 70,
+          ['maimai', 'MiLK PLUS', 'FiNALE'].includes(sheet.version),
       ),
     )
     expect(sdRemasters.length).toBeGreaterThan(0)
@@ -278,17 +276,18 @@ describe('plate exclusion lists (meta#58)', () => {
   it('declares the exclusions documented in the issue', () => {
     expect(g('shin-ver').excludedMusicIds).toEqual([70])
     expect(g('sumire').excludedMusicIds).toEqual([853])
-    expect(g('mai').excludedMusicIds).toEqual([70, 853])
-    expect(g('ha').excludedMusicIds).toEqual([70, 853])
+    expect(g('mai').excludedMusicIds).toEqual([853])
+    expect(g('ha').excludedMusicIds).toEqual([853])
   })
 
   it.each(['jp', 'intl', 'cn'] as const)(
-    'leaves ジングルベル and 前前前世 out of 真, 菫, 舞 and 覇 on %s',
+    'leaves ジングルベル out of 真 and 前前前世 out of 菫, 舞 and 覇 on %s',
     (region) => {
       expect(musicIds('shin-ver', region).has(70)).toBe(false)
       expect(musicIds('sumire', region).has(853)).toBe(false)
       for (const id of ['mai', 'ha']) {
-        expect(musicIds(id, region).has(70)).toBe(false)
+        // ジングルベル still counts toward 舞 and 覇者
+        expect(musicIds(id, region).has(70)).toBe(true)
         expect(musicIds(id, region).has(853)).toBe(false)
       }
     },
@@ -325,19 +324,19 @@ describe('plate exclusion lists (meta#58)', () => {
 
 describe('plate song counts on the bundled snapshot (meta#57, meta#58)', () => {
   // Chart sets and required sheets per plate. 真, 菫 and 舞 / 覇 drop the excluded songs: 真 89 → 88 (−70),
-  // 菫 42 → 41 (−853), 舞 / 覇 573 → 571 (−70, −853, Re:MASTER of 70 included)
+  // 菫 42 → 41 (−853), 舞 / 覇 573 → 572 (−853)
   const expected: Record<'jp' | 'intl' | 'cn', Record<string, [charts: number, sheets: number]>> = {
     jp: {
       'shin-ver': [88, 352],
       sumire: [41, 164],
-      mai: [571, 2348],
-      ha: [571, 2348],
+      mai: [572, 2353],
+      ha: [572, 2353],
       irodori: [80, 320],
       maru: [78, 312],
       meguri: [72, 288],
     },
-    intl: { 'shin-ver': [88, 352], sumire: [41, 164], mai: [571, 2348], ha: [571, 2348] },
-    cn: { 'shin-ver': [86, 344], sumire: [39, 156], mai: [527, 2169], ha: [527, 2169] },
+    intl: { 'shin-ver': [88, 352], sumire: [41, 164], mai: [572, 2353], ha: [572, 2353] },
+    cn: { 'shin-ver': [86, 344], sumire: [39, 156], mai: [528, 2174], ha: [528, 2174] },
   }
   for (const [region, plates] of Object.entries(expected) as [
     'jp' | 'intl' | 'cn',

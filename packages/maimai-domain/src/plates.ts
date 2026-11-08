@@ -80,12 +80,12 @@ const group = (
 ): PlateVersionGroup => ({ id, ja, zh, versions, kinds: STANDARD_KINDS, includesRemaster: false, ...extra })
 
 /**
- * Songs some plates leave out, by internal ID (gekichumai/meta#58): 真 leaves out 70 ジングルベル, 菫 leaves out
- * 853 前前前世, and 舞 / 覇者 leave out both.
+ * Songs some plates leave out, by internal ID (gekichumai/meta#58): 真 leaves out 70 ジングルベル, and 菫, 舞 and
+ * 覇者 leave out 853 前前前世. ジングルベル still counts toward 舞 and 覇者.
  */
 const SHIN_EXCLUDED_MUSIC_IDS = [70] as const
 const SUMIRE_EXCLUDED_MUSIC_IDS = [853] as const
-const MAI_EXCLUDED_MUSIC_IDS = [...SHIN_EXCLUDED_MUSIC_IDS, ...SUMIRE_EXCLUDED_MUSIC_IDS] as const
+const MAI_EXCLUDED_MUSIC_IDS = SUMIRE_EXCLUDED_MUSIC_IDS
 
 /** SD-era plates: identical on every server (YuzuChaN `SD_VERSION`) */
 const SD_PLATE_GROUPS: readonly PlateVersionGroup[] = [
