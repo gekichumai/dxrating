@@ -25,7 +25,7 @@ import {
   arcadeInstallations,
 } from './db/schema'
 import { eq, and, desc, asc, exists, gte, ilike, inArray, isNull, lte, notExists, or, sql, type SQL } from 'drizzle-orm'
-import type { BackendAuth } from './auth'
+import { Authentication, type BackendAuth } from './auth'
 import { AppConfig } from './config'
 import { renderChartOgImageOutputEffect } from './services/functions/chart-og-image/index'
 import { CatalogIdentityError } from './services/catalog-identities'
@@ -42,6 +42,8 @@ export interface ApiContext
     RequestHeadersHandlerPluginContext,
     ResponseHeadersHandlerPluginContext {
   user?: BackendAuth['$Infer']['Session']['user']
+  /** When the request's session was created (signed in), for Better Auth's freshness rule */
+  sessionCreatedAt?: Date
   /** The same signed-in user, as the only value `withViewer` accepts (gdp-ts `ViewerIs`) */
   viewer?: SessionViewer
   signal?: AbortSignal
@@ -1081,7 +1083,8 @@ const featuresHandler = {
 /**
  * The Security screens' device list. Better Auth's own `list-sessions` answers only a fresh session (signed in during
  * the last `session.freshAge`, one day by default) because it returns every session's token. This list leaves the
- * tokens out, so any signed-in session may read it, and a device is signed out by its `id`, scoped to the caller.
+ * tokens out, so any signed-in session may read it. Signing a device out by its `id` (scoped to the caller) needs a
+ * fresh session, by the same `freshAge` rule, so an old or stolen cookie can't sign the owner's other devices out.
  */
 const sessionsHandler = {
   list: os.sessions.list.use(requireSession).handler(
@@ -1113,6 +1116,17 @@ const sessionsHandler = {
   ),
   revoke: os.sessions.revoke.use(requireSession).handler(
     handlerGen(function* ({ context, input }) {
+      const auth = yield* Authentication
+      const freshAge = yield* auth.freshAge
+      // Better Auth's `freshSessionMiddleware`: fresh while `now - createdAt < freshAge`; a freshAge of 0 turns it off.
+      if (freshAge !== 0) {
+        const createdAt = context.sessionCreatedAt?.getTime()
+        if (createdAt === undefined || Date.now() - createdAt >= freshAge * 1000) {
+          return yield* Effect.fail(
+            new ORPCError('FORBIDDEN', { message: 'Session is not fresh', data: { reason: 'SESSION_NOT_FRESH' } }),
+          )
+        }
+      }
       const database = yield* Database
       // The same row Better Auth's `revoke-session` deletes (no secondary storage or cookie cache is configured),
       // found by id instead of token and only among the caller's own sessions.

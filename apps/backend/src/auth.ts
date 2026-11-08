@@ -248,6 +248,11 @@ export class Authentication extends Context.Service<
     readonly session: (
       headers: Headers,
     ) => Effect.Effect<Awaited<ReturnType<BackendAuth['api']['getSession']>>, AuthenticationError>
+    /**
+     * Better Auth's `session.freshAge` in seconds (0 turns the check off): a session created longer ago than this is
+     * not fresh, and Better Auth answers its sensitive routes with `SESSION_NOT_FRESH`.
+     */
+    readonly freshAge: Effect.Effect<number, AuthenticationError>
   }
 >()('dxrating/Authentication') {}
 
@@ -330,6 +335,10 @@ export const AuthenticationLive = Layer.effect(
           try: () => auth.api.getSession({ headers }),
           catch: (cause) => new AuthenticationError({ operation: 'Read authentication session', cause }),
         }).pipe(Effect.uninterruptible),
+      freshAge: Effect.tryPromise({
+        try: () => auth.$context,
+        catch: (cause) => new AuthenticationError({ operation: 'Read authentication context', cause }),
+      }).pipe(Effect.map((context) => context.sessionConfig.freshAge)),
     }
   }),
 )

@@ -42,6 +42,15 @@ const revokeSession = (cookie: string, id: string) =>
     body: '{}',
   })
 
+const sessionIdFor = async (userId: string, userAgent: string) => {
+  const { rows } = await pool.query<{ id: string }>('SELECT id FROM session WHERE user_id = $1 AND user_agent = $2', [
+    userId,
+    userAgent,
+  ])
+  expect(rows).toHaveLength(1)
+  return rows[0]!.id
+}
+
 const sessionIds = async (userId: string) =>
   (await pool.query<{ id: string }>('SELECT id FROM session WHERE user_id = $1 ORDER BY id', [userId])).rows.map(
     (row) => row.id,
@@ -106,21 +115,37 @@ describe('device sessions', () => {
     expect((await revokeSession('', 'anything')).status).toBe(401)
   })
 
-  it('revokes one of the caller’s sessions by id from a stale session', async () => {
+  it('revokes one of the caller’s sessions by id from a fresh session', async () => {
     const user = await signUp()
     const second = await signIn(user.email)
-    await makeSessionsStale(user.id)
-    const { rows } = await pool.query<{ id: string }>(
-      "SELECT id FROM session WHERE user_id = $1 AND user_agent = 'Second device'",
-      [user.id],
-    )
+    const secondId = await sessionIdFor(user.id, 'Second device')
 
-    const response = await revokeSession(user.cookie, rows[0]!.id)
+    const response = await revokeSession(user.cookie, secondId)
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ revoked: true })
     expect(await sessionIds(user.id)).toHaveLength(1)
     // The revoked device is signed out.
     expect((await listSessions(second)).status).toBe(401)
+  })
+
+  it('refuses to revoke from a session that is no longer fresh', async () => {
+    const user = await signUp()
+    await signIn(user.email)
+    const secondId = await sessionIdFor(user.id, 'Second device')
+    // Only the caller's session is stale; the device it targets was signed in just now.
+    await pool.query("UPDATE session SET created_at = now() - interval '2 days' WHERE id <> $1 AND user_id = $2", [
+      secondId,
+      user.id,
+    ])
+
+    const response = await revokeSession(user.cookie, secondId)
+    expect(response.status).toBe(403)
+    expect(await response.json()).toMatchObject({
+      code: 'FORBIDDEN',
+      message: 'Session is not fresh',
+      data: { reason: 'SESSION_NOT_FRESH' },
+    })
+    expect(await sessionIds(user.id)).toContain(secondId)
   })
 
   it("does not revoke another user's session", async () => {

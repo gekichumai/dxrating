@@ -12,7 +12,8 @@ const SESSION_TAGS = ['internal', 'account']
  *
  * Unlike Better Auth's `GET /api/auth/list-sessions`, it has no `token`. The token is the session's bearer credential,
  * which is why Better Auth only lists sessions to a fresh session (one signed in during the last `freshAge`). Without
- * it, the list can be shown to any signed-in session, and a device is revoked by its `id`.
+ * it, the list can be shown to any signed-in session. A device is revoked by its `id`, which still needs a fresh
+ * session: 403 `FORBIDDEN` with `data.reason: 'SESSION_NOT_FRESH'` otherwise.
  */
 export const DeviceSessionSchema = z.object({
   id: z.string(),
