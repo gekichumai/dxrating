@@ -1,4 +1,5 @@
 import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { difficultyFromGameLevel } from '@gekichumai/maimai-domain'
 import type sqljs from 'sql.js'
 
 export function convertQueryExecResultToEntries<T>(result: sqljs.QueryExecResult): T[] {
@@ -134,14 +135,6 @@ export interface AquaGamePlay {
   type: TypeEnum
 }
 
-const AQUA_GAME_PLAY_LEVEL_TO_DIFFICULTY: { [key: number]: DifficultyEnum } = {
-  0: DifficultyEnum.Basic,
-  1: DifficultyEnum.Advanced,
-  2: DifficultyEnum.Expert,
-  3: DifficultyEnum.Master,
-  4: DifficultyEnum.ReMaster,
-}
-
 export function readAquaGamePlays(db: sqljs.Database): AquaGamePlay[] {
   const results = db.exec('SELECT * FROM maimai2_user_music_detail')
   if (!results || results.length === 0) return []
@@ -150,7 +143,7 @@ export function readAquaGamePlays(db: sqljs.Database): AquaGamePlay[] {
 
   return records.map((record) => ({
     ...record,
-    level: AQUA_GAME_PLAY_LEVEL_TO_DIFFICULTY[record.level],
+    level: difficultyFromGameLevel(record.level)!,
     type: record.music_id >= 10000 ? TypeEnum.DX : TypeEnum.STD,
   }))
 }
@@ -381,7 +374,7 @@ export function readAquaPlayLogs(db: sqljs.Database): AquaPlayLog[] {
     login_date: new Date(record.login_date * 1000),
     play_date: new Date(record.play_date),
     user_play_date: new Date(record.user_play_date),
-    level: AQUA_GAME_PLAY_LEVEL_TO_DIFFICULTY[record.level],
+    level: difficultyFromGameLevel(record.level)!,
     type: record.music_id >= 10000 ? TypeEnum.DX : TypeEnum.STD,
     music_id: record.music_id,
     track_no: record.track_no,

@@ -66,7 +66,12 @@ export function withAchievementInt(result: RatingImportResult): RatingImportResu
 
 type ImportRowResult = { entry: RatingEntry } | { warning: ImportWarning } | { skipped: true }
 
-const LEVEL_INDEX_TO_DIFFICULTY: Record<number, DifficultyEnum> = {
+/**
+ * The game's `MusicDifficultyID`: Basic = 0, Advanced = 1, Expert = 2, Master = 3, ReMaster = 4. LXNS, Diving-Fish,
+ * MuNET, AquaDX (`userMusicDetailList[].level`) and the Aqua SQLite `level` column all store this raw value. UTAGE
+ * (5 and up) has no rating-eligible difficulty. See gekichumai/meta#55.
+ */
+const LEVEL_INDEX_TO_DIFFICULTY: Partial<Record<number, DifficultyEnum>> = {
   0: DifficultyEnum.Basic,
   1: DifficultyEnum.Advanced,
   2: DifficultyEnum.Expert,
@@ -74,11 +79,9 @@ const LEVEL_INDEX_TO_DIFFICULTY: Record<number, DifficultyEnum> = {
   4: DifficultyEnum.ReMaster,
 }
 
-const AQUA_DX_LEVEL_TO_DIFFICULTY: Record<number, DifficultyEnum> = {
-  1: DifficultyEnum.Basic,
-  2: DifficultyEnum.Expert,
-  3: DifficultyEnum.Master,
-  4: DifficultyEnum.ReMaster,
+/** The difficulty of a game `MusicDifficultyID` (0 = BASIC … 4 = Re:MASTER), or `undefined` for anything else */
+export function difficultyFromGameLevel(level: number): DifficultyEnum | undefined {
+  return LEVEL_INDEX_TO_DIFFICULTY[level]
 }
 
 const COMBO_FLAG_RANK: Record<NonNullable<ComboFlag>, number> = {
@@ -96,6 +99,10 @@ const SYNC_FLAG_RANK: Record<NonNullable<SyncFlag>, number> = {
   fsdp: 5,
 }
 
+/**
+ * The game's `PlayComboflagID`, stored raw as `combo_status` / `comboStatus`: None = 0, Silver = 1 (FC),
+ * Gold = 2 (FC+), AllPerfect = 3, AllPerfectPlus = 4. See gekichumai/meta#54.
+ */
 const AQUA_COMBO_STATUS_TO_FLAG: Record<number, ComboFlag> = {
   0: null,
   1: 'fc',
@@ -104,13 +111,18 @@ const AQUA_COMBO_STATUS_TO_FLAG: Record<number, ComboFlag> = {
   4: 'app',
 }
 
+/**
+ * The game's `PlaySyncflagID`, stored raw as `sync_status` / `syncStatus`: None = 0, ChainLow = 1 (FS),
+ * ChainHi = 2 (FS+), SyncLow = 3 (FDX), SyncHi = 4 (FDX+), SyncPlay = 5. SYNC PLAY is the last value, not the
+ * first. See gekichumai/meta#54.
+ */
 const AQUA_SYNC_STATUS_TO_FLAG: Record<number, SyncFlag> = {
   0: null,
-  1: 'sync',
-  2: 'fs',
-  3: 'fsp',
-  4: 'fsd',
-  5: 'fsdp',
+  1: 'fs',
+  2: 'fsp',
+  3: 'fsd',
+  4: 'fsdp',
+  5: 'sync',
 }
 
 export interface LxnsScoreRow {
@@ -132,7 +144,7 @@ export function normalizeLxnsScores(catalog: SongCatalog, rows: LxnsScoreRow[]):
         return missing('lxns', row, 'sheet-not-found', `UTAGE score is not rating eligible: ${row.songName}`)
       }
 
-      const difficulty = LEVEL_INDEX_TO_DIFFICULTY[row.levelIndex]
+      const difficulty = difficultyFromGameLevel(row.levelIndex)
       if (!difficulty) return missing('lxns', row, 'invalid-difficulty', `Unknown LXNS level index: ${row.levelIndex}`)
 
       const type = normalizeStandardDxType(row.type)
@@ -221,7 +233,7 @@ export interface DivingFishRow {
 export function normalizeDivingFishRows(catalog: SongCatalog, rows: DivingFishRow[]): RatingImportResult {
   return finalizeImport(
     rows.map((row) => {
-      const difficulty = LEVEL_INDEX_TO_DIFFICULTY[row.level_index]
+      const difficulty = difficultyFromGameLevel(row.level_index)
       const type = normalizeDivingFishType(row.type)
       if (!difficulty) {
         return missing('diving-fish', row, 'invalid-difficulty', `Unknown Diving Fish level index: ${row.level_index}`)
@@ -260,8 +272,13 @@ export function normalizeDivingFishRows(catalog: SongCatalog, rows: DivingFishRo
 
 export interface AquaDxRow {
   musicId: string | number
+  /** The game's `MusicDifficultyID` (0 = BASIC … 4 = Re:MASTER) */
   level: number
   achievement: number
+  /** The game's `PlayComboflagID` */
+  comboStatus?: number | string | null
+  /** The game's `PlaySyncflagID` */
+  syncStatus?: number | string | null
 }
 
 export function normalizeAquaDxRows(
@@ -272,7 +289,7 @@ export function normalizeAquaDxRows(
 ): RatingImportResult {
   return finalizeImport(
     rows.map((row) => {
-      const difficulty = AQUA_DX_LEVEL_TO_DIFFICULTY[row.level]
+      const difficulty = difficultyFromGameLevel(row.level)
       if (!difficulty) return missing('aqua-dx', row, 'invalid-difficulty', `Unknown AquaDX level: ${row.level}`)
 
       if (shouldSkipProviderMusicId(row.musicId, map)) return skipped()
@@ -294,6 +311,8 @@ export function normalizeAquaDxRows(
           sheetId: sheet.id,
           identity: sheet.identity,
           achievementRate: achievement.rate,
+          comboFlag: normalizeAquaComboStatus(row.comboStatus ?? null),
+          syncFlag: normalizeAquaSyncStatus(row.syncStatus ?? null),
           source: { provider: 'aqua-dx', providerId: row.musicId },
         },
       }
@@ -315,7 +334,7 @@ export function normalizeMuNetRows(
 ): RatingImportResult {
   return finalizeImport(
     rows.map((row) => {
-      const difficulty = LEVEL_INDEX_TO_DIFFICULTY[row.level]
+      const difficulty = difficultyFromGameLevel(row.level)
       if (!difficulty) return missing('mu-net', row, 'invalid-difficulty', `Unknown MuNET level: ${row.level}`)
 
       if (shouldSkipProviderMusicId(row.musicId, map)) return skipped()
