@@ -75,6 +75,7 @@ src/
 - `POST /monitoring/tunnel` — Sentry error tunnel
 - `POST /maimai/fetch-records` — Fetch MaimaiNET records
 - `GET /me/features`, `POST /me/features/cloud-save/opt-in` — Session-only cloud save flags (tagged `internal`, kept out of `/spec.json`)
+- `GET /me/sessions`, `POST /me/sessions/{id}/revoke` — The signed-in user's devices without their tokens, and signing one out by id (tagged `internal`). Better Auth's `list-sessions` returns tokens and so needs a fresh session (`session.freshAge`, one day); this list works for any signed-in session. Revoking still needs a fresh session (403 `FORBIDDEN`, `data.reason: 'SESSION_NOT_FRESH'`)
 - Cloud save (`cloudSave.*`, tagged `internal`, behind `cloud_save`): `GET|POST /saves`, `PATCH|DELETE /saves/{id}`,
   `GET /saves/{id}/changes`, `POST /saves/{id}/mutations`, `GET /saves/{id}/records/{sheetId}/events`,
   `POST /saves/{id}/replace`, `GET|POST /saves/{id}/snapshots`, `GET /saves/{id}/imports`, `GET /imports/{jobId}`,
