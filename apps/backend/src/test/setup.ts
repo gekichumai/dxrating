@@ -144,6 +144,7 @@ export async function cleanDatabase() {
   await pool.query('DELETE FROM song_aliases')
   await pool.query('DELETE FROM lxns_oauth_states')
   await pool.query('DELETE FROM lxns_oauth_tokens')
+  await pool.query('DELETE FROM feature_flag_overrides')
   await pool.query('DELETE FROM profiles')
   await pool.query('DELETE FROM passkey')
   await pool.query('DELETE FROM session')

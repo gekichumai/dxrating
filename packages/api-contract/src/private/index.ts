@@ -1,0 +1,12 @@
+import { featuresContract } from './features.ts'
+
+export * from './features.ts'
+
+/**
+ * Routes for signed-in first-party clients. They are part of the backend's
+ * `appContract` but never of `publicContractRoutes`, and each one is tagged
+ * `internal` so the public OpenAPI document leaves it out.
+ */
+export const privateContractRoutes = {
+  features: featuresContract,
+}

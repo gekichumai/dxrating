@@ -146,6 +146,32 @@ export const lxnsOauthTokens = pgTable('lxns_oauth_tokens', {
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 })
 
+// --- Feature Flags ---
+
+// Per-user overrides of the cloud save rollout. `CLOUD_SAVE_MODE=off` still
+// overrides every row; see src/services/feature-flags.ts for the precedence.
+export const featureFlagOverrides = pgTable(
+  'feature_flag_overrides',
+  {
+    // 'cloud_save' | 'server_imports'; text rather than an enum so flags can be added without ALTER TYPE.
+    flag: text('flag').notNull(),
+    user_id: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    enabled: boolean('enabled').notNull(),
+    source: text('source').notNull(),
+    // The privacy terms version the user agreed to when opting in.
+    consent_version: text('consent_version'),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.flag, table.user_id] }),
+    index('feature_flag_overrides_user_idx').on(table.user_id),
+    check('feature_flag_overrides_source_check', sql`${table.source} in ('admin', 'opt_in')`),
+  ],
+)
+
 // --- Arcade Location Tables ---
 //
 // The crawler owns writes to this schema. These definitions let the API query
