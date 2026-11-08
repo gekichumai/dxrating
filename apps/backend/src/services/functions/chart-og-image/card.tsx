@@ -2,6 +2,7 @@ import { TypeEnum } from '@gekichumai/dxdata'
 import type { CSSProperties, ReactNode } from 'react'
 import { CHART_TYPE_COLORS, chartTypeLetteringGradient } from '@gekichumai/maimai-domain'
 import { getOgLabels, type OgLocale } from './labels'
+import { baselineInsets, hasMeasuredInk, InkText, layoutInk } from './optical-text'
 
 export const OG_WIDTH = 1200
 export const OG_HEIGHT = 630
@@ -140,13 +141,49 @@ export function ChartOgCard({ title, artist, sheet, facts, locale, images }: Cha
           <DifficultyPill sheet={sheet} size="large" />
           <TypeBadge type={sheet.type} size="large" />
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', marginTop: 4 }}>
-          <div style={{ ...styles.heroLevel, fontSize: heroSize }}>{formatInternalLevel(sheet.internalLevelValue)}</div>
-          <div style={{ ...styles.heroLevelSuffix, marginBottom: Math.round(heroSize * 0.13) }}>Lv {sheet.level}</div>
-        </div>
+        <HeroLevel sheet={sheet} size={heroSize} />
       </div>
       <Facts items={factItems} />
     </CardFrame>
+  )
+}
+
+/** The gap between the level and "Lv", and between "Lv" and its number, as a share of the suffix size */
+export const HERO_SUFFIX_GAP = 0.42
+export const HERO_SUFFIX_SIZE = 36
+
+/**
+ * Where "Lv" and the level after it start, measured from the end of the internal level's ink. Both gaps are the same
+ * nominal width, less the white space that open shapes leave by the baseline (the foot of "7", the flag of "1"), so
+ * they read as even.
+ */
+export function getHeroSuffixOffsets(internalLevel: string, level: string, size: number) {
+  const gap = HERO_SUFFIX_SIZE * HERO_SUFFIX_GAP
+  const lv = baselineInsets('Lv')
+  const number = baselineInsets(internalLevel)
+  return {
+    lv: Math.round(gap - number.right * size - lv.left * HERO_SUFFIX_SIZE),
+    level: Math.round(gap - (lv.right + baselineInsets(level).left) * HERO_SUFFIX_SIZE),
+  }
+}
+
+/**
+ * The internal level, then "Lv 13". Both are set from their measured ink, so the level's first figure lines up with the
+ * pill and the facts row, and a "1" does not leave a tabular-figure hole after it.
+ */
+function HeroLevel({ sheet, size }: { sheet: OgSheetBadge; size: number }) {
+  const internalLevel = formatInternalLevel(sheet.internalLevelValue)
+  const offsets = getHeroSuffixOffsets(internalLevel, sheet.level, size)
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', marginTop: 4 }}>
+      <InkText text={internalLevel} fontSize={size} style={styles.heroLevel} />
+      <div style={{ display: 'flex', marginLeft: offsets.lv, marginBottom: Math.round(size * 0.13) }}>
+        <InkText text="Lv" fontSize={HERO_SUFFIX_SIZE} style={styles.heroLevelSuffix} />
+        <div style={{ display: 'flex', marginLeft: offsets.level }}>
+          <InkText text={sheet.level} fontSize={HERO_SUFFIX_SIZE} style={styles.heroLevelSuffix} />
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -287,15 +324,18 @@ const CHIP_LABELS: Record<string, string> = {
 }
 
 function LevelChip({ sheet, width, tall }: { sheet: OgSheetBadge; width: number; tall: boolean }) {
-  // "14.6" is about 2.5 em wide in the display face
-  const levelSize = Math.min(tall ? 44 : 40, Math.floor((width - 24) / 2.5))
+  const level = formatInternalLevel(sheet.internalLevelValue)
+  // The level's ink, not its tabular advance, has to fit the chip beside the 11px padding
+  const fits = (size: number) => !hasMeasuredInk(level) || layoutInk(level, size).width <= width - 24
+  let levelSize = tall ? 44 : 40
+  while (levelSize > 24 && !fits(levelSize)) levelSize -= 1
   return (
     <div style={{ ...styles.chip, width, height: tall ? 100 : 84, borderColor: sheet.difficultyColor }}>
       <div style={{ ...styles.chipBar, backgroundColor: sheet.difficultyColor }} />
       <div style={{ ...styles.chipLabel, fontSize: width < 100 ? 15 : 17 }}>
         {CHIP_LABELS[sheet.difficultyLabel] ?? sheet.difficultyLabel}
       </div>
-      <div style={{ ...styles.chipLevel, fontSize: levelSize }}>{formatInternalLevel(sheet.internalLevelValue)}</div>
+      <InkText text={level} fontSize={levelSize} style={styles.chipLevel} />
     </div>
   )
 }
@@ -337,7 +377,16 @@ function Facts({ items }: { items: Array<[string, string]> }) {
   return (
     <div style={styles.facts}>
       {items.map(([label, value], index) => (
-        <div key={label} style={{ ...styles.fact, width: widths[index] }}>
+        <div
+          key={label}
+          // Source Han Sans' side bearing puts the first fact's ink 1–2px right of the column edge; pull it back so
+          // the facts start on the same line as the pills and the level (measured on renders)
+          style={{
+            ...styles.fact,
+            ...(index === 0 && { marginLeft: -1 }),
+            width: widths[index]! + (index === 0 ? 1 : 0),
+          }}
+        >
           <div style={styles.factLabel}>{label}</div>
           <div style={styles.factValue}>{value}</div>
         </div>
@@ -445,17 +494,11 @@ const styles = {
   },
   heroLevel: {
     fontFamily: OG_FONT.display,
-    fontSize: 150,
     lineHeight: 1,
-    letterSpacing: -2,
     color: TEXT,
   },
   heroLevelSuffix: {
-    whiteSpace: 'nowrap',
-    marginLeft: 18,
-    marginBottom: 20,
     fontFamily: OG_FONT.display,
-    fontSize: 36,
     lineHeight: 1,
     color: TEXT_SECONDARY,
   },

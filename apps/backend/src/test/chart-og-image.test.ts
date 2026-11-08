@@ -16,6 +16,8 @@ import {
   resolveOgLocale,
   resolveSongOgImageData,
 } from '../services/functions/chart-og-image/index'
+import { getHeroSuffixOffsets } from '../services/functions/chart-og-image/card'
+import { baselineInsets, hasMeasuredInk, layoutInk } from '../services/functions/chart-og-image/optical-text'
 import { setupTestServer, teardownTestServer } from './setup'
 
 const song = publishedCatalog.songs.find((candidate) => candidate.id === UMIYURI)!
@@ -352,5 +354,42 @@ describe('chart OG image title layout', () => {
         'False Amber (from the Black Bazaar, Or by A Kervan Trader from the Lands Afar, Or Buried Beneath the Shifting Sands That Lead Everywhere but Nowhere)',
       ),
     ).toEqual({ fontSize: 40, lines: 2 })
+  })
+})
+describe('chart OG image level setting', () => {
+  it('starts the first figure ink on the column edge and sets figures proportionally', () => {
+    const { glyphs, width } = layoutInk('13.4', 150)
+    expect(glyphs[0]!.inkLeft).toBe(0)
+    // The "1" stem is far narrower than a tabular cell (0.816 em), so "13.4" is narrower than its tabular advance
+    expect(glyphs[1]!.inkLeft - glyphs[0]!.inkLeft).toBeLessThan(0.5 * 150)
+    expect(width).toBeLessThan(3 * 0.816 * 150)
+    // Each glyph's origin sits its measured side bearing before its ink, so the "1" origin is pulled left of the edge
+    expect(glyphs[0]!.left).toBeCloseTo(-0.169 * 150)
+  })
+
+  it('keeps the same ink gap between figures whether or not they include a "1"', () => {
+    const gaps = (text: string) => {
+      const { glyphs } = layoutInk(text, 100)
+      return glyphs.slice(1).map((glyph, index) => glyph.inkLeft - glyphs[index]!.inkLeft - glyphs[index]!.inkWidth)
+    }
+    expect(gaps('11.0')[0]).toBeCloseTo(gaps('15.0')[0]!)
+    expect(gaps('14.7')[1]).toBeCloseTo(gaps('15.0')[1]!)
+  })
+
+  it('moves "Lv" in after a figure that is open by the baseline, and "13" in after "Lv"', () => {
+    const closed = getHeroSuffixOffsets('15.0', '15', 150)
+    const open = getHeroSuffixOffsets('14.7', '14+', 150)
+    expect(open.lv).toBeLessThan(closed.lv)
+    // "1" leaves space under its flag, so the level after "Lv" moves in compared with a "9"
+    expect(getHeroSuffixOffsets('9.8', '9+', 150).level).toBeGreaterThan(closed.level)
+    expect(closed.lv).toBeGreaterThan(0)
+    // Under the arm of the "7", but still clear of its foot (which ends 0.414 em into the 0.748 em wide glyph)
+    expect(open.lv + (0.748 - 0.414) * 150).toBeGreaterThan(closed.lv)
+  })
+
+  it('falls back to plain text for characters without measured ink', () => {
+    expect(hasMeasuredInk('13.4')).toBe(true)
+    expect(hasMeasuredInk('Lv 13')).toBe(false)
+    expect(baselineInsets('★')).toEqual({ left: 0, right: 0 })
   })
 })
