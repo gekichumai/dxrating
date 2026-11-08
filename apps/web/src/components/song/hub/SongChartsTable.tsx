@@ -37,6 +37,15 @@ const TYPE_LABELS = {
   [TypeEnum.UTAGE2P]: m.song_type_utage2p,
 } satisfies Record<TypeEnum, PlainMessage>
 
+// DX and STD in their chart-type colours (tokens.css --chart-type-*), as on the song page's type tabs; utage keeps fg-2.
+// The DX gradient goes on the word itself, so it spans "DX" and not the width of the column's longest type name.
+const TYPE_LABEL_CLASSES: Record<TypeEnum, { label: string; text?: string }> = {
+  [TypeEnum.DX]: { label: 'font-bold', text: 'dx-lettering justify-self-start' },
+  [TypeEnum.STD]: { label: 'text-chart-std-text font-bold' },
+  [TypeEnum.UTAGE]: { label: 'text-fg-2' },
+  [TypeEnum.UTAGE2P]: { label: 'text-fg-2' },
+}
+
 /** Every chart of a song in one table, with the user's own score and the next rating step (client only) */
 export const SongChartsTable: FC<{
   songId: string
@@ -135,7 +144,8 @@ export const SongChartsTable: FC<{
                       <FixedWidthText
                         text={TYPE_LABELS[sheet.type]({}, { locale })}
                         sizers={typeLabels}
-                        className="shrink-0 text-xs text-fg-2"
+                        className={clsx('shrink-0 text-xs', TYPE_LABEL_CLASSES[sheet.type].label)}
+                        textClassName={TYPE_LABEL_CLASSES[sheet.type].text}
                       />
                       <SheetDifficulty difficulty={sheet.difficulty as DifficultyEnum} serverIds={sheet.serverIds} />
                       {unavailableEverywhere && (

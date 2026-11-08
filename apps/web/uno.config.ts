@@ -68,6 +68,18 @@ export default defineConfig({
         positive: 'var(--status-positive)',
         warning: 'var(--status-warning)',
       },
+      // The DX and STD chart-type labels (tokens.css): `bg-chart-std text-chart-std-ink`, `text-chart-std-text`, …
+      chart: {
+        std: {
+          DEFAULT: 'var(--chart-type-std)',
+          ink: 'var(--chart-type-std-ink)',
+          text: 'var(--chart-type-std-text)',
+        },
+        dx: {
+          plate: 'var(--chart-type-dx-plate)',
+          outline: 'var(--chart-type-dx-outline)',
+        },
+      },
     },
     fontFamily: {
       mono: '"IBM Plex Mono", "JetBrains Mono", Menlo, Consolas, Courier, monospace',

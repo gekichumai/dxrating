@@ -397,16 +397,25 @@ label[data-shrink='false'] ~ .MuiInputBase-formControl .MuiInputBase-input::plac
     --scroll-fade-end: 0px;
   }
 }
-/* The DX chart type's multicolour lettering (--dx-lettering in tokens.css); forced colours keep the system text */
-.dx-lettering {
+/*
+ * The DX chart type's multicolour lettering (tokens.css): --dx-lettering straight on a surface (lightened in dark mode),
+ * and the on-plate stops inside the white DX plate, which stays white in dark mode. Forced colours keep the system text.
+ */
+.dx-lettering,
+.dx-lettering-on-plate {
   background-image: var(--dx-lettering);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
+.dx-lettering-on-plate {
+  background-image: var(--chart-type-dx-lettering-on-plate);
+}
+
 @media (forced-colors: active) {
-  .dx-lettering {
+  .dx-lettering,
+  .dx-lettering-on-plate {
     background-image: none;
     color: CanvasText;
   }

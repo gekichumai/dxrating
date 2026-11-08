@@ -10,15 +10,17 @@ export const FixedWidthText: FC<{
   text: string
   sizers: readonly string[]
   className?: string
+  /** On the shown text only, sized to it rather than to the widest sizer (e.g. a gradient clipped to the text) */
+  textClassName?: string
   hidden?: boolean
   'aria-hidden'?: boolean
-}> = ({ text, sizers, className, hidden, 'aria-hidden': ariaHidden }) => (
+}> = ({ text, sizers, className, textClassName, hidden, 'aria-hidden': ariaHidden }) => (
   <span className={clsx('inline-grid', className)} aria-hidden={ariaHidden}>
     {sizers.map((sizer) => (
       <span key={sizer} aria-hidden className="invisible col-start-1 row-start-1">
         {sizer}
       </span>
     ))}
-    <span className={clsx('col-start-1 row-start-1', hidden && 'invisible')}>{text}</span>
+    <span className={clsx('col-start-1 row-start-1', textClassName, hidden && 'invisible')}>{text}</span>
   </span>
 )
