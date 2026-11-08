@@ -2,7 +2,13 @@ import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { toV2Community } from '@gekichumai/dxdata/v2'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setLoadedCatalogDocumentForTests } from '../clientCatalog'
-import { COMMUNITY_URL, loadCommunityLists, resetCommunityListsForTests } from '../communityOverlay'
+import {
+  COMMUNITY_URL,
+  loadCommunityLists,
+  rememberAttachedTag,
+  rememberCreatedAlias,
+  resetCommunityListsForTests,
+} from '../communityOverlay'
 
 const song = catalogSnapshot.songs[0]!
 const sheet = song.sheets[0]!
@@ -46,6 +52,30 @@ describe('community overlay loading', () => {
     expect(lists.aliases).toEqual([{ song_id: song.id, name: 'alias' }])
     expect(lists.tags).toEqual(overlay.tags)
     expect(lists.tagGroups).toEqual(overlay.tagGroups)
+    expect(lists.catalogUpdatedAt).toBe(catalogSnapshot.updatedAt)
+  })
+
+  it("adds the viewer's own attachments and aliases to every load, once", async () => {
+    fetchMock.mockResolvedValue(Response.json(overlay))
+    const attached = {
+      song_id: song.id,
+      sheet_id: 'dsht_x',
+      sheet_type: sheet.type,
+      sheet_difficulty: 'remaster',
+      tag_id: 3,
+    }
+    rememberAttachedTag(attached)
+    rememberAttachedTag(attached)
+    rememberCreatedAlias({ song_id: song.id, name: 'alias' })
+    rememberCreatedAlias({ song_id: song.id, name: 'mine' })
+
+    const lists = await loadCommunityLists()
+    expect(lists.tagSongs).toHaveLength(2)
+    expect(lists.tagSongs[1]).toEqual(attached)
+    expect(lists.aliases).toEqual([
+      { song_id: song.id, name: 'alias' },
+      { song_id: song.id, name: 'mine' },
+    ])
   })
 
   it('shares one request between the tag and alias hooks', async () => {
