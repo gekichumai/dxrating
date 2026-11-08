@@ -4,8 +4,8 @@ packages:
   - scripts/*
 
 catalog:
-  '@better-auth/expo': 1.7.6
-  '@better-auth/passkey': 1.7.6
+  '@better-auth/expo': 1.7.16
+  '@better-auth/passkey': 1.7.16
   '@orpc/client': 2.0.0-beta.40
   '@orpc/contract': 2.0.0-beta.40
   '@orpc/openapi': 2.0.0-beta.40
@@ -15,7 +15,7 @@ catalog:
   '@types/node': 25.9.9
   '@types/pg': ^8.23.1
   '@types/react': ^19.2.14
-  better-auth: 1.7.6
+  better-auth: 1.7.16
   clsx: ^2.1.1
   dotenv: ^16.6.1
   esno: ^4.8.0
