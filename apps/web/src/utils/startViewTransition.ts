@@ -37,8 +37,10 @@ export function startViewTransition(
     delete root.dataset.preferenceWipe
     for (const property of ['x', 'y', 'reach']) root.style.removeProperty(`--preference-wipe-${property}`)
   }
+  let applied = false
   const apply = () => {
     if (request !== latestRequest) return
+    applied = true
     // Capture the new React tree, rather than a pending batched update.
     return flushSync(update)
   }
@@ -63,5 +65,20 @@ export function startViewTransition(
   // A skipped animation rejects ready, but must still apply the preference.
   void transition.ready.catch(() => {})
   void transition.finished.then(cleanup, cleanup)
-  return transition.updateCallbackDone
+  return transition.updateCallbackDone.catch((error: unknown) => {
+    // The browser skipped the transition: the page was hidden (WebKit then rejects without calling the update), or the
+    // update took too long. Neither is a failure of the update, so apply it if the browser did not, and resolve.
+    if (!isSkippedTransition(error)) throw error
+    cleanup()
+    if (!applied) return apply()
+  })
+}
+
+const SKIPPED_TRANSITION_ERRORS = new Set(['InvalidStateError', 'TimeoutError', 'AbortError'])
+
+/** The DOMExceptions a browser rejects with when it skips a transition rather than when the update fails */
+function isSkippedTransition(error: unknown) {
+  return (
+    typeof DOMException !== 'undefined' && error instanceof DOMException && SKIPPED_TRANSITION_ERRORS.has(error.name)
+  )
 }
