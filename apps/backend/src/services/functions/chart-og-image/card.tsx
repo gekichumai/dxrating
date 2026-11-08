@@ -1,5 +1,6 @@
 import { TypeEnum } from '@gekichumai/dxdata'
 import type { CSSProperties, ReactNode } from 'react'
+import { CHART_TYPE_COLORS, chartTypeLetteringGradient } from '@gekichumai/maimai-domain'
 import { getOgLabels, type OgLocale } from './labels'
 
 export const OG_WIDTH = 1200
@@ -60,17 +61,35 @@ export type SongOgCardProps = {
   images: OgCardImages
 }
 
-type TypeBadgeDisplay = { label: string; background: string; color: string }
+type TypeBadgeDisplay = {
+  label: string
+  /** The plate: a solid fill or a gradient */
+  background: string
+  /** Solid lettering, or a gradient clipped to the text */
+  lettering: { color: string } | { gradient: string }
+  outline?: string
+}
 
+/**
+ * DX and STD in the colours of the game's own chart-type plates, shared with the web app and iOS
+ * (@gekichumai/maimai-domain CHART_TYPE_COLORS): STD is the solid blue plate, DX the white でらっくす plate with the
+ * blue outline and multicoloured lettering. Utage keeps its own pink.
+ */
+const UTAGE_BADGE = { background: 'linear-gradient(135deg, #fb7185 0%, #db2777 100%)', lettering: { color: '#ffffff' } }
 const TYPE_BADGES: Record<TypeEnum, TypeBadgeDisplay> = {
-  [TypeEnum.DX]: { label: 'DX', background: 'linear-gradient(135deg, #ff9f1c 0%, #ff4d6d 100%)', color: '#ffffff' },
-  [TypeEnum.STD]: { label: 'STD', background: 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)', color: '#ffffff' },
-  [TypeEnum.UTAGE]: { label: '宴', background: 'linear-gradient(135deg, #fb7185 0%, #db2777 100%)', color: '#ffffff' },
-  [TypeEnum.UTAGE2P]: {
-    label: '宴 BUDDY',
-    background: 'linear-gradient(135deg, #fb7185 0%, #db2777 100%)',
-    color: '#ffffff',
+  [TypeEnum.DX]: {
+    label: 'DX',
+    background: CHART_TYPE_COLORS.dx.plate,
+    lettering: { gradient: chartTypeLetteringGradient(CHART_TYPE_COLORS.dx.lettering) },
+    outline: CHART_TYPE_COLORS.dx.outline,
   },
+  [TypeEnum.STD]: {
+    label: 'STD',
+    background: CHART_TYPE_COLORS.std.fill,
+    lettering: { color: CHART_TYPE_COLORS.std.ink },
+  },
+  [TypeEnum.UTAGE]: { label: '宴', ...UTAGE_BADGE },
+  [TypeEnum.UTAGE2P]: { label: '宴 BUDDY', ...UTAGE_BADGE },
 }
 
 /** "13.4", always with one decimal: the number players compare */
@@ -237,11 +256,24 @@ function TypeBadge({ type, size }: { type: TypeEnum; size: 'large' | 'small' }) 
       style={{
         ...styles.pill,
         ...(size === 'large' ? styles.pillLarge : styles.pillSmall),
-        backgroundImage: badge.background,
-        color: badge.color,
+        // The renderer rejects undefined values, so each property is only set when it applies
+        ...(badge.background.startsWith('linear-gradient')
+          ? { backgroundImage: badge.background }
+          : { backgroundColor: badge.background }),
+        // Inset, so the outlined DX plate keeps the same size as the others
+        ...(badge.outline && {
+          boxShadow: `inset 0 0 0 ${size === 'large' ? 3 : 2}px ${badge.outline}, ${styles.pill.boxShadow}`,
+        }),
+        ...('color' in badge.lettering && { color: badge.lettering.color }),
       }}
     >
-      {badge.label}
+      {'gradient' in badge.lettering ? (
+        <span style={{ backgroundImage: badge.lettering.gradient, backgroundClip: 'text', color: 'transparent' }}>
+          {badge.label}
+        </span>
+      ) : (
+        badge.label
+      )}
     </div>
   )
 }
