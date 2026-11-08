@@ -82,7 +82,7 @@ describe('SEO localization', () => {
     expect(seo.meta).toContainEqual({ property: 'og:title', content: seo.title })
     expect(seo.meta).toContainEqual({
       property: 'og:image',
-      content: 'https://miruku.dxrating.net/api/v1/songs/test-song/std/master/og-image',
+      content: 'https://miruku.dxrating.net/api/v1/songs/test-song/std/master/og-image?locale=zh-Hant',
     })
     expect(seo.meta).toContainEqual({ property: 'og:image:type', content: 'image/png' })
     expect(seo.meta).toContainEqual({ name: 'twitter:image:alt', content: seo.socialImageAlt })
@@ -243,6 +243,12 @@ describe('song hub SEO', () => {
     expect(seo.url).toBe('https://dxrating.net/songs/dsng_test')
     expect(seo.meta).toContainEqual({ title: seo.title })
     expect(seo.meta).toContainEqual({ property: 'og:url', content: 'https://dxrating.net/songs/dsng_test' })
+    expect(seo.meta).toContainEqual({
+      property: 'og:image',
+      content: 'https://miruku.dxrating.net/api/v1/songs/dsng_test/og-image?locale=en',
+    })
+    expect(seo.meta).toContainEqual({ name: 'twitter:card', content: 'summary_large_image' })
+    expect(seo.meta).toContainEqual({ name: 'twitter:image:alt', content: seo.socialImageAlt })
     expect(seo.description).toContain('BPM 180')
     expect(seo.structuredData['@graph']).toEqual(
       expect.arrayContaining([
