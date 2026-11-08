@@ -1264,6 +1264,54 @@ describe('cloud save API (design §5)', () => {
       expect(open.rows[0].n).toBe(0)
     })
 
+    it('answers HEAD without starting an export, on both spellings, so no slot is left taken', async () => {
+      const user = await session(pool, 'export-head@example.com')
+      for (let i = 0; i < EXPORT_CONCURRENCY + 1; i++) {
+        for (const path of ['/api/v1/me/export', '/api/v1/me/export/']) {
+          const head = await authenticatedFetch(`${getBaseUrl()}${path}`, user.cookie, { method: 'HEAD' })
+          expect(head.status, path).toBe(200)
+          expect(head.headers.get('content-disposition')).toMatch(/^attachment; filename="dxrating-cloud-export-/)
+        }
+      }
+      // Every slot is free, and no daily export was used
+      const held = Array.from({ length: EXPORT_CONCURRENCY }, () => tryAcquireExportSlot())
+      expect(held.every(Boolean)).toBe(true)
+      for (const release of held) release!()
+      for (let i = 0; i < 5; i++) expect((await api(user.cookie, 'GET', '/me/export')).status).toBe(200)
+    })
+
+    it('ends a download nobody reads at the idle deadline and frees its slot, without another read', async () => {
+      const user = await session(pool, 'export-idle@example.com')
+      const save = await newSave(user.cookie)
+      await mutate(user.cookie, save.id, [setMutation(sheetId(1), 1000000)])
+      const database = await runDatabase((db) => Effect.succeed(db))
+      const onSettled = vi.fn()
+      const chunks = exportChunks((effect) => appRuntime.runPromise(effect), database, user.userId, new Date(), {
+        onSettled,
+        idleMs: 100,
+      })
+      await chunks.next()
+      // The client stops reading and never cancels
+      await vi.waitFor(() => expect(onSettled).toHaveBeenCalledTimes(1), { timeout: 2000 })
+      const open = await pool.query(
+        `SELECT count(*)::int AS n FROM pg_stat_activity WHERE state LIKE 'idle in transaction%' AND query LIKE '%score_%'`,
+      )
+      expect(open.rows[0].n).toBe(0)
+      // A later read sees the download failed, not a truncated file that looks complete
+      await expect(chunks.next()).rejects.toBeDefined()
+    })
+
+    it('starts the export when asked, not on the first read, so an unread response still ends', async () => {
+      const user = await session(pool, 'export-unread@example.com')
+      const database = await runDatabase((db) => Effect.succeed(db))
+      const onSettled = vi.fn()
+      exportChunks((effect) => appRuntime.runPromise(effect), database, user.userId, new Date(), {
+        onSettled,
+        idleMs: 100,
+      })
+      await vi.waitFor(() => expect(onSettled).toHaveBeenCalledTimes(1), { timeout: 2000 })
+    })
+
     it('answers a retryable 429 that costs nothing while every export slot is taken', async () => {
       const user = await session(pool, 'export-busy@example.com')
       const held = Array.from({ length: EXPORT_CONCURRENCY }, () => tryAcquireExportSlot()!)

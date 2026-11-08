@@ -45,10 +45,12 @@ export function toExportRecord(state: RecordState) {
 /** Exports that may run at once: each holds one pooled connection for its whole download */
 export const EXPORT_CONCURRENCY = 2
 /**
- * How long the export's transaction may wait for a client that stopped reading before Postgres ends it (the
- * download then fails), so a stalled download never pins a pooled connection
+ * How long the export waits for the client to take the next chunk. Past it the export's transaction ends and its slot
+ * is freed, whether or not the client ever reads again (a stalled download, a response nobody reads)
  */
-export const EXPORT_IDLE_TIMEOUT = '60s'
+export const EXPORT_IDLE_MS = 60_000
+/** Postgres's own backstop for the same case, past {@link EXPORT_IDLE_MS} */
+export const EXPORT_SESSION_IDLE_TIMEOUT = '120s'
 
 let runningExports = 0
 
@@ -82,12 +84,34 @@ class ChunkChannel {
   private wakeConsumer: (() => void) | null = null
   private wakeProducer: (() => void) | null = null
 
-  /** Hands one chunk over; resolves once it was taken, rejects once the consumer stopped */
+  constructor(private readonly idleMs: number) {}
+
+  /**
+   * Hands one chunk over; resolves once it was taken. Rejects once the consumer stopped, or when it has not taken the
+   * chunk within `idleMs` (the channel then counts as closed)
+   */
   async push(chunk: string): Promise<void> {
     if (this.closed) throw new Error('export abandoned')
     this.chunk = chunk
     this.wake('consumer')
-    while (this.chunk !== null && !this.closed) await new Promise<void>((resolve) => (this.wakeProducer = resolve))
+    const deadline = Date.now() + this.idleMs
+    while (this.chunk !== null && !this.closed) {
+      const left = deadline - Date.now()
+      if (left <= 0) {
+        // The download fails rather than ending short: a later read throws instead of taking a chunk
+        this.closed = true
+        this.chunk = null
+        this.failure = { error: new Error('The export stopped: the client did not read in time') }
+        break
+      }
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, left)
+        this.wakeProducer = () => {
+          clearTimeout(timer)
+          resolve()
+        }
+      })
+    }
     if (this.closed) throw new Error('export abandoned')
   }
 
@@ -145,15 +169,20 @@ class ChunkChannel {
  * its records, events and jobs). Each table is still read in pages of 1000 rows, handed to the download one chunk at
  * a time; nothing holds the whole export in memory. The transaction holds one pooled connection until the download
  * ends: callers take a slot with {@link tryAcquireExportSlot}, and a client that stops reading for
- * {@link EXPORT_IDLE_TIMEOUT} fails the download.
+ * {@link EXPORT_IDLE_MS} fails the download and frees the slot.
  */
-export async function* exportChunks(
+export function exportChunks(
   run: <A, E>(effect: Effect.Effect<A, E, never>) => Promise<A>,
   database: DatabaseService,
   userId: string,
   exportedAt: Date,
+  options: {
+    /** Called once the export's transaction has ended, however it ended: free its slot here */
+    onSettled?: () => void
+    idleMs?: number
+  } = {},
 ): AsyncGenerator<string> {
-  const channel = new ChunkChannel()
+  const channel = new ChunkChannel(options.idleMs ?? EXPORT_IDLE_MS)
   const emit = (chunk: string) =>
     Effect.tryPromise({ try: () => channel.push(chunk), catch: () => new ExportAbandoned() })
   const produce = database.transaction(() =>
@@ -161,7 +190,7 @@ export async function* exportChunks(
       yield* database.raw('CloudSave.exportSnapshot', 'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
       yield* database.raw(
         'CloudSave.exportIdleTimeout',
-        `SET LOCAL idle_in_transaction_session_timeout = '${EXPORT_IDLE_TIMEOUT}'`,
+        `SET LOCAL idle_in_transaction_session_timeout = '${EXPORT_SESSION_IDLE_TIMEOUT}'`,
       )
       // The snapshot is taken at the transaction's first read, before anything is sent
       const { rows: saves } = yield* database.raw<SaveRow>(
@@ -244,21 +273,26 @@ export async function* exportChunks(
       yield* emit(']}\n')
     }),
   )
-  const producer = run(produce).then(
-    () => channel.finish(),
-    (error: unknown) => channel.fail(error),
-  )
-  try {
-    for (;;) {
-      const chunk = await channel.take()
-      if (chunk === null) return
-      yield chunk
+  // Started now, not on the first read: a response nobody reads still ends at the idle deadline and frees its slot
+  const producer = run(produce)
+    .then(
+      () => channel.finish(),
+      (error: unknown) => channel.fail(error),
+    )
+    .finally(() => options.onSettled?.())
+  return (async function* () {
+    try {
+      for (;;) {
+        const chunk = await channel.take()
+        if (chunk === null) return
+        yield chunk
+      }
+    } finally {
+      // Stopped early (the client went away) or done: the transaction ends either way, and nothing is left running
+      channel.close()
+      await producer
     }
-  } finally {
-    // Stopped early (the client went away) or done: the transaction ends either way, and nothing is left running
-    channel.close()
-    await producer
-  }
+  })()
 }
 
 /** The download headers of an export */

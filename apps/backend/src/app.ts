@@ -961,6 +961,11 @@ const streamExport = (c: Context) =>
       if (!(yield* featureFlags.isEnabled('cloud_save', session.user.id))) {
         return orpcErrorResponse(new ORPCError('NOT_FOUND'))
       }
+      // HEAD (which Hono answers through this GET handler, dropping the body unread) starts no export: the headers
+      // describe a download made now, and no transaction, slot or daily export is used
+      if (c.req.method === 'HEAD') {
+        return new Response(null, { status: 200, headers: exportHeaders(new Date(yield* Clock.currentTimeMillis)) })
+      }
       const takenAt = Date.now()
       const retryAfterSeconds = cloudSaveRateLimits.export.take(session.user.id, 1, takenAt)
       if (retryAfterSeconds > 0) {
@@ -988,27 +993,19 @@ const streamExport = (c: Context) =>
       const database = yield* Database
       const exportedAt = new Date(yield* Clock.currentTimeMillis)
       const signal = c.req.raw.signal
-      const chunks = exportChunks((effect) => runApp(effect, { signal }), database, session.user.id, exportedAt)
+      // The slot is the transaction's: freed when it ends, which the idle deadline bounds even if nobody reads
+      const chunks = exportChunks((effect) => runApp(effect, { signal }), database, session.user.id, exportedAt, {
+        onSettled: release,
+      })
       const encoder = new TextEncoder()
       const body = new ReadableStream<Uint8Array>({
         async pull(controller) {
-          try {
-            const next = await chunks.next()
-            if (next.done) {
-              release()
-              controller.close()
-            } else controller.enqueue(encoder.encode(next.value))
-          } catch (error) {
-            release()
-            throw error
-          }
+          const next = await chunks.next()
+          if (next.done) controller.close()
+          else controller.enqueue(encoder.encode(next.value))
         },
         async cancel() {
-          try {
-            await chunks.return(undefined)
-          } finally {
-            release()
-          }
+          await chunks.return(undefined)
         },
       })
       return new Response(body, { status: 200, headers: exportHeaders(exportedAt) })
