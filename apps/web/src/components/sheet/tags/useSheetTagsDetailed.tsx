@@ -4,6 +4,7 @@ import type { z } from 'zod'
 import { authClient } from '../../../lib/auth-client'
 import { TAG_SONG_HIDDEN_SCORE_THRESHOLD, type SheetTagSongSchema } from '../../../lib/contract'
 import { apiClient as client } from '../../../lib/orpc'
+import { rememberSheetTagSongs } from '../../../catalog/communityOverlay'
 import { type CombinedTags, useCombinedTags, withSheetTagSongs } from '../../../models/useCombinedTags'
 import type { FlattenedSheet } from '../../../songs'
 
@@ -56,18 +57,26 @@ export const useSheetTagsDetailed = (sheet: FlattenedSheet) => {
   const refresh = useCallback(async () => {
     const fresh = await mutate()
     if (!fresh) return
+    const ref = { song_id: sheet.songId, sheet_type: sheet.type, sheet_difficulty: sheet.difficulty }
+    // Later loads of the shared list (it reloads after a local change) keep this sheet as just read
+    rememberSheetTagSongs(
+      ref,
+      fresh
+        .filter((association) => association.score > TAG_SONG_HIDDEN_SCORE_THRESHOLD)
+        .map(({ tag_id }) => ({ ...ref, sheet_id: sheet.id, tag_id })),
+    )
     await globalMutate(
       'tags.list',
       (current: CombinedTags | undefined) =>
         withSheetTagSongs(
           current,
-          { song_id: sheet.songId, sheet_type: sheet.type, sheet_difficulty: sheet.difficulty },
-          fresh,
+          ref,
+          fresh.map((association) => ({ ...association, sheet_id: sheet.id })),
           TAG_SONG_HIDDEN_SCORE_THRESHOLD,
         ),
       { revalidate: false },
     )
-  }, [mutate, globalMutate, sheet.songId, sheet.type, sheet.difficulty])
+  }, [mutate, globalMutate, sheet.id, sheet.songId, sheet.type, sheet.difficulty])
 
   return {
     data: entries,

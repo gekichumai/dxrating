@@ -1032,6 +1032,7 @@ app.all('/api/v1/*', (c) =>
               'effect/context': effectContext,
               'effect/wrap': superviseApi,
               user: session?.user,
+              sessionCreatedAt: session?.session.createdAt,
               viewer: session?.user ? viewerFromSession(session.user) : undefined,
               signal: c.req.raw.signal,
             },

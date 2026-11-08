@@ -10,7 +10,7 @@ const procedures = (router: AnyContractRouter, path: string[] = []): Array<[stri
     : Object.entries(router).flatMap(([key, value]) => procedures(value as AnyContractRouter, [...path, key]))
 
 describe('privateContractRoutes', () => {
-  it('tags every private route internal and cloud-save', () => {
+  it('tags every private route internal, and each with its own domain', () => {
     const entries = procedures(privateContractRoutes)
     expect(entries.map(([path]) => path)).toEqual([
       'features.get',
@@ -31,9 +31,12 @@ describe('privateContractRoutes', () => {
       'cloudSave.snapshots.create',
       'cloudSave.snapshots.list',
       'cloudSave.export',
+      'sessions.list',
+      'sessions.revoke',
     ])
-    for (const [, procedure] of entries) {
-      expect(getOpenAPIMeta(procedure as never)?.tags).toEqual(expect.arrayContaining(['internal', 'cloud-save']))
+    for (const [path, procedure] of entries) {
+      const domain = path.startsWith('sessions.') ? 'account' : 'cloud-save'
+      expect(getOpenAPIMeta(procedure as never)?.tags).toEqual(expect.arrayContaining(['internal', domain]))
     }
   })
 

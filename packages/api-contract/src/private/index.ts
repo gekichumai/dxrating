@@ -1,7 +1,9 @@
 import { cloudSaveContract } from './cloud-save.ts'
 import { featuresContract } from './features.ts'
+import { sessionsContract } from './sessions.ts'
 
 export * from './features.ts'
+export * from './sessions.ts'
 
 /**
  * Routes for signed-in first-party clients. They are part of the backend's
@@ -11,4 +13,5 @@ export * from './features.ts'
 export const privateContractRoutes = {
   features: featuresContract,
   cloudSave: cloudSaveContract,
+  sessions: sessionsContract,
 }

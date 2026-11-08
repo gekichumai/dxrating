@@ -6,6 +6,7 @@ import IconMdiPlus from '~icons/mdi/plus'
 import { useAuth } from '../../hooks/useAuth'
 import { apiClient as client } from '../../lib/orpc'
 import { useServerAliases } from '../../models/useServerAliases'
+import { rememberCreatedAlias } from '../../catalog/communityOverlay'
 import type { FlattenedSheet } from '../../songs'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
 import { MotionButtonBase } from '../../utils/motion'
@@ -41,6 +42,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
       setNewAltName('')
       // Show the new alias at once: the shared edge copy of the list can take a few minutes to include it
       const created = { song_id: sheet.songId, name: newAltName.trim() }
+      rememberCreatedAlias(created)
       void mutate(
         (aliases) =>
           aliases?.some((alias) => alias.song_id === created.song_id && alias.name === created.name)

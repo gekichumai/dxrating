@@ -14,6 +14,7 @@ import { chipPresenceTransitions } from '../sheetMotion'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import { Markdown } from '../../global/Markdown'
 import { SheetListItemContent } from '../SheetListItem'
+import { rememberAttachedTag } from '../../../catalog/communityOverlay'
 import { useSheetTagsDetailed } from './useSheetTagsDetailed'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
@@ -57,7 +58,15 @@ const SheetTagsAddDialog: FC<{
       toast.success(m.sheet_tags_add_toastSuccess({}, { locale }), {
         id: `tag-add-success:${tagId}`,
       })
-      // Also adds the association to the shared tag list, which comes through the edge cache
+      const attached = {
+        song_id: sheet.songId,
+        sheet_id: sheet.id,
+        sheet_type: sheet.type,
+        sheet_difficulty: sheet.difficulty,
+        tag_id: tagId,
+      }
+      rememberAttachedTag(attached)
+      // Refetches this sheet's associations and puts them into the shared tag list too
       void mutateExistingTags()
     } catch (error) {
       console.error('Failed to add tag', error)
