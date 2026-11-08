@@ -17,21 +17,21 @@
     "token:new": "tsx scripts/new-agent-token.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.19.17",
+    "@hono/node-server": "^1.19.18",
     "@orpc/contract": "catalog:",
     "@orpc/experimental-effect": "2.0.0-beta.40",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
     "drizzle-orm": "1.0.0-rc.5-5935859",
-    "effect": "4.0.0-rc.118",
+    "effect": "4.1.2",
     "hono": "catalog:",
-    "jose": "6.2.12",
+    "jose": "6.2.15",
     "pg": "catalog:",
     "zod": "4.6.7"
   },
   "devDependencies": {
-    "@effect/tsgo": "0.46.1",
+    "@effect/tsgo": "0.64.1",
     "@gekichumai/api-contract": "workspace:*",
     "@gekichumai/backend": "workspace:*",
     "@types/node": "catalog:",
