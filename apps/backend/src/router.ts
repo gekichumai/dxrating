@@ -34,6 +34,7 @@ import { CloudSaveOptInError, FeatureFlags } from './services/feature-flags'
 import { expectedUserFailure, requireSession } from './orpc-middleware'
 import { CLOUD_SAVE_EXPECTED_USER_HEADER } from '@gekichumai/api-contract'
 import { cloudSaveHandler } from './cloud-save-router'
+import * as authSchema from './db/auth-schema'
 
 export interface ApiContext
   extends
@@ -1077,6 +1078,55 @@ const featuresHandler = {
   ),
 }
 
+/**
+ * The Security screens' device list. Better Auth's own `list-sessions` answers only a fresh session (signed in during
+ * the last `session.freshAge`, one day by default) because it returns every session's token. This list leaves the
+ * tokens out, so any signed-in session may read it, and a device is signed out by its `id`, scoped to the caller.
+ */
+const sessionsHandler = {
+  list: os.sessions.list.use(requireSession).handler(
+    handlerGen(function* ({ context }) {
+      const database = yield* Database
+      const rows = yield* database.query('Sessions.list', (db) =>
+        db
+          .select({
+            id: authSchema.session.id,
+            createdAt: authSchema.session.createdAt,
+            updatedAt: authSchema.session.updatedAt,
+            expiresAt: authSchema.session.expiresAt,
+            ipAddress: authSchema.session.ipAddress,
+            userAgent: authSchema.session.userAgent,
+          })
+          .from(authSchema.session)
+          .where(and(eq(authSchema.session.userId, context.user.id), gte(authSchema.session.expiresAt, new Date())))
+          .orderBy(desc(authSchema.session.updatedAt)),
+      )
+      return {
+        sessions: rows.map((row) => ({
+          ...row,
+          createdAt: row.createdAt.toISOString(),
+          updatedAt: row.updatedAt.toISOString(),
+          expiresAt: row.expiresAt.toISOString(),
+        })),
+      }
+    }),
+  ),
+  revoke: os.sessions.revoke.use(requireSession).handler(
+    handlerGen(function* ({ context, input }) {
+      const database = yield* Database
+      // The same row Better Auth's `revoke-session` deletes (no secondary storage or cookie cache is configured),
+      // found by id instead of token and only among the caller's own sessions.
+      const deleted = yield* database.query('Sessions.revoke', (db) =>
+        db
+          .delete(authSchema.session)
+          .where(and(eq(authSchema.session.id, input.id), eq(authSchema.session.userId, context.user.id)))
+          .returning({ id: authSchema.session.id }),
+      )
+      return { revoked: deleted.length > 0 }
+    }),
+  ),
+}
+
 export const appRouter = os.router({
   announcements: announcementsHandler,
   tags: tagsHandler,
@@ -1090,4 +1140,5 @@ export const appRouter = os.router({
   lxns: lxnsHandler,
   features: featuresHandler,
   cloudSave: cloudSaveHandler,
+  sessions: sessionsHandler,
 })
