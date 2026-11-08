@@ -1322,5 +1322,6 @@
   "announcement_severity_warning": "注意",
   "announcement_severity_critical": "重要",
   "announcement_learnMore": "詳しく見る",
-  "announcement_dismiss": "お知らせを閉じる"
+  "announcement_dismiss": "お知らせを閉じる",
+  "ratingCalculator_cloudSave_saveMissing": "クラウドセーブが見つからないため、この端末のローカルセーブを使用しています。"
 }

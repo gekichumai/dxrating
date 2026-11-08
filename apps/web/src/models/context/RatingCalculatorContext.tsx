@@ -22,6 +22,8 @@ import {
   RATING_ENTRIES_STORAGE_KEY,
   reportMigration,
 } from '../../catalog/savedDataMigration'
+import { ActiveSaveContext, useActiveSaveDecision } from '../scores/ActiveSaveContext'
+import type { CloudScoreRepository } from '../scores/CloudScoreRepository'
 import { LocalScoreRepository } from '../scores/LocalScoreRepository'
 import { ScoreRepositoryContext } from '../scores/useScoreRepository'
 
@@ -48,7 +50,7 @@ function getBrowserStorage(): Storage | null {
 
 /** `react-use` `useList` actions over the repository, each a wholesale replacement of the saved entries */
 function createListActions(
-  repository: Pick<LocalScoreRepository, 'entries' | 'replaceEntries'>,
+  repository: Pick<LocalScoreRepository | CloudScoreRepository, 'entries' | 'replaceEntries'>,
   initialEntries: readonly PlayEntry[],
 ): ListActions<PlayEntry> {
   const set: ListActions<PlayEntry>['set'] = (next) => {
@@ -109,8 +111,12 @@ export const RatingCalculatorContext = createContext<RatingCalculatorContext>({
 
 export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({ children }) => {
   // The visitor's save is read in the browser only: on the server the repository is empty (no scores in SSR)
-  const [repository] = useState(() => new LocalScoreRepository(getBrowserStorage()))
-  const [initialEntries] = useState(() => repository.entries())
+  const [localRepository] = useState(() => new LocalScoreRepository(getBrowserStorage()))
+  // A cloud save replaces the local one only when the server enables it for the signed-in user (ActiveSaveContext);
+  // otherwise this is the local save, as it always was
+  const activeSave = useActiveSaveDecision()
+  const repository: LocalScoreRepository | CloudScoreRepository = activeSave.cloudRepository ?? localRepository
+  const initialEntries = useMemo(() => repository.entries(), [repository])
   const modifyEntries = useMemo(() => createListActions(repository, initialEntries), [repository, initialEntries])
   const subscribe = useCallback((onChange: () => void) => repository.subscribe(onChange), [repository])
   const getEntries = useCallback(() => repository.entries() as PlayEntry[], [repository])
@@ -136,6 +142,8 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
   // Re-runs on every change of the entries, so a later import is migrated too; a pass that matches nothing changes
   // nothing, and a change while the legacy map loads cancels the pass in favor of the one for the new entries.
   useEffect(() => {
+    // Cloud saves hold public sheet IDs only
+    if (repository.kind !== 'local') return
     if (!completeCatalogDocument || !hasLegacySheetRecords(entries)) return
     let cancelled = false
     void loadLegacySongIds().then((legacySongIds) => {
@@ -159,9 +167,11 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
   const value = useMemo(() => ({ entries, modifyEntries }), [entries, modifyEntries])
 
   return (
-    <ScoreRepositoryContext.Provider value={repository}>
-      <RatingCalculatorContext.Provider value={value}>{children}</RatingCalculatorContext.Provider>
-    </ScoreRepositoryContext.Provider>
+    <ActiveSaveContext.Provider value={activeSave}>
+      <ScoreRepositoryContext.Provider value={repository}>
+        <RatingCalculatorContext.Provider value={value}>{children}</RatingCalculatorContext.Provider>
+      </ScoreRepositoryContext.Provider>
+    </ActiveSaveContext.Provider>
   )
 }
 

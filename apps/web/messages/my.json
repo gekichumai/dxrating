@@ -1322,5 +1322,6 @@
   "announcement_severity_warning": "သတိပေးချက်",
   "announcement_severity_critical": "အရေးကြီး",
   "announcement_learnMore": "ပိုမိုလေ့လာရန်",
-  "announcement_dismiss": "ကြေညာချက်ကို ပိတ်ရန်"
+  "announcement_dismiss": "ကြေညာချက်ကို ပိတ်ရန်",
+  "ratingCalculator_cloudSave_saveMissing": "သင်၏ cloud save ကို ရှာမတွေ့ပါ၊ ထို့ကြောင့် ဤစက်သည် ၎င်း၏ local save ကို အသုံးပြုနေပါသည်။"
 }

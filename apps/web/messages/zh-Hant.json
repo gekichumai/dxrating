@@ -1322,5 +1322,6 @@
   "announcement_severity_warning": "注意",
   "announcement_severity_critical": "重要",
   "announcement_learnMore": "了解更多",
-  "announcement_dismiss": "關閉公告"
+  "announcement_dismiss": "關閉公告",
+  "ratingCalculator_cloudSave_saveMissing": "找不到你的雲端存檔，本裝置將使用本機存檔。"
 }

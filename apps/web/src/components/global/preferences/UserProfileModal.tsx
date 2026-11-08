@@ -9,6 +9,7 @@ import IconMdiLogout from '~icons/mdi/logout'
 import IconMdiLinkVariant from '~icons/mdi/link-variant'
 import IconMdiShield from '~icons/mdi/shield-outline'
 import { authClient } from '../../../lib/auth-client'
+import { useActiveSave } from '@/models/scores/ActiveSaveContext'
 import { useIsLargeDevice } from '../../../utils/breakpoints'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 import { ConnectedAccountsSection } from './ConnectedAccountsSection'
@@ -44,6 +45,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const isLargeDevice = useIsLargeDevice()
   const { data: sessionData } = authClient.useSession()
   const confirmLogout = useConfirmDialog()
+  const activeSave = useActiveSave()
 
   const handleSectionChange = (section: Section) => {
     const currentIdx = SECTIONS.findIndex((s) => s.key === activeSection)
@@ -55,6 +57,8 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const handleLogout = async () => {
     const confirmed = await confirmLogout.confirm()
     if (!confirmed) return
+    // A cloud save sends what it still has while the session is valid (at most 3 s); the rest stays queued
+    await activeSave.flushBeforeSignOut()
     await authClient.signOut()
     toast.success(m.auth_logout_toastSuccess({}, { locale }), { id: 'logout-success' })
     onClose()

@@ -47,6 +47,9 @@ const SideEffectorAutoImportRating: FC = () => {
 
   useEffect(() => {
     if (!catalog) return
+    // A cloud save imports from maimai NET on the server (design §8.3), which is not wired yet: never write a
+    // browser-side NET fetch into it
+    if (repository.kind !== 'local') return
     const mode = (() => {
       try {
         const mode = localStorage.getItem('rating-auto-import-from-net')

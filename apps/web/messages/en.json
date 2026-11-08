@@ -1322,5 +1322,6 @@
   "announcement_severity_warning": "Warning",
   "announcement_severity_critical": "Important",
   "announcement_learnMore": "Learn more",
-  "announcement_dismiss": "Dismiss announcement"
+  "announcement_dismiss": "Dismiss announcement",
+  "ratingCalculator_cloudSave_saveMissing": "Your cloud save could not be found, so this device is using its local save."
 }

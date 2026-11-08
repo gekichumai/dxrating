@@ -1322,5 +1322,6 @@
   "announcement_severity_warning": "Peringatan",
   "announcement_severity_critical": "Penting",
   "announcement_learnMore": "Pelajari lebih lanjut",
-  "announcement_dismiss": "Tutup pengumuman"
+  "announcement_dismiss": "Tutup pengumuman",
+  "ratingCalculator_cloudSave_saveMissing": "Simpanan cloud kamu tidak ditemukan, jadi perangkat ini memakai simpanan lokalnya."
 }

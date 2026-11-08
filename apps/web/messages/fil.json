@@ -1322,5 +1322,6 @@
   "announcement_severity_warning": "Babala",
   "announcement_severity_critical": "Mahalaga",
   "announcement_learnMore": "Alamin pa",
-  "announcement_dismiss": "Isara ang anunsyo"
+  "announcement_dismiss": "Isara ang anunsyo",
+  "ratingCalculator_cloudSave_saveMissing": "Hindi mahanap ang iyong cloud save, kaya ginagamit ng device na ito ang lokal nitong save."
 }

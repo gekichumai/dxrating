@@ -1322,5 +1322,6 @@
   "announcement_severity_warning": "Amaran",
   "announcement_severity_critical": "Penting",
   "announcement_learnMore": "Ketahui lebih lanjut",
-  "announcement_dismiss": "Tutup pengumuman"
+  "announcement_dismiss": "Tutup pengumuman",
+  "ratingCalculator_cloudSave_saveMissing": "Simpanan awan anda tidak ditemui, jadi peranti ini menggunakan simpanan setempatnya."
 }

@@ -1322,5 +1322,6 @@
   "announcement_severity_warning": "คำเตือน",
   "announcement_severity_critical": "สำคัญ",
   "announcement_learnMore": "ดูเพิ่มเติม",
-  "announcement_dismiss": "ปิดประกาศ"
+  "announcement_dismiss": "ปิดประกาศ",
+  "ratingCalculator_cloudSave_saveMissing": "ไม่พบเซฟบนคลาวด์ของคุณ อุปกรณ์นี้จึงใช้เซฟในเครื่องแทน"
 }

@@ -1322,5 +1322,6 @@
   "announcement_severity_warning": "주의",
   "announcement_severity_critical": "중요",
   "announcement_learnMore": "자세히 보기",
-  "announcement_dismiss": "공지 닫기"
+  "announcement_dismiss": "공지 닫기",
+  "ratingCalculator_cloudSave_saveMissing": "클라우드 저장 데이터를 찾을 수 없어 이 기기의 로컬 저장 데이터를 사용합니다."
 }

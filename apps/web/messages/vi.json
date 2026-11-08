@@ -1322,5 +1322,6 @@
   "announcement_severity_warning": "Cảnh báo",
   "announcement_severity_critical": "Quan trọng",
   "announcement_learnMore": "Tìm hiểu thêm",
-  "announcement_dismiss": "Đóng thông báo"
+  "announcement_dismiss": "Đóng thông báo",
+  "ratingCalculator_cloudSave_saveMissing": "Không tìm thấy bản lưu đám mây của bạn, nên thiết bị này đang dùng bản lưu cục bộ."
 }
