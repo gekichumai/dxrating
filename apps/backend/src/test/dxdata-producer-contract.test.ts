@@ -29,12 +29,17 @@ producerContractSuite('dxdata assembly-line producer contract', () => {
 
   it('serves the exact snapshot published by the real producer migration and writer', async () => {
     const migrations = await pool.query(`SELECT version, name FROM dxdata.catalog_schema_migrations ORDER BY version`)
-    expect(migrations.rows).toEqual([
+    const knownMigrations = [
       { version: 1, name: 'dynamic_catalog' },
       { version: 2, name: 'source_mapping_run_integrity' },
       { version: 3, name: 'immutable_source_observations' },
       { version: 4, name: 'publication_staging_and_snapshot_integrity' },
-    ])
+      // Additive: per-song field resolution records (gekichumai/meta#50 D1). The admin reads them, the API does not
+      { version: 5, name: 'field_resolutions' },
+    ]
+    // The producer ships v5 before or after this consumer, so accept v1–v4 alone or followed by known versions only
+    expect(migrations.rows.length).toBeGreaterThanOrEqual(4)
+    expect(migrations.rows).toEqual(knownMigrations.slice(0, migrations.rows.length))
 
     const promotedStage = await pool.query<{
       catalog_run_id: string
