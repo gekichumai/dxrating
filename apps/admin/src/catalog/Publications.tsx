@@ -60,7 +60,7 @@ export function Publications({ channel, before }: { channel?: string; before?: n
         </Alert>
       )}
       {data && data.publications.length === 0 && (
-        <Text size="sm" role="status">
+        <Text size="sm" component="output" display="block">
           No publications on {data.channel} yet.
         </Text>
       )}
@@ -77,10 +77,11 @@ export function Publications({ channel, before }: { channel?: string; before?: n
                 <Table.Th>Pipeline</Table.Th>
                 <Table.Th>Snapshot</Table.Th>
                 <Table.Th>Provenance</Table.Th>
+                <Table.Th>Changes</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {data.publications.map((p) => (
+              {data.publications.map((p, index) => (
                 <Table.Tr key={p.fingerprint}>
                   <Table.Td>
                     <Group gap={6} wrap="nowrap">
@@ -132,6 +133,20 @@ export function Publications({ channel, before }: { channel?: string; before?: n
                       <Text size="xs" c="dimmed">
                         none
                       </Text>
+                    )}
+                  </Table.Td>
+                  <Table.Td>
+                    {/* data.channel, not the prop: while another channel loads, these rows are still the old one's */}
+                    {(index < data.publications.length - 1 || data.nextBefore !== null) && (
+                      <Anchor
+                        size="sm"
+                        href={routeHref('diff', {
+                          channel: data.channel === 'production-v1' ? undefined : data.channel,
+                          to: p.revision,
+                        })}
+                      >
+                        vs previous
+                      </Anchor>
                     )}
                   </Table.Td>
                 </Table.Tr>

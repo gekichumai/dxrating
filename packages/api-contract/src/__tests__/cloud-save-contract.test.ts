@@ -5,8 +5,11 @@ import { describe, expect, it } from 'vitest'
 import { publicAppContract, publicContractRoutes } from '../contract.ts'
 import { isPublicSpecProcedure } from '../spec-filter.ts'
 import {
+  ChangesInputSchema,
   ClientImportInputSchema,
+  CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH,
   cloudSaveContract,
+  CreateSnapshotInputSchema,
   CreateSaveInputSchema,
   DivingFishImportInputSchema,
   ImportRecordSchema,
@@ -171,6 +174,29 @@ describe('input validation', () => {
     expect(ImportRecordSchema.safeParse({ ...record, comboFlag: 'fdx' }).success).toBe(false)
   })
 
+  it('refuses timestamps PostgreSQL cannot store (year 0, a 5-digit year in UTC)', () => {
+    const at = (clientEditedAt: string) =>
+      MutationSchema.safeParse({
+        mutationId: '01927b5e-8f3a-7c2d-9e4f-000000000000',
+        op: 'delete',
+        sheetId,
+        clientEditedAt,
+      }).success
+    expect(at('2026-11-01T00:00:00.000Z')).toBe(true)
+    expect(at('0001-01-01T00:00:00.000Z')).toBe(true)
+    expect(at('0000-01-01T00:00:00.000Z')).toBe(false)
+    expect(at('0001-01-01T00:30:00+01:00')).toBe(false)
+    expect(at('9999-12-31T23:30:00-01:00')).toBe(false)
+  })
+
+  it('refuses U+0000 and lone surrogates, which PostgreSQL text and JSONB cannot store', () => {
+    expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '123' }).success).toBe(true)
+    expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '1\u00002' }).success).toBe(false)
+    expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '1\ud800' }).success).toBe(false)
+    expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '\udc00' }).success).toBe(false)
+    expect(ImportRecordSchema.safeParse({ ...record, providerRecordId: '\ud83c\udfb5' }).success).toBe(true)
+  })
+
   it('limits mutations to 500 and requires UUIDv7 IDs', () => {
     const del = (i: number) => ({
       mutationId: `01927b5e-8f3a-7c2d-9e4f-${i.toString(16).padStart(12, '0')}`,
@@ -266,6 +292,41 @@ describe('input validation', () => {
     expect(ClientImportInputSchema.parse(clientImport)).toMatchObject({ chunkIndex: 0, chunkCount: 1 })
     expect(ClientImportInputSchema.safeParse({ ...clientImport, chunkIndex: 2, chunkCount: 4 }).success).toBe(true)
     expect(ClientImportInputSchema.safeParse({ ...clientImport, chunkIndex: 4, chunkCount: 4 }).success).toBe(false)
+  })
+
+  it('bounds the depth and size of snapshot details without overflowing the stack', () => {
+    const snapshot = { id: saveId, atRevision: 3, b15Sum: 1, b35Sum: 2, b50Sum: 3, recordCount: 4, gameVersion: '25' }
+    const nested = (depth: number) => {
+      let value: unknown = 1
+      for (let i = 0; i < depth; i++) value = [value]
+      return value
+    }
+    expect(CreateSnapshotInputSchema.safeParse(snapshot).success).toBe(true)
+    const b50 = { entries: Array.from({ length: 50 }, (_, i) => ({ sheetId, rating: 300 + i, achievement: 1005000 })) }
+    expect(CreateSnapshotInputSchema.safeParse({ ...snapshot, detail: b50 }).success).toBe(true)
+    expect(CreateSnapshotInputSchema.safeParse({ ...snapshot, detail: { a: nested(15) } }).success).toBe(true)
+    expect(CreateSnapshotInputSchema.safeParse({ ...snapshot, detail: { a: nested(16) } }).success).toBe(false)
+    // 200k levels deep: rejected, not a RangeError
+    expect(CreateSnapshotInputSchema.safeParse({ ...snapshot, detail: { a: nested(200_000) } }).success).toBe(false)
+    const long = (n: number) => ({ a: 'x'.repeat(n - '{"a":""}'.length) })
+    expect(
+      CreateSnapshotInputSchema.safeParse({ ...snapshot, detail: long(CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH) }).success,
+    ).toBe(true)
+    expect(
+      CreateSnapshotInputSchema.safeParse({ ...snapshot, detail: long(CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH + 1) })
+        .success,
+    ).toBe(false)
+    expect(
+      CreateSnapshotInputSchema.safeParse({ ...snapshot, detail: { a: Array.from({ length: 100_000 }, () => 0) } })
+        .success,
+    ).toBe(false)
+    expect(CreateSnapshotInputSchema.safeParse({ ...snapshot, detail: [1] }).success).toBe(false)
+  })
+
+  it('takes a changes mode, incremental by default', () => {
+    expect(ChangesInputSchema.parse({ id: saveId, since: '3' })).toMatchObject({ since: 3, mode: 'incremental' })
+    expect(ChangesInputSchema.parse({ id: saveId, since: '3', mode: 'full' })).toMatchObject({ mode: 'full' })
+    expect(ChangesInputSchema.safeParse({ id: saveId, mode: 'all' }).success).toBe(false)
   })
 
   it('validates idempotency keys', () => {

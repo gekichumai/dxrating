@@ -26,6 +26,20 @@ const dxdataJsonParse = (): Plugin => ({
   },
 })
 
+// The legacy song ID map is keyed by song titles. As an object literal, the minifier leaves keys such as アイム・マイヒーロー
+// unquoted, since U+30FB and U+FF65 are identifier characters as of Unicode 15.1; older engines (Chrome 114, Firefox 116)
+// fail to parse the chunk ("Invalid or unexpected token", "illegal character U+30FB"). As a JSON string there are no keys
+// to quote, in every environment.
+const legacySongIdsJsonParse = (): Plugin => ({
+  name: 'dxrating:legacy-song-ids-json-parse',
+  enforce: 'pre',
+  load(id) {
+    if (!id.endsWith('/packages/dxdata/legacy-song-ids.json')) return null
+    const json = JSON.stringify(JSON.parse(readFileSync(id, 'utf8')))
+    return { code: `export default JSON.parse(${JSON.stringify(json)})`, moduleType: 'js' }
+  },
+})
+
 // Client chunking. Default splitting gave every page ~60 small JS files, and any app change could rehash vendor code.
 // Third-party code that the first page load needs goes into a few vendor chunks named by package scope, so their
 // hashes only change when those packages do. App modules shared by two or more route entries go into one app-shared
@@ -191,6 +205,7 @@ export default defineConfig({
   plugins: [
     paraglideVitePlugin(PARAGLIDE_OPTIONS),
     dxdataJsonParse(),
+    legacySongIdsJsonParse(),
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
     UnoCSS(),
     Icons({ compiler: 'jsx', jsx: 'react', autoInstall: true }),

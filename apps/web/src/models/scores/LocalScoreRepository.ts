@@ -8,6 +8,7 @@ import {
   type ManualEntry,
   type ScoreRecord,
   type ScoreRepositoryStatus,
+  type ServerImportArgs,
   type ServerImportKind,
   UnsupportedScoreOperationError,
   type WebScoreRepository,
@@ -208,7 +209,7 @@ export class LocalScoreRepository implements WebScoreRepository {
     return { count: entries.length }
   }
 
-  runServerImport(kind: ServerImportKind, _args: Record<string, unknown>): AsyncIterable<ImportProgress> {
+  runServerImport<K extends ServerImportKind>(kind: K, _args: ServerImportArgs[K]): AsyncIterable<ImportProgress> {
     throw new UnsupportedScoreOperationError(`Server import (${kind})`, this.kind)
   }
 

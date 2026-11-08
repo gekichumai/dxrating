@@ -13,7 +13,7 @@ import type { ScoreRecord } from './ScoreRepository'
 export type InternalLevelResolver = (sheetId: string) => number | null | undefined
 
 /** A record's own best 50 hint with the ranking data of the record that carries it */
-interface HintCandidate {
+export interface HintCandidate {
   bucket: Best50Bucket
   /** Integer in 1/10000 %, as `ScoreRecord.achievement` */
   achievement: number
@@ -129,7 +129,8 @@ function hintOf(record: ScoreRecord, internalLevel: number | null): HintCandidat
   }
 }
 
-function preferHint(a: HintCandidate | null, b: HintCandidate | null): HintCandidate | null {
+/** The hint of two of a chart's records that `calculateBest50` keeps; see {@link collapseScoreRecordList} */
+export function preferHint(a: HintCandidate | null, b: HintCandidate | null): HintCandidate | null {
   if (!a) return b
   if (!b) return a
   // Both records are of the same chart, so either both have a known internal level or neither has

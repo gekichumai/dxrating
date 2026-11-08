@@ -505,7 +505,7 @@
   "auth_accountSecurity_featureDevices": "查看已登入的裝置，並讓其他裝置登出",
   "auth_accountSecurity_featuresLabel": "可以在這裡做的事",
   "auth_privacy_title": "隱私權政策",
-  "auth_privacy_updated": "最後更新：2026年10月30日",
+  "auth_privacy_updated": "最後更新：2026年11月3日",
   "auth_privacy_intro_heading": "簡介",
   "auth_privacy_intro_body": "本隱私權政策說明你使用我們的服務時，我們如何收集、使用、處理及揭露你的資訊。",
   "auth_privacy_collect_heading": "我們收集的資訊",
@@ -537,7 +537,7 @@
   "auth_privacy_retention_heading": "資料保留",
   "auth_privacy_retention_body": "我們僅在達成本隱私權政策所述目的所需的期間內保留你的資訊。我們會在遵守法律義務、解決爭議及執行我們政策所需的範圍內保留及使用你的資訊。",
   "auth_privacy_deletion_heading": "刪除帳號",
-  "auth_privacy_deletion_p1": "你可以在 DXRating 應用程式的帳號畫面永久刪除你的帳號。刪除後，你的個人檔案、留言、標籤及標籤關聯、別名、工作階段、通行密鑰、已連結的登入方式，以及已連結的 LXNS 憑證都會被移除。在服務供應商支援的情況下，已連結的 OAuth 授權會被撤銷。刪除後，你可以使用相同的電子郵件地址或登入服務供應商建立新帳號。",
+  "auth_privacy_deletion_p1": "您可以在 DXRating App 的帳戶畫面永久刪除您的帳戶。刪除後，您的個人檔案、留言、標籤及標籤關聯、別名、工作階段、通行密鑰、已連結的登入方式、已連結的 LXNS 憑證，以及您的雲端存檔（包括成績歷史、匯入紀錄和 Rating 快照）都會被移除。在服務供應商支援的情況下，已連結的 OAuth 授權會被撤銷。刪除後，您可以使用相同的電子郵件地址或登入服務供應商建立新帳戶。",
   "auth_privacy_deletion_p2": "帳號資料會立即從我們的運作中系統移除。在加密備份被自動刪除之前，或在法律要求保留的情況下，備份中可能仍留有殘餘副本。",
   "auth_privacy_rights_heading": "你的權利",
   "auth_privacy_rights_body": "你享有以下資料保護權利：",
@@ -1322,5 +1322,397 @@
   "announcement_severity_warning": "注意",
   "announcement_severity_critical": "重要",
   "announcement_learnMore": "了解更多",
-  "announcement_dismiss": "關閉公告"
+  "announcement_dismiss": "關閉公告",
+  "ratingCalculator_cloudSave_saveMissing": "找不到你的雲端存檔，本裝置將使用本機存檔。",
+  "ratingCalculator_cloudSave_title": "雲端存檔",
+  "ratingCalculator_cloudSave_description": "你的成績儲存在 DXRating 上，並在所有裝置間同步。",
+  "ratingCalculator_cloudSave_provenance_verified": "已驗證",
+  "ratingCalculator_cloudSave_provenance_friendCode": "好友代碼 {id}",
+  "ratingCalculator_cloudSave_provenance_account": "帳號 {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "{date} 抓取",
+  "ratingCalculator_cloudSave_provenance_edited": "已編輯（原為匯入）",
+  "ratingCalculator_cloudSave_provenance_manual": "手動輸入",
+  "ratingCalculator_cloudSave_provenance_notVerified": "未驗證",
+  "ratingCalculator_cloudSave_provenance_fromFile": "來自檔案（{source}）",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "來自檔案（聲稱：{source}）",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "來自本裝置",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "來自本裝置（聲稱：{source}）",
+  "ratingCalculator_cloudSave_status_idle": "已同步",
+  "ratingCalculator_cloudSave_status_syncing": "正在同步…",
+  "ratingCalculator_cloudSave_status_offline": "離線",
+  "ratingCalculator_cloudSave_status_error": "暫時無法同步",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} 項變更等待同步",
+        "countPlural=*": "{count} 項變更等待同步"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} 個同步問題",
+        "countPlural=*": "{count} 個同步問題"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "同步問題",
+  "ratingCalculator_cloudSave_issues_empty": "沒有同步問題。",
+  "ratingCalculator_cloudSave_issues_yourValue": "你的變更：{value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "刪除",
+  "ratingCalculator_cloudSave_issues_method_typed": "手動輸入",
+  "ratingCalculator_cloudSave_issues_method_keypad": "數字鍵盤",
+  "ratingCalculator_cloudSave_issues_method_photo": "照片",
+  "ratingCalculator_cloudSave_issues_superseded": "已保留較新的已驗證成績。",
+  "ratingCalculator_cloudSave_issues_rejected": "此變更未被接受，已保留原有成績。",
+  "ratingCalculator_cloudSave_issues_useMine": "仍使用我的值",
+  "ratingCalculator_cloudSave_issues_dismiss": "忽略",
+  "ratingCalculator_cloudSave_saves_title": "存檔",
+  "ratingCalculator_cloudSave_saves_description": "選擇此瀏覽器顯示和編輯的存檔。",
+  "ratingCalculator_cloudSave_saves_loading": "正在載入存檔…",
+  "ratingCalculator_cloudSave_saves_error": "無法載入存檔。",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{formatted} 筆紀錄",
+        "countPlural=*": "{formatted} 筆紀錄"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "上次同步 {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "不限地區",
+  "ratingCalculator_cloudSave_history_title": "匯入紀錄",
+  "ratingCalculator_cloudSave_history_loading": "正在載入匯入紀錄…",
+  "ratingCalculator_cloudSave_history_error": "無法載入匯入紀錄。",
+  "ratingCalculator_cloudSave_history_empty": "還沒有匯入紀錄。",
+  "ratingCalculator_cloudSave_history_running": "進行中…",
+  "ratingCalculator_cloudSave_history_trigger_user": "手動",
+  "ratingCalculator_cloudSave_history_trigger_auto": "自動",
+  "ratingCalculator_cloudSave_history_trigger_migration": "從此瀏覽器遷移",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "新增 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "提升 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "轉為已驗證 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "未變 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "保留你的編輯 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "已刪除而略過 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "被拒絕 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "沒有變化",
+  "ratingCalculator_cloudSave_import_success": "已從 {source} 匯入：{summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "匯入尚未完成就中斷了，請再試一次。",
+  "ratingCalculator_cloudSave_import_errors_generic": "無法完成這次匯入，請再試一次。",
+  "ratingCalculator_cloudSave_saves_empty": "還沒有雲端存檔。",
+  "ratingCalculator_cloudSave_retry": "再試一次",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "要將 {count} 筆成績匯入雲端存檔嗎？",
+        "countPlural=*": "要將 {count} 筆成績匯入雲端存檔嗎？"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "每個譜面保留較好的成績，現有成績不會變差。若想從頭開始，請先清空存檔。",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "取消",
+  "ratingCalculator_cloudSave_importConfirm_merge": "匯入",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "先清空…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "清空存檔後再匯入？",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "此存檔中的所有成績將在你的所有裝置上刪除，然後再匯入檔案。自本裝置上次同步後更新過的已驗證成績會被保留。",
+  "ratingCalculator_cloudSave_importConfirm_back": "返回",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "清空並匯入",
+  "ratingCalculator_cloudSave_unreachable": "暫時連不上雲端存檔。現在做的修改只會儲存在此瀏覽器中。",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "有 {countNumber} 筆紀錄沒有對應的譜面，未匯入。",
+        "countPlural=*": "有 {countNumber} 筆紀錄沒有對應的譜面，未匯入。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "這些紀錄都無法匯入：沒有對應的譜面或含有超出範圍的值。雲端存檔未作變更。",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "有 {countNumber} 筆紀錄含有無法儲存的值（例如超出範圍的 DX 分數），未匯入。",
+        "countPlural=*": "有 {countNumber} 筆紀錄含有無法儲存的值（例如超出範圍的 DX 分數），未匯入。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_divingFishMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "有 {countNumber} 筆紀錄因對方在水魚（Diving-Fish）設定了隱私而被隱藏，無法匯入。",
+        "countPlural=*": "有 {countNumber} 筆紀錄因對方在水魚（Diving-Fish）設定了隱私而被隱藏，無法匯入。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "有 {countNumber} 筆紀錄沒有對應的譜面或含有超出範圍的值，無法匯入，將被略過。",
+        "countPlural=*": "有 {countNumber} 筆紀錄沒有對應的譜面或含有超出範圍的值，無法匯入，將被略過。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "雲端存檔中正在進行來自此來源的另一次匯入，請在完成後再試一次。",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "此檔案過大，無法一次匯入。雲端存檔未作變更。",
+  "ratingCalculator_cloudSave_history_failure_generic": "未完成",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "中途停止",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "未完成：maimai NET 正在維護",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "未完成：maimai NET 登入失敗",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "未完成：沒有可用的 Aime 卡",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "未知譜面 {countNumber}",
+        "countPlural=*": "未知譜面 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "因隱私設定隱藏 {countNumber}",
+        "countPlural=*": "因隱私設定隱藏 {countNumber}"
+      }
+    }
+  ],
+  "auth_privacy_cloud_heading": "雲端存檔（測試版）",
+  "auth_privacy_cloud_p1": "開啟雲端存檔後，我們會把您的成績保存在您的帳號中，以便在您的裝置之間共用：包括每張譜面的成績及其來源（例如從 maimai DX NET、LXNS 或水魚查分器匯入、檔案匯入或手動輸入），以及該服務提供的帳號 ID（如好友代碼）。我們也會保存每次匯入的紀錄（來源、時間、數量和所接收資料的雜湊值），以及您的裝置在同步後保存的 Rating 快照。",
+  "auth_privacy_cloud_p2": "從 maimai DX NET 匯入時，您的 SEGA ID 密碼只用於該次匯入的登入，絕不會被保存或記錄。",
+  "auth_privacy_cloud_p3": "雲端存檔會保存到您刪除它們或刪除帳號為止。每張譜面最多保留 20 筆以前的成績，每個存檔最多保留 100 個 Rating 快照。已刪除的紀錄會保留 90 天，讓您的其他裝置也刪除它們；您的裝置發出的每次同步請求的紀錄保留 30 天，以確保重複送出的請求只生效一次。您刪除的存檔會在 30 天後被徹底清除。",
+  "ratingCalculator_cloudSave_descriptionInactive": "將成績保存在 DXRating 帳號中，在所有裝置上使用。",
+  "ratingCalculator_cloudSave_choose_title": "使用雲端存檔",
+  "ratingCalculator_cloudSave_choose_sectionDescription": "已在其他裝置上備份？選擇要在此瀏覽器中使用的雲端存檔。",
+  "ratingCalculator_cloudSave_choose_open": "使用雲端存檔",
+  "ratingCalculator_cloudSave_choose_dialogTitle": "選擇雲端存檔",
+  "ratingCalculator_cloudSave_choose_dialogDescription": "此瀏覽器將顯示和編輯你選擇的存檔，不會上傳任何內容。",
+  "ratingCalculator_cloudSave_choose_empty": "你的帳號還沒有雲端存檔。在此裝置上新增成績後備份，即可建立一個。",
+  "ratingCalculator_cloudSave_choose_cancel": "取消",
+  "ratingCalculator_cloudSave_migration_title": "備份到雲端",
+  "ratingCalculator_cloudSave_migration_prompt": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "要把這台裝置上的 {formatted} 筆紀錄備份到你的帳號嗎？",
+        "countPlural=*": "要把這台裝置上的 {formatted} 筆紀錄備份到你的帳號嗎？"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_backUp": "備份到雲端",
+  "ratingCalculator_cloudSave_migration_notNow": "稍後再說",
+  "ratingCalculator_cloudSave_migration_sectionDescription": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "這個瀏覽器中有 {countNumber} 筆儲存在本裝置上的紀錄。備份後即可在你的裝置之間同步。",
+        "countPlural=*": "這個瀏覽器中有 {countNumber} 筆儲存在本裝置上的紀錄。備份後即可在你的裝置之間同步。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_saveName": "我的成績",
+  "ratingCalculator_cloudSave_migration_freshDescription": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "你的 {formatted} 筆紀錄會儲存到帳號，並在所有裝置間同步。",
+        "countPlural=*": "你的 {formatted} 筆紀錄會儲存到帳號，並在所有裝置間同步。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingTitle": "你已經有一個雲端存檔",
+  "ratingCalculator_cloudSave_migration_cloudRecords": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{formatted} 筆紀錄",
+        "countPlural=*": "{formatted} 筆紀錄"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingDescription": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input region",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "「{name}」（{region}）中有 {cloudRecords}，這台裝置上有 {formatted} 筆。",
+        "countPlural=*": "「{name}」（{region}）中有 {cloudRecords}，這台裝置上有 {formatted} 筆。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_changed": "這個雲端存檔已在其他裝置上變更。請確認後再繼續。",
+  "ratingCalculator_cloudSave_migration_merge": "合併（取兩者最佳）",
+  "ratingCalculator_cloudSave_migration_mergeDescription": "每張譜面保留這台裝置和雲端中較好的成績。",
+  "ratingCalculator_cloudSave_migration_cloudOnly": "僅使用雲端",
+  "ratingCalculator_cloudSave_migration_cloudOnlyDescription": "切換到雲端存檔。這台裝置的紀錄不會上傳，而是保留在備份中。",
+  "ratingCalculator_cloudSave_migration_mergeAction": "合併",
+  "ratingCalculator_cloudSave_migration_cloudOnlyAction": "使用雲端存檔",
+  "ratingCalculator_cloudSave_migration_advanced": "進階",
+  "ratingCalculator_cloudSave_migration_replaceDescription": "用這台裝置的紀錄取代雲端存檔中的所有紀錄。",
+  "ratingCalculator_cloudSave_migration_replace": "用本裝置覆蓋雲端",
+  "ratingCalculator_cloudSave_migration_replaceTitle": "要覆蓋雲端存檔嗎？",
+  "ratingCalculator_cloudSave_migration_replaceWarning": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "「{name}」中的 {cloudRecords}將全部刪除，取代為這台裝置上的 {formatted} 筆紀錄，並同步到你所有的裝置。此操作無法復原。",
+        "countPlural=*": "「{name}」中的 {cloudRecords}將全部刪除，取代為這台裝置上的 {formatted} 筆紀錄，並同步到你所有的裝置。此操作無法復原。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceWarningEmpty": [
+    {
+      "declarations": ["input count", "input name", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "「{name}」中沒有紀錄。這台裝置上的 {formatted} 筆紀錄將寫入其中，並同步到你所有的裝置。",
+        "countPlural=*": "「{name}」中沒有紀錄。這台裝置上的 {formatted} 筆紀錄將寫入其中，並同步到你所有的裝置。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceConfirm": "覆蓋雲端存檔",
+  "ratingCalculator_cloudSave_migration_runningTitle": "正在備份…",
+  "ratingCalculator_cloudSave_migration_running": "正在上傳你的紀錄，請不要關閉此頁面。",
+  "ratingCalculator_cloudSave_migration_switchingTitle": "正在切換到雲端存檔…",
+  "ratingCalculator_cloudSave_migration_switching": "正在把這台裝置上的紀錄複製一份保存在這個瀏覽器中。",
+  "ratingCalculator_cloudSave_migration_doneTitle": "已備份",
+  "ratingCalculator_cloudSave_migration_switchedTitle": "已切換到雲端存檔",
+  "ratingCalculator_cloudSave_migration_done": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{formatted} 筆紀錄已在你的雲端存檔中。",
+        "countPlural=*": "{formatted} 筆紀錄已在你的雲端存檔中。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_doneCloudOnly": "這台裝置現在使用你的雲端存檔。",
+  "ratingCalculator_cloudSave_migration_close": "關閉",
+  "ratingCalculator_cloudSave_migration_errorTitle": "備份失敗",
+  "ratingCalculator_cloudSave_migration_switchErrorTitle": "切換失敗",
+  "ratingCalculator_cloudSave_migration_errorSafe": "這台裝置上的資料沒有變更，你可以隨時再試一次。",
+  "ratingCalculator_cloudSave_migration_errorUnchanged": "這台裝置上的資料沒有變更。",
+  "ratingCalculator_cloudSave_migration_errors_saveLimit": "雲端存檔數量已達上限，無法新增。要備份到既有的存檔，請把遊戲伺服器切換為該存檔的伺服器，然後重新開啟此視窗。",
+  "ratingCalculator_cloudSave_migration_errors_generic": "上傳沒有完成。請檢查網路後再試一次。",
+  "ratingCalculator_cloudSave_migration_errors_switchGeneric": "發生問題，請再試一次。",
+  "ratingCalculator_cloudSave_migration_unverifiedNote": "這台裝置上已有的紀錄會儲存為「未驗證」。如需已驗證的紀錄，請從 maimai NET、LXNS 或水魚查分器重新匯入。",
+  "ratingCalculator_cloudSave_migration_backupNote": "這台裝置紀錄的副本會在此瀏覽器中保留 30 天。未登入時，這台裝置仍使用自己的紀錄。",
+  "ratingCalculator_cloudSave_optIn_title": "雲端存檔（測試版）",
+  "ratingCalculator_cloudSave_optIn_description": "把成績保存在你的帳號中，並在裝置間同步。",
+  "ratingCalculator_cloudSave_optIn_consentTitle": "要開啟雲端存檔（測試版）嗎？",
+  "ratingCalculator_cloudSave_optIn_consentIntro": "開啟雲端存檔後，DXRating 會在你的帳號中儲存以下內容：",
+  "ratingCalculator_cloudSave_optIn_consentStored": "你的成績、匯入來源的帳號 ID（如好友代碼）、每次匯入的紀錄和匯入內容的雜湊值，以及你的裝置在同步後儲存的 Rating 快照。",
+  "ratingCalculator_cloudSave_optIn_consentRetention": "保存到你刪除它們或刪除帳號為止。每張譜面最多保留 20 筆以前的成績，每個存檔最多保留 100 個 Rating 快照。已刪除的紀錄會保留 90 天，讓你的其他裝置也刪除它們；你的裝置發出的每次同步請求的紀錄保留 30 天。你刪除的存檔會在 30 天後徹底清除。",
+  "ratingCalculator_cloudSave_optIn_consentPasswords": "永遠不會儲存你的 SEGA ID 密碼。",
+  "ratingCalculator_cloudSave_optIn_consentLeaving": "目前還無法在應用程式內關閉測試版。刪除 DXRating 帳號（在 DXRating App 中）會從我們的系統中刪除以上所有內容；備份的處理請見隱私權政策。",
+  "ratingCalculator_cloudSave_optIn_consentPrivacy": "詳情請參閱{#privacy}隱私權政策{/privacy}。",
+  "ratingCalculator_cloudSave_optIn_agree": "同意並開啟",
+  "ratingCalculator_cloudSave_optIn_sending": "正在開啟雲端存檔…",
+  "ratingCalculator_cloudSave_optIn_success": "雲端存檔已開啟。",
+  "ratingCalculator_cloudSave_optIn_error": "無法開啟雲端存檔，請再試一次。",
+  "ratingCalculator_cloudSave_export_title": "你的資料",
+  "ratingCalculator_cloudSave_export_description": "以 JSON 檔案下載所有雲端存檔，包括紀錄、紀錄來源、匯入歷史和 Rating 快照。",
+  "ratingCalculator_cloudSave_export_button": "下載我的資料",
+  "ratingCalculator_cloudSave_export_preparing": "正在準備…",
+  "ratingCalculator_cloudSave_export_success": "正在下載你的資料。",
+  "ratingCalculator_cloudSave_export_error": "無法下載你的資料，請再試一次。",
+  "ratingCalculator_cloudSave_export_rateLimited": "你今天已多次下載資料，請明天再試。",
+  "ratingCalculator_cloudSave_exportImport_pickTitle": "選擇要匯入的存檔",
+  "ratingCalculator_cloudSave_exportImport_pickDescription": "這個檔案中有多個存檔。",
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "已作為「未驗證」匯入：紀錄來源僅依檔案中的宣稱顯示。"
 }

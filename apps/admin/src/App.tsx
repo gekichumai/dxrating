@@ -18,13 +18,18 @@ import { ORPCError } from '@orpc/client'
 import { useQuery } from '@tanstack/react-query'
 import { Announcements } from './Announcements'
 import { adminOrpc } from './api'
+import { DataOverview } from './catalog/DataOverview'
+import { Diff } from './catalog/Diff'
 import { Publications } from './catalog/Publications'
+import { SongProvenance, SongSearch } from './catalog/Songs'
 import { routeHref, useRoute, type View } from './route'
 
 const NAV: { view: View; label: string; scope?: string }[] = [
   { view: 'overview', label: 'Overview' },
   { view: 'announcements', label: 'Announcements', scope: 'announcements:read' },
   { view: 'publications', label: 'Publications', scope: 'catalog:read' },
+  { view: 'diff', label: 'Changes', scope: 'catalog:read' },
+  { view: 'songs', label: 'Songs', scope: 'catalog:read' },
 ]
 
 const can = (scopes: readonly string[] | undefined, scope: string | undefined) =>
@@ -69,7 +74,7 @@ export function App() {
             key={item.view}
             label={item.label}
             href={routeHref(item.view)}
-            active={route.view === item.view}
+            active={route.view === item.view || (item.view === 'songs' && route.view === 'song')}
             aria-current={route.view === item.view ? 'page' : undefined}
             onClick={close}
           />
@@ -77,7 +82,7 @@ export function App() {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <Stack maw={route.view === 'publications' ? 1200 : 960}>
+        <Stack maw={route.view === 'overview' || route.view === 'announcements' ? 960 : 1200}>
           {me.isPending && <Skeleton h={120} radius="md" aria-busy="true" aria-label="Loading" />}
           {denied && (
             <Alert color="orange" title="No access" role="alert">
@@ -121,9 +126,37 @@ export function App() {
               </Table>
             </Card>
           )}
+          {principal && route.view === 'overview' && can(principal.scopes, 'catalog:read') && <DataOverview />}
           {principal && route.view === 'announcements' && can(principal.scopes, 'announcements:read') && (
             <Announcements canWrite={can(principal.scopes, 'announcements:write')} />
           )}
+          {principal && route.view === 'diff' && can(principal.scopes, 'catalog:read') && (
+            <Diff
+              channel={route.params.get('channel') ?? undefined}
+              from={Number(route.params.get('from')) || undefined}
+              to={Number(route.params.get('to')) || undefined}
+              path={route.params.get('path') ?? undefined}
+              offset={Number(route.params.get('offset')) || undefined}
+            />
+          )}
+          {principal && route.view === 'songs' && can(principal.scopes, 'catalog:read') && (
+            <SongSearch
+              channel={route.params.get('channel') ?? undefined}
+              q={route.params.get('q') ?? undefined}
+              revision={Number(route.params.get('revision')) || undefined}
+            />
+          )}
+          {principal &&
+            route.view === 'song' &&
+            can(principal.scopes, 'catalog:read') &&
+            route.params.get('songId') && (
+              <SongProvenance
+                key={route.params.get('songId')}
+                channel={route.params.get('channel') ?? undefined}
+                songId={route.params.get('songId')!}
+                revision={Number(route.params.get('revision')) || undefined}
+              />
+            )}
           {principal && route.view === 'publications' && can(principal.scopes, 'catalog:read') && (
             <Publications
               channel={route.params.get('channel') ?? undefined}

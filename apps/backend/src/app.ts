@@ -7,7 +7,7 @@ import { etag, RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { Authentication } from './auth'
 import { viewerFromSession } from './proofs/viewer-is'
-import { Data, Effect, Option } from 'effect'
+import { Clock, Data, Effect, Option } from 'effect'
 import { HttpBody } from 'effect/http'
 import { appRuntime, runApp, superviseApp } from './runtime'
 import { refuseWhileDraining } from './lifecycle'
@@ -29,7 +29,7 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc/server/plugins'
-import { onError } from '@orpc/server'
+import { onError, ORPCError } from '@orpc/server'
 import { netErrorTags, Sentry, shouldCaptureSentryError } from './lib/functions/sentry'
 import { Database } from './db/index'
 import {
@@ -58,7 +58,13 @@ import {
   readClientId,
 } from './services/api-usage'
 import { appContract } from './contract'
-import { isPublicSpecProcedure } from '@gekichumai/api-contract'
+import {
+  CLOUD_SAVE_EXPECTED_USER_HEADER,
+  CLOUD_SAVE_NET_IMPORT_ROUTE,
+  isPublicSpecProcedure,
+} from '@gekichumai/api-contract'
+import { credentialHygiene, holdCredentials } from './lib/credential-hygiene'
+import { netImportHandler } from './services/cloud-save/net-import-route'
 import { McpCatalogSource } from './services/application'
 import {
   clientKey,
@@ -75,12 +81,72 @@ import { MCP_SERVER_CARD_PATH, serverCardResponse } from './services/mcp/listing
 import { McpUsage, observeMcpRequest, rateLimitedTelemetry, reportMcpInternalError } from './services/mcp/telemetry'
 import { isPrefetchOrBot, McpAnalyticsService, mcpLogFields, sanitizeVia } from './services/mcp/analytics'
 import { clientAddress } from './services/mcp/client-key'
+import { FeatureFlags } from './services/feature-flags'
+import { cloudSaveRateLimits } from './services/rate-limit'
+import { exportChunks, exportHeaders, tryAcquireExportSlot } from './services/cloud-save/export'
+import { orpcErrorResponse } from './lib/orpc-error-response'
+import { CLOUD_SAVE_BODY_LIMIT_BYTES, CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES } from './services/cloud-save/limits'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
   readonly operation: string
   readonly cause: unknown
 }> {}
 
 const app = new Hono<EvlogVariables>()
+
+/**
+ * Refuses request bodies over `maxSize` bytes with an oRPC-shaped 413: at once when `Content-Length` says so,
+ * otherwise (a chunked upload) by counting the bytes as the handler reads them and answering 413 in place of
+ * whatever the handler made of the cut-off body.
+ */
+const cloudSaveBodyLimitOf = (maxSize: number) =>
+  createMiddleware(async (c, next) => {
+    const tooLarge = () => {
+      // The rest of the upload is not read: close the connection after the answer (Node), so a client does not send
+      // its next request on a connection the server is about to drop
+      const outgoing = (c.env as { outgoing?: { shouldKeepAlive?: boolean } } | undefined)?.outgoing
+      if (outgoing) outgoing.shouldKeepAlive = false
+      return orpcErrorResponse(
+        new ORPCError('PAYLOAD_TOO_LARGE', { message: `The request body is over ${maxSize} bytes` }),
+      )
+    }
+    const body = c.req.raw.body
+    if (!body) return next()
+    const contentLength = c.req.raw.headers.get('content-length')
+    if (contentLength !== null && !c.req.raw.headers.has('transfer-encoding')) {
+      if (Number.parseInt(contentLength, 10) > maxSize) return tooLarge()
+      return next()
+    }
+    let size = 0
+    let exceeded = false
+    const counted = body.pipeThrough(
+      new TransformStream<Uint8Array, Uint8Array>({
+        transform(chunk, controller) {
+          size += chunk.byteLength
+          if (size > maxSize) {
+            exceeded = true
+            controller.error(new Error('Payload Too Large'))
+            return
+          }
+          controller.enqueue(chunk)
+        },
+      }),
+    )
+    c.req.raw = new Request(c.req.raw, { body: counted, duplex: 'half' } as RequestInit)
+    await next()
+    if (exceeded) {
+      // keep the headers other middleware set, but not the body headers of the handler's answer
+      const previous = c.res
+      const response = tooLarge()
+      for (const [key, value] of previous.headers) {
+        if (key !== 'content-type' && key !== 'content-length' && key !== 'set-cookie') response.headers.set(key, value)
+      }
+      c.res = undefined
+      c.res = response
+    }
+  })
+const cloudSaveBodyLimit = cloudSaveBodyLimitOf(CLOUD_SAVE_BODY_LIMIT_BYTES)
+const largeCloudSaveBodyLimit = cloudSaveBodyLimitOf(CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES)
+const isLargeCloudSaveUpload = (path: string) => /^\/api\/v1\/saves\/[^/]+\/(replace|client-imports)$/.test(path)
 
 const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
 const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATALOG_PROFILE_URL}"`
@@ -262,8 +328,17 @@ const apiCors = cors({
 
     return null
   },
-  allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response', API_CLIENT_HEADER],
-  allowMethods: ['POST', 'GET', 'OPTIONS'],
+  allowHeaders: [
+    'Content-Type',
+    'Authorization',
+    'sentry-trace',
+    'baggage',
+    'x-captcha-response',
+    API_CLIENT_HEADER,
+    CLOUD_SAVE_EXPECTED_USER_HEADER,
+  ],
+  // PATCH and DELETE: cloud save routes (rename and delete a save)
+  allowMethods: ['POST', 'GET', 'PATCH', 'DELETE', 'OPTIONS'],
   exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
   maxAge: 600,
   credentials: true,
@@ -313,6 +388,18 @@ app.use(
     ],
   }) as unknown as MiddlewareHandler,
 )
+
+// Credential hygiene (design §7.2): the routes that carry a SEGA ID and password (or LXNS tokens) never log or report
+// them. Right after evlog, so their request logger is the scrubbing one.
+for (const path of [
+  '/functions/fetch-net-records/*',
+  '/api/v1/io/import/maimai-net',
+  '/api/v1/io/import/lxns/*',
+  CLOUD_SAVE_NET_IMPORT_ROUTE.honoPath,
+  '/api/v1/saves/:id/imports/lxns',
+]) {
+  app.use(path, credentialHygiene)
+}
 
 // API usage accounting: classify each request by route template and caller,
 // attach the result to the request wide event, and add it to the per-minute
@@ -518,23 +605,29 @@ const authParamsSchema = z.object({
 const verifyParams = createMiddleware((c, next) =>
   runApp(
     Effect.gen(function* () {
+      // A body that is not JSON is a plain 400, its parse error dropped: V8's SyntaxError quotes the text around the
+      // bad token, which can be the SEGA ID or password (design §7.2)
       const body = yield* Effect.tryPromise({
-        try: () => c.req.json(),
-        catch: (cause) => new HttpAdapterError({ operation: 'Read NET parameters', cause }),
-      })
-      const region = c.req.param('region') ?? body.region
+        try: () => c.req.json<unknown>(),
+        catch: () => null,
+      }).pipe(Effect.orElseSucceed(() => undefined))
+      const fields = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>
+      const region = c.req.param('region') ?? fields.region
 
-      const result = authParamsSchema.safeParse({ id: body.id, password: body.password, region })
+      const result = authParamsSchema.safeParse({ id: fields.id, password: fields.password, region })
       if (!result.success) {
         return c.json({ error: 'Invalid parameters', details: result.error.issues }, 400)
       }
 
       c.set('authParams', { id: result.data.id, password: result.data.password })
       c.set('region', result.data.region)
+      // Filtered from telemetry while the handler runs, whatever the body's framing (design §7.2): the middleware's
+      // read-ahead only sees small bodies with a Content-Length. Streaming handlers hold their own.
+      const releaseCredentials = holdCredentials([result.data.id, result.data.password])
       return yield* Effect.tryPromise({
         try: next,
         catch: (cause) => new HttpAdapterError({ operation: 'Run NET handler', cause }),
-      })
+      }).pipe(Effect.ensuring(Effect.sync(releaseCredentials)))
     }),
     { signal: c.req.raw.signal },
   ),
@@ -819,13 +912,13 @@ for (const path of PUBLIC_LIST_PATHS) {
   app.on(['GET', 'HEAD'], path, publicListEtag, publicListCacheHeaders)
 }
 
-// Comment responses depend on the signed-in viewer and must never enter a shared cache.
-app.use('/api/v1/comments', (c, next) =>
+// Comment and /me responses depend on the signed-in viewer and must never enter a shared cache.
+const viewerPrivateCacheHeaders = createMiddleware((c, next) =>
   runApp(
     Effect.gen(function* () {
       yield* Effect.tryPromise({
         try: next,
-        catch: (cause) => new HttpAdapterError({ operation: 'Run comments handler', cause }),
+        catch: (cause) => new HttpAdapterError({ operation: 'Run viewer-dependent handler', cause }),
       })
       c.header('Cache-Control', 'private, no-store')
       c.header('CDN-Cache-Control', 'no-store')
@@ -835,6 +928,95 @@ app.use('/api/v1/comments', (c, next) =>
     { signal: c.req.raw.signal },
   ),
 )
+for (const path of [
+  '/api/v1/comments',
+  '/api/v1/me',
+  '/api/v1/me/*',
+  '/api/v1/saves',
+  '/api/v1/saves/*',
+  '/api/v1/imports/*',
+]) {
+  app.use(path, viewerPrivateCacheHeaders)
+}
+
+// Cloud save request bodies (design §11.4): 2 MB for whole-save uploads, 1 MB for everything else.
+for (const path of ['/api/v1/saves', '/api/v1/saves/*', '/api/v1/imports/*', '/api/v1/me/*']) {
+  app.use(path, (c, next) =>
+    (isLargeCloudSaveUpload(c.req.path) ? largeCloudSaveBodyLimit : cloudSaveBodyLimit)(c, next),
+  )
+}
+
+// The cloud save export streams (§11.3): it is answered here, ahead of the oRPC handler, with the same session,
+// feature flag and rate limit rules as the `cloudSave.export` procedure.
+// Both spellings: the oRPC router would also match `/me/export/`, and only this route streams.
+/** The `Retry-After` of an export refused because every export slot is taken */
+const EXPORT_BUSY_RETRY_AFTER_SECONDS = 5
+const streamExport = (c: Context) =>
+  runApp(
+    Effect.gen(function* () {
+      const auth = yield* Authentication
+      const session = yield* auth.session(c.req.raw.headers)
+      if (!session?.user) return orpcErrorResponse(new ORPCError('UNAUTHORIZED'))
+      const featureFlags = yield* FeatureFlags
+      if (!(yield* featureFlags.isEnabled('cloud_save', session.user.id))) {
+        return orpcErrorResponse(new ORPCError('NOT_FOUND'))
+      }
+      // HEAD (which Hono answers through this GET handler, dropping the body unread) starts no export: the headers
+      // describe a download made now, and no transaction, slot or daily export is used
+      if (c.req.method === 'HEAD') {
+        return new Response(null, { status: 200, headers: exportHeaders(new Date(yield* Clock.currentTimeMillis)) })
+      }
+      const takenAt = Date.now()
+      const retryAfterSeconds = cloudSaveRateLimits.export.take(session.user.id, 1, takenAt)
+      if (retryAfterSeconds > 0) {
+        return orpcErrorResponse(
+          new ORPCError('TOO_MANY_REQUESTS', {
+            message: `Too many requests. Retry in ${retryAfterSeconds} seconds.`,
+            data: { retryAfterSeconds },
+          }),
+          { 'Retry-After': String(retryAfterSeconds) },
+        )
+      }
+      // Each running export holds a pooled connection for its snapshot: beyond the slots, a busy answer that costs
+      // the user nothing
+      const release = tryAcquireExportSlot()
+      if (!release) {
+        cloudSaveRateLimits.export.refund(session.user.id, 1, takenAt)
+        return orpcErrorResponse(
+          new ORPCError('TOO_MANY_REQUESTS', {
+            message: `Too many exports running. Retry in ${EXPORT_BUSY_RETRY_AFTER_SECONDS} seconds.`,
+            data: { retryAfterSeconds: EXPORT_BUSY_RETRY_AFTER_SECONDS },
+          }),
+          { 'Retry-After': String(EXPORT_BUSY_RETRY_AFTER_SECONDS) },
+        )
+      }
+      const database = yield* Database
+      const exportedAt = new Date(yield* Clock.currentTimeMillis)
+      const signal = c.req.raw.signal
+      // The slot is the transaction's: freed when it ends, which the idle deadline bounds even if nobody reads
+      const chunks = exportChunks((effect) => runApp(effect, { signal }), database, session.user.id, exportedAt, {
+        onSettled: release,
+      })
+      const encoder = new TextEncoder()
+      const body = new ReadableStream<Uint8Array>({
+        async pull(controller) {
+          const next = await chunks.next()
+          if (next.done) controller.close()
+          else controller.enqueue(encoder.encode(next.value))
+        },
+        async cancel() {
+          await chunks.return(undefined)
+        },
+      })
+      return new Response(body, { status: 200, headers: exportHeaders(exportedAt) })
+    }),
+    { signal: c.req.raw.signal },
+  )
+for (const path of ['/api/v1/me/export', '/api/v1/me/export/']) app.get(path, streamExport)
+
+// The maimai NET server import streams progress over SSE (design §5.1, §7.1), so it is a direct route ahead of the
+// oRPC handler, with the same session, flag and rate-limit rules as the cloud save procedures.
+app.post(CLOUD_SAVE_NET_IMPORT_ROUTE.honoPath, netImportHandler)
 
 app.all('/api/v1/*', (c) =>
   runApp(

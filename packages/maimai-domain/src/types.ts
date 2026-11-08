@@ -88,7 +88,8 @@ export interface RatingEntry {
 
 export interface ImportWarning {
   provider: ImportProvider
-  code: 'sheet-not-found' | 'invalid-difficulty' | 'invalid-type' | 'invalid-achievement'
+  /** `masked-score`: the provider hid the row's real values (a privacy setting of the player) */
+  code: 'sheet-not-found' | 'invalid-difficulty' | 'invalid-type' | 'invalid-achievement' | 'masked-score'
   message: string
   row: unknown
 }

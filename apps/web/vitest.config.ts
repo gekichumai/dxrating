@@ -33,6 +33,6 @@ export default defineConfig({
     // UI tests render real component trees and await async effects; on a busy machine (parallel agents, CI runners)
     // the 5s default times out tests that pass alone
     testTimeout: 20_000,
-    setupFiles: ['src/test-utils/setup-catalog.ts'],
+    setupFiles: ['src/test-utils/setup-catalog.ts', 'src/test-utils/setup-auth.ts'],
   },
 })

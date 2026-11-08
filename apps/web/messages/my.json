@@ -505,7 +505,7 @@
   "auth_accountSecurity_featureDevices": "မည်သည့်နေရာတွင် အကောင့်ဝင်ထားသည်ကို ကြည့်ပြီး အခြားစက်များမှ ထွက်ပါ",
   "auth_accountSecurity_featuresLabel": "ဤနေရာတွင် လုပ်နိုင်သည်များ",
   "auth_privacy_title": "ကိုယ်ရေးအချက်အလက် မူဝါဒ",
-  "auth_privacy_updated": "နောက်ဆုံး ပြင်ဆင်သည့်ရက်: 2026 ခုနှစ် အောက်တိုဘာ 30 ရက်",
+  "auth_privacy_updated": "နောက်ဆုံး အပ်ဒိတ်: ၂၀၂၆ ခုနှစ်၊ နိုဝင်ဘာ ၃ ရက်",
   "auth_privacy_intro_heading": "နိဒါန်း",
   "auth_privacy_intro_body": "ဤကိုယ်ရေးအချက်အလက် မူဝါဒသည် သင်ကျွန်ုပ်တို့၏ ဝန်ဆောင်မှုကို အသုံးပြုသည့်အခါ သင့်အချက်အလက်များကို မည်သို့ စုဆောင်း၊ အသုံးပြု၊ လုပ်ဆောင်ပြီး ထုတ်ဖော်သည်ကို ရှင်းပြပါသည်။",
   "auth_privacy_collect_heading": "ကျွန်ုပ်တို့ စုဆောင်းသော အချက်အလက်များ",
@@ -537,7 +537,7 @@
   "auth_privacy_retention_heading": "ဒေတာ ထိန်းသိမ်းခြင်း",
   "auth_privacy_retention_body": "ဤကိုယ်ရေးအချက်အလက် မူဝါဒတွင် ဖော်ပြထားသော ရည်ရွယ်ချက်များ ပြည့်မီရန် လိုအပ်သလောက်သာ သင့်အချက်အလက်များကို ထိန်းသိမ်းပါမည်။ ဥပဒေဆိုင်ရာ တာဝန်များကို လိုက်နာရန်၊ အငြင်းပွားမှုများကို ဖြေရှင်းရန်နှင့် ကျွန်ုပ်တို့၏ မူဝါဒများကို ကျင့်သုံးရန် လိုအပ်သလောက် သင့်အချက်အလက်များကို ထိန်းသိမ်းအသုံးပြုပါမည်။",
   "auth_privacy_deletion_heading": "အကောင့် ဖျက်ခြင်း",
-  "auth_privacy_deletion_p1": "DXRating app ၏ အကောင့် screen မှ သင့်အကောင့်ကို အပြီးတိုင် ဖျက်နိုင်ပါသည်။ ဖျက်ခြင်းဖြင့် သင့်ပရိုဖိုင်၊ မှတ်ချက်များ၊ tag နှင့် tag ချိတ်ဆက်မှုများ၊ alias များ၊ session များ၊ passkey များ၊ ချိတ်ဆက်ထားသော အကောင့်ဝင်နည်းများနှင့် ချိတ်ဆက်ထားသော LXNS အထောက်အထားများကို ဖယ်ရှားပါသည်။ Provider က ပံ့ပိုးပါက ချိတ်ဆက်ထားသော OAuth ခွင့်ပြုချက်များကို ရုပ်သိမ်းပါမည်။ ဖျက်ပြီးနောက် တူညီသော email လိပ်စာ သို့မဟုတ် အကောင့်ဝင် provider ဖြင့် အကောင့်အသစ် ဖွင့်နိုင်ပါသည်။",
+  "auth_privacy_deletion_p1": "DXRating app ၏ အကောင့်စာမျက်နှာတွင် သင့်အကောင့်ကို အပြီးတိုင် ဖျက်နိုင်ပါသည်။ ဖျက်လိုက်ပါက သင့်ပရိုဖိုင်၊ မှတ်ချက်များ၊ tag များနှင့် tag ချိတ်ဆက်မှုများ၊ alias များ၊ session များ၊ passkey များ၊ ချိတ်ဆက်ထားသော အကောင့်ဝင်နည်းများ၊ ချိတ်ဆက်ထားသော LXNS အထောက်အထားများနှင့် score မှတ်တမ်း၊ တင်သွင်းမှုမှတ်တမ်းနှင့် rating snapshot များပါဝင်သော သင့် cloud save များကို ဖယ်ရှားပါမည်။ ချိတ်ဆက်ထားသော OAuth ခွင့်ပြုချက်များကို provider က ပံ့ပိုးပါက ရုပ်သိမ်းပါမည်။ ဖျက်ပြီးနောက် ထို email လိပ်စာ သို့မဟုတ် အကောင့်ဝင် provider ဖြင့် အကောင့်အသစ် ဖွင့်နိုင်ပါသည်။",
   "auth_privacy_deletion_p2": "အကောင့်ဒေတာကို ကျွန်ုပ်တို့၏ active စနစ်များမှ ချက်ချင်း ဖယ်ရှားပါသည်။ ကျန်ရှိသော မိတ္တူများသည် encrypted backup များ အလိုအလျောက် ဖျက်ခံရသည်အထိ သို့မဟုတ် ဥပဒေအရ ထိန်းသိမ်းရန် လိုအပ်သည့်အခါ ကျန်ရှိနေနိုင်ပါသည်။",
   "auth_privacy_rights_heading": "သင့်အခွင့်အရေးများ",
   "auth_privacy_rights_body": "သင့်တွင် အောက်ပါ ဒေတာကာကွယ်ရေး အခွင့်အရေးများ ရှိပါသည်:",
@@ -1322,5 +1322,379 @@
   "announcement_severity_warning": "သတိပေးချက်",
   "announcement_severity_critical": "အရေးကြီး",
   "announcement_learnMore": "ပိုမိုလေ့လာရန်",
-  "announcement_dismiss": "ကြေညာချက်ကို ပိတ်ရန်"
+  "announcement_dismiss": "ကြေညာချက်ကို ပိတ်ရန်",
+  "ratingCalculator_cloudSave_saveMissing": "သင်၏ cloud save ကို ရှာမတွေ့ပါ၊ ထို့ကြောင့် ဤစက်သည် ၎င်း၏ local save ကို အသုံးပြုနေပါသည်။",
+  "ratingCalculator_cloudSave_title": "Cloud save",
+  "ratingCalculator_cloudSave_description": "သင့် score များကို DXRating တွင် သိမ်းထားပြီး သင့်စက်များအကြား sync ဖြစ်နေစေသည်။",
+  "ratingCalculator_cloudSave_provenance_verified": "အတည်ပြုပြီး",
+  "ratingCalculator_cloudSave_provenance_friendCode": "friend code {id}",
+  "ratingCalculator_cloudSave_provenance_account": "အကောင့် {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "{date} တွင် ရယူခဲ့သည်",
+  "ratingCalculator_cloudSave_provenance_edited": "ပြင်ဆင်ထားသည် (မူလက တင်သွင်းထားသည်)",
+  "ratingCalculator_cloudSave_provenance_manual": "ကိုယ်တိုင်ထည့်ထားသည်",
+  "ratingCalculator_cloudSave_provenance_notVerified": "အတည်မပြုရသေး",
+  "ratingCalculator_cloudSave_provenance_fromFile": "ဖိုင်မှ ({source})",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "ဖိုင်မှ (ဖိုင်က ဆိုထားသည်: {source})",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "ဤစက်မှ",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "ဤစက်မှ (ဆိုထားသည်: {source})",
+  "ratingCalculator_cloudSave_status_idle": "နောက်ဆုံးအခြေအနေ ဖြစ်သည်",
+  "ratingCalculator_cloudSave_status_syncing": "Sync လုပ်နေသည်…",
+  "ratingCalculator_cloudSave_status_offline": "အော့ဖ်လိုင်း",
+  "ratingCalculator_cloudSave_status_error": "ယခု sync မလုပ်နိုင်ပါ",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "sync ရန် စောင့်နေသော ပြောင်းလဲမှု {count} ခု"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "sync ပြဿနာ {count} ခု"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "Sync ပြဿနာများ",
+  "ratingCalculator_cloudSave_issues_empty": "Sync ပြဿနာ မရှိပါ။",
+  "ratingCalculator_cloudSave_issues_yourValue": "သင့်ပြောင်းလဲမှု: {value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "ဖယ်ရှားထားသည်",
+  "ratingCalculator_cloudSave_issues_method_typed": "ရိုက်ထည့်ထားသည်",
+  "ratingCalculator_cloudSave_issues_method_keypad": "keypad",
+  "ratingCalculator_cloudSave_issues_method_photo": "ဓာတ်ပုံ",
+  "ratingCalculator_cloudSave_issues_superseded": "အတည်ပြုထားသော score အသစ်ကို ဆက်ထားခဲ့သည်။",
+  "ratingCalculator_cloudSave_issues_rejected": "ဤပြောင်းလဲမှုကို လက်မခံသဖြင့် သိမ်းထားသော score ကို ဆက်ထားခဲ့သည်။",
+  "ratingCalculator_cloudSave_issues_useMine": "ကျွန်ုပ်၏တန်ဖိုးကို ဆက်သုံးမည်",
+  "ratingCalculator_cloudSave_issues_dismiss": "ပိတ်လိုက်ရန်",
+  "ratingCalculator_cloudSave_saves_title": "Save များ",
+  "ratingCalculator_cloudSave_saves_description": "ဤ browser တွင် မည်သည့် save ကို ပြပြီး ပြင်ဆင်မည်ကို ရွေးပါ။",
+  "ratingCalculator_cloudSave_saves_loading": "Save များ ဖွင့်နေသည်…",
+  "ratingCalculator_cloudSave_saves_error": "သင့် save များကို မဖွင့်နိုင်ပါ။",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "မှတ်တမ်း {formatted} ခု"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "နောက်ဆုံး sync {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "ဒေသ မရွေး",
+  "ratingCalculator_cloudSave_history_title": "တင်သွင်းမှု မှတ်တမ်း",
+  "ratingCalculator_cloudSave_history_loading": "တင်သွင်းမှုများ ဖွင့်နေသည်…",
+  "ratingCalculator_cloudSave_history_error": "တင်သွင်းမှု မှတ်တမ်းကို မဖွင့်နိုင်ပါ။",
+  "ratingCalculator_cloudSave_history_empty": "တင်သွင်းမှု မရှိသေးပါ။",
+  "ratingCalculator_cloudSave_history_running": "လုပ်ဆောင်နေသည်…",
+  "ratingCalculator_cloudSave_history_trigger_user": "သင်ကိုယ်တိုင်",
+  "ratingCalculator_cloudSave_history_trigger_auto": "အလိုအလျောက်",
+  "ratingCalculator_cloudSave_history_trigger_migration": "ဤ browser မှ ရွှေ့ထားသည်",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} အသစ်"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} တိုးတက်"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} အတည်ပြုပြီး"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} မပြောင်းလဲ"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} သင့်ပြင်ဆင်မှုကို ထားခဲ့သည်"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} ကျော်ထားသည် (ဖျက်ပြီး)"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} လက်မခံ"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "ပြောင်းလဲမှု မရှိပါ",
+  "ratingCalculator_cloudSave_import_success": "{source} မှ တင်သွင်းပြီးပါပြီ: {summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "ဤတင်သွင်းမှုသည် မပြီးဆုံးမီ ရပ်သွားသည်။ ထပ်စမ်းကြည့်ပါ။",
+  "ratingCalculator_cloudSave_import_errors_generic": "ဤတင်သွင်းမှုကို မပြီးစီးနိုင်ပါ။ ထပ်စမ်းကြည့်ပါ။",
+  "ratingCalculator_cloudSave_saves_empty": "Cloud save မရှိသေးပါ။",
+  "ratingCalculator_cloudSave_retry": "ထပ်စမ်းရန်",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Score {count} ခုကို သင့် cloud save ထဲ တင်သွင်းမလား?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "Chart တစ်ခုချင်းစီသည် ပိုကောင်းသော score ကို ထားရှိမည်ဖြစ်၍ သင့်ထံရှိပြီးသား score များ ပိုမဆိုးသွားပါ။ အသစ်ပြန်စလိုပါက save ကို အရင်ရှင်းပါ။",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "မလုပ်တော့ပါ",
+  "ratingCalculator_cloudSave_importConfirm_merge": "တင်သွင်းရန်",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "Save ကို အရင်ရှင်းမည်…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "Save ကို ရှင်းပြီးမှ တင်သွင်းမလား?",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "ဤ save ထဲရှိ score အားလုံးကို သင့်စက်များအားလုံးတွင် ဖျက်ပြီးမှ ဖိုင်ကို တင်သွင်းမည်။ ဤစက်က နောက်ဆုံး sync လုပ်ပြီးနောက် ပြောင်းလဲသွားသော အတည်ပြုပြီး score များကိုမူ ထားခဲ့မည်။",
+  "ratingCalculator_cloudSave_importConfirm_back": "နောက်သို့",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "ရှင်းပြီး တင်သွင်းရန်",
+  "ratingCalculator_cloudSave_unreachable": "သင့် cloud save ကို မချိတ်ဆက်နိုင်သေးပါ။ ယခု ပြောင်းလဲသမျှသည် ဤ browser တွင်သာ ကျန်နေမည်။",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} မှတ်တမ်းသည် chart နှင့် မကိုက်ညီသဖြင့် မတင်သွင်းခဲ့ပါ။"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "ဤမှတ်တမ်းများထဲမှ တစ်ခုမျှ တင်သွင်း၍ မရပါ: chart နှင့် မကိုက်ညီခြင်း သို့မဟုတ် တန်ဖိုးများ အကွာအဝေးပြင် ဖြစ်နေခြင်း ဖြစ်သည်။ သင့် cloud save ကို မပြောင်းလဲခဲ့ပါ။",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} မှတ်တမ်းတွင် DX score အကွာအဝေးပြင် ဖြစ်နေခြင်းကဲ့သို့ သိမ်း၍မရသော တန်ဖိုးရှိသဖြင့် မတင်သွင်းခဲ့ပါ။"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_divingFishMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} မှတ်တမ်းကို Diving-Fish ရှိ ကစားသူ၏ ကိုယ်ရေးလုံခြုံမှု ဆက်တင်ဖြင့် ဝှက်ထားသဖြင့် တင်သွင်း၍မရပါ။"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} မှတ်တမ်းသည် chart နှင့် မကိုက်ညီခြင်း သို့မဟုတ် တန်ဖိုး အကွာအဝေးပြင် ဖြစ်နေခြင်းကြောင့် တင်သွင်း၍ မရပါ။ ၎င်းကို ချန်ထားမည်။"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "ဤအရင်းအမြစ်မှ အခြားတင်သွင်းမှုတစ်ခု သင့် cloud save တွင် လုပ်ဆောင်နေသည်။ ပြီးမှ ထပ်စမ်းကြည့်ပါ။",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "ဤဖိုင်သည် တစ်ကြိမ်တည်း တင်သွင်းရန် အလွန်ကြီးသည်။ သင့် cloud save ကို မပြောင်းလဲခဲ့ပါ။",
+  "ratingCalculator_cloudSave_history_failure_generic": "မပြီးစီးပါ",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "မပြီးဆုံးမီ ရပ်သွားသည်",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "မပြီးစီးပါ: maimai NET ပြုပြင်ထိန်းသိမ်းနေသည်",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "မပြီးစီးပါ: maimai NET သို့ အကောင့်ဝင်၍ မရပါ",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "မပြီးစီးပါ: အသုံးပြုနိုင်သော Aime card မရှိပါ",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "မသိသော chart {countNumber} ခု"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "ကိုယ်ရေးလုံခြုံမှု ဆက်တင်ကြောင့် ဝှက်ထားသည် {countNumber} ခု"
+      }
+    }
+  ],
+  "auth_privacy_cloud_heading": "Cloud save (beta)",
+  "auth_privacy_cloud_p1": "Cloud save ကို ဖွင့်ပါက သင့်စက်များ မျှဝေသုံးနိုင်ရန် သင့် score များကို သင့်အကောင့်တွင် သိမ်းဆည်းပါမည်။ Chart တစ်ခုစီအတွက် သင့်ရလဒ်နှင့် ၎င်း၏ ရင်းမြစ် (ဥပမာ maimai DX NET၊ LXNS သို့မဟုတ် Diving-Fish မှ တင်သွင်းမှု၊ ဖိုင်တစ်ခု သို့မဟုတ် ကိုယ်တိုင်ရိုက်ထည့်ထားသော အချက်အလက်) နှင့်အတူ ထို provider က ပေးသော friend code ကဲ့သို့ အကောင့် ID ကိုလည်း သိမ်းပါမည်။ တင်သွင်းမှုတိုင်း၏ မှတ်တမ်း (ရင်းမြစ်၊ အချိန်၊ အရေအတွက်နှင့် လက်ခံရရှိသော ဒေတာ၏ hash) နှင့် sync လုပ်ပြီးနောက် သင့်စက်များက သိမ်းသော rating snapshot များကိုလည်း ထိန်းသိမ်းထားပါသည်။",
+  "auth_privacy_cloud_p2": "maimai DX NET မှ တင်သွင်းသည့်အခါ သင့် SEGA ID စကားဝှက်ကို ထိုတင်သွင်းမှုအတွက် အကောင့်ဝင်ရာတွင်သာ သုံးပါသည်။ မည်သည့်နေရာတွင်မျှ သိမ်းဆည်းခြင်း သို့မဟုတ် မှတ်တမ်းတင်ခြင်း မပြုပါ။",
+  "auth_privacy_cloud_p3": "Cloud save များကို သင်ဖျက်သည်အထိ သို့မဟုတ် သင့်အကောင့်ကို ဖျက်သည်အထိ ထိန်းသိမ်းထားပါသည်။ Chart တစ်ခုစီသည် ယခင်ရလဒ် ၂၀ အထိ၊ save တစ်ခုစီသည် rating snapshot ၁၀၀ အထိ သိမ်းထားသည်။ ဖျက်လိုက်သော မှတ်တမ်းများကို ၉၀ ရက် မှတ်သားထားသဖြင့် သင့်အခြားစက်များတွင်လည်း ဖယ်ရှားနိုင်ပြီး၊ သင့်စက်များမှ ပို့သော sync တောင်းဆိုမှုတိုင်း၏ မှတ်တမ်းကို ၃၀ ရက် သိမ်းထားသဖြင့် နှစ်ကြိမ်ပို့မိသော တောင်းဆိုမှုကို တစ်ကြိမ်သာ အသုံးချပါသည်။ သင်ဖျက်လိုက်သော save ကို ၃၀ ရက်အကြာတွင် အပြီးတိုင် ဖျက်ပစ်ပါသည်။",
+  "ratingCalculator_cloudSave_descriptionInactive": "သင့် score များကို DXRating အကောင့်တွင် သိမ်းပြီး စက်အားလုံးတွင် အသုံးပြုပါ။",
+  "ratingCalculator_cloudSave_choose_title": "Cloud save သုံးရန်",
+  "ratingCalculator_cloudSave_choose_sectionDescription": "အခြားစက်တွင် backup လုပ်ထားပြီးလား? ဤ browser တွင် သုံးရန် cloud save တစ်ခု ရွေးပါ။",
+  "ratingCalculator_cloudSave_choose_open": "Cloud save သုံးရန်",
+  "ratingCalculator_cloudSave_choose_dialogTitle": "Cloud save ရွေးပါ",
+  "ratingCalculator_cloudSave_choose_dialogDescription": "ဤ browser သည် သင်ရွေးသော save ကို ပြပြီး ပြင်ဆင်မည်။ ဘာမျှ မတင်ပါ။",
+  "ratingCalculator_cloudSave_choose_empty": "သင့်အကောင့်တွင် cloud save မရှိသေးပါ။ တစ်ခုပြုလုပ်ရန် ဤစက်တွင် score များထည့်ပြီး backup လုပ်ပါ။",
+  "ratingCalculator_cloudSave_choose_cancel": "မလုပ်တော့ပါ",
+  "ratingCalculator_cloudSave_migration_title": "Cloud သို့ backup လုပ်ရန်",
+  "ratingCalculator_cloudSave_migration_prompt": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "ဤစက်ရှိ မှတ်တမ်း {formatted} ခုကို သင့်အကောင့်သို့ backup လုပ်မလား?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_backUp": "Cloud သို့ backup လုပ်ရန်",
+  "ratingCalculator_cloudSave_migration_notNow": "ယခု မလုပ်သေးပါ",
+  "ratingCalculator_cloudSave_migration_sectionDescription": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "ဤ browser တွင် ဤစက်ပေါ်သိမ်းထားသော မှတ်တမ်း {countNumber} ခု ရှိသည်။ သင့်စက်များအကြား sync ဖြစ်စေရန် backup လုပ်ပါ။"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_saveName": "ကျွန်ုပ်၏ score များ",
+  "ratingCalculator_cloudSave_migration_freshDescription": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "သင့်မှတ်တမ်း {formatted} ခုကို သင့်အကောင့်တွင် သိမ်းပြီး စက်များအကြား sync လုပ်ပါမည်။"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingTitle": "သင့်တွင် cloud save ရှိပြီးသား ဖြစ်သည်",
+  "ratingCalculator_cloudSave_migration_cloudRecords": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "မှတ်တမ်း {formatted} ခု"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingDescription": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input region",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "“{name}” ({region}) တွင် {cloudRecords} ရှိသည်။ ဤစက်တွင် မှတ်တမ်း {formatted} ခု ရှိသည်။"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_changed": "ဤ cloud save ကို အခြားစက်တစ်ခုတွင် ပြောင်းလဲထားသည်။ ဆက်မလုပ်မီ ထပ်စစ်ပါ။",
+  "ratingCalculator_cloudSave_migration_merge": "ပေါင်းစည်းရန် (နှစ်ဖက်စလုံးမှ အကောင်းဆုံးကို ထားမည်)",
+  "ratingCalculator_cloudSave_migration_mergeDescription": "Chart တစ်ခုစီသည် ဤစက် သို့မဟုတ် cloud မှ ပိုကောင်းသော score ကို ထားရှိမည်။",
+  "ratingCalculator_cloudSave_migration_cloudOnly": "Cloud ကိုသာ သုံးရန်",
+  "ratingCalculator_cloudSave_migration_cloudOnlyDescription": "Cloud save သို့ ပြောင်းမည်။ ဤစက်ရှိ မှတ်တမ်းများကို backup အဖြစ် ထားခဲ့ပြီး မတင်ပါ။",
+  "ratingCalculator_cloudSave_migration_mergeAction": "ပေါင်းစည်းရန်",
+  "ratingCalculator_cloudSave_migration_cloudOnlyAction": "Cloud save သုံးရန်",
+  "ratingCalculator_cloudSave_migration_advanced": "အဆင့်မြင့်",
+  "ratingCalculator_cloudSave_migration_replaceDescription": "Cloud save ထဲရှိ မှတ်တမ်းအားလုံးကို ဤစက်ရှိ မှတ်တမ်းများဖြင့် အစားထိုးမည်။",
+  "ratingCalculator_cloudSave_migration_replace": "Cloud ကို ဤစက်ဖြင့် အစားထိုးရန်",
+  "ratingCalculator_cloudSave_migration_replaceTitle": "Cloud save ကို အစားထိုးမလား?",
+  "ratingCalculator_cloudSave_migration_replaceWarning": [
+    {
+      "declarations": [
+        "input count",
+        "input cloudRecords",
+        "input name",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "“{name}” ထဲရှိ {cloudRecords} ကို ဤစက်ရှိ မှတ်တမ်း {formatted} ခုဖြင့် အစားထိုးမည်။ သင့်အခြားစက်များတွင်လည်း ပြောင်းလဲမှု ရောက်ရှိမည်။ ပြန်ပြင်၍ မရပါ။"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceWarningEmpty": [
+    {
+      "declarations": ["input count", "input name", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "“{name}” တွင် မှတ်တမ်း မရှိပါ။ ဤစက်ရှိ မှတ်တမ်း {formatted} ခုကို ရရှိမည်ဖြစ်ပြီး သင့်အခြားစက်များတွင်လည်း ပြောင်းလဲမှု ရောက်ရှိမည်။"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceConfirm": "Cloud save ကို အစားထိုးရန်",
+  "ratingCalculator_cloudSave_migration_runningTitle": "Backup လုပ်နေသည်…",
+  "ratingCalculator_cloudSave_migration_running": "သင့်မှတ်တမ်းများကို တင်နေသည်။ ဤစာမျက်နှာကို ဖွင့်ထားပါ။",
+  "ratingCalculator_cloudSave_migration_switchingTitle": "သင့် cloud save သို့ ပြောင်းနေသည်…",
+  "ratingCalculator_cloudSave_migration_switching": "ဤစက်ရှိ မှတ်တမ်းများ၏ မိတ္တူကို ဤ browser တွင် ထားရှိနေသည်။",
+  "ratingCalculator_cloudSave_migration_doneTitle": "Backup လုပ်ပြီးပါပြီ",
+  "ratingCalculator_cloudSave_migration_switchedTitle": "သင့် cloud save ကို သုံးနေပါပြီ",
+  "ratingCalculator_cloudSave_migration_done": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "မှတ်တမ်း {formatted} ခုသည် ယခု သင့် cloud save ထဲတွင် ရှိပါပြီ။"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_doneCloudOnly": "ဤစက်သည် ယခု သင့် cloud save ကို သုံးနေပါပြီ။",
+  "ratingCalculator_cloudSave_migration_close": "ပိတ်ရန်",
+  "ratingCalculator_cloudSave_migration_errorTitle": "Backup မလုပ်နိုင်ပါ",
+  "ratingCalculator_cloudSave_migration_switchErrorTitle": "မပြောင်းနိုင်ပါ",
+  "ratingCalculator_cloudSave_migration_errorSafe": "ဤစက်ရှိ မည်သည့်အရာကိုမျှ မပြောင်းလဲခဲ့ပါ။ အချိန်မရွေး ထပ်စမ်းနိုင်သည်။",
+  "ratingCalculator_cloudSave_migration_errorUnchanged": "ဤစက်ရှိ မည်သည့်အရာကိုမျှ မပြောင်းလဲခဲ့ပါ။",
+  "ratingCalculator_cloudSave_migration_errors_saveLimit": "ခွင့်ပြုထားသော cloud save အရေအတွက် အများဆုံးရှိပြီးဖြစ်၍ အသစ် မပြုလုပ်နိုင်ပါ။ ရှိပြီးသား save တစ်ခုထဲသို့ backup လုပ်လိုပါက ဂိမ်းဒေသကို ထို save ၏ ဒေသသို့ ပြောင်းပြီး ဤစာမျက်နှာကို ထပ်ဖွင့်ပါ။",
+  "ratingCalculator_cloudSave_migration_errors_generic": "တင်ခြင်း မပြီးစီးပါ။ အင်တာနက်ချိတ်ဆက်မှုကို စစ်ပြီး ထပ်စမ်းကြည့်ပါ။",
+  "ratingCalculator_cloudSave_migration_errors_switchGeneric": "တစ်ခုခု မှားယွင်းသွားသည်။ ထပ်စမ်းကြည့်ပါ။",
+  "ratingCalculator_cloudSave_migration_unverifiedNote": "ဤစက်ရှိ မှတ်တမ်းများကို “အတည်မပြုရသေး” အဖြစ် သိမ်းမည်။ အတည်ပြုပြီး မှတ်တမ်းများရရန် maimai NET၊ LXNS သို့မဟုတ် Diving-Fish မှ ထပ်တင်သွင်းပါ။",
+  "ratingCalculator_cloudSave_migration_backupNote": "ဤစက်ရှိ မှတ်တမ်းများ၏ မိတ္တူကို ဤ browser တွင် ၃၀ ရက်ထားမည်။ အကောင့်ထွက်ထားသည့်အခါ ဤစက်သည် ကိုယ်ပိုင်မှတ်တမ်းများကို ဆက်သုံးမည်။",
+  "ratingCalculator_cloudSave_optIn_title": "Cloud save (beta)",
+  "ratingCalculator_cloudSave_optIn_description": "သင့် score များကို အကောင့်တွင် သိမ်းပြီး စက်များအကြား sync လုပ်ပါ။",
+  "ratingCalculator_cloudSave_optIn_consentTitle": "Cloud save (beta) ကို ဖွင့်မလား?",
+  "ratingCalculator_cloudSave_optIn_consentIntro": "Cloud save ဖြင့် DXRating သည် အောက်ပါအချက်အလက်များကို သင့်အကောင့်တွင် သိမ်းဆည်းမည်။",
+  "ratingCalculator_cloudSave_optIn_consentStored": "သင့် score များ၊ သင်တင်သွင်းသော provider အကောင့် ID များ (friend code ကဲ့သို့)၊ တင်သွင်းမှုတိုင်း၏ မှတ်တမ်းနှင့် တင်သွင်းသည့်ဒေတာ၏ hash၊ နှင့် sync လုပ်ပြီးနောက် သင့်စက်များက သိမ်းသော rating snapshot များ။",
+  "ratingCalculator_cloudSave_optIn_consentRetention": "သင်ဖျက်သည်အထိ သို့မဟုတ် သင့်အကောင့်ကို ဖျက်သည်အထိ သိမ်းထားမည်။ Chart တစ်ခုစီသည် ယခင်ရလဒ် ၂၀ အထိ၊ save တစ်ခုစီသည် rating snapshot ၁၀၀ အထိ သိမ်းထားသည်။ ဖျက်လိုက်သော မှတ်တမ်းများကို ၉၀ ရက် မှတ်သားထားသဖြင့် သင့်အခြားစက်များတွင်လည်း ဖယ်ရှားနိုင်ပြီး၊ သင့်စက်များမှ ပို့သော sync တောင်းဆိုမှုတိုင်း၏ မှတ်တမ်းကို ၃၀ ရက် သိမ်းထားမည်။ သင်ဖျက်လိုက်သော save ကို ၃၀ ရက်အကြာတွင် အပြီးတိုင် ဖျက်ပစ်မည်။",
+  "ratingCalculator_cloudSave_optIn_consentPasswords": "သင့် SEGA ID စကားဝှက်ကို ဘယ်သောအခါမျှ မသိမ်းပါ။",
+  "ratingCalculator_cloudSave_optIn_consentLeaving": "Beta ကို app ထဲတွင် မပိတ်နိုင်သေးပါ။ သင့် DXRating အကောင့်ကို (DXRating app တွင်) ဖျက်လိုက်ပါက ဤအချက်အလက်အားလုံးကို ကျွန်ုပ်တို့စနစ်များမှ ဖယ်ရှားမည်။ backup များအကြောင်းကို ကိုယ်ရေးအချက်အလက် မူဝါဒတွင် ရှင်းပြထားသည်။",
+  "ratingCalculator_cloudSave_optIn_consentPrivacy": "{#privacy}ကိုယ်ရေးအချက်အလက် မူဝါဒ{/privacy} တွင် ပိုမိုဖတ်ရှုပါ။",
+  "ratingCalculator_cloudSave_optIn_agree": "သဘောတူပြီး ဖွင့်ရန်",
+  "ratingCalculator_cloudSave_optIn_sending": "Cloud save ကို ဖွင့်နေသည်…",
+  "ratingCalculator_cloudSave_optIn_success": "Cloud save ဖွင့်ပြီးပါပြီ။",
+  "ratingCalculator_cloudSave_optIn_error": "Cloud save ကို မဖွင့်နိုင်ပါ။ ထပ်စမ်းကြည့်ပါ။",
+  "ratingCalculator_cloudSave_export_title": "သင့်ဒေတာ",
+  "ratingCalculator_cloudSave_export_description": "Cloud save အားလုံးကို ၎င်းတို့၏ မှတ်တမ်းများ၊ ရင်းမြစ်များ၊ တင်သွင်းမှုမှတ်တမ်းနှင့် rating snapshot များနှင့်အတူ JSON ဖိုင်အဖြစ် ဒေါင်းလုဒ်လုပ်ပါ။",
+  "ratingCalculator_cloudSave_export_button": "ကျွန်ုပ်၏ဒေတာ ဒေါင်းလုဒ်လုပ်ရန်",
+  "ratingCalculator_cloudSave_export_preparing": "ပြင်ဆင်နေသည်…",
+  "ratingCalculator_cloudSave_export_success": "သင့်ဒေတာကို ဒေါင်းလုဒ်လုပ်နေသည်။",
+  "ratingCalculator_cloudSave_export_error": "သင့်ဒေတာကို ဒေါင်းလုဒ်မလုပ်နိုင်ပါ။ ထပ်စမ်းကြည့်ပါ။",
+  "ratingCalculator_cloudSave_export_rateLimited": "ယနေ့ သင့်ဒေတာကို အကြိမ်များစွာ ဒေါင်းလုဒ်လုပ်ပြီးပါပြီ။ မနက်ဖြန် ထပ်စမ်းကြည့်ပါ။",
+  "ratingCalculator_cloudSave_exportImport_pickTitle": "တင်သွင်းရန် save ရွေးပါ",
+  "ratingCalculator_cloudSave_exportImport_pickDescription": "ဤဖိုင်တွင် save တစ်ခုထက်ပို၍ ပါသည်။",
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "“အတည်မပြုရသေး” အဖြစ် တင်သွင်းထားသည်: မှတ်တမ်းများ၏ ရင်းမြစ်ကို ဖိုင်က ဆိုထားသည့်အတိုင်း ပြထားသည်။"
 }

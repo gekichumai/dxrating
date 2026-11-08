@@ -45,6 +45,36 @@ CREATE TABLE IF NOT EXISTS dxdata.catalog_publication_receipts (
   PRIMARY KEY (channel, publication_fingerprint_sha256),
   UNIQUE (channel, revision)
 );
+CREATE TABLE IF NOT EXISTS dxdata.catalog_sources (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  source_kind TEXT NOT NULL,
+  priority INTEGER NOT NULL DEFAULT 0,
+  authoritative BOOLEAN NOT NULL DEFAULT false
+);
+CREATE TABLE IF NOT EXISTS dxdata.catalog_source_runs (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  source_id TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT 'catalog',
+  payload_sha256 TEXT NOT NULL,
+  observation_key TEXT NOT NULL,
+  started_at TIMESTAMPTZ NOT NULL,
+  finished_at TIMESTAMPTZ,
+  status TEXT NOT NULL,
+  item_count INTEGER,
+  error TEXT
+);
+CREATE TABLE IF NOT EXISTS dxdata.canonical_songs (
+  id TEXT PRIMARY KEY,
+  legacy_song_id TEXT UNIQUE
+);
+CREATE TABLE IF NOT EXISTS dxdata.song_source_mappings (
+  source_id TEXT NOT NULL,
+  external_id TEXT NOT NULL,
+  song_id TEXT NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT true,
+  PRIMARY KEY (source_id, external_id)
+);
 CREATE TABLE IF NOT EXISTS dxdata.catalog_publication_provenance_manifests (
   channel TEXT NOT NULL,
   publication_fingerprint_sha256 TEXT NOT NULL,
@@ -64,9 +94,50 @@ export const createCatalogFixtureSchema = async (pool: pg.Pool) => {
 
 export const clearCatalogFixture = async (pool: pg.Pool) => {
   await pool.query(`
-    TRUNCATE dxdata.catalog_publication_provenance_manifests, dxdata.catalog_publication_receipts,
+    TRUNCATE dxdata.catalog_publication_provenance_manifests, dxdata.catalog_publication_receipts, dxdata.canonical_songs, dxdata.song_source_mappings, dxdata.catalog_sources, dxdata.catalog_source_runs,
       dxdata.catalog_publications, dxdata.catalog_snapshots, dxdata.catalog_build_runs RESTART IDENTITY
   `)
+}
+
+/** Records a source and its succeeded observations (time, item count), as the assembly line does */
+export const observeSourceFixture = async (
+  pool: pg.Pool,
+  source: { id: string; name: string; kind: string; authoritative?: boolean },
+  observations: { at: string; items: number; status?: string }[],
+) => {
+  await pool.query(
+    `INSERT INTO dxdata.catalog_sources (id, name, source_kind, authoritative) VALUES ($1, $2, $3, $4)
+     ON CONFLICT (id) DO NOTHING`,
+    [source.id, source.name, source.kind, source.authoritative ?? false],
+  )
+  for (const [index, observation] of observations.entries()) {
+    const key = sha(`${source.id}-${observation.at}-${index}`)
+    await pool.query(
+      `INSERT INTO dxdata.catalog_source_runs
+         (source_id, payload_sha256, observation_key, started_at, finished_at, status, item_count)
+       VALUES ($1, $2, $2, $3, $3, $4, $5)`,
+      [source.id, key, observation.at, observation.status ?? 'succeeded', observation.items],
+    )
+  }
+}
+
+/** Maps a public song ID to its legacy songId, as the catalog's canonical_songs does (other columns left out) */
+export const mapSongFixture = async (pool: pg.Pool, id: string, legacySongId: string) => {
+  await pool.query('INSERT INTO dxdata.canonical_songs (id, legacy_song_id) VALUES ($1, $2)', [id, legacySongId])
+  await pool.query(
+    `INSERT INTO dxdata.song_source_mappings (source_id, external_id, song_id) VALUES ('legacy_dxdata', $1, $2)`,
+    [legacySongId, id],
+  )
+}
+
+/** Renames a song's legacy ID the way the catalog does: the old mapping stays, inactive */
+export const renameLegacySongFixture = async (pool: pg.Pool, id: string, legacySongId: string) => {
+  await pool.query('UPDATE dxdata.canonical_songs SET legacy_song_id = $2 WHERE id = $1', [id, legacySongId])
+  await pool.query(`UPDATE dxdata.song_source_mappings SET active = false WHERE song_id = $1`, [id])
+  await pool.query(
+    `INSERT INTO dxdata.song_source_mappings (source_id, external_id, song_id) VALUES ('legacy_dxdata', $1, $2)`,
+    [legacySongId, id],
+  )
 }
 
 /** Publishes a synthetic catalog `body` as the next revision of `channel`, the way the assembly line records it */
