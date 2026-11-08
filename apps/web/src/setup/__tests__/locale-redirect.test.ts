@@ -74,6 +74,19 @@ describe('non-canonical prefixes', () => {
     expectRedirect(get('/EN'), 301, '/')
   })
 
+  it('keeps an /en URL in English for a visitor who prefers another language', () => {
+    for (const path of ['/en/rating', '/EN']) {
+      const response = get(path, { cookie: 'dxrating.locale=ja', 'accept-language': 'ja-JP' })
+      expect(response?.status).toBe(301)
+      expect(response?.headers.get('Set-Cookie')).toMatch(/^dxrating\.locale=en;/)
+      expect(response?.headers.get('Cache-Control')).toBe('private, no-store')
+      const next = response?.headers.get('Location') ?? ''
+      expect(get(next, { cookie: 'dxrating.locale=en', 'accept-language': 'ja-JP' })).toBeNull()
+    }
+    // A wrong-case prefix of another language says the language itself
+    expect(get('/JA/rating')?.headers.get('Set-Cookie')).toBeNull()
+  })
+
   it('serves canonical prefixed URLs', () => {
     expect(get('/zh-hans/songs/x', { cookie: 'dxrating.locale=ja' })).toBeNull()
     expect(get('/th')).toBeNull()
