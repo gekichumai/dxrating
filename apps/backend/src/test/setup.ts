@@ -1,3 +1,4 @@
+import { CLOUD_SAVE_EXPECTED_USER_HEADER } from '@gekichumai/api-contract'
 // env.ts is loaded via vitest setupFiles before this file is imported,
 // so process.env is already populated when config.ts parses.
 
@@ -107,14 +108,25 @@ export function extractSessionCookie(res: Response): string {
     .join('; ')
 }
 
+/** The user each test session cookie signs in, so requests name their account as the web does */
+const userIdByCookie = new Map<string, string>()
+
+/** Requests with `cookie` send `X-DXRating-Expected-User: userId` from now on (cloud save writes require it) */
+export function bindCookieToUser(cookie: string, userId: string) {
+  userIdByCookie.set(cookie, userId)
+}
+
+/**
+ * `fetch` with the session cookie. A cookie bound with {@link bindCookieToUser} also names its user in
+ * `X-DXRating-Expected-User`, unless `init.headers` sets that header itself (an empty value sends none).
+ */
 export async function authenticatedFetch(url: string, cookie: string, init?: RequestInit) {
-  return fetch(url, {
-    ...init,
-    headers: {
-      ...init?.headers,
-      Cookie: cookie,
-    },
-  })
+  const headers = new Headers(init?.headers)
+  const userId = userIdByCookie.get(cookie)
+  if (!headers.has(CLOUD_SAVE_EXPECTED_USER_HEADER) && userId) headers.set(CLOUD_SAVE_EXPECTED_USER_HEADER, userId)
+  else if (headers.get(CLOUD_SAVE_EXPECTED_USER_HEADER) === '') headers.delete(CLOUD_SAVE_EXPECTED_USER_HEADER)
+  headers.set('Cookie', cookie)
+  return fetch(url, { ...init, headers })
 }
 
 // --- DB cleanup helper ---

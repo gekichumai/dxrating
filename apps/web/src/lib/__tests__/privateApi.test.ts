@@ -113,4 +113,25 @@ describe('privateApiClient errors in the sync loop', () => {
     )
     expect(classifySyncError(error)).toEqual({ kind: 'rate-limited', retryAfterMs: 12_000 })
   })
+
+  it('names the bound account on every request of privateApiClientFor, and no account on the shared client', async () => {
+    vi.stubEnv('VITE_BACKEND_URL', 'https://api.example.test')
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
+      Response.json({ revision: 6, results: [] }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const { privateApiClient, privateApiClientFor } = await import('../privateApi')
+    const mutation = {
+      mutationId: '0190a6f0-0000-7000-8000-000000000000',
+      op: 'delete',
+      sheetId: 'dsht_e5nsvt8k2a',
+    } as const
+    await privateApiClientFor('user-a').cloudSave.records.mutate({ id: 'dsav_main', mutations: [mutation] })
+    await privateApiClient.cloudSave.records.mutate({ id: 'dsav_main', mutations: [mutation] })
+    const sent = fetchMock.mock.calls.map(([input, init]) =>
+      (input instanceof Request ? input.headers : new Headers(init?.headers)).get('X-DXRating-Expected-User'),
+    )
+    expect(sent).toEqual(['user-a', null])
+    expect(privateApiClientFor('user-a')).toBe(privateApiClientFor('user-a'))
+  })
 })

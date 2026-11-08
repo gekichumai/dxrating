@@ -58,7 +58,11 @@ import {
   readClientId,
 } from './services/api-usage'
 import { appContract } from './contract'
-import { CLOUD_SAVE_NET_IMPORT_ROUTE, isPublicSpecProcedure } from '@gekichumai/api-contract'
+import {
+  CLOUD_SAVE_EXPECTED_USER_HEADER,
+  CLOUD_SAVE_NET_IMPORT_ROUTE,
+  isPublicSpecProcedure,
+} from '@gekichumai/api-contract'
 import { credentialHygiene, holdCredentials } from './lib/credential-hygiene'
 import { netImportHandler } from './services/cloud-save/net-import-route'
 import { McpCatalogSource } from './services/application'
@@ -324,7 +328,15 @@ const apiCors = cors({
 
     return null
   },
-  allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response', API_CLIENT_HEADER],
+  allowHeaders: [
+    'Content-Type',
+    'Authorization',
+    'sentry-trace',
+    'baggage',
+    'x-captcha-response',
+    API_CLIENT_HEADER,
+    CLOUD_SAVE_EXPECTED_USER_HEADER,
+  ],
   // PATCH and DELETE: cloud save routes (rename and delete a save)
   allowMethods: ['POST', 'GET', 'PATCH', 'DELETE', 'OPTIONS'],
   exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],

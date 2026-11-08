@@ -172,6 +172,12 @@ node dist/flag-set.js cloud_save owner@example.com off   # in the production ima
   `skippedUnknownSheet`. NET: 6/h and 30/day per user, 30/h per address, one per user and four in total at a time.
   Jobs running for 15 minutes are failed as `abandoned` at startup, by the daily cleanup, and when they block a new
   job. `client-imports.ts`: 5000 records per chunk, each chunk its own transaction, resumable by idempotency key.
+- Account binding (§10): every write (saves, mutations, replace, client and server imports, the NET import, the beta
+  opt-in) must name its account in `X-DXRating-Expected-User` (`CLOUD_SAVE_EXPECTED_USER_HEADER`), or it is answered
+  400; a session that is another account is answered 409 `{ reason: 'ACCOUNT_MISMATCH' }` before anything is written.
+  Reads check the header when sent. `requireExpectedUser` in `src/orpc-middleware.ts` runs after the feature guard, so
+  a disabled feature stays a 404; the opt-in checks it after the opt-in phase. The web sends it through
+  `privateApiClientFor(userId)`.
 - Credential hygiene (`src/lib/credential-hygiene.ts`, §7.2): SEGA IDs and passwords are never stored or logged. The
   NET and LXNS routes get a scrubbing evlog logger; Sentry never attaches their bodies and scrubs every event,
   breadcrumb and log (keys and the values of running NET requests); PostHog events are scrubbed the same way.

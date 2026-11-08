@@ -1,10 +1,11 @@
 import { ButtonBase, Popover } from '@mui/material'
 import clsx from 'clsx'
-import { type CSSProperties, type FC, useId, useState } from 'react'
+import { type CSSProperties, type FC, useEffect, useId, useState } from 'react'
 import IconMdiCloudAlertOutline from '~icons/mdi/cloud-alert-outline'
 import IconMdiCloudCheckOutline from '~icons/mdi/cloud-check-outline'
 import IconMdiCloudOffOutline from '~icons/mdi/cloud-off-outline'
 import IconMdiCloudSyncOutline from '~icons/mdi/cloud-sync-outline'
+import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useCloudSaveStatus } from '@/models/scores/CloudSaveUiContext'
 import type { ScoreRepositoryStatus } from '@/models/scores/ScoreRepository'
 import { labelSeparator } from './provenanceLabel'
@@ -28,6 +29,20 @@ const STATE_MESSAGES: Record<ScoreRepositoryStatus['state'], PlainMessage> = {
   error: m.ratingCalculator_cloudSave_status_error,
 }
 
+/** Issues already reported on this page: each one counts once (§12.3), however often it re-renders */
+const reportedIssueIds = new Set<string>()
+
+/** Reports `sync_conflict_shown` for each sync issue the header shows for the first time; its kind only */
+function useReportShownIssues(issues: ScoreRepositoryStatus['issues'] | undefined) {
+  useEffect(() => {
+    for (const issue of issues ?? []) {
+      if (reportedIssueIds.has(issue.id)) continue
+      reportedIssueIds.add(issue.id)
+      captureAnalyticsEvent('sync_conflict_shown', { kind: issue.kind })
+    }
+  }, [issues])
+}
+
 /**
  * The cloud save's sync state in the header (idle, syncing, offline, error), the number of changes waiting to be
  * sent and the sync issues. Renders nothing on the local save.
@@ -37,6 +52,7 @@ export const SyncStatusIndicator: FC<{ className?: string; style?: CSSProperties
   const status = useCloudSaveStatus()
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const popoverId = useId()
+  useReportShownIssues(status?.issues)
   if (!status) return null
 
   const { state, pendingCount, issues } = status

@@ -43,6 +43,7 @@ import IconMdiArrowUp from '~icons/mdi/arrow-up'
 import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import IconMdiTrashCan from '~icons/mdi/trash-can'
 import { RecordProvenanceIcon } from '../components/cloud-save/ProvenanceBadge'
+import { CloudMigrationPrompt } from '../components/cloud-save/CloudMigrationPrompt'
 import {
   type ComboFlag,
   type PlayEntry,
@@ -238,6 +239,9 @@ export const RatingCalculator = () => {
               <ExportMenu />
               <ClearButton />
             </div>
+
+            {/* Signed in with cloud save on: the offer to back the local save up (never automatic) */}
+            <CloudMigrationPrompt />
           </section>
           <ImportUndoBanner />
         </div>

@@ -62,8 +62,9 @@ export function cloudRecordToScoreRecord(record: CloudRecord, identity: SheetIde
     comboFlag: record.comboFlag,
     syncFlag: record.syncFlag,
     dxScore: record.dxScore,
-    // `calculateBest50` honours Diving-Fish hints only, as the local save does (`playEntryToScoreRecord`): see
-    // honoursBucketHint
+    // `calculateBest50` honours Diving-Fish hints only, as the local save does (`playEntryToScoreRecord`). A record a
+    // client uploaded (a backup, a rating file) carries a hint only where the device's calculator honoured one, so it
+    // keeps reading the same; the hint never changes the record's verification
     best50Bucket: honoursBucketHint(record) ? record.best50Bucket : null,
     provenance: record.provenance,
   }
@@ -72,7 +73,9 @@ export function cloudRecordToScoreRecord(record: CloudRecord, identity: SheetIde
 /**
  * Whether the calculator reads a record's best 50 hint. A server import stores one only from Diving-Fish: a
  * Diving-Fish record's own, or the bucket a Diving-Fish job wrote onto a better score it kept from another provider
- * (`decideImportMerge`), which keeps that provider's provenance. A manual entry carries none
+ * (`decideImportMerge`), which keeps that provider's provenance. A record a client uploaded (a backup, a rating file)
+ * carries a hint only where the device's calculator honoured one (`entriesToImportRecords`). A manual entry carries
+ * none
  */
 function honoursBucketHint(record: CloudRecord): boolean {
   return record.provenance.source !== 'manual'
@@ -95,7 +98,7 @@ export function cloudRecordToPlayEntry(record: CloudRecord, identity: SheetIdent
     if (provider === 'diving-fish' && record.best50Bucket !== null) entry.source.best50Bucket = record.best50Bucket
   }
   // The calculator (`useRatingEntries`) reads the best 50 hint from `providerConfig`, as a local Diving-Fish import
-  // stores it
+  // stores it; a backed-up (`legacy-local`) record keeps the hint its device honoured, without claiming a provider
   if (record.best50Bucket !== null && honoursBucketHint(record)) {
     entry.providerConfig = { divingFish: { ratingEligibility: record.best50Bucket } }
   }

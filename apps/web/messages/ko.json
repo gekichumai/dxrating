@@ -505,7 +505,7 @@
   "auth_accountSecurity_featureDevices": "로그인된 기기를 확인하고 다른 기기에서 로그아웃",
   "auth_accountSecurity_featuresLabel": "이 페이지에서 할 수 있는 일",
   "auth_privacy_title": "개인정보 처리방침",
-  "auth_privacy_updated": "최종 업데이트: 2026년 10월 30일",
+  "auth_privacy_updated": "최종 업데이트: 2026년 11월 3일",
   "auth_privacy_intro_heading": "소개",
   "auth_privacy_intro_body": "본 개인정보 처리방침은 귀하가 당사 서비스를 이용할 때 당사가 귀하의 정보를 어떻게 수집, 이용, 처리 및 공개하는지 설명합니다.",
   "auth_privacy_collect_heading": "수집하는 정보",
@@ -537,7 +537,7 @@
   "auth_privacy_retention_heading": "데이터 보관",
   "auth_privacy_retention_body": "당사는 본 개인정보 처리방침에 명시된 목적을 달성하는 데 필요한 기간 동안만 귀하의 정보를 보관합니다. 또한 법적 의무 준수, 분쟁 해결 및 정책 집행에 필요한 범위 내에서 귀하의 정보를 보관하고 이용합니다.",
   "auth_privacy_deletion_heading": "계정 삭제",
-  "auth_privacy_deletion_p1": "DXRating 앱의 계정 화면에서 계정을 영구적으로 삭제할 수 있습니다. 삭제하면 프로필, 댓글, 태그 및 태그 연결, 별칭, 세션, 패스키, 연결된 로그인 방법, 연결된 LXNS 인증 정보가 삭제됩니다. 연결된 OAuth 권한은 제공업체가 지원하는 경우 취소됩니다. 삭제 후에는 동일한 이메일 주소나 로그인 제공업체로 새 계정을 만들 수 있습니다.",
+  "auth_privacy_deletion_p1": "DXRating 앱의 계정 화면에서 계정을 영구적으로 삭제할 수 있습니다. 삭제하면 프로필, 댓글, 태그 및 태그 연결, 별칭, 세션, 패스키, 연결된 로그인 방법, 연결된 LXNS 인증 정보, 그리고 점수 이력·가져오기 기록·레이팅 스냅샷을 포함한 클라우드 저장이 삭제됩니다. 연결된 OAuth 권한은 제공업체가 지원하는 경우 취소됩니다. 삭제 후에는 동일한 이메일 주소나 로그인 제공업체로 새 계정을 만들 수 있습니다.",
   "auth_privacy_deletion_p2": "계정 데이터는 운영 중인 시스템에서 즉시 삭제됩니다. 암호화된 백업에는 해당 백업이 자동으로 삭제될 때까지 또는 법령에 따라 보관이 요구되는 경우 잔여 사본이 남아 있을 수 있습니다.",
   "auth_privacy_rights_heading": "귀하의 권리",
   "auth_privacy_rights_body": "귀하에게는 다음과 같은 개인정보 보호 권리가 있습니다.",
@@ -1532,5 +1532,167 @@
         "countPlural=*": "알 수 없는 채보 {countNumber}"
       }
     }
-  ]
+  ],
+  "auth_privacy_cloud_heading": "클라우드 저장(베타)",
+  "auth_privacy_cloud_p1": "클라우드 저장을 켜면 기기 간에 공유할 수 있도록 점수를 계정에 저장합니다. 채보마다 결과와 그 출처(maimai DX NET, LXNS, Diving-Fish에서 가져오기, 파일, 직접 입력 등), 해당 서비스의 계정 ID(친구 코드 등)를 저장합니다. 또한 가져오기마다의 기록(출처, 시각, 개수, 받은 데이터의 해시)과 동기화 후 기기가 저장하는 레이팅 스냅샷도 보관합니다.",
+  "auth_privacy_cloud_p2": "maimai DX NET에서 가져올 때 SEGA ID 비밀번호는 그 가져오기의 로그인에만 사용하며, 저장하거나 기록하지 않습니다.",
+  "auth_privacy_cloud_p3": "클라우드 저장은 직접 삭제하거나 계정을 삭제할 때까지 보관합니다. 채보마다 이전 결과를 최대 20개, 저장마다 레이팅 스냅샷을 최대 100개 보관합니다. 삭제한 기록은 다른 기기에서도 삭제되도록 90일 동안 기억하며, 기기에서 보낸 동기화 요청의 기록은 두 번 보낸 요청이 한 번만 적용되도록 30일 동안 보관합니다. 삭제한 저장은 30일 뒤에 완전히 지워집니다.",
+  "ratingCalculator_cloudSave_descriptionInactive": "점수를 DXRating 계정에 저장하고 모든 기기에서 사용할 수 있습니다.",
+  "ratingCalculator_cloudSave_choose_title": "클라우드 저장 사용",
+  "ratingCalculator_cloudSave_choose_sectionDescription": "다른 기기에서 이미 백업했나요? 이 브라우저에서 사용할 클라우드 저장 데이터를 선택하세요.",
+  "ratingCalculator_cloudSave_choose_open": "클라우드 저장 사용",
+  "ratingCalculator_cloudSave_choose_dialogTitle": "클라우드 저장 데이터 선택",
+  "ratingCalculator_cloudSave_choose_dialogDescription": "선택한 저장 데이터를 이 브라우저에서 보고 편집합니다. 아무것도 업로드하지 않습니다.",
+  "ratingCalculator_cloudSave_choose_empty": "이 계정에는 아직 클라우드 저장 데이터가 없습니다. 이 기기에서 점수를 추가한 뒤 백업하면 만들 수 있습니다.",
+  "ratingCalculator_cloudSave_choose_cancel": "취소",
+  "ratingCalculator_cloudSave_migration_title": "클라우드에 백업",
+  "ratingCalculator_cloudSave_migration_prompt": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "이 기기의 기록 {formatted}개를 계정에 백업할까요?",
+        "countPlural=*": "이 기기의 기록 {formatted}개를 계정에 백업할까요?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_backUp": "클라우드에 백업",
+  "ratingCalculator_cloudSave_migration_notNow": "나중에",
+  "ratingCalculator_cloudSave_migration_sectionDescription": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "이 브라우저에는 이 기기에 저장된 기록이 {countNumber}개 있습니다. 백업하면 다른 기기와 동기화할 수 있습니다.",
+        "countPlural=*": "이 브라우저에는 이 기기에 저장된 기록이 {countNumber}개 있습니다. 백업하면 다른 기기와 동기화할 수 있습니다."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_saveName": "내 점수",
+  "ratingCalculator_cloudSave_migration_freshDescription": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "기록 {formatted}개를 계정에 저장하고 모든 기기에서 동기화합니다.",
+        "countPlural=*": "기록 {formatted}개를 계정에 저장하고 모든 기기에서 동기화합니다."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingTitle": "이미 클라우드 저장이 있습니다",
+  "ratingCalculator_cloudSave_migration_cloudRecords": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "기록 {formatted}개",
+        "countPlural=*": "기록 {formatted}개"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingDescription": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input region",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "“{name}”({region})에 {cloudRecords}가 있습니다. 이 기기에는 {formatted}개 있습니다.",
+        "countPlural=*": "“{name}”({region})에 {cloudRecords}가 있습니다. 이 기기에는 {formatted}개 있습니다."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_changed": "이 클라우드 저장이 다른 기기에서 변경되었습니다. 다시 확인한 뒤 계속하세요.",
+  "ratingCalculator_cloudSave_migration_merge": "병합 (둘 중 더 좋은 기록 유지)",
+  "ratingCalculator_cloudSave_migration_mergeDescription": "채보마다 이 기기와 클라우드 중 더 좋은 점수를 남깁니다.",
+  "ratingCalculator_cloudSave_migration_cloudOnly": "클라우드만 사용",
+  "ratingCalculator_cloudSave_migration_cloudOnlyDescription": "클라우드 저장으로 전환합니다. 이 기기의 기록은 업로드하지 않고 백업에 남깁니다.",
+  "ratingCalculator_cloudSave_migration_mergeAction": "병합",
+  "ratingCalculator_cloudSave_migration_cloudOnlyAction": "클라우드 저장 사용",
+  "ratingCalculator_cloudSave_migration_advanced": "고급",
+  "ratingCalculator_cloudSave_migration_replaceDescription": "클라우드 저장의 모든 기록을 이 기기의 기록으로 바꿉니다.",
+  "ratingCalculator_cloudSave_migration_replace": "이 기기 기록으로 클라우드 바꾸기",
+  "ratingCalculator_cloudSave_migration_replaceTitle": "클라우드 저장을 바꿀까요?",
+  "ratingCalculator_cloudSave_migration_replaceWarning": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "“{name}”의 {cloudRecords}가 모두 삭제되고 이 기기의 기록 {formatted}개로 바뀝니다. 모든 기기에 적용되며 되돌릴 수 없습니다.",
+        "countPlural=*": "“{name}”의 {cloudRecords}가 모두 삭제되고 이 기기의 기록 {formatted}개로 바뀝니다. 모든 기기에 적용되며 되돌릴 수 없습니다."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceWarningEmpty": [
+    {
+      "declarations": ["input count", "input name", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "“{name}”에는 기록이 없습니다. 이 기기의 기록 {formatted}개가 들어가며 모든 기기에 적용됩니다.",
+        "countPlural=*": "“{name}”에는 기록이 없습니다. 이 기기의 기록 {formatted}개가 들어가며 모든 기기에 적용됩니다."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceConfirm": "클라우드 저장 바꾸기",
+  "ratingCalculator_cloudSave_migration_runningTitle": "백업 중…",
+  "ratingCalculator_cloudSave_migration_running": "기록을 업로드하고 있습니다. 이 페이지를 열어 두세요.",
+  "ratingCalculator_cloudSave_migration_switchingTitle": "클라우드 저장으로 전환 중…",
+  "ratingCalculator_cloudSave_migration_switching": "이 기기의 기록 사본을 이 브라우저에 보관하고 있습니다.",
+  "ratingCalculator_cloudSave_migration_doneTitle": "백업했습니다",
+  "ratingCalculator_cloudSave_migration_switchedTitle": "클라우드 저장을 사용하고 있습니다",
+  "ratingCalculator_cloudSave_migration_done": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "기록 {formatted}개가 클라우드 저장에 들어갔습니다.",
+        "countPlural=*": "기록 {formatted}개가 클라우드 저장에 들어갔습니다."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_doneCloudOnly": "이제 이 기기는 클라우드 저장을 사용합니다.",
+  "ratingCalculator_cloudSave_migration_close": "닫기",
+  "ratingCalculator_cloudSave_migration_errorTitle": "백업하지 못했습니다",
+  "ratingCalculator_cloudSave_migration_switchErrorTitle": "전환하지 못했습니다",
+  "ratingCalculator_cloudSave_migration_errorSafe": "이 기기의 데이터는 바뀌지 않았습니다. 언제든 다시 시도할 수 있습니다.",
+  "ratingCalculator_cloudSave_migration_errorUnchanged": "이 기기의 데이터는 바뀌지 않았습니다.",
+  "ratingCalculator_cloudSave_migration_errors_saveLimit": "클라우드 저장 개수 한도에 도달해 새로 만들 수 없습니다. 기존 저장에 백업하려면 게임 지역을 그 저장의 지역으로 바꾼 뒤 다시 여세요.",
+  "ratingCalculator_cloudSave_migration_errors_generic": "업로드가 끝나지 않았습니다. 연결을 확인하고 다시 시도하세요.",
+  "ratingCalculator_cloudSave_migration_errors_switchGeneric": "문제가 발생했습니다. 다시 시도하세요.",
+  "ratingCalculator_cloudSave_migration_unverifiedNote": "이 기기에 있던 기록은 “검증되지 않음”으로 저장됩니다. 검증된 기록을 얻으려면 maimai NET, LXNS 또는 Diving-Fish에서 다시 가져오세요.",
+  "ratingCalculator_cloudSave_migration_backupNote": "이 기기 기록의 사본은 이 브라우저에 30일 동안 남습니다. 로그아웃 상태에서는 이 기기의 기록을 계속 사용합니다.",
+  "ratingCalculator_cloudSave_optIn_title": "클라우드 저장 (베타)",
+  "ratingCalculator_cloudSave_optIn_description": "점수를 계정에 보관하고 여러 기기에서 동기화합니다.",
+  "ratingCalculator_cloudSave_optIn_consentTitle": "클라우드 저장(베타)을 켤까요?",
+  "ratingCalculator_cloudSave_optIn_consentIntro": "클라우드 저장을 켜면 DXRating이 계정에 다음을 저장합니다.",
+  "ratingCalculator_cloudSave_optIn_consentStored": "점수, 가져온 곳의 계정 ID(친구 코드 등), 가져오기마다의 기록과 가져온 내용의 해시, 동기화 후 기기가 저장하는 레이팅 스냅샷.",
+  "ratingCalculator_cloudSave_optIn_consentRetention": "직접 삭제하거나 계정을 삭제할 때까지 보관합니다. 채보마다 이전 결과를 최대 20개, 세이브마다 레이팅 스냅샷을 최대 100개까지 보관합니다. 삭제한 기록은 다른 기기에서도 삭제되도록 90일 동안 기억하며, 기기에서 보낸 동기화 요청의 기록은 30일 동안 보관합니다. 삭제한 세이브는 30일 후에 완전히 지워집니다.",
+  "ratingCalculator_cloudSave_optIn_consentPasswords": "SEGA ID 비밀번호는 절대 저장하지 않습니다.",
+  "ratingCalculator_cloudSave_optIn_consentLeaving": "아직 앱에서 베타를 끌 수 없습니다. DXRating 계정을 삭제하면(DXRating 앱에서) 이 모든 것이 서비스 시스템에서 삭제됩니다. 백업에 대해서는 개인정보 처리방침을 확인하세요.",
+  "ratingCalculator_cloudSave_optIn_consentPrivacy": "자세한 내용은 {#privacy}개인정보 처리방침{/privacy}을 확인하세요.",
+  "ratingCalculator_cloudSave_optIn_agree": "동의하고 켜기",
+  "ratingCalculator_cloudSave_optIn_sending": "클라우드 저장을 켜는 중…",
+  "ratingCalculator_cloudSave_optIn_success": "클라우드 저장을 켰습니다.",
+  "ratingCalculator_cloudSave_optIn_error": "클라우드 저장을 켜지 못했습니다. 다시 시도하세요.",
+  "ratingCalculator_cloudSave_export_title": "내 데이터",
+  "ratingCalculator_cloudSave_export_description": "모든 클라우드 저장을 기록, 기록의 출처, 가져오기 이력, 레이팅 스냅샷과 함께 JSON 파일로 내려받습니다.",
+  "ratingCalculator_cloudSave_export_button": "내 데이터 다운로드",
+  "ratingCalculator_cloudSave_export_preparing": "준비 중…",
+  "ratingCalculator_cloudSave_export_success": "데이터를 내려받는 중입니다.",
+  "ratingCalculator_cloudSave_export_error": "데이터를 내려받지 못했습니다. 다시 시도하세요.",
+  "ratingCalculator_cloudSave_export_rateLimited": "오늘 여러 번 내려받았습니다. 내일 다시 시도하세요.",
+  "ratingCalculator_cloudSave_exportImport_pickTitle": "가져올 저장 선택",
+  "ratingCalculator_cloudSave_exportImport_pickDescription": "이 파일에는 저장이 여러 개 있습니다.",
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "“검증되지 않음”으로 가져왔습니다. 기록의 출처는 파일이 주장하는 대로 표시됩니다."
 }

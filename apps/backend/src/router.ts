@@ -31,7 +31,8 @@ import { renderChartOgImageOutputEffect } from './services/functions/chart-og-im
 import { CatalogIdentityError } from './services/catalog-identities'
 import { CatalogIdentities, McpCatalogSource } from './services/application'
 import { CloudSaveOptInError, FeatureFlags } from './services/feature-flags'
-import { requireSession } from './orpc-middleware'
+import { expectedUserFailure, requireSession } from './orpc-middleware'
+import { CLOUD_SAVE_EXPECTED_USER_HEADER } from '@gekichumai/api-contract'
 import { cloudSaveHandler } from './cloud-save-router'
 
 export interface ApiContext
@@ -1057,13 +1058,18 @@ const featuresHandler = {
   optInCloudSave: os.features.optInCloudSave.use(requireSession).handler(
     handlerGen(function* ({ context, input }) {
       const featureFlags = yield* FeatureFlags
-      return yield* featureFlags.optInCloudSave(context.user.id, input.consentVersion).pipe(
+      // The consent is the account's that gave it: bound like a cloud save write (§10), checked after the phase so
+      // outside the opt-in phase the route stays a 404
+      const expectedUserId = context.reqHeaders?.get(CLOUD_SAVE_EXPECTED_USER_HEADER) ?? null
+      return yield* featureFlags.optInCloudSave(context.user.id, input.consentVersion, expectedUserId).pipe(
         Effect.catchTag('CloudSaveOptInError', (error: CloudSaveOptInError) =>
           Effect.fail(
             error.reason === 'unavailable'
               ? // Outside the opt-in phase the route does not exist.
                 new ORPCError('NOT_FOUND')
-              : new ORPCError('FORBIDDEN', { message: 'Cloud save is disabled for this account' }),
+              : error.reason === 'disabled'
+                ? new ORPCError('FORBIDDEN', { message: 'Cloud save is disabled for this account' })
+                : (expectedUserFailure(expectedUserId, context.user.id, true) ?? new ORPCError('CONFLICT')),
           ),
         ),
       )

@@ -9,8 +9,7 @@ import IconMdiLogout from '~icons/mdi/logout'
 import IconMdiLinkVariant from '~icons/mdi/link-variant'
 import IconMdiShield from '~icons/mdi/shield-outline'
 import IconMdiCloudOutline from '~icons/mdi/cloud-outline'
-import { CloudSaveSection } from '../../cloud-save/CloudSaveSection'
-import { useCloudSaveUi } from '@/models/scores/CloudSaveUiContext'
+import { CloudSaveSection, useHasCloudSaveSection } from '../../cloud-save/CloudSaveSection'
 import { authClient } from '../../../lib/auth-client'
 import { useActiveSave } from '@/models/scores/ActiveSaveContext'
 import { useIsLargeDevice } from '../../../utils/breakpoints'
@@ -30,7 +29,7 @@ const SECTIONS: { key: Section; icon: FC<{ className?: string }>; label: PlainMe
   { key: 'security', icon: IconMdiShield, label: m.auth_userProfile_security },
 ]
 
-// Only while a cloud save is active
+// Only while a cloud save is active, cloud save is on for the user, or the beta opt-in is offered
 const CLOUD_SAVE_SECTION = {
   key: 'cloud-save' as const,
   icon: IconMdiCloudOutline,
@@ -50,8 +49,8 @@ const NAV_ITEM_CLASS =
 
 const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const locale = useLocale()
-  const cloudSave = useCloudSaveUi()
-  const sections = cloudSave ? [...SECTIONS, CLOUD_SAVE_SECTION] : SECTIONS
+  const hasCloudSaveSection = useHasCloudSaveSection()
+  const sections = hasCloudSaveSection ? [...SECTIONS, CLOUD_SAVE_SECTION] : SECTIONS
   const [selectedSection, setActiveSection] = useState<Section>('profile')
   // The cloud save section goes away with the cloud save
   const activeSection = sections.some((section) => section.key === selectedSection) ? selectedSection : 'profile'

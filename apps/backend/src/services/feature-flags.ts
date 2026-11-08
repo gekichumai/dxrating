@@ -80,8 +80,11 @@ export const resolveUserFeatures = (settings: FeatureFlagSettings, state: UserFl
 }
 
 export class CloudSaveOptInError extends Data.TaggedError('CloudSaveOptInError')<{
-  /** `unavailable`: the mode is not `optin`. `disabled`: an administrator turned the user off. */
-  readonly reason: 'unavailable' | 'disabled'
+  /**
+   * `unavailable`: the mode is not `optin`. `disabled`: an administrator turned the user off. `account_mismatch` /
+   * `expected_user_missing`: the request names another account than the session's, or none (§10)
+   */
+  readonly reason: 'unavailable' | 'disabled' | 'account_mismatch' | 'expected_user_missing'
 }> {}
 
 export interface FeatureFlagStore {
@@ -98,6 +101,11 @@ export class FeatureFlags extends Context.Service<
     readonly optInCloudSave: (
       userId: string,
       consentVersion: string,
+      /**
+       * The account the consent was given for (`X-DXRating-Expected-User`); `undefined` skips the check (in-process
+       * callers). Checked after the mode, so outside the opt-in phase the route stays a 404
+       */
+      expectedUserId?: string | null,
     ) => Effect.Effect<UserFeatures, DatabaseError | CloudSaveOptInError>
     /** Drops this process's cached state for one user. */
     readonly invalidate: (userId: string) => Effect.Effect<void>
@@ -134,9 +142,13 @@ export const makeFeatureFlags = (settings: FeatureFlagSettings, store: FeatureFl
   return FeatureFlags.of({
     isEnabled: (flag, userId) => Effect.map(state(userId), (loaded) => resolveFeatureFlag(flag, settings, loaded)),
     features,
-    optInCloudSave: (userId, consentVersion) =>
+    optInCloudSave: (userId, consentVersion, expectedUserId) =>
       Effect.gen(function* () {
         if (settings.cloudSaveMode !== 'optin') return yield* new CloudSaveOptInError({ reason: 'unavailable' })
+        if (expectedUserId !== undefined) {
+          if (!expectedUserId) return yield* new CloudSaveOptInError({ reason: 'expected_user_missing' })
+          if (expectedUserId !== userId) return yield* new CloudSaveOptInError({ reason: 'account_mismatch' })
+        }
         const current = yield* store.load(userId)
         if (current.overrides.cloud_save === false) return yield* new CloudSaveOptInError({ reason: 'disabled' })
         yield* store.recordOptIn(userId, consentVersion)

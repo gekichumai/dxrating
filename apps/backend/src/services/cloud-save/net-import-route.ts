@@ -1,4 +1,5 @@
 import {
+  CLOUD_SAVE_EXPECTED_USER_HEADER,
   NetImportInputSchema,
   NetImportParamsSchema,
   type ImportResultDTO,
@@ -14,6 +15,7 @@ import { Database } from '../../db/index'
 import { holdCredentials } from '../../lib/credential-hygiene'
 import type { StateUpdateCallback } from '../../lib/functions/client'
 import { orpcErrorResponse } from '../../lib/orpc-error-response'
+import { expectedUserFailure } from '../../orpc-middleware'
 import { runApp } from '../../runtime'
 import { FeatureFlags } from '../feature-flags'
 import { clientKey } from '../mcp/client-key'
@@ -112,6 +114,9 @@ export const netImportHandler = (c: Context) => {
       ) {
         return orpcErrorResponse(new ORPCError('NOT_FOUND'))
       }
+      // Bound to the account the import was started for (§10): another tab may have signed someone else in
+      const accountFailure = expectedUserFailure(c.req.header(CLOUD_SAVE_EXPECTED_USER_HEADER) ?? null, userId, true)
+      if (accountFailure) return orpcErrorResponse(accountFailure)
 
       const params = NetImportParamsSchema.safeParse({ id: c.req.param('id') })
       if (!params.success) return badRequest(params.error.issues)

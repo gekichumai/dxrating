@@ -4,6 +4,7 @@ import { Effect } from 'effect'
 import type { ApiContext } from './router'
 import { FeatureFlags, type FeatureFlag } from './services/feature-flags'
 import type { KeyedRateLimit } from './services/rate-limit'
+import { CLOUD_SAVE_EXPECTED_USER_HEADER } from '@gekichumai/api-contract'
 
 export type SessionUser = NonNullable<ApiContext['user']>
 export type SessionApiContext = ApiContext & { user: SessionUser }
@@ -115,4 +116,36 @@ export const writeConcurrency = (limit: number) => {
       else inFlight.delete(key)
     }
   })
+}
+/**
+ * Binds a cloud save request to the account it was started for (§10): the web names that account in
+ * `X-DXRating-Expected-User`, and a session that is another account now (signed in from another tab while the request
+ * was on its way) is answered 409 CONFLICT `{ reason: 'ACCOUNT_MISMATCH' }` before anything is read or written.
+ * `required` (writes): a request without the header is answered 400, so no write can skip the binding. Reads check
+ * it when sent. Use after `requireSession` and `requireFeature`, so a disabled feature stays a 404.
+ */
+export const requireExpectedUser = (required: boolean) =>
+  os.$context<SessionApiContext>().middleware(({ context, next }) => {
+    const expected = context.reqHeaders?.get(CLOUD_SAVE_EXPECTED_USER_HEADER) ?? null
+    const failure = expectedUserFailure(expected, context.user.id, required)
+    if (failure) throw failure
+    return next()
+  })
+
+/** The error for a request bound to `expected` (the header, `null` when absent) with the session `userId` */
+export function expectedUserFailure(
+  expected: string | null,
+  userId: string,
+  required: boolean,
+): ORPCError<string, unknown> | null {
+  if (expected === null || expected === '') {
+    return required ? new ORPCError('BAD_REQUEST', { message: `${CLOUD_SAVE_EXPECTED_USER_HEADER} is required` }) : null
+  }
+  if (expected !== userId) {
+    return new ORPCError('CONFLICT', {
+      message: 'The session belongs to another account',
+      data: { reason: 'ACCOUNT_MISMATCH' },
+    })
+  }
+  return null
 }

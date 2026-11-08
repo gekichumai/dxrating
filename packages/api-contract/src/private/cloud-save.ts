@@ -39,6 +39,9 @@ import { z } from 'zod'
  * - `NOT_FOUND` (404): the save or job does not exist, belongs to someone else, or cloud save is off for the user.
  * - `CONFLICT` (409) `{ reason: 'SAVE_LIMIT', limit }`: the user already has the maximum number of saves.
  * - `CONFLICT` (409) `{ reason: 'IMPORT_IN_PROGRESS', jobId }`: a job of the same source is running on the save.
+ * - `CONFLICT` (409) `{ reason: 'ACCOUNT_MISMATCH' }`: the request names another account than the session's in
+ *   {@link CLOUD_SAVE_EXPECTED_USER_HEADER} (§10: the session changed while the request was on its way).
+ * - `BAD_REQUEST` (400): a write without {@link CLOUD_SAVE_EXPECTED_USER_HEADER}.
  * - `PRECONDITION_FAILED` (412) `{ revision }`: `replace` with a stale `ifRevision`.
  * - `TOO_MANY_REQUESTS` (429) `{ retryAfterSeconds }`: rate limited (§11.4); the response also sets `Retry-After`.
  *
@@ -46,6 +49,15 @@ import { z } from 'zod'
  * iterators (see `/functions/fetch-net-records/v1/:region`), so that route is a direct Hono route described by
  * {@link CLOUD_SAVE_NET_IMPORT_ROUTE} and its schemas below, not a procedure of {@link cloudSaveContract}.
  */
+
+/**
+ * The account a cloud save request is for: the web sends the user ID it started the work for, and the server answers
+ * 409 `ACCOUNT_MISMATCH` when the session belongs to someone else. Another tab can sign another account in on the
+ * same browser at any moment, so a check on the client before sending always leaves a window; the server compares at
+ * the moment it acts. Required on every write (saves, mutations, replace, imports, the NET import, the beta opt-in);
+ * checked when sent on reads.
+ */
+export const CLOUD_SAVE_EXPECTED_USER_HEADER = 'X-DXRating-Expected-User'
 
 /** Every cloud-save route carries these tags; `internal` keeps it out of `/spec.json` */
 export const CLOUD_SAVE_ROUTE_TAGS = ['internal', 'cloud-save']
@@ -570,6 +582,7 @@ const RateLimitedErrorDataSchema = z.object({ retryAfterSeconds: z.number().int(
 export const CloudSaveErrorDataSchemas = {
   saveLimit: z.object({ reason: z.literal('SAVE_LIMIT'), limit: z.number().int().positive() }),
   importInProgress: z.object({ reason: z.literal('IMPORT_IN_PROGRESS'), jobId: ImportJobIdSchema }),
+  accountMismatch: z.object({ reason: z.literal('ACCOUNT_MISMATCH') }),
   preconditionFailed: z.object({ revision: RevisionSchema }),
   rateLimited: RateLimitedErrorDataSchema,
 }

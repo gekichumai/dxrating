@@ -505,7 +505,7 @@
   "auth_accountSecurity_featureDevices": "Tingnan kung saan ka naka-sign in at i-sign out ang ibang device",
   "auth_accountSecurity_featuresLabel": "Mga magagawa mo rito",
   "auth_privacy_title": "Privacy Policy",
-  "auth_privacy_updated": "Huling na-update: Oktubre 30, 2026",
+  "auth_privacy_updated": "Huling na-update: Nobyembre 3, 2026",
   "auth_privacy_intro_heading": "Panimula",
   "auth_privacy_intro_body": "Ipinapaliwanag ng Privacy Policy na ito kung paano namin kinokolekta, ginagamit, pinoproseso, at ibinubunyag ang iyong impormasyon kapag ginamit mo ang aming serbisyo.",
   "auth_privacy_collect_heading": "Impormasyong kinokolekta namin",
@@ -537,7 +537,7 @@
   "auth_privacy_retention_heading": "Pagtatago ng data",
   "auth_privacy_retention_body": "Itatago lang namin ang iyong impormasyon hangga't kailangan para matupad ang mga layuning nakasaad sa Privacy Policy na ito. Itatago at gagamitin namin ang iyong impormasyon hangga't kailangan para sumunod sa aming mga legal na obligasyon, lutasin ang mga alitan, at ipatupad ang aming mga patakaran.",
   "auth_privacy_deletion_heading": "Pag-delete ng account",
-  "auth_privacy_deletion_p1": "Puwede mong permanenteng i-delete ang iyong account mula sa account screen sa DXRating app. Inaalis ng pag-delete ang iyong profile, mga komento, mga tag at tag attachment, mga alias, mga session, mga passkey, mga naka-link na paraan ng pag-sign in, at mga naka-link na LXNS credential. Binabawi ang mga naka-link na OAuth grant kapag sinusuportahan ng provider. Pagkatapos mag-delete, puwede kang gumawa ng bagong account gamit ang parehong email address o sign-in provider.",
+  "auth_privacy_deletion_p1": "Maaari mong permanenteng i-delete ang iyong account mula sa account screen sa DXRating app. Tinatanggal ng pag-delete ang iyong profile, mga komento, tag at tag attachment, alias, session, passkey, naka-link na paraan ng pag-sign in, naka-link na LXNS credentials, at ang iyong mga cloud save kasama ang kasaysayan ng score, import log at rating snapshot. Binabawbawi ang mga naka-link na OAuth grant kapag sinusuportahan ito ng provider. Pagkatapos ng pag-delete, makakagawa ka ng bagong account gamit ang parehong email address o sign-in provider.",
   "auth_privacy_deletion_p2": "Agad na inaalis ang data ng account sa aming mga aktibong system. Maaaring may matirang kopya sa mga naka-encrypt na backup hanggang awtomatikong ma-delete ang mga backup na iyon, o kapag kinakailangan ng batas ang pagtatago.",
   "auth_privacy_rights_heading": "Ang iyong mga karapatan",
   "auth_privacy_rights_body": "May mga sumusunod kang karapatan sa proteksyon ng data:",
@@ -1531,5 +1531,160 @@
         "countPlural=*": "{countNumber} hindi kilalang chart"
       }
     }
-  ]
+  ],
+  "auth_privacy_cloud_heading": "Cloud save (beta)",
+  "auth_privacy_cloud_p1": "Kapag in-on mo ang cloud save, iniimbak namin ang iyong mga score sa iyong account para magamit ito ng iyong mga device: para sa bawat chart, ang iyong resulta at kung saan ito galing (halimbawa, import mula sa maimai DX NET, LXNS o Diving-Fish, isang file, o entry na tinype mo), kasama ang account ID na ibinibigay ng provider, gaya ng iyong friend code. Nag-iingat din kami ng log ng bawat import (ang source, oras, bilang at hash ng natanggap na data) at ng mga rating snapshot na sine-save ng iyong mga device pagkatapos mag-sync.",
+  "auth_privacy_cloud_p2": "Kapag nag-import ka mula sa maimai DX NET, ginagamit lang ang password ng iyong SEGA ID para mag-sign in para sa import na iyon. Hindi ito kailanman iniimbak o nila-log.",
+  "auth_privacy_cloud_p3": "Iniingatan ang mga cloud save hanggang i-delete mo ang mga ito o ang iyong account. Bawat chart ay nagtatabi ng hanggang 20 naunang resulta, at bawat save ay hanggang 100 rating snapshot. Naaalala nang 90 araw ang mga na-delete na record para maalis din ito ng iyong ibang device, at itinatabi nang 30 araw ang talaan ng bawat sync request mula sa iyong mga device para ang request na nadalawang beses na ipinadala ay isang beses lang ma-apply. Ang save na dinelete mo ay buong buburahin pagkalipas ng 30 araw.",
+  "ratingCalculator_cloudSave_descriptionInactive": "Itago ang iyong mga score sa iyong DXRating account at gamitin ang mga ito sa lahat ng iyong device.",
+  "ratingCalculator_cloudSave_choose_title": "Gumamit ng cloud save",
+  "ratingCalculator_cloudSave_choose_sectionDescription": "May backup sa ibang device? Pumili ng cloud save na gagamitin sa browser na ito.",
+  "ratingCalculator_cloudSave_choose_open": "Gumamit ng cloud save",
+  "ratingCalculator_cloudSave_choose_dialogTitle": "Pumili ng cloud save",
+  "ratingCalculator_cloudSave_choose_dialogDescription": "Ipapakita at ie-edit ng browser na ito ang save na pipiliin mo. Walang ia-upload.",
+  "ratingCalculator_cloudSave_choose_empty": "Wala pang cloud save ang iyong account. Para gumawa ng isa, magdagdag ng mga score sa device na ito, tapos i-back up ang mga ito.",
+  "ratingCalculator_cloudSave_choose_cancel": "Kanselahin",
+  "ratingCalculator_cloudSave_migration_title": "I-back up sa cloud",
+  "ratingCalculator_cloudSave_migration_prompt": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "I-back up sa iyong account ang {formatted} record sa device na ito?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_backUp": "I-back up sa cloud",
+  "ratingCalculator_cloudSave_migration_notNow": "Huwag muna",
+  "ratingCalculator_cloudSave_migration_sectionDescription": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "May {countNumber} record na naka-save sa device na ito ang browser na ito. I-back up ito para ma-sync sa lahat ng iyong device.",
+        "countPlural=*": "May {countNumber} record na naka-save sa device na ito ang browser na ito. I-back up ito para ma-sync sa lahat ng iyong device."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_saveName": "Mga score ko",
+  "ratingCalculator_cloudSave_migration_freshDescription": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Ise-save sa iyong account ang {formatted} record mo at isi-sync ito sa lahat ng iyong device."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingTitle": "May cloud save ka na",
+  "ratingCalculator_cloudSave_migration_cloudRecords": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} record"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingDescription": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input region",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Ang “{name}” ({region}) ay may {cloudRecords}. Ang device na ito ay may {formatted} record."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_changed": "Nagbago ang cloud save na ito sa ibang device. Suriin itong muli bago magpatuloy.",
+  "ratingCalculator_cloudSave_migration_merge": "Pagsamahin (itago ang pinakamaganda sa dalawa)",
+  "ratingCalculator_cloudSave_migration_mergeDescription": "Pinananatili ng bawat chart ang mas mataas na score nito mula sa device na ito o sa cloud.",
+  "ratingCalculator_cloudSave_migration_cloudOnly": "Cloud lang ang gamitin",
+  "ratingCalculator_cloudSave_migration_cloudOnlyDescription": "Lumipat sa cloud save. Itatabi sa backup ang mga record ng device na ito at hindi ia-upload.",
+  "ratingCalculator_cloudSave_migration_mergeAction": "Pagsamahin",
+  "ratingCalculator_cloudSave_migration_cloudOnlyAction": "Gamitin ang cloud save",
+  "ratingCalculator_cloudSave_migration_advanced": "Advanced",
+  "ratingCalculator_cloudSave_migration_replaceDescription": "Palitan ang bawat record sa cloud save ng mga record sa device na ito.",
+  "ratingCalculator_cloudSave_migration_replace": "Palitan ang cloud ng device na ito",
+  "ratingCalculator_cloudSave_migration_replaceTitle": "Palitan ang cloud save?",
+  "ratingCalculator_cloudSave_migration_replaceWarning": [
+    {
+      "declarations": [
+        "input count",
+        "input cloudRecords",
+        "input name",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Papalitan ng {formatted} record mula sa device na ito ang {cloudRecords} sa “{name}”. Makukuha rin ng iyong ibang device ang pagbabago. Hindi na ito mababawi."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceWarningEmpty": [
+    {
+      "declarations": ["input count", "input name", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Walang record ang “{name}”. Makukuha nito ang {formatted} record mula sa device na ito, at makukuha rin ng iyong ibang device ang pagbabago."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceConfirm": "Palitan ang cloud save",
+  "ratingCalculator_cloudSave_migration_runningTitle": "Nagba-back up…",
+  "ratingCalculator_cloudSave_migration_running": "Ina-upload ang iyong mga record. Panatilihing bukas ang page na ito.",
+  "ratingCalculator_cloudSave_migration_switchingTitle": "Lumilipat sa iyong cloud save…",
+  "ratingCalculator_cloudSave_migration_switching": "Nagtatabi ng kopya ng mga record ng device na ito sa browser na ito.",
+  "ratingCalculator_cloudSave_migration_doneTitle": "Na-back up na",
+  "ratingCalculator_cloudSave_migration_switchedTitle": "Gamit na ang iyong cloud save",
+  "ratingCalculator_cloudSave_migration_done": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} record ang nasa iyong cloud save na ngayon."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_doneCloudOnly": "Gamit na ng device na ito ang iyong cloud save.",
+  "ratingCalculator_cloudSave_migration_close": "Isara",
+  "ratingCalculator_cloudSave_migration_errorTitle": "Hindi ma-back up",
+  "ratingCalculator_cloudSave_migration_switchErrorTitle": "Hindi makalipat",
+  "ratingCalculator_cloudSave_migration_errorSafe": "Walang nagbago sa device na ito. Puwede kang sumubok muli anumang oras.",
+  "ratingCalculator_cloudSave_migration_errorUnchanged": "Walang nagbago sa device na ito.",
+  "ratingCalculator_cloudSave_migration_errors_saveLimit": "Naabot mo na ang pinakamaraming puwedeng cloud save, kaya hindi na makakagawa ng bago. Para mag-back up sa isa sa mga save mo, ilipat ang region ng game sa region ng save na iyon at buksan ulit ito.",
+  "ratingCalculator_cloudSave_migration_errors_generic": "Hindi natapos ang upload. Suriin ang iyong koneksyon at subukang muli.",
+  "ratingCalculator_cloudSave_migration_errors_switchGeneric": "May nangyaring mali. Subukang muli.",
+  "ratingCalculator_cloudSave_migration_unverifiedNote": "Ise-save bilang “hindi verified” ang mga record na nasa device na ito na. Mag-import ulit mula sa maimai NET, LXNS o Diving-Fish para makakuha ng mga verified na record.",
+  "ratingCalculator_cloudSave_migration_backupNote": "Mananatili nang 30 araw sa browser na ito ang kopya ng mga record ng device na ito. Kapag naka-sign out ka, patuloy na gagamitin ng device na ito ang sarili nitong mga record.",
+  "ratingCalculator_cloudSave_optIn_title": "Cloud save (beta)",
+  "ratingCalculator_cloudSave_optIn_description": "Itago ang iyong mga score sa iyong account at i-sync ang mga ito sa lahat ng iyong device.",
+  "ratingCalculator_cloudSave_optIn_consentTitle": "I-on ang cloud save (beta)?",
+  "ratingCalculator_cloudSave_optIn_consentIntro": "Sa cloud save, iniimbak ng DXRating ang mga sumusunod sa iyong account:",
+  "ratingCalculator_cloudSave_optIn_consentStored": "Ang iyong mga score, ang mga account ID ng provider na pinag-i-import-an mo (gaya ng iyong friend code), isang log ng bawat import na may hash ng na-import, at ang mga rating snapshot na sine-save ng iyong mga device pagkatapos mag-sync.",
+  "ratingCalculator_cloudSave_optIn_consentRetention": "Iniingatan hanggang i-delete mo ang mga ito o ang iyong account. Bawat chart ay nagtatabi ng hanggang 20 naunang resulta, at bawat save ay hanggang 100 rating snapshot. Naaalala nang 90 araw ang mga na-delete na record para maalis din ito ng iyong ibang device, at itinatabi nang 30 araw ang talaan ng bawat sync request mula sa iyong mga device. Ang save na dinelete mo ay buong buburahin pagkalipas ng 30 araw.",
+  "ratingCalculator_cloudSave_optIn_consentPasswords": "Hindi kailanman iniimbak ang password ng iyong SEGA ID.",
+  "ratingCalculator_cloudSave_optIn_consentLeaving": "Hindi mo pa mapapatay ang beta sa app. Tinatanggal ng pag-delete ng iyong DXRating account (sa DXRating app) ang lahat ng ito sa aming mga system; ipinapaliwanag ng privacy policy ang tungkol sa mga backup.",
+  "ratingCalculator_cloudSave_optIn_consentPrivacy": "Magbasa pa sa {#privacy}privacy policy{/privacy}.",
+  "ratingCalculator_cloudSave_optIn_agree": "Sumang-ayon at i-on",
+  "ratingCalculator_cloudSave_optIn_sending": "Ino-on ang cloud save…",
+  "ratingCalculator_cloudSave_optIn_success": "Naka-on na ang cloud save.",
+  "ratingCalculator_cloudSave_optIn_error": "Hindi ma-on ang cloud save. Subukang muli.",
+  "ratingCalculator_cloudSave_export_title": "Iyong data",
+  "ratingCalculator_cloudSave_export_description": "I-download bilang JSON file ang bawat cloud save kasama ang mga record nito, kung saan galing ang mga ito, kasaysayan ng import at mga rating snapshot.",
+  "ratingCalculator_cloudSave_export_button": "I-download ang data ko",
+  "ratingCalculator_cloudSave_export_preparing": "Inihahanda…",
+  "ratingCalculator_cloudSave_export_success": "Dina-download ang iyong data.",
+  "ratingCalculator_cloudSave_export_error": "Hindi ma-download ang iyong data. Subukang muli.",
+  "ratingCalculator_cloudSave_export_rateLimited": "Ilang beses mo nang na-download ang iyong data ngayong araw. Subukang muli bukas.",
+  "ratingCalculator_cloudSave_exportImport_pickTitle": "Pumili ng save na i-import",
+  "ratingCalculator_cloudSave_exportImport_pickDescription": "May higit sa isang save ang file na ito.",
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Na-import bilang “hindi verified”: ipinapakita ang pinagmulan ng mga record ayon sa sinasabi ng file."
 }

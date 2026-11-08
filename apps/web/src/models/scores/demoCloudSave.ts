@@ -8,6 +8,7 @@ import {
 } from '@gekichumai/maimai-domain'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
 import type { CloudSaveController, CloudSaveUi } from './CloudSaveUiContext'
+import type { CloudSaveActions } from './cloudSaveActions'
 import {
   type CloudRecord,
   cloudRecordToPlayEntry,
@@ -445,5 +446,62 @@ export function createDemoCloudSave(
       listSaves: async () => DEMO_SAVES,
       setActiveSaveId: (saveId) => repository.switchSave(saveId),
     },
+  }
+}
+/**
+ * The dev demo flows of `?demoCloudSaveFlow=` (screenshots of the migration dialog, the beta opt-in and "Use a cloud
+ * save")
+ */
+export type DemoCloudSaveFlow = 'migrate' | 'migrate-existing' | 'opt-in' | 'choose-save'
+
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/**
+ * Cloud save account actions that never leave the browser: the migration finds no save (`migrate`) or the demo's
+ * main save (`migrate-existing`), and every request answers after a short pause
+ */
+export function createDemoCloudSaveActions(flow: DemoCloudSaveFlow): CloudSaveActions {
+  const migrationJob = (saveId: string, fetched: number) =>
+    job({
+      id: 'dimp_demo_migration',
+      saveId,
+      source: 'legacy-local',
+      fetchedBy: 'client',
+      trigger: 'migration',
+      sourceAccountId: null,
+      sourceAccountKind: null,
+      rawPayloadSha256: DEMO_HASH,
+      counts: counts({ fetched, inserted: fetched }),
+    })
+  return {
+    migration: {
+      listSaves: async () => {
+        await pause(300)
+        return flow === 'migrate-existing' ? [DEMO_SAVES[0]!] : []
+      },
+      createSave: async (input) => {
+        await pause(300)
+        return { ...DEMO_SAVES[0]!, name: input.name, region: input.region, revision: 0, recordCount: 0 }
+      },
+      clientImport: async (input) => {
+        await pause(800)
+        return { job: migrationJob(input.id, input.records.length), revision: 1 }
+      },
+      replace: async (input) => {
+        await pause(800)
+        return { job: migrationJob(input.id, input.records.length), revision: input.ifRevision + 1 }
+      },
+      getImportJob: async () => migrationJob(DEMO_SAVES[0]!.id, 0),
+    },
+    optIn: async () => {
+      await pause(300)
+      return { cloudSave: true, serverImports: true, optInAvailable: false }
+    },
+    exportData: async () => ({
+      blob: new Blob([JSON.stringify({ format: 'dxrating-cloud-save-export', version: 1, saves: [] })], {
+        type: 'application/json',
+      }),
+      fileName: 'dxrating-cloud-export-demo.json',
+    }),
   }
 }

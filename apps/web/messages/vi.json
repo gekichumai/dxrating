@@ -505,7 +505,7 @@
   "auth_accountSecurity_featureDevices": "Xem bạn đang đăng nhập ở đâu và đăng xuất các thiết bị khác",
   "auth_accountSecurity_featuresLabel": "Bạn có thể làm gì ở đây",
   "auth_privacy_title": "Chính sách quyền riêng tư",
-  "auth_privacy_updated": "Cập nhật lần cuối: 30 tháng 10, 2026",
+  "auth_privacy_updated": "Cập nhật lần cuối: 3 tháng 11, 2026",
   "auth_privacy_intro_heading": "Giới thiệu",
   "auth_privacy_intro_body": "Chính sách quyền riêng tư này giải thích cách chúng tôi thu thập, sử dụng, xử lý và tiết lộ thông tin của bạn khi bạn dùng dịch vụ.",
   "auth_privacy_collect_heading": "Thông tin chúng tôi thu thập",
@@ -537,7 +537,7 @@
   "auth_privacy_retention_heading": "Thời hạn lưu trữ dữ liệu",
   "auth_privacy_retention_body": "Chúng tôi chỉ lưu thông tin của bạn trong thời gian cần thiết cho các mục đích nêu trong Chính sách quyền riêng tư này. Chúng tôi sẽ lưu và dùng thông tin của bạn ở mức cần thiết để tuân thủ nghĩa vụ pháp lý, giải quyết tranh chấp và thực thi chính sách.",
   "auth_privacy_deletion_heading": "Xóa tài khoản",
-  "auth_privacy_deletion_p1": "Bạn có thể xóa vĩnh viễn tài khoản từ màn hình tài khoản trong ứng dụng DXRating. Việc xóa sẽ gỡ hồ sơ, bình luận, tag và các lượt gắn tag, tên gọi khác, phiên đăng nhập, khóa truy cập, các phương thức đăng nhập đã liên kết và thông tin đăng nhập LXNS đã liên kết. Các quyền OAuth đã liên kết sẽ bị thu hồi nếu nhà cung cấp hỗ trợ. Sau khi xóa, bạn có thể tạo tài khoản mới với cùng địa chỉ email hoặc nhà cung cấp đăng nhập.",
+  "auth_privacy_deletion_p1": "Bạn có thể xóa vĩnh viễn tài khoản từ màn hình tài khoản trong ứng dụng DXRating. Việc xóa sẽ gỡ hồ sơ, bình luận, tag và các tag đã gắn, tên gọi khác, phiên đăng nhập, khóa truy cập, các phương thức đăng nhập đã liên kết, thông tin LXNS đã liên kết, cùng các bản lưu đám mây với lịch sử điểm, nhật ký nhập và bản chụp rating của bạn. Các quyền OAuth đã liên kết sẽ bị thu hồi khi nhà cung cấp hỗ trợ. Sau khi xóa, bạn có thể tạo tài khoản mới bằng cùng địa chỉ email hoặc nhà cung cấp đăng nhập.",
   "auth_privacy_deletion_p2": "Dữ liệu tài khoản bị xóa khỏi hệ thống đang hoạt động ngay lập tức. Bản sao còn sót có thể vẫn nằm trong các bản sao lưu đã mã hóa cho đến khi chúng tự động bị xóa, hoặc khi luật yêu cầu lưu trữ.",
   "auth_privacy_rights_heading": "Quyền của bạn",
   "auth_privacy_rights_body": "Bạn có các quyền bảo vệ dữ liệu sau:",
@@ -1524,5 +1524,159 @@
         "countPlural=*": "{countNumber} chart không xác định"
       }
     }
-  ]
+  ],
+  "auth_privacy_cloud_heading": "Lưu đám mây (beta)",
+  "auth_privacy_cloud_p1": "Nếu bạn bật lưu đám mây, chúng tôi lưu điểm của bạn trong tài khoản để các thiết bị có thể dùng chung: với mỗi chart là kết quả của bạn và nguồn gốc của nó (ví dụ nhập từ maimai DX NET, LXNS hoặc Diving-Fish, từ tệp, hoặc do bạn tự nhập), kèm ID tài khoản mà nhà cung cấp đó cấp cho bạn, chẳng hạn friend code. Chúng tôi cũng lưu nhật ký của mỗi lần nhập (nguồn, thời gian, số lượng và mã băm của dữ liệu nhận được) cùng các bản chụp rating mà thiết bị của bạn lưu sau khi đồng bộ.",
+  "auth_privacy_cloud_p2": "Khi bạn nhập từ maimai DX NET, mật khẩu SEGA ID của bạn chỉ được dùng để đăng nhập cho lần nhập đó. Mật khẩu không bao giờ được lưu hay ghi log.",
+  "auth_privacy_cloud_p3": "Bản lưu đám mây được giữ cho đến khi bạn xóa chúng hoặc xóa tài khoản. Mỗi chart giữ tối đa 20 kết quả trước đó, và mỗi bản lưu giữ tối đa 100 bản chụp rating. Bản ghi đã xóa được ghi nhớ trong 90 ngày để các thiết bị khác của bạn cũng xóa theo, và bản ghi về mỗi yêu cầu đồng bộ từ thiết bị của bạn được giữ 30 ngày để yêu cầu gửi hai lần chỉ được áp dụng một lần. Bản lưu bạn xóa sẽ bị xóa vĩnh viễn sau 30 ngày.",
+  "ratingCalculator_cloudSave_descriptionInactive": "Lưu điểm trong tài khoản DXRating và dùng trên mọi thiết bị của bạn.",
+  "ratingCalculator_cloudSave_choose_title": "Dùng bản lưu đám mây",
+  "ratingCalculator_cloudSave_choose_sectionDescription": "Đã sao lưu trên thiết bị khác? Chọn một bản lưu đám mây để dùng trên trình duyệt này.",
+  "ratingCalculator_cloudSave_choose_open": "Dùng bản lưu đám mây",
+  "ratingCalculator_cloudSave_choose_dialogTitle": "Chọn bản lưu đám mây",
+  "ratingCalculator_cloudSave_choose_dialogDescription": "Trình duyệt này sẽ hiển thị và chỉnh sửa bản lưu bạn chọn. Không có gì được tải lên.",
+  "ratingCalculator_cloudSave_choose_empty": "Tài khoản của bạn chưa có bản lưu đám mây nào. Để tạo, hãy thêm điểm trên thiết bị này rồi sao lưu.",
+  "ratingCalculator_cloudSave_choose_cancel": "Hủy",
+  "ratingCalculator_cloudSave_migration_title": "Sao lưu lên đám mây",
+  "ratingCalculator_cloudSave_migration_prompt": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Sao lưu {formatted} bản ghi trên thiết bị này vào tài khoản của bạn?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_backUp": "Sao lưu lên đám mây",
+  "ratingCalculator_cloudSave_migration_notNow": "Để sau",
+  "ratingCalculator_cloudSave_migration_sectionDescription": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Trình duyệt này có {countNumber} bản ghi lưu trên thiết bị. Hãy sao lưu để đồng bộ giữa các thiết bị của bạn."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_saveName": "Điểm của tôi",
+  "ratingCalculator_cloudSave_migration_freshDescription": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} bản ghi của bạn sẽ được lưu vào tài khoản và đồng bộ giữa các thiết bị."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingTitle": "Bạn đã có một bản lưu đám mây",
+  "ratingCalculator_cloudSave_migration_cloudRecords": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} bản ghi"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingDescription": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input region",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "“{name}” ({region}) có {cloudRecords}. Thiết bị này có {formatted} bản ghi."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_changed": "Bản lưu đám mây này đã thay đổi trên một thiết bị khác. Hãy kiểm tra lại trước khi tiếp tục.",
+  "ratingCalculator_cloudSave_migration_merge": "Gộp (giữ điểm tốt nhất của cả hai)",
+  "ratingCalculator_cloudSave_migration_mergeDescription": "Mỗi chart giữ điểm tốt hơn giữa thiết bị này và đám mây.",
+  "ratingCalculator_cloudSave_migration_cloudOnly": "Chỉ dùng đám mây",
+  "ratingCalculator_cloudSave_migration_cloudOnlyDescription": "Chuyển sang bản lưu đám mây. Các bản ghi của thiết bị này được giữ trong bản sao lưu, không tải lên.",
+  "ratingCalculator_cloudSave_migration_mergeAction": "Gộp",
+  "ratingCalculator_cloudSave_migration_cloudOnlyAction": "Dùng bản lưu đám mây",
+  "ratingCalculator_cloudSave_migration_advanced": "Nâng cao",
+  "ratingCalculator_cloudSave_migration_replaceDescription": "Thay mọi bản ghi trong bản lưu đám mây bằng các bản ghi trên thiết bị này.",
+  "ratingCalculator_cloudSave_migration_replace": "Thay đám mây bằng thiết bị này",
+  "ratingCalculator_cloudSave_migration_replaceTitle": "Thay thế bản lưu đám mây?",
+  "ratingCalculator_cloudSave_migration_replaceWarning": [
+    {
+      "declarations": [
+        "input count",
+        "input cloudRecords",
+        "input name",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{cloudRecords} trong “{name}” sẽ được thay bằng {formatted} bản ghi từ thiết bị này. Các thiết bị khác của bạn cũng sẽ nhận thay đổi này. Không thể hoàn tác."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceWarningEmpty": [
+    {
+      "declarations": ["input count", "input name", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "“{name}” chưa có bản ghi nào. Nó sẽ nhận {formatted} bản ghi từ thiết bị này, và các thiết bị khác của bạn cũng sẽ nhận thay đổi này."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceConfirm": "Thay thế bản lưu đám mây",
+  "ratingCalculator_cloudSave_migration_runningTitle": "Đang sao lưu…",
+  "ratingCalculator_cloudSave_migration_running": "Đang tải các bản ghi của bạn lên. Hãy giữ trang này mở.",
+  "ratingCalculator_cloudSave_migration_switchingTitle": "Đang chuyển sang bản lưu đám mây…",
+  "ratingCalculator_cloudSave_migration_switching": "Đang giữ một bản sao các bản ghi của thiết bị này trong trình duyệt.",
+  "ratingCalculator_cloudSave_migration_doneTitle": "Đã sao lưu",
+  "ratingCalculator_cloudSave_migration_switchedTitle": "Đang dùng bản lưu đám mây",
+  "ratingCalculator_cloudSave_migration_done": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} bản ghi đã nằm trong bản lưu đám mây của bạn."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_doneCloudOnly": "Thiết bị này giờ dùng bản lưu đám mây của bạn.",
+  "ratingCalculator_cloudSave_migration_close": "Đóng",
+  "ratingCalculator_cloudSave_migration_errorTitle": "Không sao lưu được",
+  "ratingCalculator_cloudSave_migration_switchErrorTitle": "Không chuyển được",
+  "ratingCalculator_cloudSave_migration_errorSafe": "Không có gì trên thiết bị này bị thay đổi. Bạn có thể thử lại bất cứ lúc nào.",
+  "ratingCalculator_cloudSave_migration_errorUnchanged": "Không có gì trên thiết bị này bị thay đổi.",
+  "ratingCalculator_cloudSave_migration_errors_saveLimit": "Bạn đã đạt số bản lưu đám mây tối đa nên không thể tạo thêm. Để sao lưu vào một bản lưu hiện có, hãy chuyển khu vực game sang khu vực của bản lưu đó rồi mở lại.",
+  "ratingCalculator_cloudSave_migration_errors_generic": "Việc tải lên chưa hoàn tất. Hãy kiểm tra kết nối rồi thử lại.",
+  "ratingCalculator_cloudSave_migration_errors_switchGeneric": "Đã xảy ra lỗi. Hãy thử lại.",
+  "ratingCalculator_cloudSave_migration_unverifiedNote": "Các bản ghi đã có trên thiết bị này được lưu là “chưa xác minh”. Hãy nhập lại từ maimai NET, LXNS hoặc Diving-Fish để có bản ghi đã xác minh.",
+  "ratingCalculator_cloudSave_migration_backupNote": "Một bản sao các bản ghi của thiết bị này được giữ trong trình duyệt trong 30 ngày. Khi bạn đã đăng xuất, thiết bị này tiếp tục dùng các bản ghi của riêng nó.",
+  "ratingCalculator_cloudSave_optIn_title": "Lưu đám mây (beta)",
+  "ratingCalculator_cloudSave_optIn_description": "Lưu điểm trong tài khoản và đồng bộ giữa các thiết bị của bạn.",
+  "ratingCalculator_cloudSave_optIn_consentTitle": "Bật lưu đám mây (beta)?",
+  "ratingCalculator_cloudSave_optIn_consentIntro": "Với lưu đám mây, DXRating lưu những thông tin sau trong tài khoản của bạn:",
+  "ratingCalculator_cloudSave_optIn_consentStored": "Điểm của bạn, ID tài khoản của các nhà cung cấp bạn nhập từ đó (chẳng hạn friend code), nhật ký của mỗi lần nhập kèm mã băm của dữ liệu đã nhập, và các bản chụp rating mà thiết bị của bạn lưu sau khi đồng bộ.",
+  "ratingCalculator_cloudSave_optIn_consentRetention": "Được giữ cho đến khi bạn xóa chúng hoặc xóa tài khoản. Mỗi chart giữ tối đa 20 kết quả trước đó, và mỗi bản lưu giữ tối đa 100 bản chụp rating. Bản ghi đã xóa được ghi nhớ trong 90 ngày để các thiết bị khác của bạn cũng xóa theo, và bản ghi về mỗi yêu cầu đồng bộ từ thiết bị của bạn được giữ 30 ngày. Bản lưu bạn xóa sẽ bị xóa vĩnh viễn sau 30 ngày.",
+  "ratingCalculator_cloudSave_optIn_consentPasswords": "Mật khẩu SEGA ID của bạn không bao giờ được lưu.",
+  "ratingCalculator_cloudSave_optIn_consentLeaving": "Hiện bạn chưa thể tắt bản beta trong ứng dụng. Xóa tài khoản DXRating (trong ứng dụng DXRating) sẽ gỡ toàn bộ những dữ liệu này khỏi hệ thống của chúng tôi; chính sách quyền riêng tư giải thích về bản sao lưu.",
+  "ratingCalculator_cloudSave_optIn_consentPrivacy": "Xem thêm trong {#privacy}chính sách quyền riêng tư{/privacy}.",
+  "ratingCalculator_cloudSave_optIn_agree": "Đồng ý và bật",
+  "ratingCalculator_cloudSave_optIn_sending": "Đang bật lưu đám mây…",
+  "ratingCalculator_cloudSave_optIn_success": "Đã bật lưu đám mây.",
+  "ratingCalculator_cloudSave_optIn_error": "Không bật được lưu đám mây. Hãy thử lại.",
+  "ratingCalculator_cloudSave_export_title": "Dữ liệu của bạn",
+  "ratingCalculator_cloudSave_export_description": "Tải xuống mọi bản lưu đám mây cùng bản ghi, nguồn gốc, lịch sử nhập và bản chụp rating dưới dạng tệp JSON.",
+  "ratingCalculator_cloudSave_export_button": "Tải dữ liệu của tôi",
+  "ratingCalculator_cloudSave_export_preparing": "Đang chuẩn bị…",
+  "ratingCalculator_cloudSave_export_success": "Dữ liệu của bạn đang được tải xuống.",
+  "ratingCalculator_cloudSave_export_error": "Không tải được dữ liệu của bạn. Hãy thử lại.",
+  "ratingCalculator_cloudSave_export_rateLimited": "Hôm nay bạn đã tải dữ liệu nhiều lần. Hãy thử lại vào ngày mai.",
+  "ratingCalculator_cloudSave_exportImport_pickTitle": "Chọn bản lưu để nhập",
+  "ratingCalculator_cloudSave_exportImport_pickDescription": "Tệp này có nhiều hơn một bản lưu.",
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Được nhập là “chưa xác minh”: nguồn gốc của các bản ghi được hiển thị theo khai báo của tệp."
 }

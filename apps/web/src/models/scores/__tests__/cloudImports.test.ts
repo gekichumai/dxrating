@@ -110,6 +110,20 @@ describe('entriesToImportRecords', () => {
     ])
   })
 
+  it('sends a best 50 hint only where the calculator honours it (Diving-Fish)', () => {
+    const { records } = entriesToImportRecords(
+      [
+        { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 99, source: { provider: 'lxns', best50Bucket: 'b15' } },
+        { sheetId: 'dsht_5mk3yr8gme', achievementRate: 98, source: { provider: 'diving-fish', best50Bucket: 'b35' } },
+      ],
+      { source: 'dxrating-json', claimedSource: null },
+    )
+    expect(records.map((record) => [record.sheetId, record.best50Bucket])).toEqual([
+      ['dsht_e5nsvt8k2a', null],
+      ['dsht_5mk3yr8gme', 'b35'],
+    ])
+  })
+
   it('keeps the better flags of duplicates with an equal achievement, in either order', () => {
     const pick = (entries: PlayEntry[]) =>
       entriesToImportRecords(entries, { source: 'dxrating-json', claimedSource: null }).records.map((record) => [

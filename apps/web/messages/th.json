@@ -505,7 +505,7 @@
   "auth_accountSecurity_featureDevices": "ดูว่าเข้าสู่ระบบอยู่ที่ไหนบ้าง และออกจากระบบอุปกรณ์อื่น",
   "auth_accountSecurity_featuresLabel": "สิ่งที่ทำได้ที่นี่",
   "auth_privacy_title": "นโยบายความเป็นส่วนตัว",
-  "auth_privacy_updated": "อัปเดตล่าสุด: 30 ตุลาคม 2026",
+  "auth_privacy_updated": "อัปเดตล่าสุด: 3 พฤศจิกายน 2026",
   "auth_privacy_intro_heading": "บทนำ",
   "auth_privacy_intro_body": "นโยบายความเป็นส่วนตัวนี้อธิบายวิธีที่เราเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลของคุณเมื่อคุณใช้บริการของเรา",
   "auth_privacy_collect_heading": "ข้อมูลที่เราเก็บรวบรวม",
@@ -537,7 +537,7 @@
   "auth_privacy_retention_heading": "การเก็บรักษาข้อมูล",
   "auth_privacy_retention_body": "เราจะเก็บรักษาข้อมูลของคุณเท่าที่จำเป็นเพื่อให้บรรลุวัตถุประสงค์ที่ระบุไว้ในนโยบายความเป็นส่วนตัวนี้เท่านั้น เราจะเก็บรักษาและใช้ข้อมูลของคุณเท่าที่จำเป็นเพื่อปฏิบัติตามข้อผูกพันทางกฎหมาย ระงับข้อพิพาท และบังคับใช้นโยบายของเรา",
   "auth_privacy_deletion_heading": "การลบบัญชี",
-  "auth_privacy_deletion_p1": "คุณลบบัญชีอย่างถาวรได้จากหน้าบัญชีในแอป DXRating การลบจะนำโปรไฟล์ ความคิดเห็น แท็กและการติดแท็ก ชื่อเรียก เซสชัน พาสคีย์ วิธีเข้าสู่ระบบที่เชื่อมไว้ และข้อมูลรับรอง LXNS ที่เชื่อมไว้ออกทั้งหมด สิทธิ์ OAuth ที่เชื่อมไว้จะถูกเพิกถอนหากผู้ให้บริการรองรับ หลังจากลบแล้ว คุณสร้างบัญชีใหม่ด้วยอีเมลหรือผู้ให้บริการเข้าสู่ระบบเดิมได้",
+  "auth_privacy_deletion_p1": "คุณลบบัญชีอย่างถาวรได้จากหน้าบัญชีในแอป DXRating การลบจะนำโปรไฟล์ ความคิดเห็น แท็กและการติดแท็ก ชื่อเรียก เซสชัน พาสคีย์ วิธีเข้าสู่ระบบที่เชื่อมไว้ ข้อมูลรับรอง LXNS ที่เชื่อมไว้ และเซฟบนคลาวด์พร้อมประวัติสกอร์ บันทึกการนำเข้า และสแนปช็อตเรตติ้งออกทั้งหมด การให้สิทธิ์ OAuth ที่เชื่อมไว้จะถูกเพิกถอนหากผู้ให้บริการรองรับ หลังลบแล้ว คุณสร้างบัญชีใหม่ด้วยอีเมลหรือผู้ให้บริการเข้าสู่ระบบเดิมได้",
   "auth_privacy_deletion_p2": "ข้อมูลบัญชีจะถูกลบออกจากระบบที่ใช้งานอยู่ของเราทันที สำเนาที่เหลืออาจยังอยู่ในข้อมูลสำรองที่เข้ารหัสไว้จนกว่าข้อมูลสำรองนั้นจะถูกลบโดยอัตโนมัติ หรือเมื่อกฎหมายกำหนดให้ต้องเก็บรักษา",
   "auth_privacy_rights_heading": "สิทธิ์ของคุณ",
   "auth_privacy_rights_body": "คุณมีสิทธิ์ในการคุ้มครองข้อมูลดังต่อไปนี้:",
@@ -1524,5 +1524,159 @@
         "countPlural=*": "ชาร์ตที่ไม่รู้จัก {countNumber} ชาร์ต"
       }
     }
-  ]
+  ],
+  "auth_privacy_cloud_heading": "เซฟบนคลาวด์ (เบต้า)",
+  "auth_privacy_cloud_p1": "หากคุณเปิดใช้เซฟบนคลาวด์ เราจะเก็บสกอร์ของคุณไว้ในบัญชีเพื่อให้อุปกรณ์ต่างๆ ใช้ร่วมกันได้ โดยเก็บผลของแต่ละชาร์ตและที่มาของผลนั้น (เช่น นำเข้าจาก maimai DX NET, LXNS หรือ Diving-Fish จากไฟล์ หรือที่คุณกรอกเอง) พร้อม ID บัญชีที่ผู้ให้บริการนั้นกำหนดให้ เช่น รหัสเพื่อน นอกจากนี้เรายังเก็บบันทึกของการนำเข้าแต่ละครั้ง (แหล่งที่มา เวลา จำนวน และแฮชของข้อมูลที่ได้รับ) และสแนปช็อตเรตติ้งที่อุปกรณ์ของคุณบันทึกหลังการซิงค์",
+  "auth_privacy_cloud_p2": "เมื่อคุณนำเข้าจาก maimai DX NET รหัสผ่าน SEGA ID ของคุณจะถูกใช้เพื่อเข้าสู่ระบบสำหรับการนำเข้าครั้งนั้นเท่านั้น และจะไม่ถูกจัดเก็บหรือบันทึกไว้เลย",
+  "auth_privacy_cloud_p3": "เซฟบนคลาวด์จะถูกเก็บไว้จนกว่าคุณจะลบเซฟหรือบัญชี แต่ละชาร์ตเก็บผลก่อนหน้าได้สูงสุด 20 รายการ และแต่ละเซฟเก็บสแนปช็อตเรตติ้งได้สูงสุด 100 รายการ เรคคอร์ดที่ถูกลบจะถูกจำไว้ 90 วันเพื่อให้อุปกรณ์อื่นของคุณลบตามด้วย และบันทึกคำขอซิงค์จากอุปกรณ์ของคุณจะถูกเก็บไว้ 30 วัน เพื่อให้คำขอที่ส่งซ้ำถูกนำไปใช้เพียงครั้งเดียว เซฟที่คุณลบจะถูกลบถาวรหลังจากนั้น 30 วัน",
+  "ratingCalculator_cloudSave_descriptionInactive": "เก็บสกอร์ไว้ในบัญชี DXRating และใช้ได้ทุกอุปกรณ์",
+  "ratingCalculator_cloudSave_choose_title": "ใช้เซฟบนคลาวด์",
+  "ratingCalculator_cloudSave_choose_sectionDescription": "สำรองไว้บนอุปกรณ์อื่นแล้วใช่ไหม? เลือกเซฟบนคลาวด์เพื่อใช้ในเบราว์เซอร์นี้",
+  "ratingCalculator_cloudSave_choose_open": "ใช้เซฟบนคลาวด์",
+  "ratingCalculator_cloudSave_choose_dialogTitle": "เลือกเซฟบนคลาวด์",
+  "ratingCalculator_cloudSave_choose_dialogDescription": "เบราว์เซอร์นี้จะแสดงและแก้ไขเซฟที่คุณเลือก ไม่มีการอัปโหลดอะไร",
+  "ratingCalculator_cloudSave_choose_empty": "บัญชีของคุณยังไม่มีเซฟบนคลาวด์ หากต้องการสร้าง ให้เพิ่มสกอร์บนอุปกรณ์นี้ แล้วสำรองขึ้นคลาวด์",
+  "ratingCalculator_cloudSave_choose_cancel": "ยกเลิก",
+  "ratingCalculator_cloudSave_migration_title": "สำรองขึ้นคลาวด์",
+  "ratingCalculator_cloudSave_migration_prompt": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "สำรอง {formatted} เรคคอร์ดบนอุปกรณ์นี้ไปยังบัญชีของคุณไหม?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_backUp": "สำรองขึ้นคลาวด์",
+  "ratingCalculator_cloudSave_migration_notNow": "ไว้ทีหลัง",
+  "ratingCalculator_cloudSave_migration_sectionDescription": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "เบราว์เซอร์นี้มี {countNumber} เรคคอร์ดที่บันทึกไว้ในอุปกรณ์ สำรองขึ้นคลาวด์เพื่อซิงค์ข้ามอุปกรณ์ของคุณ"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_saveName": "สกอร์ของฉัน",
+  "ratingCalculator_cloudSave_migration_freshDescription": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} เรคคอร์ดของคุณจะถูกบันทึกลงบัญชีและซิงค์ข้ามอุปกรณ์ของคุณ"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingTitle": "คุณมีเซฟบนคลาวด์อยู่แล้ว",
+  "ratingCalculator_cloudSave_migration_cloudRecords": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} เรคคอร์ด"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingDescription": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input region",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "“{name}” ({region}) มี {cloudRecords} ส่วนอุปกรณ์นี้มี {formatted} เรคคอร์ด"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_changed": "เซฟบนคลาวด์นี้ถูกเปลี่ยนจากอุปกรณ์อื่น ตรวจสอบอีกครั้งก่อนดำเนินการต่อ",
+  "ratingCalculator_cloudSave_migration_merge": "รวม (เก็บส่วนที่ดีที่สุดของทั้งสองฝั่ง)",
+  "ratingCalculator_cloudSave_migration_mergeDescription": "แต่ละชาร์ตจะเก็บสกอร์ที่ดีกว่าระหว่างอุปกรณ์นี้กับคลาวด์",
+  "ratingCalculator_cloudSave_migration_cloudOnly": "ใช้เฉพาะคลาวด์",
+  "ratingCalculator_cloudSave_migration_cloudOnlyDescription": "เปลี่ยนไปใช้เซฟบนคลาวด์ เรคคอร์ดของอุปกรณ์นี้จะถูกเก็บไว้เป็นข้อมูลสำรอง ไม่ถูกอัปโหลด",
+  "ratingCalculator_cloudSave_migration_mergeAction": "รวม",
+  "ratingCalculator_cloudSave_migration_cloudOnlyAction": "ใช้เซฟบนคลาวด์",
+  "ratingCalculator_cloudSave_migration_advanced": "ขั้นสูง",
+  "ratingCalculator_cloudSave_migration_replaceDescription": "แทนที่เรคคอร์ดทั้งหมดในเซฟบนคลาวด์ด้วยเรคคอร์ดบนอุปกรณ์นี้",
+  "ratingCalculator_cloudSave_migration_replace": "แทนที่คลาวด์ด้วยอุปกรณ์นี้",
+  "ratingCalculator_cloudSave_migration_replaceTitle": "แทนที่เซฟบนคลาวด์ไหม?",
+  "ratingCalculator_cloudSave_migration_replaceWarning": [
+    {
+      "declarations": [
+        "input count",
+        "input cloudRecords",
+        "input name",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{cloudRecords} ใน “{name}” จะถูกแทนที่ด้วย {formatted} เรคคอร์ดจากอุปกรณ์นี้ อุปกรณ์อื่นของคุณจะได้รับการเปลี่ยนแปลงนี้ด้วย และย้อนกลับไม่ได้"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceWarningEmpty": [
+    {
+      "declarations": ["input count", "input name", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "“{name}” ยังไม่มีเรคคอร์ด จะได้รับ {formatted} เรคคอร์ดจากอุปกรณ์นี้ และอุปกรณ์อื่นของคุณจะได้รับการเปลี่ยนแปลงนี้ด้วย"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceConfirm": "แทนที่เซฟบนคลาวด์",
+  "ratingCalculator_cloudSave_migration_runningTitle": "กำลังสำรอง…",
+  "ratingCalculator_cloudSave_migration_running": "กำลังอัปโหลดเรคคอร์ดของคุณ โปรดเปิดหน้านี้ค้างไว้",
+  "ratingCalculator_cloudSave_migration_switchingTitle": "กำลังเปลี่ยนไปใช้เซฟบนคลาวด์…",
+  "ratingCalculator_cloudSave_migration_switching": "กำลังเก็บสำเนาเรคคอร์ดของอุปกรณ์นี้ไว้ในเบราว์เซอร์นี้",
+  "ratingCalculator_cloudSave_migration_doneTitle": "สำรองแล้ว",
+  "ratingCalculator_cloudSave_migration_switchedTitle": "ตอนนี้ใช้เซฟบนคลาวด์แล้ว",
+  "ratingCalculator_cloudSave_migration_done": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} เรคคอร์ดอยู่ในเซฟบนคลาวด์ของคุณแล้ว"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_doneCloudOnly": "อุปกรณ์นี้ใช้เซฟบนคลาวด์ของคุณแล้ว",
+  "ratingCalculator_cloudSave_migration_close": "ปิด",
+  "ratingCalculator_cloudSave_migration_errorTitle": "สำรองไม่สำเร็จ",
+  "ratingCalculator_cloudSave_migration_switchErrorTitle": "เปลี่ยนไม่สำเร็จ",
+  "ratingCalculator_cloudSave_migration_errorSafe": "ไม่มีอะไรบนอุปกรณ์นี้เปลี่ยนแปลง คุณลองอีกครั้งได้ทุกเมื่อ",
+  "ratingCalculator_cloudSave_migration_errorUnchanged": "ไม่มีอะไรบนอุปกรณ์นี้เปลี่ยนแปลง",
+  "ratingCalculator_cloudSave_migration_errors_saveLimit": "คุณมีเซฟบนคลาวด์ครบจำนวนสูงสุดแล้ว จึงสร้างเซฟใหม่ไม่ได้ หากต้องการสำรองลงเซฟที่มีอยู่ ให้เปลี่ยนภูมิภาคของเกมเป็นภูมิภาคของเซฟนั้น แล้วเปิดหน้านี้อีกครั้ง",
+  "ratingCalculator_cloudSave_migration_errors_generic": "อัปโหลดไม่เสร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
+  "ratingCalculator_cloudSave_migration_errors_switchGeneric": "เกิดข้อผิดพลาด ลองอีกครั้ง",
+  "ratingCalculator_cloudSave_migration_unverifiedNote": "เรคคอร์ดที่มีอยู่บนอุปกรณ์นี้จะถูกบันทึกเป็น “ยังไม่ได้ยืนยัน” นำเข้าจาก maimai NET, LXNS หรือ Diving-Fish อีกครั้งเพื่อให้ได้เรคคอร์ดที่ยืนยันแล้ว",
+  "ratingCalculator_cloudSave_migration_backupNote": "สำเนาเรคคอร์ดของอุปกรณ์นี้จะอยู่ในเบราว์เซอร์นี้ 30 วัน เมื่อออกจากระบบ อุปกรณ์นี้จะกลับไปใช้เรคคอร์ดของตัวเอง",
+  "ratingCalculator_cloudSave_optIn_title": "เซฟบนคลาวด์ (เบต้า)",
+  "ratingCalculator_cloudSave_optIn_description": "เก็บสกอร์ไว้ในบัญชีและซิงค์ข้ามอุปกรณ์ของคุณ",
+  "ratingCalculator_cloudSave_optIn_consentTitle": "เปิดใช้เซฟบนคลาวด์ (เบต้า) ไหม?",
+  "ratingCalculator_cloudSave_optIn_consentIntro": "เมื่อใช้เซฟบนคลาวด์ DXRating จะเก็บสิ่งต่อไปนี้ไว้ในบัญชีของคุณ:",
+  "ratingCalculator_cloudSave_optIn_consentStored": "สกอร์ของคุณ ID บัญชีของผู้ให้บริการที่คุณนำเข้า (เช่น รหัสเพื่อน) บันทึกการนำเข้าแต่ละครั้งพร้อมแฮชของข้อมูลที่นำเข้า และสแนปช็อตเรตติ้งที่อุปกรณ์ของคุณบันทึกหลังการซิงค์",
+  "ratingCalculator_cloudSave_optIn_consentRetention": "เก็บไว้จนกว่าคุณจะลบข้อมูลหรือบัญชี แต่ละชาร์ตเก็บผลก่อนหน้าได้สูงสุด 20 รายการ และแต่ละเซฟเก็บสแนปช็อตเรตติ้งได้สูงสุด 100 รายการ เรคคอร์ดที่ถูกลบจะถูกจำไว้ 90 วันเพื่อให้อุปกรณ์อื่นของคุณลบตามด้วย และบันทึกคำขอซิงค์จากอุปกรณ์ของคุณจะถูกเก็บไว้ 30 วัน เซฟที่คุณลบจะถูกลบถาวรหลังจากนั้น 30 วัน",
+  "ratingCalculator_cloudSave_optIn_consentPasswords": "รหัสผ่าน SEGA ID ของคุณจะไม่ถูกจัดเก็บ",
+  "ratingCalculator_cloudSave_optIn_consentLeaving": "ตอนนี้ยังปิดเบต้าในแอปเองไม่ได้ การลบบัญชี DXRating (ในแอป DXRating) จะนำข้อมูลทั้งหมดนี้ออกจากระบบของเรา ส่วนข้อมูลสำรองมีอธิบายไว้ในนโยบายความเป็นส่วนตัว",
+  "ratingCalculator_cloudSave_optIn_consentPrivacy": "อ่านเพิ่มเติมใน{#privacy}นโยบายความเป็นส่วนตัว{/privacy}",
+  "ratingCalculator_cloudSave_optIn_agree": "ยอมรับและเปิดใช้",
+  "ratingCalculator_cloudSave_optIn_sending": "กำลังเปิดใช้เซฟบนคลาวด์…",
+  "ratingCalculator_cloudSave_optIn_success": "เปิดใช้เซฟบนคลาวด์แล้ว",
+  "ratingCalculator_cloudSave_optIn_error": "เปิดใช้เซฟบนคลาวด์ไม่ได้ ลองอีกครั้ง",
+  "ratingCalculator_cloudSave_export_title": "ข้อมูลของคุณ",
+  "ratingCalculator_cloudSave_export_description": "ดาวน์โหลดเซฟบนคลาวด์ทั้งหมดพร้อมเรคคอร์ด ที่มา ประวัติการนำเข้า และสแนปช็อตเรตติ้ง เป็นไฟล์ JSON",
+  "ratingCalculator_cloudSave_export_button": "ดาวน์โหลดข้อมูลของฉัน",
+  "ratingCalculator_cloudSave_export_preparing": "กำลังเตรียม…",
+  "ratingCalculator_cloudSave_export_success": "กำลังดาวน์โหลดข้อมูลของคุณ",
+  "ratingCalculator_cloudSave_export_error": "ดาวน์โหลดข้อมูลของคุณไม่ได้ ลองอีกครั้ง",
+  "ratingCalculator_cloudSave_export_rateLimited": "วันนี้คุณดาวน์โหลดข้อมูลหลายครั้งแล้ว ลองอีกครั้งพรุ่งนี้",
+  "ratingCalculator_cloudSave_exportImport_pickTitle": "เลือกเซฟที่จะนำเข้า",
+  "ratingCalculator_cloudSave_exportImport_pickDescription": "ไฟล์นี้มีมากกว่าหนึ่งเซฟ",
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "นำเข้าเป็น “ยังไม่ได้ยืนยัน”: ที่มาของเรคคอร์ดแสดงตามที่ไฟล์ระบุ"
 }
