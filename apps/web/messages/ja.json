@@ -1506,6 +1506,16 @@
       }
     }
   ],
+  "ratingCalculator_cloudSave_import_divingFishMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} 件の記録は Diving-Fish 側のプライバシー設定で非公開のため、インポートできません。",
+        "countPlural=*": "{countNumber} 件の記録は Diving-Fish 側のプライバシー設定で非公開のため、インポートできません。"
+      }
+    }
+  ],
   "ratingCalculator_cloudSave_importConfirm_leftOut": [
     {
       "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
@@ -1530,6 +1540,16 @@
       "match": {
         "countPlural=one": "不明な譜面 {countNumber}",
         "countPlural=*": "不明な譜面 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "プライバシー設定で非公開 {countNumber}",
+        "countPlural=*": "プライバシー設定で非公開 {countNumber}"
       }
     }
   ],

@@ -80,6 +80,7 @@ const job = (fields: Partial<ImportJobDTO> = {}): ImportJobDTO => ({
     keptUserEdit: 0,
     skippedDeleted: 0,
     skippedUnknownSheet: 0,
+    skippedMasked: 0,
     rejected: 0,
   },
   errorCode: null,

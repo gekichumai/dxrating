@@ -19,6 +19,7 @@ const COUNT_KEYS = [
   'keptUserEdit',
   'skippedDeleted',
   'skippedUnknownSheet',
+  'skippedMasked',
   'rejected',
 ] as const satisfies (keyof ImportCountsDTO)[]
 

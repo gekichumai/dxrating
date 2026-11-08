@@ -120,15 +120,20 @@ export const beginServerImport = (
     }),
   )
 
-/** The import counts of normalizer warnings: unknown charts (and UTAGE, which no save stores) vs. invalid values */
+/**
+ * The import counts of normalizer warnings: unknown charts (and UTAGE, which no save stores), rows the provider
+ * masked for the player's privacy, and invalid values
+ */
 export function warningCounts(warnings: readonly ImportWarning[]) {
   let skippedUnknownSheet = 0
+  let skippedMasked = 0
   let rejected = 0
   for (const warning of warnings) {
     if (warning.code === 'invalid-achievement') rejected += 1
+    else if (warning.code === 'masked-score') skippedMasked += 1
     else skippedUnknownSheet += 1
   }
-  return { skippedUnknownSheet, rejected }
+  return { skippedUnknownSheet, skippedMasked, rejected }
 }
 
 /** The merge records of a normalized import */
@@ -225,8 +230,9 @@ export const runServerImport = <R>(
     // the sweeper failed the job meanwhile
     if (!recorded) return yield* new ServerImportFailure({ code: 'abandoned' })
     const extraCounts: Partial<ImportCountsDTO> = {
-      fetched: skipped.skippedUnknownSheet + skipped.rejected,
+      fetched: skipped.skippedUnknownSheet + skipped.skippedMasked + skipped.rejected,
       skippedUnknownSheet: skipped.skippedUnknownSheet,
+      skippedMasked: skipped.skippedMasked,
       rejected: skipped.rejected,
     }
     return yield* completeImportJob(database, {

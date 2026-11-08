@@ -61,6 +61,7 @@ export const EMPTY_COUNTS: ImportCountsDTO = {
   keptUserEdit: 0,
   skippedDeleted: 0,
   skippedUnknownSheet: 0,
+  skippedMasked: 0,
   rejected: 0,
 }
 

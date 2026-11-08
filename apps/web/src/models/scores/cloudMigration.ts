@@ -446,7 +446,7 @@ export interface MigrationOutcome {
 
 /** What the job did not keep of the upload */
 const serverOmissions = (job: ImportJobDTO) =>
-  job.counts.rejected + job.counts.skippedDeleted + job.counts.skippedUnknownSheet
+  job.counts.rejected + job.counts.skippedDeleted + job.counts.skippedUnknownSheet + (job.counts.skippedMasked ?? 0)
 
 const ATTEMPTS = 3
 /** How long a running import of the save is waited for */

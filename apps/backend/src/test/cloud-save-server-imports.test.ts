@@ -875,7 +875,11 @@ describe('Diving-Fish server import', () => {
       })
 
     const masked = await run()
-    expect(masked.body.job).toMatchObject({ status: 'succeeded', counts: { fetched: 2, inserted: 0, rejected: 2 } })
+    expect(masked.body.job).toMatchObject({
+      status: 'succeeded',
+      // Counted apart from malformed rows: the player's privacy setting, which the web names as such
+      counts: { fetched: 2, inserted: 0, skippedMasked: 2, rejected: 0 },
+    })
     expect(await records(user.saveId)).toHaveLength(0)
 
     // Unmasked, the exact score is stored

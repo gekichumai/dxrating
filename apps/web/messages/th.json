@@ -1500,6 +1500,15 @@
       }
     }
   ],
+  "ratingCalculator_cloudSave_import_divingFishMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} เรคคอร์ดถูกซ่อนด้วยการตั้งค่าความเป็นส่วนตัวของผู้เล่นบน Diving-Fish จึงนำเข้าไม่ได้"
+      }
+    }
+  ],
   "ratingCalculator_cloudSave_importConfirm_leftOut": [
     {
       "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
@@ -1522,6 +1531,15 @@
       "selectors": ["countPlural"],
       "match": {
         "countPlural=*": "ชาร์ตที่ไม่รู้จัก {countNumber} ชาร์ต"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "ซ่อนด้วยการตั้งค่าความเป็นส่วนตัว {countNumber} รายการ"
       }
     }
   ],

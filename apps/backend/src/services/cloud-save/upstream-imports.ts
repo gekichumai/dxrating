@@ -172,7 +172,7 @@ export const fetchDivingFishImport = (query: DivingFishQuery) =>
         }
         // The public B50 applies the player's score mask (an AP at 100.6% comes back as 101%, anything under 10% as 0%)
         // and says nothing about it, but a masked row has no DX score. A real play has one (short of nothing but Goods
-        // or Misses), so such a row is left out as rejected rather than stored as an exact verified score that
+        // or Misses), so such a row is left out (counted as `skippedMasked`) rather than stored as an exact verified score that
         // keep-best merging would never lower again
         if (!row.data.dxScore) {
           masked += 1
@@ -195,9 +195,10 @@ export const fetchDivingFishImport = (query: DivingFishQuery) =>
           message: 'Malformed Diving-Fish row',
           row: null,
         }))
+        // Counted apart (`skippedMasked`): the player's privacy setting, not a malformed row
         const hidden = Array.from({ length: masked }, () => ({
           provider: 'diving-fish' as const,
-          code: 'invalid-achievement' as const,
+          code: 'masked-score' as const,
           message: 'Diving-Fish row without a DX score (score mask): the achievement may be rounded',
           row: null,
         }))

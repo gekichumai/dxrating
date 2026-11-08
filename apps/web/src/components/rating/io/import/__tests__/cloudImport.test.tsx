@@ -16,7 +16,13 @@ import type {
 } from '@/models/scores/ScoreRepository'
 import { importReviewController } from '@/models/scores/importReview'
 import { migrateLegacyImportEntries } from '@/catalog/savedDataMigration'
-import { importFallbackEntries, importFileEntries, importPath } from '../cloudImport'
+import {
+  IMPORT_COUNT_MESSAGES,
+  importFallbackEntries,
+  importFileEntries,
+  importPath,
+  maskedRowsNotice,
+} from '../cloudImport'
 import { importFromNETRecords } from '../importFromNETRecords'
 import { netImportProgress } from '../netImportProgressStore'
 import { m } from '@/paraglide/messages'
@@ -49,6 +55,7 @@ const job: ImportJobDTO = {
     keptUserEdit: 0,
     skippedDeleted: 0,
     skippedUnknownSheet: 0,
+    skippedMasked: 0,
     rejected: 0,
   },
   errorCode: null,
@@ -77,6 +84,27 @@ function fakeCloud(serverImportsEnabled = true, failure?: Error) {
 afterEach(() => {
   localStorage.clear()
   netImportProgress.update(null)
+})
+
+describe('maskedRowsNotice', () => {
+  const withMasked = (skippedMasked: number | undefined) =>
+    ({ ...job, counts: { ...job.counts, skippedMasked } }) as ImportJobDTO
+
+  it('names rows the player hid on Diving-Fish apart from failed ones, in every locale', () => {
+    expect(maskedRowsNotice(withMasked(3), 'en')).toBe(
+      "3 records are hidden by the player's privacy settings on Diving-Fish and can't be imported.",
+    )
+    expect(maskedRowsNotice(withMasked(1), 'en')).toBe(
+      "1 record is hidden by the player's privacy settings on Diving-Fish and can't be imported.",
+    )
+    expect(maskedRowsNotice(withMasked(2), 'zh-Hans')).toContain('隐私')
+    expect(IMPORT_COUNT_MESSAGES.skippedMasked({ count: 2 }, { locale: 'en' })).toBe('2 hidden by privacy settings')
+  })
+
+  it('says nothing when no row was hidden, or when the backend does not count them yet', () => {
+    expect(maskedRowsNotice(withMasked(0), 'en')).toBeNull()
+    expect(maskedRowsNotice(withMasked(undefined), 'en')).toBeNull()
+  })
 })
 
 describe('importPath', () => {

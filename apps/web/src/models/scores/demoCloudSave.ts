@@ -149,6 +149,7 @@ const counts = (overrides: Partial<ImportJobDTO['counts']>): ImportJobDTO['count
   keptUserEdit: 0,
   skippedDeleted: 0,
   skippedUnknownSheet: 0,
+  skippedMasked: 0,
   rejected: 0,
   ...overrides,
 })
@@ -190,6 +191,15 @@ const DEMO_JOBS: ImportJobDTO[] = [
     sourceAccountId: null,
     startedAt: '2026-10-25T18:00:00.000Z',
     counts: counts({ fetched: 640, inserted: 620, skippedUnknownSheet: 20 }),
+  }),
+  job({
+    // A Diving-Fish player who hides part of their scores: those rows are counted apart, not as rejected
+    id: 'dimp_demo_diving_fish',
+    source: 'diving-fish',
+    sourceAccountId: 'demo-player',
+    sourceAccountKind: 'df_username',
+    startedAt: '2026-10-25T09:30:00.000Z',
+    counts: counts({ fetched: 50, inserted: 12, improved: 6, unchanged: 28, skippedMasked: 4 }),
   }),
   job({
     id: 'dimp_demo_failed',
