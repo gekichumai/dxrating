@@ -13,8 +13,8 @@
   "dependencies": {
     "@gekichumai/admin-api": "workspace:*",
     "@gekichumai/api-contract": "workspace:*",
-    "@mantine/core": "9.7.3",
-    "@mantine/hooks": "9.7.3",
+    "@mantine/core": "9.7.4",
+    "@mantine/hooks": "9.7.4",
     "@orpc/client": "catalog:",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
@@ -27,11 +27,11 @@
     "@testing-library/react": "^16.3.2",
     "@types/react": "catalog:",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.1.2",
+    "@vitejs/plugin-react": "^6.2.1",
     "happy-dom": "^20.9.0",
     "typescript": "7.0.2",
     "vite": "^8.3.5",
     "vitest": "catalog:",
-    "wrangler": "^4.156.0"
+    "wrangler": "^4.157.0"
   }
 }
