@@ -1500,6 +1500,15 @@
       }
     }
   ],
+  "ratingCalculator_cloudSave_import_divingFishMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} catatan disembunyikan oleh pengaturan privasi pemain di Diving-Fish dan tidak bisa diimpor."
+      }
+    }
+  ],
   "ratingCalculator_cloudSave_importConfirm_leftOut": [
     {
       "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
@@ -1522,6 +1531,15 @@
       "selectors": ["countPlural"],
       "match": {
         "countPlural=*": "{countNumber} chart tidak dikenal"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} disembunyikan oleh pengaturan privasi"
       }
     }
   ],

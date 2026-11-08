@@ -1506,6 +1506,16 @@
       }
     }
   ],
+  "ratingCalculator_cloudSave_import_divingFishMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "有 {countNumber} 条记录因对方在水鱼（Diving-Fish）设置了隐私而被隐藏，无法导入。",
+        "countPlural=*": "有 {countNumber} 条记录因对方在水鱼（Diving-Fish）设置了隐私而被隐藏，无法导入。"
+      }
+    }
+  ],
   "ratingCalculator_cloudSave_importConfirm_leftOut": [
     {
       "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
@@ -1530,6 +1540,16 @@
       "match": {
         "countPlural=one": "未知谱面 {countNumber}",
         "countPlural=*": "未知谱面 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "因隐私设置隐藏 {countNumber}",
+        "countPlural=*": "因隐私设置隐藏 {countNumber}"
       }
     }
   ],

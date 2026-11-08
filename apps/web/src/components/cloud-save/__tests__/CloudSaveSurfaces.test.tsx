@@ -285,22 +285,28 @@ describe('ImportHistoryList', () => {
     const { ui } = demo()
     render(<ImportHistoryList />, { wrapper: withCloud(ui) })
     const items = await screen.findAllByRole('listitem')
-    expect(items).toHaveLength(4)
+    expect(items).toHaveLength(5)
     expect(items[0]?.textContent).toContain('maimai NET (JP)')
     expect(items[0]?.textContent).toContain('Automatic')
     // Formatted like the save list's counts
     expect(items[0]?.textContent).toContain('3 new · 5 improved · 1,278 unchanged · 1 kept your edit')
     expect(items[1]?.textContent).toContain('210 now verified')
     expect(items[2]?.textContent).toContain('20 unknown charts')
+    // Rows the player hid on Diving-Fish: named as such, not as rejected
+    expect(items[3]?.textContent).toContain('Diving-Fish')
+    expect(items[3]?.textContent).toContain('4 hidden by privacy settings')
+    expect(items[3]?.textContent).not.toContain('rejected')
     // In a few words, never the bare code, and no "try again" for a job in the past
-    expect(items[3]?.textContent).toContain("Didn't finish: maimai NET sign-in failed")
-    expect(items[3]?.textContent).not.toContain('INVALID_CREDENTIALS')
-    expect(items[3]?.textContent).not.toMatch(/try again/i)
+    expect(items[4]?.textContent).toContain("Didn't finish: maimai NET sign-in failed")
+    expect(items[4]?.textContent).not.toContain('INVALID_CREDENTIALS')
+    expect(items[4]?.textContent).not.toMatch(/try again/i)
   })
 
   it('names uploads of this browser as such, and counts one chart in the singular', async () => {
     const { repository, ui } = demo()
-    const [first, , , failed] = await repository.listImportJobs()
+    const jobs = await repository.listImportJobs()
+    const first = jobs[0]
+    const failed = jobs.find((job) => job.status === 'failed')
     vi.spyOn(repository, 'listImportJobs').mockResolvedValue([
       {
         ...first!,
@@ -337,7 +343,7 @@ describe('ImportHistoryList', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
 
-    expect(await screen.findAllByRole('listitem')).toHaveLength(4)
+    expect(await screen.findAllByRole('listitem')).toHaveLength(5)
     expect(listImportJobs).toHaveBeenCalledTimes(2)
   })
 })

@@ -29,7 +29,13 @@ import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
 import type { ImportJobDTO } from '@gekichumai/api-contract'
-import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
+import {
+  importFallbackEntries,
+  importPath,
+  runServerImportToEnd,
+  maskedRowsNotice,
+  summarizeImportJob,
+} from './cloudImport'
 import { importFailureMessage } from '@/components/cloud-save/importFailureMessage'
 import { ServerImportFailedError } from '@/models/scores/cloudImports'
 import { useLocale } from '@/i18n/LocaleProvider'
@@ -285,13 +291,19 @@ export const ImportDivingFishDialogContent: FC<{
                 loading: m.ratingCalculator_io_import_divingFish_loading({}, { locale }),
                 success: (count) => m.ratingCalculator_io_import_divingFish_success({ count }, { locale }),
                 serverSuccess: (job) =>
-                  m.ratingCalculator_cloudSave_import_success(
-                    {
-                      source: 'Diving-Fish',
-                      summary: summarizeImportJob(job, locale),
-                    },
-                    { locale },
-                  ),
+                  [
+                    m.ratingCalculator_cloudSave_import_success(
+                      {
+                        source: 'Diving-Fish',
+                        summary: summarizeImportJob(job, locale),
+                      },
+                      { locale },
+                    ),
+                    // Rows the player hid on Diving-Fish: said apart, as nothing here can import them
+                    maskedRowsNotice(job, locale),
+                  ]
+                    .filter(Boolean)
+                    .join(' '),
                 serverError: (code) => importFailureMessage(code, locale),
                 error: (error) => m.ratingCalculator_io_import_divingFish_error({ error }, { locale }),
                 cancelled: m.ratingCalculator_io_import_review_cancelled({}, { locale }),

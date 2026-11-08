@@ -1506,6 +1506,16 @@
       }
     }
   ],
+  "ratingCalculator_cloudSave_import_divingFishMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} record is hidden by the player's privacy settings on Diving-Fish and can't be imported.",
+        "countPlural=*": "{countNumber} records are hidden by the player's privacy settings on Diving-Fish and can't be imported."
+      }
+    }
+  ],
   "ratingCalculator_cloudSave_importConfirm_leftOut": [
     {
       "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
@@ -1530,6 +1540,16 @@
       "match": {
         "countPlural=one": "{countNumber} unknown chart",
         "countPlural=*": "{countNumber} unknown charts"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} hidden by privacy settings",
+        "countPlural=*": "{countNumber} hidden by privacy settings"
       }
     }
   ],

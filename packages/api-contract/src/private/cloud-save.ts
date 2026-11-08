@@ -207,6 +207,11 @@ export const ImportCountsDTOSchema = z.object({
   keptUserEdit: CountSchema.default(0),
   skippedDeleted: CountSchema.default(0),
   skippedUnknownSheet: CountSchema.default(0),
+  /**
+   * Rows the provider sent without their real values because the player hid them (Diving-Fish's score mask): left
+   * out, not stored as a rounded score. Defaults to 0, so a backend without the count reads as before
+   */
+  skippedMasked: CountSchema.default(0),
   rejected: CountSchema.default(0),
 })
 export type ImportCountsDTO = z.output<typeof ImportCountsDTOSchema>

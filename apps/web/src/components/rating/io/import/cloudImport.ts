@@ -110,6 +110,7 @@ export const IMPORT_COUNT_MESSAGES = {
   keptUserEdit: m.ratingCalculator_cloudSave_history_counts_keptUserEdit,
   skippedDeleted: m.ratingCalculator_cloudSave_history_counts_skippedDeleted,
   skippedUnknownSheet: m.ratingCalculator_cloudSave_history_counts_skippedUnknownSheet,
+  skippedMasked: m.ratingCalculator_cloudSave_history_counts_skippedMasked,
   rejected: m.ratingCalculator_cloudSave_history_counts_rejected,
 } satisfies Partial<
   Record<keyof ImportJobDTO['counts'], (inputs: { count: number }, options: { locale: Locale }) => string>
@@ -123,6 +124,16 @@ export function summarizeImportJob(job: ImportJobDTO, locale: Locale): string {
     .map((key) => IMPORT_COUNT_MESSAGES[key]({ count: job.counts[key] }, { locale }))
   return parts.length ? parts.join(' · ') : m.ratingCalculator_cloudSave_history_counts_none({}, { locale })
 }
+/**
+ * What a server import could not bring over because the player hid it (Diving-Fish's privacy setting, which sends
+ * those rows without their real values): said apart from rows that failed, as nothing on this side can fix it.
+ * `null` when there were none
+ */
+export function maskedRowsNotice(job: ImportJobDTO, locale: Locale): string | null {
+  const count = job.counts.skippedMasked ?? 0
+  return count > 0 ? m.ratingCalculator_cloudSave_import_divingFishMasked({ count }, { locale }) : null
+}
+
 /**
  * Toasts what a cloud file import left out: entries that match no chart, and entries the server's import schema
  * rejects (an out-of-range value…). Nothing for the local save.

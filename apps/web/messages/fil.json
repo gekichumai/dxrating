@@ -1505,6 +1505,16 @@
       }
     }
   ],
+  "ratingCalculator_cloudSave_import_divingFishMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} record ang nakatago dahil sa privacy settings ng player sa Diving-Fish, kaya hindi ito ma-import.",
+        "countPlural=*": "{countNumber} record ang nakatago dahil sa privacy settings ng player sa Diving-Fish, kaya hindi ito ma-import."
+      }
+    }
+  ],
   "ratingCalculator_cloudSave_importConfirm_leftOut": [
     {
       "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
@@ -1529,6 +1539,16 @@
       "match": {
         "countPlural=one": "{countNumber} hindi kilalang chart",
         "countPlural=*": "{countNumber} hindi kilalang chart"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} nakatago dahil sa privacy settings",
+        "countPlural=*": "{countNumber} nakatago dahil sa privacy settings"
       }
     }
   ],

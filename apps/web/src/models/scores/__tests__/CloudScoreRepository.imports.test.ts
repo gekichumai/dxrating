@@ -61,6 +61,7 @@ const counts = (overrides: Partial<ImportJobDTO['counts']> = {}): ImportJobDTO['
   keptUserEdit: 0,
   skippedDeleted: 0,
   skippedUnknownSheet: 0,
+  skippedMasked: 0,
   rejected: 0,
   ...overrides,
 })
