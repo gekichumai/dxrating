@@ -10,6 +10,7 @@ import {
   createChartOgImageHandler,
   formatInternalLevelLabelParts,
   getTitleLayout,
+  layoutFacts,
   resolveChartOgImageData,
   resolveChartOgImageDataEffect,
   resolveOgLocale,
@@ -301,6 +302,38 @@ describe('OG image locale', () => {
     expect(resolveOgLocale('zh-Hans')).toBe('zh-Hans')
     expect(resolveOgLocale('zh-hans')).toBe('en')
     expect(resolveOgLocale(undefined)).toBe('en')
+  })
+})
+
+describe('chart OG image facts row', () => {
+  it('keeps every fact within the column when the version and charter are long', () => {
+    // 君の知らない物語 DX EXPERT in Japanese, the longest version, and the longest charter of the catalog
+    const items: Array<[string, string]> = [
+      ['ノーツ数', '1122'],
+      ['BPM', '181'],
+      ['バージョン', 'maimaiでらっくす PLUS'],
+      ['譜面作者', 'サファ太 Vs. Safari Vs. Saf Vs. モリモリさふぁた'],
+    ]
+    const widths = layoutFacts(items, 568)
+
+    expect(widths.reduce((sum, width) => sum + width, 0) + 30 * (items.length - 1)).toBeLessThanOrEqual(568)
+    // Both text facts keep room for their label
+    expect(widths[2]).toBeGreaterThanOrEqual(19 * 5)
+    expect(widths[3]).toBeGreaterThanOrEqual(19 * 4)
+  })
+
+  it('gives short facts their natural width', () => {
+    const widths = layoutFacts(
+      [
+        ['Notes', '708'],
+        ['BPM', '126'],
+        ['Version', 'MAGiCAL'],
+        ['Charter', 'ぴちネコ'],
+      ],
+      568,
+    )
+
+    expect(widths[3]).toBe(4 * 28 + 2)
   })
 })
 

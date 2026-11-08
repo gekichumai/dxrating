@@ -12,7 +12,7 @@ import { fetchAssetEffect } from '../oneshot-renderer/assetFetcher'
 import { ChartOgCard, OG_FONT, OG_HEIGHT, OG_WIDTH, SongOgCard, type OgCardImages, type OgSheetBadge } from './card'
 import { resolveOgLocale, type OgLocale } from './labels'
 
-export { getTitleLayout } from './card'
+export { getTitleLayout, layoutFacts } from './card'
 export { OG_LOCALES, resolveOgLocale, type OgLocale } from './labels'
 
 export class ChartOgRenderError extends Data.TaggedError('ChartOgRenderError')<{

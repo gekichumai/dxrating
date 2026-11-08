@@ -268,11 +268,44 @@ function LevelChip({ sheet, width, tall }: { sheet: OgSheetBadge; width: number;
   )
 }
 
+const FACT_GAP = 30
+const FACT_LABEL_SIZE = 19
+const FACT_VALUE_SIZE = 28
+
+function estimateTextWidth(text: string, fontSize: number) {
+  return Math.ceil([...text].reduce((sum, char) => sum + estimateCharWidth(char), 0) * fontSize)
+}
+
+/**
+ * Widths for the facts row. Each fact keeps its natural width while the row fits; otherwise the text facts (version,
+ * charter, genre) share what the others leave, the shortest first, and cut their values with an ellipsis. A label
+ * never wraps.
+ */
+export function layoutFacts(items: Array<[string, string]>, width = CONTENT_WIDTH) {
+  const natural = items.map(([label, value]) =>
+    Math.max(estimateTextWidth(label, FACT_LABEL_SIZE), estimateTextWidth(value, FACT_VALUE_SIZE) + 2),
+  )
+  const isText = items.map(([, value]) => !/^\d+$/.test(value))
+  const widths = [...natural]
+  let available = width - FACT_GAP * (items.length - 1) - natural.reduce((sum, w, i) => sum + (isText[i] ? 0 : w), 0)
+  const textIndexes = items
+    .map((_, i) => i)
+    .filter((i) => isText[i])
+    .sort((a, b) => natural[a]! - natural[b]!)
+  textIndexes.forEach((index, position) => {
+    const share = Math.floor(available / (textIndexes.length - position))
+    widths[index] = Math.min(natural[index]!, share)
+    available -= widths[index]!
+  })
+  return widths
+}
+
 function Facts({ items }: { items: Array<[string, string]> }) {
+  const widths = layoutFacts(items)
   return (
     <div style={styles.facts}>
       {items.map(([label, value], index) => (
-        <div key={label} style={{ ...styles.fact, ...(index === items.length - 1 ? { flexShrink: 1 } : {}) }}>
+        <div key={label} style={{ ...styles.fact, width: widths[index] }}>
           <div style={styles.factLabel}>{label}</div>
           <div style={styles.factValue}>{value}</div>
         </div>
@@ -428,7 +461,7 @@ const styles = {
   },
   facts: {
     display: 'flex',
-    gap: 34,
+    gap: FACT_GAP,
     marginTop: 20,
     paddingTop: 16,
     borderTop: '2px solid rgba(255, 255, 255, 0.18)',
@@ -440,8 +473,12 @@ const styles = {
     minWidth: 0,
   },
   factLabel: {
+    display: 'block',
     color: TEXT_TERTIARY,
-    fontSize: 19,
+    fontSize: FACT_LABEL_SIZE,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
     fontWeight: 400,
     lineHeight: 1,
   },
@@ -449,7 +486,7 @@ const styles = {
     display: 'block',
     marginTop: 8,
     color: TEXT,
-    fontSize: 28,
+    fontSize: FACT_VALUE_SIZE,
     fontWeight: 700,
     lineHeight: 1.1,
     whiteSpace: 'nowrap',
