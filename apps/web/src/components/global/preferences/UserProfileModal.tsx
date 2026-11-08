@@ -8,7 +8,10 @@ import IconMdiClose from '~icons/mdi/close'
 import IconMdiLogout from '~icons/mdi/logout'
 import IconMdiLinkVariant from '~icons/mdi/link-variant'
 import IconMdiShield from '~icons/mdi/shield-outline'
+import IconMdiCloudOutline from '~icons/mdi/cloud-outline'
+import { CloudSaveSection, useHasCloudSaveSection } from '../../cloud-save/CloudSaveSection'
 import { authClient } from '../../../lib/auth-client'
+import { useActiveSave } from '@/models/scores/ActiveSaveContext'
 import { useIsLargeDevice } from '../../../utils/breakpoints'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 import { ConnectedAccountsSection } from './ConnectedAccountsSection'
@@ -18,13 +21,20 @@ import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
 
-type Section = 'profile' | 'accounts' | 'security'
+type Section = 'profile' | 'accounts' | 'security' | 'cloud-save'
 
 const SECTIONS: { key: Section; icon: FC<{ className?: string }>; label: PlainMessage }[] = [
   { key: 'profile', icon: IconMdiAccount, label: m.auth_userProfile_profile },
   { key: 'accounts', icon: IconMdiLinkVariant, label: m.auth_userProfile_accounts_title },
   { key: 'security', icon: IconMdiShield, label: m.auth_userProfile_security },
 ]
+
+// Only while a cloud save is active, cloud save is on for the user, or the beta opt-in is offered
+const CLOUD_SAVE_SECTION = {
+  key: 'cloud-save' as const,
+  icon: IconMdiCloudOutline,
+  label: m.ratingCalculator_cloudSave_title,
+}
 
 // A section switch is a frequent interaction: short, on --ease-out. Under reduced motion MotionConfig (theme
 // provider) drops the y offset and keeps the fade
@@ -39,15 +49,20 @@ const NAV_ITEM_CLASS =
 
 const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const locale = useLocale()
-  const [activeSection, setActiveSection] = useState<Section>('profile')
+  const hasCloudSaveSection = useHasCloudSaveSection()
+  const sections = hasCloudSaveSection ? [...SECTIONS, CLOUD_SAVE_SECTION] : SECTIONS
+  const [selectedSection, setActiveSection] = useState<Section>('profile')
+  // The cloud save section goes away with the cloud save
+  const activeSection = sections.some((section) => section.key === selectedSection) ? selectedSection : 'profile'
   const [direction, setDirection] = useState(0)
   const isLargeDevice = useIsLargeDevice()
   const { data: sessionData } = authClient.useSession()
   const confirmLogout = useConfirmDialog()
+  const activeSave = useActiveSave()
 
   const handleSectionChange = (section: Section) => {
-    const currentIdx = SECTIONS.findIndex((s) => s.key === activeSection)
-    const nextIdx = SECTIONS.findIndex((s) => s.key === section)
+    const currentIdx = sections.findIndex((s) => s.key === activeSection)
+    const nextIdx = sections.findIndex((s) => s.key === section)
     setDirection(nextIdx > currentIdx ? 1 : -1)
     setActiveSection(section)
   }
@@ -55,6 +70,8 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const handleLogout = async () => {
     const confirmed = await confirmLogout.confirm()
     if (!confirmed) return
+    // A cloud save sends what it still has while the session is valid (at most 3 s); the rest stays queued
+    await activeSave.flushBeforeSignOut()
     await authClient.signOut()
     toast.success(m.auth_logout_toastSuccess({}, { locale }), { id: 'logout-success' })
     onClose()
@@ -99,7 +116,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
         )}
         <nav aria-label={m.auth_userProfile_sections({}, { locale })}>
           <ul className={clsx('m-0 p-0 list-none flex flex-col gap-0.5', !isLargeDevice && 'flex-row gap-1')}>
-            {SECTIONS.map(({ key, icon: Icon, label }) => {
+            {sections.map(({ key, icon: Icon, label }) => {
               const selected = activeSection === key
               return (
                 <li key={key} className={clsx(!isLargeDevice && 'flex-1 min-w-0')}>
@@ -172,6 +189,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
         >
           {activeSection === 'profile' && <ProfileSection idPrefix="account-dialog" />}
           {activeSection === 'accounts' && <ConnectedAccountsSection />}
+          {activeSection === 'cloud-save' && <CloudSaveSection />}
           {activeSection === 'security' && (
             <SecuritySection currentSessionToken={sessionData?.session?.token} idPrefix="account-dialog" titleAs="h3" />
           )}

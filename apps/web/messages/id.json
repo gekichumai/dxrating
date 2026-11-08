@@ -505,7 +505,7 @@
   "auth_accountSecurity_featureDevices": "Lihat di mana kamu sedang login dan keluarkan perangkat lain",
   "auth_accountSecurity_featuresLabel": "Yang bisa kamu lakukan di sini",
   "auth_privacy_title": "Kebijakan Privasi",
-  "auth_privacy_updated": "Terakhir diperbarui: 30 Oktober 2026",
+  "auth_privacy_updated": "Terakhir diperbarui: 3 November 2026",
   "auth_privacy_intro_heading": "Pendahuluan",
   "auth_privacy_intro_body": "Kebijakan Privasi ini menjelaskan cara kami mengumpulkan, menggunakan, memproses, dan mengungkapkan informasimu saat kamu menggunakan layanan kami.",
   "auth_privacy_collect_heading": "Informasi yang kami kumpulkan",
@@ -537,7 +537,7 @@
   "auth_privacy_retention_heading": "Retensi data",
   "auth_privacy_retention_body": "Kami hanya akan menyimpan informasimu selama diperlukan untuk memenuhi tujuan yang dijelaskan dalam Kebijakan Privasi ini. Kami akan menyimpan dan menggunakan informasimu sejauh diperlukan untuk mematuhi kewajiban hukum, menyelesaikan sengketa, dan menegakkan kebijakan kami.",
   "auth_privacy_deletion_heading": "Penghapusan akun",
-  "auth_privacy_deletion_p1": "Kamu bisa menghapus akunmu secara permanen dari layar akun di aplikasi DXRating. Penghapusan akan menghapus profil, komentar, tag dan pemasangan tag, alias, sesi, passkey, metode login yang terhubung, serta kredensial LXNS yang terhubung. Izin OAuth yang terhubung akan dicabut jika didukung oleh penyedianya. Setelah dihapus, kamu bisa membuat akun baru dengan alamat email atau penyedia login yang sama.",
+  "auth_privacy_deletion_p1": "Kamu bisa menghapus akunmu secara permanen dari layar akun di aplikasi DXRating. Penghapusan akan menghapus profil, komentar, tag dan pemasangan tag, alias, sesi, passkey, metode masuk yang terhubung, kredensial LXNS yang terhubung, serta cloud save-mu beserta riwayat skor, log impor, dan snapshot rating. Otorisasi OAuth yang terhubung dicabut jika didukung oleh penyedianya. Setelah penghapusan, kamu bisa membuat akun baru dengan alamat email atau penyedia masuk yang sama.",
   "auth_privacy_deletion_p2": "Data akun langsung dihapus dari sistem aktif kami. Salinan sisa mungkin masih ada di cadangan terenkripsi sampai cadangan itu terhapus otomatis, atau jika penyimpanan diwajibkan oleh hukum.",
   "auth_privacy_rights_heading": "Hak-hakmu",
   "auth_privacy_rights_body": "Kamu memiliki hak perlindungan data berikut:",
@@ -1317,5 +1317,384 @@
   "completion_progress_dx_withScore": "Dengan DX Score",
   "completion_progress_dx_average": "Rata-rata",
   "completion_progress_dx_star": "✦{star} ke atas",
-  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} ke atas: {count} dari {total}"
+  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} ke atas: {count} dari {total}",
+  "announcement_severity_info": "Pemberitahuan",
+  "announcement_severity_warning": "Peringatan",
+  "announcement_severity_critical": "Penting",
+  "announcement_learnMore": "Pelajari lebih lanjut",
+  "announcement_dismiss": "Tutup pengumuman",
+  "ratingCalculator_cloudSave_saveMissing": "Simpanan cloud kamu tidak ditemukan, jadi perangkat ini memakai simpanan lokalnya.",
+  "ratingCalculator_cloudSave_title": "Cloud save",
+  "ratingCalculator_cloudSave_description": "Skormu disimpan di DXRating dan tetap sinkron di semua perangkatmu.",
+  "ratingCalculator_cloudSave_provenance_verified": "Terverifikasi",
+  "ratingCalculator_cloudSave_provenance_friendCode": "friend code {id}",
+  "ratingCalculator_cloudSave_provenance_account": "akun {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "diambil {date}",
+  "ratingCalculator_cloudSave_provenance_edited": "Diedit (awalnya diimpor)",
+  "ratingCalculator_cloudSave_provenance_manual": "Manual",
+  "ratingCalculator_cloudSave_provenance_notVerified": "belum terverifikasi",
+  "ratingCalculator_cloudSave_provenance_fromFile": "Dari file ({source})",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "Dari file (klaim: {source})",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "Dari perangkat ini",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "Dari perangkat ini (klaim: {source})",
+  "ratingCalculator_cloudSave_status_idle": "Sudah terbaru",
+  "ratingCalculator_cloudSave_status_syncing": "Menyinkronkan…",
+  "ratingCalculator_cloudSave_status_offline": "Offline",
+  "ratingCalculator_cloudSave_status_error": "Tidak bisa menyinkronkan saat ini",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{count} perubahan menunggu sinkronisasi"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{count} masalah sinkronisasi"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "Masalah sinkronisasi",
+  "ratingCalculator_cloudSave_issues_empty": "Tidak ada masalah sinkronisasi.",
+  "ratingCalculator_cloudSave_issues_yourValue": "Perubahanmu: {value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "dihapus",
+  "ratingCalculator_cloudSave_issues_method_typed": "diketik",
+  "ratingCalculator_cloudSave_issues_method_keypad": "keypad",
+  "ratingCalculator_cloudSave_issues_method_photo": "foto",
+  "ratingCalculator_cloudSave_issues_superseded": "Skor terverifikasi yang lebih baru dipertahankan.",
+  "ratingCalculator_cloudSave_issues_rejected": "Perubahan ini tidak diterima, jadi skor yang tersimpan dipertahankan.",
+  "ratingCalculator_cloudSave_issues_useMine": "Tetap pakai nilaiku",
+  "ratingCalculator_cloudSave_issues_dismiss": "Tutup",
+  "ratingCalculator_cloudSave_saves_title": "Save",
+  "ratingCalculator_cloudSave_saves_description": "Pilih save yang ditampilkan dan diedit di browser ini.",
+  "ratingCalculator_cloudSave_saves_loading": "Memuat save…",
+  "ratingCalculator_cloudSave_saves_error": "Gagal memuat save-mu.",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} catatan"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "terakhir disinkronkan {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "Region mana pun",
+  "ratingCalculator_cloudSave_history_title": "Riwayat impor",
+  "ratingCalculator_cloudSave_history_loading": "Memuat impor…",
+  "ratingCalculator_cloudSave_history_error": "Gagal memuat riwayat impor.",
+  "ratingCalculator_cloudSave_history_empty": "Belum ada impor.",
+  "ratingCalculator_cloudSave_history_running": "Sedang berjalan…",
+  "ratingCalculator_cloudSave_history_trigger_user": "Oleh kamu",
+  "ratingCalculator_cloudSave_history_trigger_auto": "Otomatis",
+  "ratingCalculator_cloudSave_history_trigger_migration": "Dipindahkan dari browser ini",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} baru"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} meningkat"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} kini terverifikasi"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} tidak berubah"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} mempertahankan editanmu"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} dilewati (dihapus)"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} ditolak"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "Tidak ada perubahan",
+  "ratingCalculator_cloudSave_import_success": "Diimpor dari {source}: {summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "Impor ini berhenti sebelum selesai. Coba lagi.",
+  "ratingCalculator_cloudSave_import_errors_generic": "Gagal menyelesaikan impor ini. Coba lagi.",
+  "ratingCalculator_cloudSave_saves_empty": "Belum ada cloud save.",
+  "ratingCalculator_cloudSave_retry": "Coba lagi",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Impor {count} skor ke cloud save-mu?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "Setiap chart mempertahankan skor yang lebih baik, jadi skor yang sudah kamu punya tidak akan turun. Untuk memulai dari awal, kosongkan save terlebih dahulu.",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "Batal",
+  "ratingCalculator_cloudSave_importConfirm_merge": "Impor",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "Kosongkan save dulu…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "Kosongkan save, lalu impor?",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "Semua skor di save ini dihapus di semua perangkatmu, lalu file diimpor. Skor terverifikasi yang berubah sejak perangkat ini terakhir disinkronkan tetap dipertahankan.",
+  "ratingCalculator_cloudSave_importConfirm_back": "Kembali",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "Kosongkan dan impor",
+  "ratingCalculator_cloudSave_unreachable": "Belum bisa menjangkau cloud save-mu. Perubahan yang kamu buat sekarang tetap tersimpan di browser ini.",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} catatan tidak cocok dengan chart mana pun dan tidak diimpor."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "Tidak ada catatan yang bisa diimpor: tidak cocok dengan chart mana pun atau nilainya di luar rentang. Cloud save-mu tidak diubah.",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} catatan memiliki nilai yang tidak bisa disimpan, misalnya DX score di luar rentang, dan tidak diimpor."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_divingFishMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} catatan disembunyikan oleh pengaturan privasi pemain di Diving-Fish dan tidak bisa diimpor."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} catatan tidak bisa diimpor karena tidak cocok dengan chart mana pun atau nilainya di luar rentang. Catatan ini akan dilewati."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "Impor lain dari sumber ini sedang berjalan di cloud save-mu. Coba lagi setelah selesai.",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "File ini terlalu besar untuk diunggah dalam satu impor. Cloud save-mu tidak diubah.",
+  "ratingCalculator_cloudSave_history_failure_generic": "Tidak selesai",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "Berhenti sebelum selesai",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "Tidak selesai: maimai NET sedang maintenance",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "Tidak selesai: gagal masuk ke maimai NET",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "Tidak selesai: tidak ada kartu Aime yang bisa dipakai",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} chart tidak dikenal"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} disembunyikan oleh pengaturan privasi"
+      }
+    }
+  ],
+  "auth_privacy_cloud_heading": "Cloud save (beta)",
+  "auth_privacy_cloud_p1": "Jika kamu mengaktifkan cloud save, kami menyimpan skormu di akunmu agar perangkat-perangkatmu bisa berbagi data tersebut: untuk setiap chart, hasilmu beserta asalnya (misalnya impor dari maimai DX NET, LXNS, atau Diving-Fish, sebuah file, atau entri yang kamu ketik sendiri), dengan ID akun dari penyedia tersebut, seperti friend code-mu. Kami juga menyimpan log setiap impor (sumber, waktu, jumlah, dan hash data yang diterima) serta snapshot rating yang disimpan perangkatmu setelah sinkronisasi.",
+  "auth_privacy_cloud_p2": "Saat kamu mengimpor dari maimai DX NET, password SEGA ID-mu hanya dipakai untuk masuk pada impor itu. Password tidak pernah disimpan atau dicatat di log.",
+  "auth_privacy_cloud_p3": "Cloud save disimpan sampai kamu menghapusnya atau menghapus akunmu. Setiap chart menyimpan hingga 20 hasil sebelumnya, dan setiap save hingga 100 snapshot rating. Catatan yang dihapus diingat selama 90 hari agar perangkat lainmu ikut menghapusnya, dan catatan setiap permintaan sinkronisasi dari perangkatmu disimpan selama 30 hari agar permintaan yang terkirim dua kali hanya diterapkan sekali. Save yang kamu hapus dihapus permanen 30 hari kemudian.",
+  "ratingCalculator_cloudSave_descriptionInactive": "Simpan skormu di akun DXRating dan pakai di semua perangkatmu.",
+  "ratingCalculator_cloudSave_choose_title": "Pakai cloud save",
+  "ratingCalculator_cloudSave_choose_sectionDescription": "Sudah dicadangkan di perangkat lain? Pilih cloud save untuk dipakai di browser ini.",
+  "ratingCalculator_cloudSave_choose_open": "Pakai cloud save",
+  "ratingCalculator_cloudSave_choose_dialogTitle": "Pilih cloud save",
+  "ratingCalculator_cloudSave_choose_dialogDescription": "Browser ini akan menampilkan dan mengedit save yang kamu pilih. Tidak ada yang diunggah.",
+  "ratingCalculator_cloudSave_choose_empty": "Akunmu belum punya cloud save. Untuk membuatnya, tambahkan skor di perangkat ini, lalu cadangkan.",
+  "ratingCalculator_cloudSave_choose_cancel": "Batal",
+  "ratingCalculator_cloudSave_migration_title": "Cadangkan ke cloud",
+  "ratingCalculator_cloudSave_migration_prompt": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Cadangkan {formatted} catatan di perangkat ini ke akunmu?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_backUp": "Cadangkan ke cloud",
+  "ratingCalculator_cloudSave_migration_notNow": "Nanti saja",
+  "ratingCalculator_cloudSave_migration_sectionDescription": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Browser ini memiliki {countNumber} catatan yang tersimpan di perangkat ini. Cadangkan agar tersinkron di semua perangkatmu."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_saveName": "Skor saya",
+  "ratingCalculator_cloudSave_migration_freshDescription": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} catatanmu akan disimpan ke akunmu dan disinkronkan di semua perangkatmu."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingTitle": "Kamu sudah punya cloud save",
+  "ratingCalculator_cloudSave_migration_cloudRecords": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} catatan"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingDescription": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input region",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "“{name}” ({region}) berisi {cloudRecords}. Perangkat ini memiliki {formatted} catatan."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_changed": "Cloud save ini berubah di perangkat lain. Periksa lagi sebelum melanjutkan.",
+  "ratingCalculator_cloudSave_migration_merge": "Gabungkan (pertahankan yang terbaik dari keduanya)",
+  "ratingCalculator_cloudSave_migration_mergeDescription": "Setiap chart mempertahankan skor yang lebih baik dari perangkat ini atau cloud.",
+  "ratingCalculator_cloudSave_migration_cloudOnly": "Pakai cloud saja",
+  "ratingCalculator_cloudSave_migration_cloudOnlyDescription": "Beralih ke cloud save. Catatan di perangkat ini disimpan sebagai cadangan, tidak diunggah.",
+  "ratingCalculator_cloudSave_migration_mergeAction": "Gabungkan",
+  "ratingCalculator_cloudSave_migration_cloudOnlyAction": "Pakai cloud save",
+  "ratingCalculator_cloudSave_migration_advanced": "Lanjutan",
+  "ratingCalculator_cloudSave_migration_replaceDescription": "Ganti semua catatan di cloud save dengan catatan di perangkat ini.",
+  "ratingCalculator_cloudSave_migration_replace": "Ganti cloud dengan perangkat ini",
+  "ratingCalculator_cloudSave_migration_replaceTitle": "Ganti cloud save?",
+  "ratingCalculator_cloudSave_migration_replaceWarning": [
+    {
+      "declarations": [
+        "input count",
+        "input cloudRecords",
+        "input name",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{cloudRecords} di “{name}” akan diganti dengan {formatted} catatan dari perangkat ini. Perangkat lainmu juga akan menerima perubahan ini. Tindakan ini tidak bisa dibatalkan."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceWarningEmpty": [
+    {
+      "declarations": ["input count", "input name", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "“{name}” belum punya catatan. Save ini akan menerima {formatted} catatan dari perangkat ini, dan perangkat lainmu juga akan menerima perubahannya."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceConfirm": "Ganti cloud save",
+  "ratingCalculator_cloudSave_migration_runningTitle": "Mencadangkan…",
+  "ratingCalculator_cloudSave_migration_running": "Mengunggah catatanmu. Biarkan halaman ini tetap terbuka.",
+  "ratingCalculator_cloudSave_migration_switchingTitle": "Beralih ke cloud save-mu…",
+  "ratingCalculator_cloudSave_migration_switching": "Menyimpan salinan catatan perangkat ini di browser ini.",
+  "ratingCalculator_cloudSave_migration_doneTitle": "Sudah dicadangkan",
+  "ratingCalculator_cloudSave_migration_switchedTitle": "Sekarang memakai cloud save-mu",
+  "ratingCalculator_cloudSave_migration_done": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} catatan kini ada di cloud save-mu."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_doneCloudOnly": "Perangkat ini sekarang memakai cloud save-mu.",
+  "ratingCalculator_cloudSave_migration_close": "Tutup",
+  "ratingCalculator_cloudSave_migration_errorTitle": "Gagal mencadangkan",
+  "ratingCalculator_cloudSave_migration_switchErrorTitle": "Gagal beralih",
+  "ratingCalculator_cloudSave_migration_errorSafe": "Tidak ada yang diubah di perangkat ini. Kamu bisa mencoba lagi kapan saja.",
+  "ratingCalculator_cloudSave_migration_errorUnchanged": "Tidak ada yang diubah di perangkat ini.",
+  "ratingCalculator_cloudSave_migration_errors_saveLimit": "Jumlah cloud save-mu sudah mencapai batas, jadi save baru tidak bisa dibuat. Untuk mencadangkan ke salah satu save-mu, ganti region game ke region save tersebut lalu buka ini lagi.",
+  "ratingCalculator_cloudSave_migration_errors_generic": "Unggahan tidak selesai. Periksa koneksimu dan coba lagi.",
+  "ratingCalculator_cloudSave_migration_errors_switchGeneric": "Terjadi kesalahan. Coba lagi.",
+  "ratingCalculator_cloudSave_migration_unverifiedNote": "Catatan yang sudah ada di perangkat ini disimpan sebagai “belum terverifikasi”. Impor ulang dari maimai NET, LXNS, atau Diving-Fish untuk mendapatkan catatan terverifikasi.",
+  "ratingCalculator_cloudSave_migration_backupNote": "Salinan catatan perangkat ini tetap ada di browser ini selama 30 hari. Saat kamu keluar, perangkat ini tetap memakai catatannya sendiri.",
+  "ratingCalculator_cloudSave_optIn_title": "Cloud save (beta)",
+  "ratingCalculator_cloudSave_optIn_description": "Simpan skormu di akunmu dan sinkronkan di semua perangkatmu.",
+  "ratingCalculator_cloudSave_optIn_consentTitle": "Aktifkan cloud save (beta)?",
+  "ratingCalculator_cloudSave_optIn_consentIntro": "Dengan cloud save, DXRating menyimpan hal berikut di akunmu:",
+  "ratingCalculator_cloudSave_optIn_consentStored": "Skormu, ID akun penyedia tempat kamu mengimpor (seperti friend code-mu), log setiap impor beserta hash dari data yang diimpor, dan snapshot rating yang disimpan perangkatmu setelah sinkronisasi.",
+  "ratingCalculator_cloudSave_optIn_consentRetention": "Disimpan sampai kamu menghapusnya atau menghapus akunmu. Setiap chart menyimpan hingga 20 hasil sebelumnya, dan setiap save hingga 100 snapshot rating. Catatan yang dihapus diingat selama 90 hari agar perangkat lainmu ikut menghapusnya, dan catatan setiap permintaan sinkronisasi dari perangkatmu disimpan selama 30 hari. Save yang kamu hapus dihapus permanen 30 hari kemudian.",
+  "ratingCalculator_cloudSave_optIn_consentPasswords": "Password SEGA ID-mu tidak pernah disimpan.",
+  "ratingCalculator_cloudSave_optIn_consentLeaving": "Kamu belum bisa menonaktifkan beta ini di aplikasi. Menghapus akun DXRating-mu (di aplikasi DXRating) akan menghapus semua ini dari sistem kami; kebijakan privasi menjelaskan soal cadangan.",
+  "ratingCalculator_cloudSave_optIn_consentPrivacy": "Baca selengkapnya di {#privacy}kebijakan privasi{/privacy}.",
+  "ratingCalculator_cloudSave_optIn_agree": "Setuju dan aktifkan",
+  "ratingCalculator_cloudSave_optIn_sending": "Mengaktifkan cloud save…",
+  "ratingCalculator_cloudSave_optIn_success": "Cloud save aktif.",
+  "ratingCalculator_cloudSave_optIn_error": "Gagal mengaktifkan cloud save. Coba lagi.",
+  "ratingCalculator_cloudSave_export_title": "Datamu",
+  "ratingCalculator_cloudSave_export_description": "Unduh semua cloud save beserta catatan, asalnya, riwayat impor, dan snapshot rating sebagai file JSON.",
+  "ratingCalculator_cloudSave_export_button": "Unduh datakku",
+  "ratingCalculator_cloudSave_export_preparing": "Menyiapkan…",
+  "ratingCalculator_cloudSave_export_success": "Datamu sedang diunduh.",
+  "ratingCalculator_cloudSave_export_error": "Gagal mengunduh datamu. Coba lagi.",
+  "ratingCalculator_cloudSave_export_rateLimited": "Kamu sudah mengunduh datamu beberapa kali hari ini. Coba lagi besok.",
+  "ratingCalculator_cloudSave_exportImport_pickTitle": "Pilih save untuk diimpor",
+  "ratingCalculator_cloudSave_exportImport_pickDescription": "File ini berisi lebih dari satu save.",
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Diimpor sebagai “belum terverifikasi”: asal catatan ditampilkan sesuai klaim di file."
 }

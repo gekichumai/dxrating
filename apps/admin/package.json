@@ -1,0 +1,37 @@
+{
+  "name": "@gekichumai/admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "lint": "oxlint .",
+    "test": "vitest run",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@gekichumai/admin-api": "workspace:*",
+    "@gekichumai/api-contract": "workspace:*",
+    "@mantine/core": "9.7.3",
+    "@mantine/hooks": "9.7.3",
+    "@orpc/client": "catalog:",
+    "@orpc/contract": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "@orpc/tanstack-query": "catalog:",
+    "@tanstack/react-query": "^5.100.11",
+    "react": "catalog:",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "catalog:",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.1.2",
+    "happy-dom": "^20.9.0",
+    "typescript": "7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "catalog:",
+    "wrangler": "^4.156.0"
+  }
+}

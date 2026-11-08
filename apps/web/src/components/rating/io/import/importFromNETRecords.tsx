@@ -1,63 +1,42 @@
 import type { VersionEnum } from '@gekichumai/dxdata'
 import { normalizeMaimaiNetRecords, type SongCatalog } from '@gekichumai/maimai-domain'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@/lib/telemetry'
 import { WebHaptics } from 'web-haptics'
 import toast from 'react-hot-toast'
 import { reviewAndApplyImport } from '@/models/scores/importReview'
 import type { WebScoreRepository } from '@/models/scores/ScoreRepository'
 import type { MusicRecord, RecentRecord } from './ImportFromNETRecordsListItem'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
-import { NetImportError, type NetImportErrorCode, unexpectedErrorSubtitle } from './netImportErrorFeedback'
+import {
+  NET_IMPORT_ERROR_MESSAGES,
+  NetImportError,
+  type NetImportErrorCode,
+  isNetImportErrorCode,
+  netImportErrorCodeOf,
+  unexpectedErrorSubtitle,
+} from './netImportErrorFeedback'
 import type { PlainMessage } from '@/i18n/message'
+import { getLocale } from '@/paraglide/runtime'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { m } from '@/paraglide/messages'
 import { netImportProgress } from './netImportProgressStore'
+import {
+  FETCH_STATE_PROGRESS,
+  type FetchNetRecordProgressState,
+  isFetchNetRecordProgressState,
+} from './netImportStages'
+import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
+import { ImportAlreadyRunningError, ServerImportFailedError } from '@/models/scores/cloudImports'
 
-const ERROR_CODE_MESSAGES: Record<NetImportErrorCode, PlainMessage> = {
-  NET_MAINTENANCE: m.ratingCalculator_io_import_netRecords_errors_maintenance,
-  INVALID_CREDENTIALS: m.ratingCalculator_io_import_netRecords_errors_invalidCredentials,
-  AIME_CARD_UNAVAILABLE: m.ratingCalculator_io_import_netRecords_errors_aimeCardUnavailable,
-  UNKNOWN_ERROR: m.ratingCalculator_io_import_netRecords_errors_unknown,
-  INTERNAL_ERROR: m.ratingCalculator_io_import_netRecords_errors_internal,
-  TOKEN_ERROR: m.ratingCalculator_io_import_netRecords_errors_token,
-}
+const ERROR_CODE_MESSAGES = NET_IMPORT_ERROR_MESSAGES
 
 const ERROR_CODE_DETAIL_MESSAGES: Partial<Record<NetImportErrorCode, PlainMessage>> = {
   NET_MAINTENANCE: m.ratingCalculator_io_import_netRecords_errors_maintenanceDetail,
   AIME_CARD_UNAVAILABLE: m.ratingCalculator_io_import_netRecords_errors_aimeCardUnavailableDetail,
 }
 
-export type FetchNetRecordProgressState =
-  | 'ready'
-  | 'auth:in-progress'
-  | 'auth:succeeded'
-  | 'fetch:recent:in-progress'
-  | 'fetch:recent:completed'
-  | 'fetch:music:in-progress:basic'
-  | 'fetch:music:in-progress:advanced'
-  | 'fetch:music:in-progress:expert'
-  | 'fetch:music:in-progress:master'
-  | 'fetch:music:in-progress:remaster'
-  | 'fetch:music:in-progress:utage'
-  | 'fetch:music:completed'
-  | 'concluded'
-
-const FETCH_STATE_PROGRESS: Record<FetchNetRecordProgressState, number> = {
-  ready: 0.01,
-  'auth:in-progress': 0.08,
-  'auth:succeeded': 0.2,
-  'fetch:recent:in-progress': 0.2,
-  'fetch:recent:completed': 0.3,
-  'fetch:music:in-progress:basic': 0.4,
-  'fetch:music:in-progress:advanced': 0.5,
-  'fetch:music:in-progress:expert': 0.6,
-  'fetch:music:in-progress:master': 0.7,
-  'fetch:music:in-progress:remaster': 0.8,
-  'fetch:music:in-progress:utage': 0.9,
-  'fetch:music:completed': 1,
-  concluded: 1,
-}
+export type { FetchNetRecordProgressState }
 
 interface AuthParams {
   region: 'jp' | 'intl'
@@ -98,8 +77,8 @@ const fetchNetRecords = async (
           resolve(data)
         } else if (event === 'error') {
           const parsed = JSON.parse(message.data) as { code?: string; error?: string }
-          if (parsed.code && parsed.code in ERROR_CODE_MESSAGES) {
-            reject(new NetImportError(parsed.code as NetImportErrorCode, parsed.error))
+          if (parsed.code && isNetImportErrorCode(parsed.code)) {
+            reject(new NetImportError(parsed.code, parsed.error))
           } else {
             reject(new Error(parsed.error ?? 'unknown error'))
           }
@@ -131,12 +110,20 @@ export const NET_IMPORT_COOLDOWN_MS = 15 * 60 * 1000 // 15 minutes
 
 let importInFlight = false
 
+export interface CloudNetImportOptions {
+  /** `auto` for the automatic import; `user` when the user asked (the default with credentials passed in) */
+  trigger?: 'user' | 'auto'
+  /** The automatic import's key, one per save and 15 minutes (`autoNetImportKey`) */
+  idempotencyKey?: string
+}
+
 export const importFromNETRecords = async (
   catalog: SongCatalog,
   repository: WebScoreRepository,
   mode: 'merge' | 'replace',
   onProgress?: (state: FetchNetRecordProgressState, progress: number) => void,
   authParams?: AuthParams,
+  cloud?: CloudNetImportOptions,
 ) => {
   if (importInFlight) {
     console.warn('[importFromNETRecords] Import already in progress, skipping duplicate call')
@@ -176,6 +163,59 @@ export const importFromNETRecords = async (
       return
     }
     const { region, username, password } = params
+
+    const path = importPath(repository)
+    if (path === 'server') {
+      // A cloud save: the server signs in to maimai NET, fetches and merges the records (verified), and this page
+      // pulls them after. The same progress toast; the records never pass through the browser
+      let stage: FetchNetRecordProgressState = 'ready'
+      const job = await runServerImportToEnd(
+        repository,
+        'maimai-net',
+        {
+          region,
+          id: username,
+          password,
+          trigger: cloud?.trigger ?? (authParams ? 'user' : 'auto'),
+          idempotencyKey: cloud?.idempotencyKey,
+        },
+        (progress) => {
+          if (isFetchNetRecordProgressState(progress.stage)) stage = progress.stage
+          onProgress?.(stage, progress.progress)
+          netImportProgress.update({ status: 'running', stage, progress: progress.progress })
+        },
+      ).catch((error: unknown) => {
+        // The stream's error codes are the ones the old route reports; a replayed or polled job carries them in
+        // lowercase
+        const code = error instanceof ServerImportFailedError ? netImportErrorCodeOf(error.code) : null
+        if (code) throw new NetImportError(code, error instanceof Error ? error.message : undefined)
+        throw error
+      })
+      haptics.trigger('success')
+      netImportProgress.finish(
+        'success',
+        <div className="flex flex-col">
+          <span>
+            {m.ratingCalculator_cloudSave_import_success({
+              source: `maimai NET (${String(region).toUpperCase()})`,
+              summary: summarizeImportJob(job, getLocale()),
+            })}
+          </span>
+        </div>,
+      )
+      localStorage.setItem(NET_IMPORT_LAST_SUCCESS_KEY, Date.now().toString())
+      captureAnalyticsEvent('rating_import_succeeded', {
+        source: 'maimai_net',
+        duration_ms: performance.now() - importStart,
+        entry_count: job.counts.fetched,
+        warning_count: 0,
+        mode,
+        trigger,
+        region,
+      })
+      return
+    }
+
     const data = await fetchNetRecords({ region, username, password }, (state, progress) => {
       onProgress?.(state, progress)
       netImportProgress.update({ status: 'running', stage: state, progress })
@@ -186,25 +226,35 @@ export const importFromNETRecords = async (
       console.warn('[importFromNETRecords]', warning.message, warning.row)
     }
 
-    // merge: a higher achievement replaces the saved values of its chart. A manual import is always previewed; an
-    // automatic one only when it would lower or remove a saved score
-    const { applied } = await reviewAndApplyImport(
-      repository,
-      entries,
-      { source: 'maimai-net', mode },
-      { trigger: trigger === 'manual' ? 'manual' : 'automatic' },
-    )
-    if (!applied) {
-      captureAnalyticsEvent('rating_import_failed', {
-        source: 'maimai_net',
-        duration_ms: performance.now() - importStart,
-        error_code: 'cancelled_by_user',
-        mode,
-        trigger,
+    if (path === 'client-fallback') {
+      // A cloud save with server imports off (§7.4): the one case where this page uploads what it fetched. The
+      // records are client_reported and never shown as verified. It only merges, so it is not previewed
+      await importFallbackEntries(repository, entries, 'maimai-net', {
+        claimedSource: `maimai-net-${region}`,
+        trigger: cloud?.trigger ?? (authParams ? 'user' : 'auto'),
+        idempotencyKey: cloud?.idempotencyKey,
       })
-      netImportProgress.update(null)
-      toast(m.ratingCalculator_io_import_review_cancelled(), { id: 'import-review-cancelled' })
-      return
+    } else {
+      // merge: a higher achievement replaces the saved values of its chart. A manual import is always previewed; an
+      // automatic one only when it would lower or remove a saved score
+      const { applied } = await reviewAndApplyImport(
+        repository,
+        entries,
+        { source: 'maimai-net', mode },
+        { trigger: trigger === 'manual' ? 'manual' : 'automatic' },
+      )
+      if (!applied) {
+        captureAnalyticsEvent('rating_import_failed', {
+          source: 'maimai_net',
+          duration_ms: performance.now() - importStart,
+          error_code: 'cancelled_by_user',
+          mode,
+          trigger,
+        })
+        netImportProgress.update(null)
+        toast(m.ratingCalculator_io_import_review_cancelled(), { id: 'import-review-cancelled' })
+        return
+      }
     }
 
     const lastRecord = data.recent.at(0)
@@ -276,9 +326,15 @@ export const importFromNETRecords = async (
     const title =
       error instanceof NetImportError
         ? ERROR_CODE_MESSAGES[error.code]()
-        : m.ratingCalculator_io_import_netRecords_errors_unknown()
+        : error instanceof ImportAlreadyRunningError
+          ? m.ratingCalculator_cloudSave_import_errors_alreadyRunning()
+          : m.ratingCalculator_io_import_netRecords_errors_unknown()
     const translatedDetail = error instanceof NetImportError ? ERROR_CODE_DETAIL_MESSAGES[error.code] : undefined
-    const subtitle = translatedDetail ? translatedDetail() : unexpectedErrorSubtitle(error)
+    const subtitle = translatedDetail
+      ? translatedDetail()
+      : error instanceof ImportAlreadyRunningError
+        ? null
+        : unexpectedErrorSubtitle(error)
 
     netImportProgress.finish(
       'error',

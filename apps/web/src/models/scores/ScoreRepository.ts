@@ -1,3 +1,4 @@
+import type { ImportJobDTO } from '@gekichumai/api-contract'
 import type {
   Best50Bucket,
   ComboFlag,
@@ -45,24 +46,92 @@ export interface ImportMeta {
    * values of its chart when its achievement is higher (the maimai NET merge).
    */
   mode: 'replace' | 'merge'
+  /**
+   * Cloud saves: the account ID the file claims (e.g. the Aqua user of an SQLite file). Stored as claimed, never
+   * shown beyond a short prefix
+   */
+  claimedAccountId?: string
+  /**
+   * Cloud saves: the provider every record claims in the §7.4 fallback (e.g. `maimai-net-jp`); the source's own
+   * name when absent
+   */
+  claimedSource?: string
+  /** Cloud saves: `auto` for the automatic maimai NET import (it never revives a deleted record, §5.3); `user` by default */
+  trigger?: 'user' | 'auto'
+  /** Cloud saves: the import's idempotency key (`autoNetImportKey` for the automatic import); a fresh one by default */
+  idempotencyKey?: string
 }
 
 export interface ImportResult {
-  /** Entries in the import */
+  /**
+   * Entries in the import. Cloud saves: what the server reports it took (inserted, improved, upgraded, unchanged, or
+   * kept behind the user's own edit), never the number of records sent
+   */
   count: number
+  /** Cloud saves: entries left out (no chart matches their sheet ID, or no valid achievement) */
+  skipped?: number
+  /** Cloud saves: entries the server's import schema rejects (an out-of-range value…), never sent or not taken */
+  rejected?: number
+  /** Cloud saves: the import job the server recorded */
+  job?: ImportJobDTO
 }
 
 export type ServerImportKind = 'maimai-net' | 'lxns' | 'diving-fish'
 
+/** What every server import accepts */
+interface ServerImportCommonArgs {
+  /**
+   * One key per user action (§5.5): a retry of the same action reuses it, so the server never runs it twice. A
+   * fresh UUID when omitted
+   */
+  idempotencyKey?: string
+  /** `user` (default): the user asked for it; `auto`: the automatic maimai NET import */
+  trigger?: 'user' | 'auto'
+}
+
+export interface ServerImportArgs {
+  'maimai-net': ServerImportCommonArgs & { region: 'jp' | 'intl'; id: string; password: string }
+  lxns: ServerImportCommonArgs
+  'diving-fish': ServerImportCommonArgs & ({ username: string; qq?: never } | { qq: string; username?: never })
+}
+
 export interface ImportProgress {
+  /**
+   * maimai NET: the upstream state (`auth:in-progress`, `fetch:music:in-progress:master`…); every import: `waiting`
+   * (attached to a job that is already running), `pulling` (the job is done, its records are being pulled), `done`
+   */
   stage: string
   /** 0 to 1 */
   progress: number
+  /** Set on the last progress (`done`): the finished job */
+  job?: ImportJobDTO
 }
 
+/**
+ * A change the server did not take (cloud saves, design §5.4). The user's intent is kept so it can be applied again
+ * on purpose, over the record the server kept.
+ */
 export interface SyncIssue {
+  /** The ID of the mutation that carried the intent */
+  id: string
+  /** The save the intent was made on: an issue is shown and applied again only there (§5.4, §8.1) */
+  saveId: string
   sheetId: string
+  /**
+   * `superseded`: the server kept a newer verified record, returned with the result. `rejected`: the server refused
+   * the value (`reason` says why).
+   */
+  kind: 'superseded' | 'rejected'
   reason: string
+  intent: {
+    op: 'set' | 'delete'
+    value?: { achievement: number; comboFlag: ComboFlag | null; syncFlag: SyncFlag | null; dxScore?: number | null }
+    entryMethod: ManualEntryMethod
+    /** Device clock, when the user made the change (it may have been sent much later) */
+    clientEditedAt?: string
+  }
+  /** Device clock, when the issue was recorded */
+  createdAt: string
 }
 
 export interface ScoreRepositoryStatus {
@@ -94,8 +163,13 @@ export interface ScoreRepository {
   /** File and browser-side provider imports */
   applyImport(entries: PlayEntry[], meta: ImportMeta): Promise<ImportResult>
   /** Imports the server fetches into a cloud save; the local save cannot run them */
-  runServerImport(kind: ServerImportKind, args: Record<string, unknown>): AsyncIterable<ImportProgress>
+  runServerImport<K extends ServerImportKind>(kind: K, args: ServerImportArgs[K]): AsyncIterable<ImportProgress>
   readonly status: ScoreRepositoryStatus
+  /**
+   * Cloud saves: whether the server runs maimai NET, LXNS and Diving-Fish imports for the user (`serverImports`).
+   * `false` is the §7.4 fallback, where the browser fetches them and uploads them as `client_reported`
+   */
+  readonly serverImportsEnabled?: boolean
 }
 
 /**

@@ -7,7 +7,7 @@ import {
   DialogContentText,
   DialogTitle,
 } from '@mui/material'
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@/lib/telemetry'
 import { type FC, useEffect, useRef, useState } from 'react'
 import useSWR from 'swr'
 import IconMdiImage from '~icons/mdi/image'

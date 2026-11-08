@@ -1,7 +1,9 @@
+import { SUPPORTED_LOCALES, type SupportedLocale } from '@gekichumai/api-contract'
 import { parse as parseCookie } from 'cookie'
 
-export const SUPPORTED_LOCALES = ['en', 'ja', 'ko', 'zh-Hans', 'zh-Hant', 'ms', 'id', 'fil', 'vi', 'th', 'my'] as const
-export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
+// The one language list, shared with the backend and served to the iOS app (packages/api-contract/src/locales.ts).
+// Paraglide's project.inlang/settings.json must list the same tags; a test checks it.
+export { SUPPORTED_LOCALES, type SupportedLocale }
 
 export const DEFAULT_LOCALE: SupportedLocale = 'en'
 export const LOCALE_QUERY_PARAM = 'locale'

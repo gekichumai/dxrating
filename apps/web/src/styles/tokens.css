@@ -47,6 +47,11 @@
   /* Status fills that carry white text (>=4.5:1): availability, unlock, success and warning badges */
   --status-positive: #047857;
   --status-warning: #b45309;
+  /*
+   * The DX chart type's multicolour lettering, from the official でらっくす plate as the iOS app draws it: red, orange,
+   * green and cyan, each stop deepened to >=4.5:1 on white (the plate's yellow cannot be, so it is skipped)
+   */
+  --dx-lettering: linear-gradient(90deg, #d32f2f, #b35600, #3e7d1c, #0277a8);
 
   /* What `bg-white/…` and `text-black/…` utilities resolve to; dark.css swaps them (uno.config.ts postprocess) */
   --surface-rgb: 255 255 255;
@@ -289,6 +294,25 @@ html[lang|='my'] {
 :lang(ja) :is(h1, h2, h3) {
   word-break: auto-phrase;
 }
+/*
+ * Room around headers that stick to the top of the page, on iOS only. Safari 26+ treats a sticky or fixed element
+ * that runs right along the top edge as a toolbar. It then paints a flat band in the page colour under the status bar
+ * instead of letting the page scroll under it with its own soft fade. On the iOS 27 Simulator, a stuck header got the
+ * band when it was flush with or 2–4px below the top edge, or within 2px of the content width. It got the fade 8px
+ * below the edge, or inset 8px a side. 12px leaves a margin. Other browsers keep the headers flush.
+ */
+:root {
+  --sticky-top-gap: 0px;
+  --sticky-inline-inset: 0px;
+}
+
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --sticky-top-gap: 12px;
+    --sticky-inline-inset: 12px;
+  }
+}
+
 /*
  * Status-bar backdrop. With viewport-fit=cover the page runs under the iOS status bar, and the header scrolls away
  * with the page, so scrolled content (the navigation pill, cards) would show through behind the clock and battery.

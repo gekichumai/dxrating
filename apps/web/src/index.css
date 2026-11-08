@@ -209,19 +209,29 @@ html {
   }
 }
 
+/* Visually hidden until keyboard focus. Not translated off-screen: iOS Safari draws the page under its translucent
+   status bar and toolbar, and a rubber-band pull at the top reveals fixed content placed above the viewport */
 .skip-to-content {
   position: fixed;
   top: 1rem;
   left: 1rem;
   z-index: 1500;
-  padding: 0.75rem 1rem;
-  color: CanvasText;
-  background: Canvas;
-  transform: translateY(calc(-100% - 2rem));
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
 }
 
 .skip-to-content:focus-visible {
-  transform: none;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  white-space: normal;
+  clip-path: none;
+  padding: 0.75rem 1rem;
+  color: CanvasText;
+  background: Canvas;
   outline: auto;
 }
 
@@ -385,5 +395,19 @@ label[data-shrink='false'] ~ .MuiInputBase-formControl .MuiInputBase-input::plac
   to {
     --scroll-fade-start: 24px;
     --scroll-fade-end: 0px;
+  }
+}
+/* The DX chart type's multicolour lettering (--dx-lettering in tokens.css); forced colours keep the system text */
+.dx-lettering {
+  background-image: var(--dx-lettering);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (forced-colors: active) {
+  .dx-lettering {
+    background-image: none;
+    color: CanvasText;
   }
 }

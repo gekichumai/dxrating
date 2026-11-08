@@ -591,7 +591,8 @@ export const SheetTitle: FC<SheetTitleProps> = ({
         {enableClickToCopy && (
           <IconButton
             size="small"
-            className="shrink-0 !-mt-1"
+            // Centred on the title's first line: 22.5px tall below md (text-lg, leading-tight), 26px from md, the button 26px
+            className="shrink-0 !-mt-[2px] md:!mt-0"
             aria-label={m.sheet_copyTitle_tooltip({}, { locale })}
             title={m.sheet_copyTitle_tooltip({}, { locale })}
             onClick={() => {

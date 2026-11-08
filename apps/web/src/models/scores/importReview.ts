@@ -8,7 +8,7 @@ import {
   type ImportUndoStore,
 } from './importUndo'
 import { LocalScoreRepository } from './LocalScoreRepository'
-import type { ImportMeta, ScoreRepository, WebScoreRepository } from './ScoreRepository'
+import type { ImportMeta, ImportResult, ScoreRepository, WebScoreRepository } from './ScoreRepository'
 
 /**
  * Imports into the local save go through here (meta#35): the import is previewed, the visitor confirms it, the save is
@@ -92,6 +92,8 @@ export interface ReviewedImportResult {
   plan: ImportPlan
   /** Whether the import can be undone after a reload (false: for this visit only, or not at all) */
   undoPersisted: boolean
+  /** What the save reports it took, when the import was applied */
+  result?: ImportResult
 }
 
 export interface ReviewAndApplyOptions {
@@ -119,8 +121,8 @@ export async function reviewAndApplyImport(
   const plan = planImport(previousEntries, entries, meta)
   const undoStore = getImportUndoStore(repository)
   if (!undoStore) {
-    await repository.applyImport(entries, meta)
-    return { applied: true, plan, undoPersisted: false }
+    const result = await repository.applyImport(entries, meta)
+    return { applied: true, plan, undoPersisted: false, result }
   }
 
   let latestEntries = previousEntries
@@ -138,7 +140,7 @@ export async function reviewAndApplyImport(
     needsReview = isRiskyPlan(appliedPlan)
   }
 
-  await repository.applyImport(entries, meta)
+  const result = await repository.applyImport(entries, meta)
   const snapshot: ImportUndoSnapshot = {
     version: 1,
     id: newSnapshotId(),
@@ -151,7 +153,7 @@ export async function reviewAndApplyImport(
     appliedFingerprint: fingerprintEntries(repository.entries()),
   }
   const { persisted } = undoStore.save(snapshot)
-  return { applied: true, plan: appliedPlan, undoPersisted: persisted }
+  return { applied: true, plan: appliedPlan, undoPersisted: persisted, result }
 }
 
 /** Whether undoing would also discard changes made after the import */

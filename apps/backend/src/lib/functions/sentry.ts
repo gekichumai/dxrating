@@ -2,6 +2,13 @@ import * as Sentry from '@sentry/node'
 import type { Scope } from '@sentry/node'
 import { COMMON_ERROR_STATUS_MAP, ORPCError } from '@orpc/server'
 import { NetImportError } from './client'
+import {
+  isCredentialPath,
+  pathOf,
+  scrubSentryBreadcrumb,
+  scrubSentryEvent,
+  scrubSentryLog,
+} from '../credential-hygiene'
 
 // Export types for use in other files
 export type { Scope }
@@ -134,15 +141,28 @@ export function sentryOptions({
   environment: string
   release: string | undefined
 }): Sentry.NodeOptions {
+  return buildSentryOptions(environment, { dsn, release })
+}
+
+/**
+ * The Sentry options of the backend. Credential hygiene (design §7.2): request bodies of the credential routes are
+ * never attached (`ignoreIncomingRequestBody`), and every event, breadcrumb and log is scrubbed of credential keys
+ * (`password`, tokens, cookies, Authorization, the SEGA ID on the NET routes) and of the credentials of running NET
+ * requests before it leaves the process.
+ */
+export function buildSentryOptions(
+  environment: string,
+  overrides: Partial<Sentry.NodeOptions> = {},
+): Sentry.NodeOptions {
   return {
-    dsn,
     environment,
-    release,
     sendDefaultPii: true,
     enableLogs: true,
     integrations: [
-      // HTTP integration for tracking HTTP requests
-      Sentry.httpIntegration(),
+      // HTTP integration for tracking HTTP requests; never attach the body of a credential route
+      Sentry.httpIntegration({
+        ignoreIncomingRequestBody: (url) => isCredentialPath(pathOf(url)) || isCredentialRoute(url),
+      }),
       // Send console.log, console.warn, and console.error calls as logs to Sentry
       Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
     ],
@@ -150,9 +170,15 @@ export function sentryOptions({
     // Every MCP request is traced (a span per MCP message); the rest at 10%
     tracesSampler: ({ name, inheritOrSampleWith }) =>
       /\/mcp(?:\?|$|\s)/.test(name) ? 1.0 : inheritOrSampleWith(environment === 'production' ? 0.1 : 1.0),
-    // Configure which errors to capture
+    // Configure which errors to capture; whatever is sent is scrubbed of credentials
     beforeSend(event, hint) {
-      return shouldCaptureSentryError(hint.originalException) ? scrubCredentialBodies(event) : null
+      return shouldCaptureSentryError(hint.originalException) ? scrubCredentialBodies(scrubSentryEvent(event)) : null
+    },
+    beforeBreadcrumb(breadcrumb) {
+      return scrubSentryBreadcrumb(breadcrumb)
+    },
+    beforeSendLog(log) {
+      return scrubSentryLog(log)
     },
     // Configure which transactions to capture
     beforeSendTransaction(event) {
@@ -160,8 +186,9 @@ export function sentryOptions({
       if (event.transaction === 'GET /') {
         return null
       }
-      return scrubCredentialBodies(event)
+      return scrubCredentialBodies(scrubSentryEvent(event))
     },
+    ...overrides,
   }
 }
 
@@ -183,7 +210,7 @@ export function initSentry() {
       ? `dxrating-backend@${process.env.GIT_COMMIT}`
       : undefined)
 
-  Sentry.init(sentryOptions({ dsn, environment, release }))
+  Sentry.init(buildSentryOptions(environment, { dsn, release }))
 
   console.log(`Sentry initialized with environment: ${environment}, release: ${release}`)
 }

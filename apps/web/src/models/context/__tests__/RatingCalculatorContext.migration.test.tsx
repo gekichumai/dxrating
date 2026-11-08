@@ -1,6 +1,9 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { PlayEntry } from '../../../components/rating/RatingCalculatorAddEntryForm'
+import { loadLegacySongIds } from '../../../catalog/legacySongIds'
+import { getMigrationCatalog } from '../../../catalog/savedDataMigration'
 import { useSheetFavoriteState } from '../../favorite'
 import { RatingCalculatorContextProvider, useRatingCalculatorContext } from '../RatingCalculatorContext'
 
@@ -33,6 +36,14 @@ const MIGRATED_ENTRIES = [
 const renderContext = () => renderHook(() => useRatingCalculatorContext(), { wrapper: RatingCalculatorContextProvider })
 
 describe('RatingCalculatorContext saved data migration', () => {
+  // The first migration pass loads the legacy song ID chunk and indexes the catalog, once per worker. On a busy runner
+  // that cold start alone outlasts waitFor's 1s, failing whichever test runs first (and the next, while it is still in
+  // flight), so it is paid here and every test waits only for the migration it checks
+  beforeAll(async () => {
+    await loadLegacySongIds()
+    getMigrationCatalog(catalogSnapshot)
+  }, 20_000)
+
   beforeEach(() => {
     window.localStorage.clear()
   })

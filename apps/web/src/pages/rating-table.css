@@ -30,8 +30,16 @@
   width: 96px;
 }
 
+/* Raised by the sticky gap (tokens.css), so it leaves the viewport the moment the header sticks */
 .rating-table-sentinel {
+  position: relative;
+  top: calc(-1 * var(--sticky-top-gap));
   height: 0;
+}
+
+/* TableVirtuoso pins the header with an inline top: 0. On iOS it sticks a little below the edge (see --sticky-top-gap) */
+.rating-table thead {
+  top: var(--sticky-top-gap) !important;
 }
 
 /* The header is part of the records panel, like the form above it: no fill of its own, and one hairline under it as
@@ -371,6 +379,10 @@
   .rating-col--achievementRate > span {
     font-size: 0.8125rem;
     letter-spacing: -0.02em;
+  }
+  /* Cloud saves: no room beside the achievement on phones; the chart dialog shows the provenance */
+  .rating-table .rating-provenance-icon {
+    display: none;
   }
   /* Narrow columns: the label may wrap, and the chevron follows its last line as text does */
   .rating-table-sort {

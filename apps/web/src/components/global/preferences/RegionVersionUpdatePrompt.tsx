@@ -20,10 +20,7 @@ export function RegionVersionUpdatePrompt() {
   const current = DXVersionToDXDataVersionEnumMap[version]
   const latest = DXVersionToDXDataVersionEnumMap[availableVersionUpdate]
   return (
-    <section
-      aria-labelledby={titleId}
-      className="glass-overlay fixed z-[1100] bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-4 right-4 md:right-auto md:w-[26rem] p-4 pe-2 shadow-[var(--shadow-overlay)]"
-    >
+    <section aria-labelledby={titleId} className="glass-overlay p-4 pe-2 shadow-[var(--shadow-overlay)]">
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0 flex flex-col gap-1">
           <h2 id={titleId} className="m-0 text-base font-semibold leading-snug text-fg-1 text-balance">

@@ -30,6 +30,10 @@ import { AppConfig } from './config'
 import { renderChartOgImageOutputEffect } from './services/functions/chart-og-image/index'
 import { CatalogIdentityError } from './services/catalog-identities'
 import { CatalogIdentities, McpCatalogSource } from './services/application'
+import { CloudSaveOptInError, FeatureFlags } from './services/feature-flags'
+import { expectedUserFailure, requireSession } from './orpc-middleware'
+import { CLOUD_SAVE_EXPECTED_USER_HEADER } from '@gekichumai/api-contract'
+import { cloudSaveHandler } from './cloud-save-router'
 
 export interface ApiContext
   extends
@@ -446,9 +450,11 @@ const aliasesHandler = {
 }
 
 import { netGatewayStatusEffect, withMaimaiNETClient, type NetGatewayStatus } from './lib/functions/client'
+import { holdCredentials } from './lib/credential-hygiene'
 import { recordNetFailure, recordNetSuccess } from './services/functions/fetch-net-records/telemetry'
 import * as lxnsService from './services/lxns/viewer'
 import { withViewer, type SessionViewer } from './proofs/viewer-is'
+import { listPublicAnnouncements } from './services/announcements'
 
 const TrendingSeriesSchema = Schema.Struct({
   breakdown_value: Schema.optional(Schema.Unknown),
@@ -893,16 +899,22 @@ const maimaiHandler = {
     handlerGen(function* ({ input }) {
       const { id, password, region } = input
       const startedAt = yield* Clock.currentTimeMillis
-      const records = yield* withMaimaiNETClient(region, (client) =>
-        Effect.gen(function* () {
-          yield* client.loginEffect({ id, password })
-          const [recentRecords, musicRecords] = yield* Effect.all(
-            [client.fetchRecentRecordsEffect(), client.fetchMusicRecordsEffect()],
-            { concurrency: 'unbounded' },
-          )
-          return { recentRecords, musicRecords }
-        }),
-      ).pipe(Effect.tapError((error) => Effect.sync(() => recordNetFailure(region, 'api', error))))
+      // Filtered from telemetry while the request runs, whatever the body's framing (design §7.2)
+      const records = yield* Effect.acquireUseRelease(
+        Effect.sync(() => holdCredentials([id, password])),
+        () =>
+          withMaimaiNETClient(region, (client) =>
+            Effect.gen(function* () {
+              yield* client.loginEffect({ id, password })
+              const [recentRecords, musicRecords] = yield* Effect.all(
+                [client.fetchRecentRecordsEffect(), client.fetchMusicRecordsEffect()],
+                { concurrency: 'unbounded' },
+              )
+              return { recentRecords, musicRecords }
+            }),
+          ).pipe(Effect.tapError((error) => Effect.sync(() => recordNetFailure(region, 'api', error)))),
+        (release) => Effect.sync(release),
+      )
       const finishedAt = yield* Clock.currentTimeMillis
       yield* Effect.sync(() =>
         recordNetSuccess(region, 'api', {
@@ -1028,7 +1040,45 @@ const lxnsHandler = {
   ),
 }
 
+const announcementsHandler = {
+  list: os.announcements.list.handler(
+    handlerGen(function* () {
+      return yield* listPublicAnnouncements()
+    }),
+  ),
+}
+
+const featuresHandler = {
+  get: os.features.get.use(requireSession).handler(
+    handlerGen(function* ({ context }) {
+      const featureFlags = yield* FeatureFlags
+      return yield* featureFlags.features(context.user.id)
+    }),
+  ),
+  optInCloudSave: os.features.optInCloudSave.use(requireSession).handler(
+    handlerGen(function* ({ context, input }) {
+      const featureFlags = yield* FeatureFlags
+      // The consent is the account's that gave it: bound like a cloud save write (§10), checked after the phase so
+      // outside the opt-in phase the route stays a 404
+      const expectedUserId = context.reqHeaders?.get(CLOUD_SAVE_EXPECTED_USER_HEADER) ?? null
+      return yield* featureFlags.optInCloudSave(context.user.id, input.consentVersion, expectedUserId).pipe(
+        Effect.catchTag('CloudSaveOptInError', (error: CloudSaveOptInError) =>
+          Effect.fail(
+            error.reason === 'unavailable'
+              ? // Outside the opt-in phase the route does not exist.
+                new ORPCError('NOT_FOUND')
+              : error.reason === 'disabled'
+                ? new ORPCError('FORBIDDEN', { message: 'Cloud save is disabled for this account' })
+                : (expectedUserFailure(expectedUserId, context.user.id, true) ?? new ORPCError('CONFLICT')),
+          ),
+        ),
+      )
+    }),
+  ),
+}
+
 export const appRouter = os.router({
+  announcements: announcementsHandler,
   tags: tagsHandler,
   comments: commentsHandler,
   aliases: aliasesHandler,
@@ -1038,4 +1088,6 @@ export const appRouter = os.router({
   maimai: maimaiHandler,
   maimaiNet: maimaiNetHandler,
   lxns: lxnsHandler,
+  features: featuresHandler,
+  cloudSave: cloudSaveHandler,
 })

@@ -505,7 +505,7 @@
   "auth_accountSecurity_featureDevices": "Lihat di mana anda log masuk dan log keluar peranti lain",
   "auth_accountSecurity_featuresLabel": "Apa yang boleh anda buat di sini",
   "auth_privacy_title": "Dasar Privasi",
-  "auth_privacy_updated": "Kemas kini terakhir: 30 Oktober 2026",
+  "auth_privacy_updated": "Dikemas kini kali terakhir: 3 November 2026",
   "auth_privacy_intro_heading": "Pengenalan",
   "auth_privacy_intro_body": "Dasar Privasi ini menerangkan cara kami mengumpul, menggunakan, memproses dan mendedahkan maklumat anda apabila anda menggunakan perkhidmatan kami.",
   "auth_privacy_collect_heading": "Maklumat yang kami kumpul",
@@ -537,7 +537,7 @@
   "auth_privacy_retention_heading": "Penyimpanan data",
   "auth_privacy_retention_body": "Kami akan menyimpan maklumat anda hanya selama yang perlu untuk memenuhi tujuan yang dinyatakan dalam Dasar Privasi ini. Kami akan menyimpan dan menggunakan maklumat anda setakat yang perlu untuk mematuhi kewajipan undang-undang kami, menyelesaikan pertikaian dan menguatkuasakan dasar kami.",
   "auth_privacy_deletion_heading": "Pemadaman akaun",
-  "auth_privacy_deletion_p1": "Anda boleh memadam akaun anda secara kekal daripada skrin akaun dalam aplikasi DXRating. Pemadaman akan membuang profil, komen, tag dan lampiran tag, alias, sesi, kunci laluan, kaedah log masuk yang dipautkan dan kelayakan LXNS yang dipautkan. Kebenaran OAuth yang dipautkan akan dibatalkan jika disokong oleh penyedia. Selepas pemadaman, anda boleh mencipta akaun baharu menggunakan alamat e-mel atau penyedia log masuk yang sama.",
+  "auth_privacy_deletion_p1": "Anda boleh memadam akaun anda secara kekal daripada skrin akaun dalam aplikasi DXRating. Pemadaman membuang profil, komen, tag dan lampiran tag, alias, sesi, kunci laluan, kaedah log masuk yang dipautkan, bukti kelayakan LXNS yang dipautkan, dan simpanan awan anda bersama sejarah skor, log import dan syot kilat rating. Kebenaran OAuth yang dipautkan dibatalkan apabila disokong oleh penyedia. Selepas pemadaman, anda boleh mencipta akaun baharu menggunakan alamat e-mel atau penyedia log masuk yang sama.",
   "auth_privacy_deletion_p2": "Data akaun dibuang daripada sistem aktif kami serta-merta. Salinan baki mungkin kekal dalam sandaran yang disulitkan sehingga sandaran itu dipadam secara automatik, atau apabila penyimpanan dikehendaki oleh undang-undang.",
   "auth_privacy_rights_heading": "Hak anda",
   "auth_privacy_rights_body": "Anda mempunyai hak perlindungan data berikut:",
@@ -1317,5 +1317,384 @@
   "completion_progress_dx_withScore": "Dengan DX score",
   "completion_progress_dx_average": "Purata",
   "completion_progress_dx_star": "✦{star} atau lebih",
-  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} atau lebih: {count} daripada {total}"
+  "completion_progress_dx_cellLabel": "Lv.{level} ✦{star} atau lebih: {count} daripada {total}",
+  "announcement_severity_info": "Notis",
+  "announcement_severity_warning": "Amaran",
+  "announcement_severity_critical": "Penting",
+  "announcement_learnMore": "Ketahui lebih lanjut",
+  "announcement_dismiss": "Tutup pengumuman",
+  "ratingCalculator_cloudSave_saveMissing": "Simpanan awan anda tidak ditemui, jadi peranti ini menggunakan simpanan setempatnya.",
+  "ratingCalculator_cloudSave_title": "Simpanan awan",
+  "ratingCalculator_cloudSave_description": "Skor anda disimpan di DXRating dan kekal segerak merentas peranti anda.",
+  "ratingCalculator_cloudSave_provenance_verified": "Disahkan",
+  "ratingCalculator_cloudSave_provenance_friendCode": "kod rakan {id}",
+  "ratingCalculator_cloudSave_provenance_account": "akaun {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "diambil {date}",
+  "ratingCalculator_cloudSave_provenance_edited": "Diedit (asalnya diimport)",
+  "ratingCalculator_cloudSave_provenance_manual": "Manual",
+  "ratingCalculator_cloudSave_provenance_notVerified": "tidak disahkan",
+  "ratingCalculator_cloudSave_provenance_fromFile": "Daripada fail ({source})",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "Daripada fail (didakwa: {source})",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "Daripada peranti ini",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "Daripada peranti ini (didakwa: {source})",
+  "ratingCalculator_cloudSave_status_idle": "Terkini",
+  "ratingCalculator_cloudSave_status_syncing": "Menyegerak…",
+  "ratingCalculator_cloudSave_status_offline": "Luar talian",
+  "ratingCalculator_cloudSave_status_error": "Tidak dapat menyegerak sekarang",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{count} perubahan menunggu untuk disegerakkan"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{count} isu penyegerakan"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "Isu penyegerakan",
+  "ratingCalculator_cloudSave_issues_empty": "Tiada isu penyegerakan.",
+  "ratingCalculator_cloudSave_issues_yourValue": "Perubahan anda: {value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "dibuang",
+  "ratingCalculator_cloudSave_issues_method_typed": "ditaip",
+  "ratingCalculator_cloudSave_issues_method_keypad": "pad kekunci",
+  "ratingCalculator_cloudSave_issues_method_photo": "foto",
+  "ratingCalculator_cloudSave_issues_superseded": "Skor tersahih yang lebih baharu dikekalkan.",
+  "ratingCalculator_cloudSave_issues_rejected": "Perubahan ini tidak diterima, jadi skor yang tersimpan dikekalkan.",
+  "ratingCalculator_cloudSave_issues_useMine": "Tetap guna nilai saya",
+  "ratingCalculator_cloudSave_issues_dismiss": "Tutup",
+  "ratingCalculator_cloudSave_saves_title": "Simpanan",
+  "ratingCalculator_cloudSave_saves_description": "Pilih simpanan yang dipaparkan dan diedit oleh pelayar ini.",
+  "ratingCalculator_cloudSave_saves_loading": "Memuatkan simpanan…",
+  "ratingCalculator_cloudSave_saves_error": "Tidak dapat memuatkan simpanan anda.",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} rekod"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "disegerakkan kali terakhir {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "Mana-mana rantau",
+  "ratingCalculator_cloudSave_history_title": "Sejarah import",
+  "ratingCalculator_cloudSave_history_loading": "Memuatkan import…",
+  "ratingCalculator_cloudSave_history_error": "Tidak dapat memuatkan sejarah import.",
+  "ratingCalculator_cloudSave_history_empty": "Belum ada import.",
+  "ratingCalculator_cloudSave_history_running": "Sedang berjalan…",
+  "ratingCalculator_cloudSave_history_trigger_user": "Oleh anda",
+  "ratingCalculator_cloudSave_history_trigger_auto": "Automatik",
+  "ratingCalculator_cloudSave_history_trigger_migration": "Dipindahkan daripada pelayar ini",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} baharu"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} bertambah baik"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} kini disahkan"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} tidak berubah"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} mengekalkan suntingan anda"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} dilangkau (dipadam)"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} ditolak"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "Tiada perubahan",
+  "ratingCalculator_cloudSave_import_success": "Diimport daripada {source}: {summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "Import ini terhenti sebelum selesai. Cuba lagi.",
+  "ratingCalculator_cloudSave_import_errors_generic": "Tidak dapat menyelesaikan import ini. Cuba lagi.",
+  "ratingCalculator_cloudSave_saves_empty": "Belum ada simpanan awan.",
+  "ratingCalculator_cloudSave_retry": "Cuba lagi",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Import {count} skor ke dalam simpanan awan anda?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "Setiap chart mengekalkan skornya yang lebih baik, jadi tiada apa yang anda ada akan menjadi lebih teruk. Untuk bermula semula, kosongkan simpanan dahulu.",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "Batal",
+  "ratingCalculator_cloudSave_importConfirm_merge": "Import",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "Kosongkan simpanan dahulu…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "Kosongkan simpanan, kemudian import?",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "Setiap skor dalam simpanan ini dipadam pada semua peranti anda, kemudian fail diimport. Skor tersahih yang berubah sejak peranti ini disegerak kali terakhir dikekalkan.",
+  "ratingCalculator_cloudSave_importConfirm_back": "Kembali",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "Kosongkan dan import",
+  "ratingCalculator_cloudSave_unreachable": "Simpanan awan anda belum dapat dicapai. Perubahan yang anda buat sekarang kekal dalam pelayar ini.",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} rekod tidak sepadan dengan mana-mana chart dan tidak diimport."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "Tiada rekod ini yang boleh diimport: ia tidak sepadan dengan mana-mana chart atau mempunyai nilai di luar julat. Simpanan awan anda tidak diubah.",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} rekod mempunyai nilai yang tidak boleh disimpan, seperti DX score di luar julat, dan tidak diimport."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_divingFishMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} rekod disembunyikan oleh tetapan privasi pemain di Diving-Fish dan tidak boleh diimport."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} rekod tidak boleh diimport kerana tidak sepadan dengan mana-mana chart atau mempunyai nilai di luar julat. Ia akan ditinggalkan."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "Import lain daripada sumber ini sedang berjalan pada simpanan awan anda. Cuba lagi selepas ia selesai.",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "Fail ini terlalu besar untuk dimuat naik dalam satu import. Simpanan awan anda tidak diubah.",
+  "ratingCalculator_cloudSave_history_failure_generic": "Tidak selesai",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "Terhenti sebelum selesai",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "Tidak selesai: maimai NET sedang diselenggara",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "Tidak selesai: log masuk maimai NET gagal",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "Tidak selesai: tiada kad Aime yang boleh digunakan",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} chart tidak dikenali"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} disembunyikan oleh tetapan privasi"
+      }
+    }
+  ],
+  "auth_privacy_cloud_heading": "Simpanan awan (beta)",
+  "auth_privacy_cloud_p1": "Jika anda menghidupkan simpanan awan, kami menyimpan skor anda dalam akaun anda supaya peranti anda boleh berkongsinya: bagi setiap chart, keputusan anda dan asalnya (contohnya import daripada maimai DX NET, LXNS atau Diving-Fish, sebuah fail, atau entri yang anda taip), bersama ID akaun yang diberikan oleh penyedia itu, seperti kod rakan anda. Kami juga menyimpan log bagi setiap import (sumber, masa, kiraan dan cincangan data yang diterima) serta syot kilat rating yang disimpan oleh peranti anda selepas menyegerak.",
+  "auth_privacy_cloud_p2": "Apabila anda mengimport daripada maimai DX NET, kata laluan SEGA ID anda hanya digunakan untuk log masuk bagi import itu. Ia tidak pernah disimpan atau dilog.",
+  "auth_privacy_cloud_p3": "Simpanan awan disimpan sehingga anda memadamnya atau memadam akaun anda. Setiap chart menyimpan sehingga 20 keputusan terdahulu, dan setiap simpanan sehingga 100 syot kilat rating. Rekod yang dipadam diingati selama 90 hari supaya peranti anda yang lain turut membuangnya, dan rekod bagi setiap permintaan segerak daripada peranti anda disimpan selama 30 hari supaya permintaan yang dihantar dua kali hanya dilaksanakan sekali. Simpanan yang anda padam dihapuskan sepenuhnya 30 hari kemudian.",
+  "ratingCalculator_cloudSave_descriptionInactive": "Simpan skor anda dalam akaun DXRating dan gunakannya pada semua peranti anda.",
+  "ratingCalculator_cloudSave_choose_title": "Guna simpanan awan",
+  "ratingCalculator_cloudSave_choose_sectionDescription": "Sudah disandarkan pada peranti lain? Pilih simpanan awan untuk digunakan pada pelayar ini.",
+  "ratingCalculator_cloudSave_choose_open": "Guna simpanan awan",
+  "ratingCalculator_cloudSave_choose_dialogTitle": "Pilih simpanan awan",
+  "ratingCalculator_cloudSave_choose_dialogDescription": "Pelayar ini akan memaparkan dan mengedit simpanan yang anda pilih. Tiada apa yang dimuat naik.",
+  "ratingCalculator_cloudSave_choose_empty": "Akaun anda belum mempunyai simpanan awan. Untuk membuat satu, tambah skor pada peranti ini, kemudian sandarkannya.",
+  "ratingCalculator_cloudSave_choose_cancel": "Batal",
+  "ratingCalculator_cloudSave_migration_title": "Sandarkan ke awan",
+  "ratingCalculator_cloudSave_migration_prompt": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Sandarkan {formatted} rekod pada peranti ini ke akaun anda?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_backUp": "Sandarkan ke awan",
+  "ratingCalculator_cloudSave_migration_notNow": "Bukan sekarang",
+  "ratingCalculator_cloudSave_migration_sectionDescription": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Pelayar ini mempunyai {countNumber} rekod yang disimpan pada peranti ini. Sandarkannya untuk menyegerakkannya merentas peranti anda."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_saveName": "Skor saya",
+  "ratingCalculator_cloudSave_migration_freshDescription": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} rekod anda akan disimpan ke akaun anda dan disegerakkan merentas peranti anda."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingTitle": "Anda sudah mempunyai simpanan awan",
+  "ratingCalculator_cloudSave_migration_cloudRecords": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} rekod"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingDescription": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input region",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "“{name}” ({region}) mempunyai {cloudRecords}. Peranti ini mempunyai {formatted} rekod."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_changed": "Simpanan awan ini telah berubah pada peranti lain. Semak semula sebelum anda meneruskan.",
+  "ratingCalculator_cloudSave_migration_merge": "Gabung (kekalkan yang terbaik daripada kedua-duanya)",
+  "ratingCalculator_cloudSave_migration_mergeDescription": "Setiap chart mengekalkan skornya yang lebih baik, sama ada daripada peranti ini atau awan.",
+  "ratingCalculator_cloudSave_migration_cloudOnly": "Guna awan sahaja",
+  "ratingCalculator_cloudSave_migration_cloudOnlyDescription": "Tukar kepada simpanan awan. Rekod peranti ini disimpan dalam sandaran, tidak dimuat naik.",
+  "ratingCalculator_cloudSave_migration_mergeAction": "Gabung",
+  "ratingCalculator_cloudSave_migration_cloudOnlyAction": "Guna simpanan awan",
+  "ratingCalculator_cloudSave_migration_advanced": "Lanjutan",
+  "ratingCalculator_cloudSave_migration_replaceDescription": "Gantikan setiap rekod dalam simpanan awan dengan rekod pada peranti ini.",
+  "ratingCalculator_cloudSave_migration_replace": "Gantikan awan dengan peranti ini",
+  "ratingCalculator_cloudSave_migration_replaceTitle": "Gantikan simpanan awan?",
+  "ratingCalculator_cloudSave_migration_replaceWarning": [
+    {
+      "declarations": [
+        "input count",
+        "input cloudRecords",
+        "input name",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{cloudRecords} dalam “{name}” akan digantikan dengan {formatted} rekod daripada peranti ini. Peranti anda yang lain juga akan menerima perubahan ini. Ini tidak boleh dibuat asal."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceWarningEmpty": [
+    {
+      "declarations": ["input count", "input name", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "“{name}” tidak mempunyai rekod. Ia akan menerima {formatted} rekod daripada peranti ini, dan peranti anda yang lain juga akan menerima perubahan ini."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceConfirm": "Gantikan simpanan awan",
+  "ratingCalculator_cloudSave_migration_runningTitle": "Menyandarkan…",
+  "ratingCalculator_cloudSave_migration_running": "Memuat naik rekod anda. Biarkan halaman ini terbuka.",
+  "ratingCalculator_cloudSave_migration_switchingTitle": "Bertukar ke simpanan awan anda…",
+  "ratingCalculator_cloudSave_migration_switching": "Menyimpan salinan rekod peranti ini dalam pelayar ini.",
+  "ratingCalculator_cloudSave_migration_doneTitle": "Disandarkan",
+  "ratingCalculator_cloudSave_migration_switchedTitle": "Kini menggunakan simpanan awan anda",
+  "ratingCalculator_cloudSave_migration_done": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} rekod kini berada dalam simpanan awan anda."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_doneCloudOnly": "Peranti ini kini menggunakan simpanan awan anda.",
+  "ratingCalculator_cloudSave_migration_close": "Tutup",
+  "ratingCalculator_cloudSave_migration_errorTitle": "Tidak dapat menyandarkan",
+  "ratingCalculator_cloudSave_migration_switchErrorTitle": "Tidak dapat bertukar",
+  "ratingCalculator_cloudSave_migration_errorSafe": "Tiada apa pada peranti ini diubah. Anda boleh cuba lagi bila-bila masa.",
+  "ratingCalculator_cloudSave_migration_errorUnchanged": "Tiada apa pada peranti ini diubah.",
+  "ratingCalculator_cloudSave_migration_errors_saveLimit": "Anda sudah mencapai had simpanan awan, jadi yang baharu tidak dapat dibuat. Untuk menyandarkan ke dalam salah satu simpanan anda, tukar rantau permainan kepada rantau simpanan itu dan buka ini semula.",
+  "ratingCalculator_cloudSave_migration_errors_generic": "Muat naik tidak selesai. Semak sambungan anda dan cuba lagi.",
+  "ratingCalculator_cloudSave_migration_errors_switchGeneric": "Sesuatu tidak kena. Cuba lagi.",
+  "ratingCalculator_cloudSave_migration_unverifiedNote": "Rekod yang sudah ada pada peranti ini disimpan sebagai “tidak disahkan”. Import semula daripada maimai NET, LXNS atau Diving-Fish untuk mendapatkan rekod yang disahkan.",
+  "ratingCalculator_cloudSave_migration_backupNote": "Salinan rekod peranti ini kekal dalam pelayar ini selama 30 hari. Apabila anda log keluar, peranti ini terus menggunakan rekodnya sendiri.",
+  "ratingCalculator_cloudSave_optIn_title": "Simpanan awan (beta)",
+  "ratingCalculator_cloudSave_optIn_description": "Simpan skor anda dalam akaun anda dan segerakkannya merentas peranti anda.",
+  "ratingCalculator_cloudSave_optIn_consentTitle": "Hidupkan simpanan awan (beta)?",
+  "ratingCalculator_cloudSave_optIn_consentIntro": "Dengan simpanan awan, DXRating menyimpan perkara berikut dalam akaun anda:",
+  "ratingCalculator_cloudSave_optIn_consentStored": "Skor anda, ID akaun penyedia yang anda import daripadanya (seperti kod rakan anda), log bagi setiap import bersama cincangan apa yang diimport, dan syot kilat rating yang disimpan oleh peranti anda selepas menyegerak.",
+  "ratingCalculator_cloudSave_optIn_consentRetention": "Disimpan sehingga anda memadamnya atau memadam akaun anda. Setiap chart menyimpan sehingga 20 keputusan terdahulu, dan setiap simpanan sehingga 100 syot kilat rating. Rekod yang dipadam diingati selama 90 hari supaya peranti anda yang lain turut membuangnya, dan rekod bagi setiap permintaan segerak daripada peranti anda disimpan selama 30 hari. Simpanan yang anda padam dihapuskan sepenuhnya 30 hari kemudian.",
+  "ratingCalculator_cloudSave_optIn_consentPasswords": "Kata laluan SEGA ID anda tidak pernah disimpan.",
+  "ratingCalculator_cloudSave_optIn_consentLeaving": "Anda belum boleh mematikan beta ini dalam aplikasi. Memadam akaun DXRating anda (dalam aplikasi DXRating) membuang semua ini daripada sistem kami; dasar privasi menerangkan tentang sandaran.",
+  "ratingCalculator_cloudSave_optIn_consentPrivacy": "Baca lebih lanjut dalam {#privacy}dasar privasi{/privacy}.",
+  "ratingCalculator_cloudSave_optIn_agree": "Setuju dan hidupkan",
+  "ratingCalculator_cloudSave_optIn_sending": "Menghidupkan simpanan awan…",
+  "ratingCalculator_cloudSave_optIn_success": "Simpanan awan dihidupkan.",
+  "ratingCalculator_cloudSave_optIn_error": "Tidak dapat menghidupkan simpanan awan. Cuba lagi.",
+  "ratingCalculator_cloudSave_export_title": "Data anda",
+  "ratingCalculator_cloudSave_export_description": "Muat turun setiap simpanan awan bersama rekodnya, asal rekod, sejarah import dan syot kilat rating, sebagai fail JSON.",
+  "ratingCalculator_cloudSave_export_button": "Muat turun data saya",
+  "ratingCalculator_cloudSave_export_preparing": "Menyediakan…",
+  "ratingCalculator_cloudSave_export_success": "Data anda sedang dimuat turun.",
+  "ratingCalculator_cloudSave_export_error": "Tidak dapat memuat turun data anda. Cuba lagi.",
+  "ratingCalculator_cloudSave_export_rateLimited": "Anda telah memuat turun data anda beberapa kali hari ini. Cuba lagi esok.",
+  "ratingCalculator_cloudSave_exportImport_pickTitle": "Pilih simpanan untuk diimport",
+  "ratingCalculator_cloudSave_exportImport_pickDescription": "Fail ini mempunyai lebih daripada satu simpanan.",
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Diimport sebagai “tidak disahkan”: asal rekod ditunjukkan seperti yang didakwa oleh fail."
 }

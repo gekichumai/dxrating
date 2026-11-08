@@ -1,0 +1,22 @@
+/* A translucent material over a soft accent wash: no large flat solid-colour areas (AGENTS.md "Design") */
+.admin-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      1200px 600px at 10% -10%,
+      color-mix(in oklab, var(--mantine-color-dxrating-3) 22%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      900px 500px at 110% 10%,
+      color-mix(in oklab, var(--mantine-color-cyan-3) 18%, transparent),
+      transparent 70%
+    ),
+    var(--mantine-color-body);
+}
+
+.admin-glass {
+  background: color-mix(in oklab, var(--mantine-color-body) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}

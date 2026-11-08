@@ -1,8 +1,13 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LocalScoreRepository } from '@/models/scores/LocalScoreRepository'
 import { ScoreRepositoryContext } from '@/models/scores/useScoreRepository'
+import { CloudImportConfirmDialog } from '@/components/cloud-save/CloudImportConfirmDialog'
+import { entriesToImportRecords, NothingToImportError } from '@/models/scores/cloudImports'
+import { ExportSavePickerDialog } from '@/components/cloud-save/ExportSavePickerDialog'
+import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
+import type { ScoreRepository } from '@/models/scores/ScoreRepository'
 import { ImportFromJSONButtonListItem } from '../ImportFromJSONButtonListItem'
 import { importReviewController } from '@/models/scores/importReview'
 import { ImportReviewHost } from '../ImportReviewDialog'
@@ -154,5 +159,208 @@ describe('ImportFromJSONButtonListItem', () => {
     await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1))
     expect(toastError.mock.calls[0]![0]).toMatch(/^Unable to import this file\. /)
     expect(repository.entries()).toEqual(SAVED)
+  })
+
+  describe('on a cloud save', () => {
+    function renderCloud(applyImport: ScoreRepository['applyImport']) {
+      cleanup()
+      const cloud = { kind: 'cloud', serverImportsEnabled: true, applyImport: vi.fn(applyImport) }
+      render(
+        <ScoreRepositoryContext.Provider value={cloud as never}>
+          <ImportFromJSONButtonListItem onClose={() => {}} />
+          <CloudImportConfirmDialog />
+        </ScoreRepositoryContext.Provider>,
+      )
+      return cloud
+    }
+
+    const entries = [
+      { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100.5 },
+      { sheetId: 'dsht_5mk3yr8gme', achievementRate: 99 },
+      { sheetId: 'dsht_23456789ab', achievementRate: 101.5 },
+    ]
+
+    it('counts what the server took and says how many were left out', async () => {
+      renderCloud(async () => ({ count: 2, skipped: 1, rejected: 1 }))
+      await importFile(JSON.stringify(entries))
+      await act(async () => fireEvent.click(await screen.findByRole('button', { name: 'Import' })))
+
+      await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Imported 2 records'))
+      expect(toast).toHaveBeenCalledWith("1 record didn't match a chart and wasn't imported.")
+      expect(toast).toHaveBeenCalledWith(
+        "1 record has a value that can't be saved, such as a DX score out of range, and wasn't imported.",
+      )
+    })
+
+    it("shows an error and never clears the save when no record passes the server's schema", async () => {
+      const cloud = renderCloud(async () => ({ count: 1 }))
+      await importFile(JSON.stringify([{ sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100.5, dxScore: 100001 }]))
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith(
+          "None of these records can be imported: they match no chart or have values out of range. Your cloud save wasn't changed.",
+        ),
+      )
+      expect(screen.queryByRole('dialog')).toBeNull()
+      expect(cloud.applyImport).not.toHaveBeenCalled()
+      expect(toastSuccess).not.toHaveBeenCalled()
+    })
+
+    it('says nothing was imported, and the save kept, when no record matches a chart', async () => {
+      renderCloud(async () => {
+        throw new NothingToImportError(3)
+      })
+      await importFile(JSON.stringify(entries))
+      await act(async () => fireEvent.click(await screen.findByRole('button', { name: 'Import' })))
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith(
+          "None of these records can be imported: they match no chart or have values out of range. Your cloud save wasn't changed.",
+        ),
+      )
+      expect(toastSuccess).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('a "Download my data" file (GET /me/export)', () => {
+    const provenance = (source: string, fields: Record<string, unknown> = {}) => ({
+      source,
+      claimedSource: null,
+      fetchedBy: 'server',
+      verification: 'verified',
+      entryMethod: 'import',
+      sourceAccountId: '123456789012345',
+      importJobId: 'dimp_1',
+      rawPayloadSha256: 'a'.repeat(64),
+      fetchedAt: '2026-11-02T00:00:00.000Z',
+      editedFromJobId: null,
+      ...fields,
+    })
+    const record = (sheetId: string, achievement: number, source: string, fields: Record<string, unknown> = {}) => ({
+      sheetId,
+      achievement,
+      achievementRate: achievement / 10000,
+      comboFlag: null,
+      syncFlag: null,
+      dxScore: null,
+      best50Bucket: null,
+      providerRecordId: null,
+      provenance: provenance(source, fields),
+      revision: 3,
+      valueChangedAt: '2026-11-02T00:00:00.000Z',
+      clientEditedAt: null,
+      deletedAt: null,
+      dxrating: { source },
+    })
+    const save = (id: string, name: string, records: unknown[], deletedAt: string | null = null) => ({
+      id,
+      name,
+      region: 'jp',
+      gameVersion: null,
+      clientProfileKey: null,
+      revision: 3,
+      recordCount: records.length,
+      createdAt: '2026-11-01T00:00:00.000Z',
+      updatedAt: '2026-11-02T00:00:00.000Z',
+      latestSnapshot: null,
+      deletedAt,
+      records,
+      tombstones: [],
+      importJobs: [],
+      events: [],
+      snapshots: [],
+    })
+    const exportFile = (saves: unknown[]) =>
+      JSON.stringify({ format: 'dxrating-cloud-save-export', version: 1, exportedAt: '2026-11-03T00:00:00Z', saves })
+
+    const MAIN = save('dsav_main', 'Main', [
+      record('dsht_e5nsvt8k2a', 1005432, 'maimai-net-jp'),
+      record('dsht_5mk3yr8gme', 990000, 'manual', { verification: 'client_reported', fetchedBy: 'client' }),
+      record('dsht_mpd82wyms9', 980000, 'dxrating-json', { claimedSource: 'lxns', verification: 'client_reported' }),
+    ])
+
+    it('imports into the local save, the provenance kept only as the claimed provider', async () => {
+      await importFile(exportFile([MAIN, save('dsav_gone', 'Deleted', [record('dsht_23456789ab', 1e6, 'lxns')], 'x')]))
+      // The local save's import preview (meta#35), as for any rating file
+      const dialog = await screen.findByRole('dialog')
+      expect(dialog.textContent).toContain('Review import from DXRating file')
+      fireEvent.click(within(dialog).getByRole('button', { name: /^Import/ }))
+
+      await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Imported 3 records'))
+      expect(repository.entries()).toEqual([
+        {
+          sheetId: 'dsht_e5nsvt8k2a',
+          achievementRate: 100.5432,
+          comboFlag: null,
+          syncFlag: null,
+          source: { provider: 'maimai-net' },
+        },
+        { sheetId: 'dsht_5mk3yr8gme', achievementRate: 99, comboFlag: null, syncFlag: null },
+        {
+          sheetId: 'dsht_mpd82wyms9',
+          achievementRate: 98,
+          comboFlag: null,
+          syncFlag: null,
+          source: { provider: 'lxns' },
+        },
+      ])
+      // A local save verifies nothing: no "not verified" notice
+      expect(toast).not.toHaveBeenCalledWith(expect.stringMatching(/not verified/), expect.anything())
+    })
+
+    it('uploads to a cloud save as a DXRating JSON file: client_reported, the provider only claimed', async () => {
+      cleanup()
+      const applyImport = vi.fn(async (entries: PlayEntry[]) => ({ count: entries.length }))
+      const cloud = { kind: 'cloud', serverImportsEnabled: true, applyImport }
+      render(
+        <ScoreRepositoryContext.Provider value={cloud as never}>
+          <ImportFromJSONButtonListItem onClose={() => {}} />
+          <CloudImportConfirmDialog />
+          <ExportSavePickerDialog />
+        </ScoreRepositoryContext.Provider>,
+      )
+
+      await importFile(exportFile([MAIN, save('dsav_intl', 'Intl', [record('dsht_23456789ab', 1000000, 'lxns')])]))
+      // Two saves: the user picks one
+      fireEvent.click(await screen.findByRole('button', { name: /^Main/ }))
+      await act(async () => fireEvent.click(await screen.findByRole('button', { name: 'Import' })))
+
+      await waitFor(() => expect(applyImport).toHaveBeenCalledTimes(1))
+      const [entries, meta] = applyImport.mock.calls[0]! as unknown as [PlayEntry[], { source: string }]
+      expect(meta.source).toBe('dxrating-json')
+      const { records } = entriesToImportRecords(entries, { source: 'dxrating-json', claimedSource: null })
+      expect(records.map((item) => [item.sheetId, item.claimedSource])).toEqual([
+        ['dsht_e5nsvt8k2a', 'maimai-net'],
+        ['dsht_5mk3yr8gme', null],
+        ['dsht_mpd82wyms9', 'lxns'],
+      ])
+      // Nothing of the file's verification, job or account goes to the server
+      expect(JSON.stringify(records)).not.toMatch(/verified|dimp_|123456789012345|fetchedBy/)
+      await waitFor(() => expect(toast).toHaveBeenCalledWith(expect.stringMatching(/not verified/), expect.anything()))
+    })
+
+    it('cancelling the save picker imports nothing and says nothing', async () => {
+      cleanup()
+      const entriesBefore = repository.entries()
+      render(
+        <ScoreRepositoryContext.Provider value={repository}>
+          <ImportFromJSONButtonListItem onClose={() => {}} />
+          <ExportSavePickerDialog />
+        </ScoreRepositoryContext.Provider>,
+      )
+
+      await importFile(exportFile([MAIN, save('dsav_intl', 'Intl', [record('dsht_23456789ab', 1000000, 'lxns')])]))
+      expect(await screen.findByRole('button', { name: /^Main/ })).toBeTruthy()
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+      await waitFor(() => expect(screen.queryByRole('button', { name: /^Main/ })).toBeNull())
+      // Let anything the cancel would have started settle
+      await act(async () => {})
+      expect(repository.entries()).toEqual(entriesBefore)
+      expect(window.localStorage.getItem('rating-calculator-entries')).toBe(JSON.stringify(SAVED))
+      expect(toastSuccess).not.toHaveBeenCalled()
+      expect(toastError).not.toHaveBeenCalled()
+      expect(toast).not.toHaveBeenCalled()
+    })
   })
 })

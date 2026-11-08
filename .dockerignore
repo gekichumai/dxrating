@@ -13,6 +13,8 @@
 !packages/maimai-domain/
 !packages/oneshot-renderer/
 !apps/backend/
+# apps/admin-api/Dockerfile (gekichumai/meta#50)
+!apps/admin-api/
 
 # Keep local generated artifacts out of the Docker build context.
 **/.env

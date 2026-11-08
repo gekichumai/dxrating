@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/cloudflare'
-import { wrapFetchWithSentry } from '@sentry/tanstackstart-react'
+import * as SentryStart from '@sentry/tanstackstart-react'
 import { StartServer, createStartHandler } from '@tanstack/react-start/server'
 import { renderRouterToStream } from '@tanstack/react-router/ssr/server'
 import { createElement } from 'react'
@@ -16,6 +16,14 @@ import { appendVaryHeader, detectServerLocale } from './setup/locale'
 import { trailingSlashRedirect } from './setup/trailing-slash'
 import { finishServerTimingSpan, setServerTimingHeader, startServerTimingSpan } from './setup/server-timing'
 import { sentryScrubOptions } from './lib/sentryScrub'
+import { attachTelemetrySdk } from './lib/telemetry'
+
+// Server-rendered code reports metrics and logs through src/lib/telemetry.ts; on the server the SDK is always there
+attachTelemetrySdk({
+  metrics: SentryStart.metrics,
+  logger: SentryStart.logger,
+  captureException: SentryStart.captureException,
+})
 
 type WorkerExecutionContext = { waitUntil(promise: Promise<unknown>): void }
 
@@ -68,7 +76,7 @@ async function handleWithHtmlCache(request: Request, env: unknown, ctx: WorkerEx
   return visitorResponse
 }
 
-const requestHandler: ServerEntry = wrapFetchWithSentry({
+const requestHandler: ServerEntry = SentryStart.wrapFetchWithSentry({
   fetch(request, ...rest: unknown[]) {
     const [env, ctx] = rest as [unknown, WorkerExecutionContext | undefined]
     return trailingSlashRedirect(request) ?? handleWithHtmlCache(request, env, ctx)
@@ -84,7 +92,8 @@ export default Sentry.withSentry(
     release: import.meta.env.VITE_SENTRY_RELEASE || undefined,
     environment: import.meta.env.VITE_SENTRY_ENVIRONMENT ?? 'development',
     // Off unless this is a CI release or preview build (see src/setup/sentry-release.ts), so local runs send nothing
-    enabled: Boolean(import.meta.env.VITE_SENTRY_RELEASE),
+    // and e2e builds (VITE_E2E_BUILD) keep the Worker from sending their test traffic to the production project
+    enabled: Boolean(import.meta.env.VITE_SENTRY_RELEASE) && !import.meta.env.VITE_E2E_BUILD,
     tracesSampleRate: 0.2,
     // OAuth callbacks carry one-time code and state in the query
     ...sentryScrubOptions,
