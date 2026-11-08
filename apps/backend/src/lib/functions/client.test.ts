@@ -7,8 +7,10 @@ import {
   MAIMAI_NET_INTERMEDIATE_CERTIFICATES,
   MaimaiNETIntlClient,
   NetImportError,
+  parseFriendCode,
   type NetImportErrorCode,
 } from './client'
+import { DOMParser } from 'xmldom-qsa'
 import { URLS } from './URLS'
 
 class StubIntlClient extends MaimaiNETIntlClient {
@@ -88,5 +90,35 @@ describe('maimai NET TLS certificates', () => {
     expect(issuer).toBeDefined()
     if (!issuer) throw new Error('issuer root certificate is missing')
     expect(intermediate.verify(issuer.publicKey)).toBe(true)
+  })
+})
+// Synthetic pages: the real friend code page must be checked on JP and intl accounts by the owner (design §16.4)
+describe('friend code page', () => {
+  const parse = (html: string) =>
+    parseFriendCode(new DOMParser({ errorHandler: () => {} }).parseFromString(html, 'text/html'))
+
+  it('reads the one code of the see-through block', () => {
+    expect(
+      parse(`<html><body><div class="wrapper">
+        <div class="name_block f_l f_16">ＳＹＮＴＨ</div>
+        <div class="see_through_block m_t_5 m_b_5 p_5 t_c f_15">9012345678901</div>
+      </div></body></html>`),
+    ).toBe('9012345678901')
+  })
+
+  it('falls back to the one element whose whole text is a code', () => {
+    expect(
+      parse('<html><body><div><span>Friend code</span><div class="code"> 9012345678901 </div></div></body></html>'),
+    ).toBe('9012345678901')
+  })
+
+  it('answers null for a page without exactly one code (a login page, two candidates)', () => {
+    expect(parse('<html><body><form><input name="segaId" /></form></body></html>')).toBeNull()
+    expect(parse('<html><body><div>90123456789</div><div>12345678901</div></body></html>')).toBeNull()
+    expect(
+      parse(
+        '<html><body><div class="see_through_block">90123456789</div><div class="see_through_block">12345678901</div></body></html>',
+      ),
+    ).toBeNull()
   })
 })

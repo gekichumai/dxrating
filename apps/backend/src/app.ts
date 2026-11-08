@@ -58,7 +58,9 @@ import {
   readClientId,
 } from './services/api-usage'
 import { appContract } from './contract'
-import { isPublicSpecProcedure } from '@gekichumai/api-contract'
+import { CLOUD_SAVE_NET_IMPORT_ROUTE, isPublicSpecProcedure } from '@gekichumai/api-contract'
+import { credentialHygiene, holdCredentials } from './lib/credential-hygiene'
+import { netImportHandler } from './services/cloud-save/net-import-route'
 import { McpCatalogSource } from './services/application'
 import {
   clientKey,
@@ -78,6 +80,7 @@ import { clientAddress } from './services/mcp/client-key'
 import { FeatureFlags } from './services/feature-flags'
 import { cloudSaveRateLimits } from './services/rate-limit'
 import { exportChunks, exportHeaders } from './services/cloud-save/export'
+import { orpcErrorResponse } from './lib/orpc-error-response'
 import { CLOUD_SAVE_BODY_LIMIT_BYTES, CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES } from './services/cloud-save/limits'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
   readonly operation: string
@@ -85,18 +88,6 @@ class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
 }> {}
 
 const app = new Hono<EvlogVariables>()
-
-/** An oRPC-shaped error response (with the v1 `status` field) for routes served outside the oRPC handler */
-const orpcErrorResponse = (error: ORPCError<string, unknown>, headers: Record<string, string> = {}) => {
-  const status =
-    error.code === 'PAYLOAD_TOO_LARGE'
-      ? 413
-      : (COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500)
-  return new Response(JSON.stringify({ ...error.toJSON(), status }), {
-    status,
-    headers: { 'Content-Type': 'application/json', ...headers },
-  })
-}
 
 /**
  * Refuses request bodies over `maxSize` bytes with an oRPC-shaped 413: at once when `Content-Length` says so,
@@ -386,6 +377,18 @@ app.use(
   }) as unknown as MiddlewareHandler,
 )
 
+// Credential hygiene (design §7.2): the routes that carry a SEGA ID and password (or LXNS tokens) never log or report
+// them. Right after evlog, so their request logger is the scrubbing one.
+for (const path of [
+  '/functions/fetch-net-records/*',
+  '/api/v1/io/import/maimai-net',
+  '/api/v1/io/import/lxns/*',
+  CLOUD_SAVE_NET_IMPORT_ROUTE.honoPath,
+  '/api/v1/saves/:id/imports/lxns',
+]) {
+  app.use(path, credentialHygiene)
+}
+
 // API usage accounting: classify each request by route template and caller,
 // attach the result to the request wide event, and add it to the per-minute
 // rollup flushed by the ApiUsage service.
@@ -590,23 +593,29 @@ const authParamsSchema = z.object({
 const verifyParams = createMiddleware((c, next) =>
   runApp(
     Effect.gen(function* () {
+      // A body that is not JSON is a plain 400, its parse error dropped: V8's SyntaxError quotes the text around the
+      // bad token, which can be the SEGA ID or password (design §7.2)
       const body = yield* Effect.tryPromise({
-        try: () => c.req.json(),
-        catch: (cause) => new HttpAdapterError({ operation: 'Read NET parameters', cause }),
-      })
-      const region = c.req.param('region') ?? body.region
+        try: () => c.req.json<unknown>(),
+        catch: () => null,
+      }).pipe(Effect.orElseSucceed(() => undefined))
+      const fields = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>
+      const region = c.req.param('region') ?? fields.region
 
-      const result = authParamsSchema.safeParse({ id: body.id, password: body.password, region })
+      const result = authParamsSchema.safeParse({ id: fields.id, password: fields.password, region })
       if (!result.success) {
         return c.json({ error: 'Invalid parameters', details: result.error.issues }, 400)
       }
 
       c.set('authParams', { id: result.data.id, password: result.data.password })
       c.set('region', result.data.region)
+      // Filtered from telemetry while the handler runs, whatever the body's framing (design §7.2): the middleware's
+      // read-ahead only sees small bodies with a Content-Length. Streaming handlers hold their own.
+      const releaseCredentials = holdCredentials([result.data.id, result.data.password])
       return yield* Effect.tryPromise({
         try: next,
         catch: (cause) => new HttpAdapterError({ operation: 'Run NET handler', cause }),
-      })
+      }).pipe(Effect.ensuring(Effect.sync(releaseCredentials)))
     }),
     { signal: c.req.raw.signal },
   ),
@@ -968,6 +977,10 @@ const streamExport = (c: Context) =>
     { signal: c.req.raw.signal },
   )
 for (const path of ['/api/v1/me/export', '/api/v1/me/export/']) app.get(path, streamExport)
+
+// The maimai NET server import streams progress over SSE (design §5.1, §7.1), so it is a direct route ahead of the
+// oRPC handler, with the same session, flag and rate-limit rules as the cloud save procedures.
+app.post(CLOUD_SAVE_NET_IMPORT_ROUTE.honoPath, netImportHandler)
 
 app.all('/api/v1/*', (c) =>
   runApp(

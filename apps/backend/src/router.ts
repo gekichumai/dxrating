@@ -449,6 +449,7 @@ const aliasesHandler = {
 }
 
 import { netGatewayStatusEffect, withMaimaiNETClient, type NetGatewayStatus } from './lib/functions/client'
+import { holdCredentials } from './lib/credential-hygiene'
 import { recordNetFailure, recordNetSuccess } from './services/functions/fetch-net-records/telemetry'
 import * as lxnsService from './services/lxns/viewer'
 import { withViewer, type SessionViewer } from './proofs/viewer-is'
@@ -897,16 +898,22 @@ const maimaiHandler = {
     handlerGen(function* ({ input }) {
       const { id, password, region } = input
       const startedAt = yield* Clock.currentTimeMillis
-      const records = yield* withMaimaiNETClient(region, (client) =>
-        Effect.gen(function* () {
-          yield* client.loginEffect({ id, password })
-          const [recentRecords, musicRecords] = yield* Effect.all(
-            [client.fetchRecentRecordsEffect(), client.fetchMusicRecordsEffect()],
-            { concurrency: 'unbounded' },
-          )
-          return { recentRecords, musicRecords }
-        }),
-      ).pipe(Effect.tapError((error) => Effect.sync(() => recordNetFailure(region, 'api', error))))
+      // Filtered from telemetry while the request runs, whatever the body's framing (design §7.2)
+      const records = yield* Effect.acquireUseRelease(
+        Effect.sync(() => holdCredentials([id, password])),
+        () =>
+          withMaimaiNETClient(region, (client) =>
+            Effect.gen(function* () {
+              yield* client.loginEffect({ id, password })
+              const [recentRecords, musicRecords] = yield* Effect.all(
+                [client.fetchRecentRecordsEffect(), client.fetchMusicRecordsEffect()],
+                { concurrency: 'unbounded' },
+              )
+              return { recentRecords, musicRecords }
+            }),
+          ).pipe(Effect.tapError((error) => Effect.sync(() => recordNetFailure(region, 'api', error)))),
+        (release) => Effect.sync(release),
+      )
       const finishedAt = yield* Clock.currentTimeMillis
       yield* Effect.sync(() =>
         recordNetSuccess(region, 'api', {

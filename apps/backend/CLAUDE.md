@@ -78,8 +78,9 @@ src/
 - Cloud save (`cloudSave.*`, tagged `internal`, behind `cloud_save`): `GET|POST /saves`, `PATCH|DELETE /saves/{id}`,
   `GET /saves/{id}/changes`, `POST /saves/{id}/mutations`, `GET /saves/{id}/records/{sheetId}/events`,
   `POST /saves/{id}/replace`, `GET|POST /saves/{id}/snapshots`, `GET /saves/{id}/imports`, `GET /imports/{jobId}`,
-  `GET /me/export` (streamed by a direct Hono route). `client-imports` and the server imports answer 501 until
-  design PR 6.
+  `GET /me/export` (streamed by a direct Hono route), `POST /saves/{id}/client-imports` (chunked client uploads,
+  `client_reported`), and the server imports `POST /saves/{id}/imports/lxns|diving-fish` (oRPC) and
+  `POST /saves/{id}/imports/maimai-net` (SSE, a direct Hono route), which also need `server_imports`.
 
 ### Direct Routes
 
@@ -164,6 +165,17 @@ node dist/flag-set.js cloud_save owner@example.com off   # in the production ima
   writers cannot take the whole 5-connection pool; bodies are capped at 1 MB (2 MB for `replace` /
   `client-imports`: a replace carries a whole save, up to 10000 records); snapshot `detail` is at most 16 deep and
   32 KB of JSON.
+- Server imports (`server-imports.ts`, `upstream-imports.ts`, `net-import-route.ts`, design §7): the server fetches
+  maimai NET (JP/intl), LXNS (stored OAuth token) or the public Diving-Fish B50 and writes `verified` records itself;
+  the client never relays them. All or nothing: any failed fetch (after the #368 page retry) fails the job and writes
+  nothing. Records resolve through the published catalog (`import-catalog.ts`); unknown charts count as
+  `skippedUnknownSheet`. NET: 6/h and 30/day per user, 30/h per address, one per user and four in total at a time.
+  Jobs running for 15 minutes are failed as `abandoned` at startup, by the daily cleanup, and when they block a new
+  job. `client-imports.ts`: 5000 records per chunk, each chunk its own transaction, resumable by idempotency key.
+- Credential hygiene (`src/lib/credential-hygiene.ts`, §7.2): SEGA IDs and passwords are never stored or logged. The
+  NET and LXNS routes get a scrubbing evlog logger; Sentry never attaches their bodies and scrubs every event,
+  breadcrumb and log (keys and the values of running NET requests); PostHog events are scrubbed the same way.
+  `src/test/credential-hygiene.test.ts` drives failing imports through every NET route and greps every channel.
 - `changes`: `since=0` is a full pull; its later pages pass `mode=full` (never reset by the tombstone horizon); the
   last page's `nextSince` is the save's revision.
 
