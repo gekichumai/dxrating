@@ -1,7 +1,7 @@
 import useSWR from 'swr'
 import type { z } from 'zod'
 import type { TagsListResponseSchema } from '../lib/contract'
-import { apiClient as client } from '../lib/orpc'
+import { loadCommunityLists, resolvedAgainst, useRefreshOnCatalogChange } from '../catalog/communityOverlay'
 
 export type CombinedTags = z.infer<typeof TagsListResponseSchema>
 export type Tag = CombinedTags['tags'][number]
@@ -9,10 +9,12 @@ export type TagGroup = CombinedTags['tagGroups'][number]
 export type TagSong = CombinedTags['tagSongs'][number]
 
 export const useCombinedTags = () => {
-  return useSWR(
+  const combinedTags = useSWR(
     'tags.list',
     async () => {
-      return (await client.tags.list({ idScheme: 'public' })) as CombinedTags
+      // From the v2 community overlay: the tag-sheet associations it keeps visible, resolved against the catalog
+      const { tags, tagGroups, tagSongs, catalogUpdatedAt } = await loadCommunityLists()
+      return resolvedAgainst({ tags, tagGroups, tagSongs } as CombinedTags, catalogUpdatedAt)
     },
     {
       focusThrottleInterval: 1000 * 60 * 60,
@@ -23,11 +25,14 @@ export const useCombinedTags = () => {
       suspense: false,
     },
   )
+  // The dedupe window above does not hold back this revalidation
+  useRefreshOnCatalogChange(combinedTags.data, combinedTags.mutate)
+  return combinedTags
 }
 
 /**
- * The list with an association the viewer just attached. The shared list comes through the edge cache, which can
- * take a few minutes to include a new attachment, so the viewer's own write is added locally instead of refetched.
+ * The list with an association the viewer just attached, shown at once. The shared list comes through the edge cache,
+ * which can take a few minutes to include a new attachment; {@link rememberAttachedTag} keeps it in later loads too.
  */
 export const withAttachedTag = (current: CombinedTags | undefined, tagSong: TagSong): CombinedTags | undefined => {
   if (!current) return current

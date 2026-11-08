@@ -1,6 +1,7 @@
 import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import snapshotAssetUrl from '@gekichumai/dxdata/snapshot.json?url'
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
+import { toV2Catalog } from '@gekichumai/dxdata/v2'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   CATALOG_REQUEST_URL,
@@ -117,6 +118,29 @@ describe('client catalog loading', () => {
     const cached = cacheStorage.entries.get(CATALOG_URL)!
     expect(cached.headers.get('x-dxrating-catalog-etag')).toBe('W/"new"')
     await expect(cached.clone().json()).resolves.toEqual(NEW)
+  })
+
+  it('loads the v2 API document as the v1 catalog shape, without tags and aliases, and caches it', async () => {
+    const { tagGroups: _g, tags: _t, tagSongs: _s, aliases: _a, ...catalog } = NEW
+    fetchMock.mockResolvedValueOnce(jsonResponse(toV2Catalog(NEW), { headers: { etag: '"v2"' } }))
+
+    const expected = { ...catalog, tagGroups: [], tags: [], tagSongs: [], aliases: [] }
+    await expect(loadClientCatalogDocument()).resolves.toEqual(expected)
+    await vi.waitFor(() => expect(cacheStorage.entries.has(CATALOG_URL)).toBe(true))
+
+    // A later visit renders from the cached v2 text
+    setLoadedCatalogDocumentForTests(null)
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 304 }))
+    await expect(loadClientCatalogDocument()).resolves.toEqual(expected)
+  })
+
+  it('deletes the v1 copy an earlier build kept', async () => {
+    const v1Url = CATALOG_URL.replace('/api/v2/dxdata', '/api/v1/dxdata')
+    cacheStorage.entries.set(v1Url, jsonResponse(OLD))
+    fetchMock.mockResolvedValueOnce(jsonResponse(toV2Catalog(NEW)))
+
+    await loadClientCatalogDocument()
+    await vi.waitFor(() => expect(cacheStorage.entries.has(v1Url)).toBe(false))
   })
 
   it('renders a returning visit from the cached copy, then revalidates with its ETag', async () => {

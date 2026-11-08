@@ -15,6 +15,7 @@ import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessa
 import { Markdown } from '../../global/Markdown'
 import { SheetListItemContent } from '../SheetListItem'
 import { withAttachedTag } from '../../../models/useCombinedTags'
+import { rememberAttachedTag } from '../../../catalog/communityOverlay'
 import { useSheetTags } from './useSheetTags'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
@@ -58,17 +59,15 @@ const SheetTagsAddDialog: FC<{
       toast.success(m.sheet_tags_add_toastSuccess({}, { locale }), {
         id: `tag-add-success:${tagId}`,
       })
-      void mutateExistingTags(
-        (current) =>
-          withAttachedTag(current, {
-            song_id: sheet.songId,
-            sheet_id: sheet.id,
-            sheet_type: sheet.type,
-            sheet_difficulty: sheet.difficulty,
-            tag_id: tagId,
-          }),
-        { revalidate: false },
-      )
+      const attached = {
+        song_id: sheet.songId,
+        sheet_id: sheet.id,
+        sheet_type: sheet.type,
+        sheet_difficulty: sheet.difficulty,
+        tag_id: tagId,
+      }
+      rememberAttachedTag(attached)
+      void mutateExistingTags((current) => withAttachedTag(current, attached), { revalidate: false })
     } catch (error) {
       console.error('Failed to add tag', error)
 

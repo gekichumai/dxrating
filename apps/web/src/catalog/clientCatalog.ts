@@ -1,4 +1,5 @@
 import type { SongCatalogDocument } from '@gekichumai/dxdata'
+import { fromV2Catalog, type CatalogV2Document } from '@gekichumai/dxdata/v2'
 import snapshotAssetUrl from '@gekichumai/dxdata/snapshot.json?url'
 import * as Sentry from '@/lib/telemetry'
 
@@ -9,8 +10,12 @@ import * as Sentry from '@/lib/telemetry'
 // does not need the catalog. The catalog is a plain GET route of the backend, not an oRPC procedure, and revalidation
 // needs a conditional request of its own, hence fetch().
 
-export const CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v1/dxdata`
+// The v2 catalog (gekichumai/meta#43) carries no tags or aliases: those come from the community overlay
+// (communityOverlay.ts), which changes far more often and is cached apart
+export const CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v2/dxdata`
 export const CATALOG_CACHE_NAME = 'dxrating-catalog-v1'
+/** Where earlier builds kept the v1 document in the same cache; deleted when found */
+const V1_CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v1/dxdata`
 const ETAG_HEADER = 'x-dxrating-catalog-etag'
 
 const BUILD_CATALOG_UPDATED_AT = import.meta.env.VITE_CATALOG_SNAPSHOT_UPDATED_AT ?? ''
@@ -113,11 +118,34 @@ export const isSongCatalogDocument = (value: unknown): value is SongCatalogDocum
   )
 }
 
+const isCatalogV2Document = (value: unknown): value is CatalogV2Document => {
+  if (typeof value !== 'object' || value === null) return false
+  const document = value as Partial<CatalogV2Document>
+  return (
+    document.schemaVersion === 2 &&
+    typeof document.updatedAt === 'string' &&
+    Array.isArray(document.versions) &&
+    Array.isArray(document.servers) &&
+    Array.isArray(document.songs) &&
+    document.songs.length > 0
+  )
+}
+
+/**
+ * The catalog in the v1 shape the app renders from, from a v2 API document or a v1 one (the bundled snapshot, a copy
+ * from an earlier build). A v2 document has empty tag and alias lists; the app reads those from the community overlay
+ * either way (communityOverlay.ts).
+ */
+export const parseCatalogDocument = (value: unknown): SongCatalogDocument | null => {
+  if (isCatalogV2Document(value)) return { ...fromV2Catalog(value), tagGroups: [], tags: [], tagSongs: [], aliases: [] }
+  return isSongCatalogDocument(value) ? value : null
+}
+
 async function readCatalogResponse(response: Response): Promise<CatalogResponse> {
   if (!response.ok) throw new Error(`Catalog request failed with HTTP ${response.status}`)
   const text = await response.text()
-  const document: unknown = JSON.parse(text)
-  if (!isSongCatalogDocument(document)) throw new Error('Catalog response is not a schema v1 catalog document')
+  const document = parseCatalogDocument(JSON.parse(text))
+  if (!document) throw new Error('Catalog response is not a catalog document')
   return { document, text, etag: response.headers.get('etag') }
 }
 
@@ -185,7 +213,9 @@ async function revalidateCatalog(cache: Cache, etag: string | null) {
 async function openCatalogCache(): Promise<Cache | null> {
   if (typeof caches === 'undefined') return null
   try {
-    return await caches.open(CATALOG_CACHE_NAME)
+    const cache = await caches.open(CATALOG_CACHE_NAME)
+    void cache.delete(V1_CATALOG_URL).catch(() => {})
+    return cache
   } catch {
     // Cache Storage can be unavailable (some private modes): load from the network every time
     return null
@@ -196,8 +226,8 @@ async function readCachedCatalog(cache: Cache): Promise<{ document: SongCatalogD
   try {
     const response = await cache.match(CATALOG_URL)
     if (!response) return null
-    const document: unknown = await response.json()
-    if (!isSongCatalogDocument(document)) {
+    const document = parseCatalogDocument(await response.json())
+    if (!document) {
       await cache.delete(CATALOG_URL)
       return null
     }
