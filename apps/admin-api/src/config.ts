@@ -27,7 +27,10 @@ export const envSchema = z
     ADMIN_ACCESS_TEAM_DOMAIN: optionalString,
     /** The Access application's AUD tag */
     ADMIN_ACCESS_AUD: optionalString,
-    /** Emails allowed in, repeating the Access policy inside the app. Empty means nobody. */
+    /**
+     * Ignored: humans are authorized by the Access token alone (owner's decision, 2026-11-08). Still parsed so an old
+     * deployment that sets it keeps starting; remove it from the environment at leisure.
+     */
     ADMIN_HUMAN_EMAILS: list,
     /** Development only: treat every request as this Access identity. Refused outside development. */
     /** Agent tokens: a JSON list of hashed, scoped, expiring tokens (see agent-tokens.ts). Blank means none. */
