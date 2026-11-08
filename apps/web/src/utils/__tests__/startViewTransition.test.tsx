@@ -143,4 +143,30 @@ describe('preference wipe', () => {
     await Promise.all([appliedAssertion, completionAssertion])
     expect(document.documentElement.hasAttribute('data-preference-wipe')).toBe(false)
   })
+
+  it.each([
+    ['InvalidStateError', 'Skipping view transition because document visibility state has become hidden.'],
+    ['TimeoutError', 'Transition was aborted because of timeout in DOM update.'],
+  ])('still applies the update when the browser skips the transition with %s', async (name, message) => {
+    const { transitions } = mockTransitions()
+    const update = vi.fn()
+    const completion = startViewTransition(update, { x: 0, y: 0 })
+    // WebKit rejects without calling the update callback when the page is hidden
+    transitions[0].done.reject(new DOMException(message, name) as unknown as Error)
+    transitions[0].finished.reject(new DOMException(message, name) as unknown as Error)
+    await expect(completion).resolves.toBeUndefined()
+    expect(update).toHaveBeenCalledOnce()
+    expect(document.documentElement.hasAttribute('data-preference-wipe')).toBe(false)
+  })
+
+  it('does not apply the update twice when the browser ran it before skipping', async () => {
+    const { transitions } = mockTransitions()
+    const update = vi.fn()
+    const completion = startViewTransition(update, { x: 0, y: 0 })
+    await transitions[0].update()
+    transitions[0].done.reject(new DOMException('DOM update timed out', 'TimeoutError') as unknown as Error)
+    transitions[0].finished.resolve()
+    await expect(completion).resolves.toBeUndefined()
+    expect(update).toHaveBeenCalledOnce()
+  })
 })

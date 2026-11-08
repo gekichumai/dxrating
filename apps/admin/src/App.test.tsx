@@ -16,6 +16,7 @@ const mount = (client = new QueryClient()) =>
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  window.location.hash = ''
 })
 
 describe('admin shell', () => {
@@ -62,11 +63,21 @@ describe('admin shell', () => {
       actor: 'human:owner@example.invalid',
       scopes: ['*'],
     }
-    const fetchMock = vi.fn(async (input: Request | string) =>
-      new URL(input instanceof Request ? input.url : input, 'http://admin.test').pathname === '/api/announcements'
-        ? Response.json({ announcements: [] })
-        : Response.json(principal),
-    )
+    const empty: Record<string, unknown> = {
+      '/api/announcements': { announcements: [] },
+      '/api/catalog/overview': {
+        channel: 'production-v1',
+        observedAt: '2026-11-07T00:00:00.000Z',
+        current: null,
+        latestChange: null,
+        sources: [],
+        failures: { recorded: false, note: 'not recorded' },
+      },
+    }
+    const fetchMock = vi.fn(async (input: Request | string) => {
+      const path = new URL(input instanceof Request ? input.url : input, 'http://admin.test').pathname
+      return Response.json(empty[path] ?? principal)
+    })
     vi.stubGlobal('fetch', fetchMock)
     const client = new QueryClient()
     mount(client)
@@ -78,5 +89,23 @@ describe('admin shell', () => {
     expect((await screen.findByText('No access')).closest('[role=alert]')).toBeTruthy()
     expect(screen.queryByText('human:owner@example.invalid')).toBeNull()
     expect(screen.queryByText('owner@example.invalid')).toBeNull()
+  })
+
+  it('shows only the views the principal has scopes for, and opens the one in the hash', async () => {
+    window.location.hash = '#publications'
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: Request | string) => {
+        const path = new URL(input instanceof Request ? input.url : input, 'http://admin.test').pathname
+        if (path === '/api/catalog/publications')
+          return Response.json({ channel: 'production-v1', channels: [], publications: [], nextBefore: null })
+        return Response.json({ type: 'agent', id: 'reader', actor: 'agent:reader', scopes: ['catalog:read'] })
+      }),
+    )
+    mount()
+    expect(await screen.findByRole('heading', { name: 'Publications' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Publications' }).getAttribute('aria-current')).toBe('page')
+    expect(screen.queryByRole('link', { name: 'Announcements' })).toBeNull()
+    expect(screen.queryByText('Signed in')).toBeNull()
   })
 })

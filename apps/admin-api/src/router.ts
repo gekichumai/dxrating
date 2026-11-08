@@ -10,6 +10,11 @@ import {
   listAnnouncements,
   updateAnnouncement,
 } from './announcements'
+import { diffPublications } from './catalog/publication-diff'
+import { searchSongs, songProvenance } from './catalog/provenance'
+import { songHistory } from './catalog/song-history'
+import { catalogOverview } from './catalog/overview'
+import { listPublications } from './catalog/publications'
 import { requireAdmin, requireScope } from './require-admin'
 import type { DatabaseError } from './db'
 import type { AdminApiServices } from './runtime'
@@ -65,6 +70,50 @@ export const adminApiRouter = os.router({
         yield* requireScope(principal, 'announcements:write')
         const result = yield* endAnnouncement(principal, input.id).pipe(Effect.orDie)
         return result ?? (yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'No such announcement' })))
+      }),
+    ),
+  },
+  catalog: {
+    publications: os.catalog.publications.handler(
+      handlerGen(function* ({ context, input }) {
+        const principal = yield* requireAdmin(headersOf(context))
+        yield* requireScope(principal, 'catalog:read')
+        return yield* listPublications(input).pipe(Effect.orDie)
+      }),
+    ),
+    diff: os.catalog.diff.handler(
+      handlerGen(function* ({ context, input }) {
+        const principal = yield* requireAdmin(headersOf(context))
+        yield* requireScope(principal, 'catalog:read')
+        return yield* diffPublications(input).pipe(Effect.catchTag('DatabaseError', (error) => Effect.die(error)))
+      }),
+    ),
+    songs: os.catalog.songs.handler(
+      handlerGen(function* ({ context, input }) {
+        const principal = yield* requireAdmin(headersOf(context))
+        yield* requireScope(principal, 'catalog:read')
+        return yield* searchSongs(input).pipe(Effect.catchTag('DatabaseError', (error) => Effect.die(error)))
+      }),
+    ),
+    song: os.catalog.song.handler(
+      handlerGen(function* ({ context, input }) {
+        const principal = yield* requireAdmin(headersOf(context))
+        yield* requireScope(principal, 'catalog:read')
+        return yield* songProvenance(input).pipe(Effect.catchTag('DatabaseError', (error) => Effect.die(error)))
+      }),
+    ),
+    overview: os.catalog.overview.handler(
+      handlerGen(function* ({ context, input }) {
+        const principal = yield* requireAdmin(headersOf(context))
+        yield* requireScope(principal, 'catalog:read')
+        return yield* catalogOverview(input).pipe(Effect.catchTag('DatabaseError', (error) => Effect.die(error)))
+      }),
+    ),
+    songHistory: os.catalog.songHistory.handler(
+      handlerGen(function* ({ context, input }) {
+        const principal = yield* requireAdmin(headersOf(context))
+        yield* requireScope(principal, 'catalog:read')
+        return yield* songHistory(input).pipe(Effect.orDie)
       }),
     ),
   },

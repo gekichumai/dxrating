@@ -17,6 +17,7 @@ export const AGENT_SCOPES = [
   'bans:write',
   'reports:read',
   'reports:triage',
+  'catalog:read',
 ] as const
 export type AgentScope = (typeof AGENT_SCOPES)[number]
 
