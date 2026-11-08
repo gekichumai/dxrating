@@ -20,3 +20,28 @@
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
+/* Publications: a folded run of unchanged publications, and its rows once expanded */
+.admin-run-toggle {
+  border-radius: var(--mantine-radius-sm);
+  color: inherit;
+}
+.admin-run-toggle:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: -2px;
+}
+.admin-run-chevron {
+  display: inline-block;
+  transition: transform 120ms ease;
+}
+.admin-run-row[data-expanded] .admin-run-chevron {
+  transform: rotate(90deg);
+}
+.admin-run-row,
+.admin-run-member {
+  background: color-mix(in oklab, var(--mantine-color-dimmed) 6%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-run-chevron {
+    transition: none;
+  }
+}

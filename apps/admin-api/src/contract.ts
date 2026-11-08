@@ -131,6 +131,12 @@ export const PublicationSchema = z.object({
   byteLength: z.number().int(),
   hasProvenanceManifest: z.boolean(),
   current: z.boolean().describe('The publication the channel serves now'),
+  changedFromPrevious: z
+    .boolean()
+    .nullable()
+    .describe(
+      'Whether the catalog differs from the previous revision’s, ignoring the build-time updatedAt stamp; null for the first publication',
+    ),
 })
 
 const FieldChangeSchema = z.object({
