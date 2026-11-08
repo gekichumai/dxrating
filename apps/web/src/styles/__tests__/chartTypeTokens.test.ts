@@ -32,19 +32,21 @@ describe('chart-type tokens', () => {
     expect(token(tokensCss, 'chart-type-dx-plate')).toBe(lower(dx.plate))
     expect(token(tokensCss, 'chart-type-dx-outline')).toBe(lower(dx.outline))
     expect(token(tokensCss, 'chart-type-dx-lettering-on-plate')).toBe(lower(chartTypeLetteringGradient(dx.lettering)))
-    expect(token(tokensCss, 'dx-lettering')).toBe(lower(chartTypeLetteringGradient(dx.lettering)))
+    expect(token(tokensCss, 'dx-lettering')).toBe(lower(chartTypeLetteringGradient(dx.letteringOnSurface)))
     expect(token(darkCss, 'dx-lettering')).toBe(lower(chartTypeLetteringGradient(dx.letteringDark)))
   })
 
   it('keep every label colour at WCAG AA (4.5:1) against what it sits on', () => {
     const { std, dx } = CHART_TYPE_COLORS
     expect(contrast(std.ink, std.fill)).toBeGreaterThanOrEqual(4.5)
-    // Light glass is at most this dark; dark glass at most this light
-    const lightGlass = '#E8E8EE'
+    // Light glass, tinted by the version colour, is at most this dark (about #DCF3E8 on MAGiCAL, darker on a hovered
+    // row); dark glass at most this light
+    const lightGlass = '#D4ECE0'
     const darkGlass = '#2A2A30'
     expect(contrast(std.text, lightGlass)).toBeGreaterThanOrEqual(4.5)
     expect(contrast(std.textDark, darkGlass)).toBeGreaterThanOrEqual(4.5)
     for (const stop of dx.lettering) expect(contrast(stop, dx.plate), stop).toBeGreaterThanOrEqual(4.5)
+    for (const stop of dx.letteringOnSurface) expect(contrast(stop, lightGlass), stop).toBeGreaterThanOrEqual(4.5)
     for (const stop of dx.letteringDark) expect(contrast(stop, darkGlass), stop).toBeGreaterThanOrEqual(4.5)
   })
 })

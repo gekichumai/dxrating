@@ -60,7 +60,8 @@
   --chart-type-dx-plate: #ffffff;
   --chart-type-dx-outline: #007cdb;
   --chart-type-dx-lettering-on-plate: linear-gradient(90deg, #d32f2f, #b35600, #3e7d1c, #0277a8);
-  --dx-lettering: linear-gradient(90deg, #d32f2f, #b35600, #3e7d1c, #0277a8);
+  /* Straight on light glass, which the version colour tints darker than white: each stop a step deeper */
+  --dx-lettering: linear-gradient(90deg, #c02a2a, #a24e00, #397219, #016d9a);
 
   /* What `bg-white/…` and `text-black/…` utilities resolve to; dark.css swaps them (uno.config.ts postprocess) */
   --surface-rgb: 255 255 255;
