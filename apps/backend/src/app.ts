@@ -83,7 +83,7 @@ import { isPrefetchOrBot, McpAnalyticsService, mcpLogFields, sanitizeVia } from 
 import { clientAddress } from './services/mcp/client-key'
 import { FeatureFlags } from './services/feature-flags'
 import { cloudSaveRateLimits } from './services/rate-limit'
-import { exportChunks, exportHeaders } from './services/cloud-save/export'
+import { exportChunks, exportHeaders, tryAcquireExportSlot } from './services/cloud-save/export'
 import { orpcErrorResponse } from './lib/orpc-error-response'
 import { CLOUD_SAVE_BODY_LIMIT_BYTES, CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES } from './services/cloud-save/limits'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
@@ -949,6 +949,8 @@ for (const path of ['/api/v1/saves', '/api/v1/saves/*', '/api/v1/imports/*', '/a
 // The cloud save export streams (§11.3): it is answered here, ahead of the oRPC handler, with the same session,
 // feature flag and rate limit rules as the `cloudSave.export` procedure.
 // Both spellings: the oRPC router would also match `/me/export/`, and only this route streams.
+/** The `Retry-After` of an export refused because every export slot is taken */
+const EXPORT_BUSY_RETRY_AFTER_SECONDS = 5
 const streamExport = (c: Context) =>
   runApp(
     Effect.gen(function* () {
@@ -959,7 +961,13 @@ const streamExport = (c: Context) =>
       if (!(yield* featureFlags.isEnabled('cloud_save', session.user.id))) {
         return orpcErrorResponse(new ORPCError('NOT_FOUND'))
       }
-      const retryAfterSeconds = cloudSaveRateLimits.export.take(session.user.id)
+      // HEAD (which Hono answers through this GET handler, dropping the body unread) starts no export: the headers
+      // describe a download made now, and no transaction, slot or daily export is used
+      if (c.req.method === 'HEAD') {
+        return new Response(null, { status: 200, headers: exportHeaders(new Date(yield* Clock.currentTimeMillis)) })
+      }
+      const takenAt = Date.now()
+      const retryAfterSeconds = cloudSaveRateLimits.export.take(session.user.id, 1, takenAt)
       if (retryAfterSeconds > 0) {
         return orpcErrorResponse(
           new ORPCError('TOO_MANY_REQUESTS', {
@@ -969,10 +977,26 @@ const streamExport = (c: Context) =>
           { 'Retry-After': String(retryAfterSeconds) },
         )
       }
+      // Each running export holds a pooled connection for its snapshot: beyond the slots, a busy answer that costs
+      // the user nothing
+      const release = tryAcquireExportSlot()
+      if (!release) {
+        cloudSaveRateLimits.export.refund(session.user.id, 1, takenAt)
+        return orpcErrorResponse(
+          new ORPCError('TOO_MANY_REQUESTS', {
+            message: `Too many exports running. Retry in ${EXPORT_BUSY_RETRY_AFTER_SECONDS} seconds.`,
+            data: { retryAfterSeconds: EXPORT_BUSY_RETRY_AFTER_SECONDS },
+          }),
+          { 'Retry-After': String(EXPORT_BUSY_RETRY_AFTER_SECONDS) },
+        )
+      }
       const database = yield* Database
       const exportedAt = new Date(yield* Clock.currentTimeMillis)
       const signal = c.req.raw.signal
-      const chunks = exportChunks((effect) => runApp(effect, { signal }), database, session.user.id, exportedAt)
+      // The slot is the transaction's: freed when it ends, which the idle deadline bounds even if nobody reads
+      const chunks = exportChunks((effect) => runApp(effect, { signal }), database, session.user.id, exportedAt, {
+        onSettled: release,
+      })
       const encoder = new TextEncoder()
       const body = new ReadableStream<Uint8Array>({
         async pull(controller) {

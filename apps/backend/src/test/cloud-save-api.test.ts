@@ -9,6 +9,9 @@ vi.hoisted(() => {
 
 import { runCloudSaveCleanup } from '../services/cloud-save/cleanup'
 import { canonicalSha256 } from '../services/cloud-save/jobs'
+import { EXPORT_CONCURRENCY, exportChunks, tryAcquireExportSlot } from '../services/cloud-save/export'
+import { appRuntime } from '../runtime'
+import { Effect } from 'effect'
 import { CLOUD_SAVE_EXPECTED_USER_HEADER } from '@gekichumai/api-contract'
 import { CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES, CLOUD_SAVE_MAX_RECORDS_PER_SAVE } from '../services/cloud-save/limits'
 import {
@@ -22,7 +25,7 @@ import {
   testPool,
   uuidv7,
 } from './cloud-save-helpers'
-import { cleanDatabase, getBaseUrl, setupTestServer, teardownTestServer } from './setup'
+import { authenticatedFetch, cleanDatabase, getBaseUrl, setupTestServer, teardownTestServer } from './setup'
 
 const pool = testPool()
 
@@ -1206,6 +1209,123 @@ describe('cloud save API (design §5)', () => {
       expect(slashed.headers.get('content-type')).toBe(response.headers.get('content-type'))
       expect(slashed.headers.get('content-disposition')).toMatch(/^attachment; filename="dxrating-cloud-export-/)
       expect((await slashed.json()).saves).toHaveLength(1)
+    })
+
+    it('is one consistent snapshot: a write landing while the file downloads is not half in it', async () => {
+      const user = await session(pool, 'export-snapshot@example.com')
+      const save = await newSave(user.cookie)
+      await mutate(user.cookie, save.id, [setMutation(sheetId(1), 1000000), setMutation(sheetId(2), 990000)])
+      const database = await runDatabase((db) => Effect.succeed(db))
+      const run = <A, E>(effect: Effect.Effect<A, E, never>) => appRuntime.runPromise(effect)
+
+      const chunks = exportChunks(run, database, user.userId, new Date())
+      // The first chunk is sent once the snapshot is taken
+      const parts = [(await chunks.next()).value as string]
+      // Lands mid-download: changes a record, adds one and deletes one, and bumps the save's revision
+      const write = await mutate(user.cookie, save.id, [
+        setMutation(sheetId(1), 1005000),
+        setMutation(sheetId(3), 980000),
+        deleteMutation(sheetId(2)),
+      ])
+      expect(write.status).toBe(200)
+      for await (const part of chunks) parts.push(part)
+
+      const [exported] = JSON.parse(parts.join('')).saves
+      expect(exported.revision).toBe(2)
+      expect(
+        exported.records.map((record: { sheetId: string; achievement: number }) => [
+          record.sheetId,
+          record.achievement,
+        ]),
+      ).toEqual([
+        [sheetId(1), 1000000],
+        [sheetId(2), 990000],
+      ])
+      expect(exported.tombstones).toEqual([])
+      expect(exported.events).toHaveLength(2)
+      // The next export has the write, whole
+      const after = (await (await authenticatedFetch(`${getBaseUrl()}/api/v1/me/export`, user.cookie)).json()).saves[0]
+      expect(after.revision).toBe(5)
+      expect(after.records.map((record: { sheetId: string }) => record.sheetId)).toEqual([sheetId(1), sheetId(3)])
+      expect(after.tombstones).toHaveLength(1)
+    })
+
+    it('ends its transaction when the download stops early', async () => {
+      const user = await session(pool, 'export-abandoned@example.com')
+      const save = await newSave(user.cookie)
+      await mutate(user.cookie, save.id, [setMutation(sheetId(1), 1000000)])
+      const database = await runDatabase((db) => Effect.succeed(db))
+      const chunks = exportChunks((effect) => appRuntime.runPromise(effect), database, user.userId, new Date())
+      await chunks.next()
+      await expect(chunks.return(undefined)).resolves.toEqual({ done: true, value: undefined })
+      const open = await pool.query(
+        `SELECT count(*)::int AS n FROM pg_stat_activity WHERE state LIKE 'idle in transaction%' AND query LIKE '%score_saves%'`,
+      )
+      expect(open.rows[0].n).toBe(0)
+    })
+
+    it('answers HEAD without starting an export, on both spellings, so no slot is left taken', async () => {
+      const user = await session(pool, 'export-head@example.com')
+      for (let i = 0; i < EXPORT_CONCURRENCY + 1; i++) {
+        for (const path of ['/api/v1/me/export', '/api/v1/me/export/']) {
+          const head = await authenticatedFetch(`${getBaseUrl()}${path}`, user.cookie, { method: 'HEAD' })
+          expect(head.status, path).toBe(200)
+          expect(head.headers.get('content-disposition')).toMatch(/^attachment; filename="dxrating-cloud-export-/)
+        }
+      }
+      // Every slot is free, and no daily export was used
+      const held = Array.from({ length: EXPORT_CONCURRENCY }, () => tryAcquireExportSlot())
+      expect(held.every(Boolean)).toBe(true)
+      for (const release of held) release!()
+      for (let i = 0; i < 5; i++) expect((await api(user.cookie, 'GET', '/me/export')).status).toBe(200)
+    })
+
+    it('ends a download nobody reads at the idle deadline and frees its slot, without another read', async () => {
+      const user = await session(pool, 'export-idle@example.com')
+      const save = await newSave(user.cookie)
+      await mutate(user.cookie, save.id, [setMutation(sheetId(1), 1000000)])
+      const database = await runDatabase((db) => Effect.succeed(db))
+      const onSettled = vi.fn()
+      const chunks = exportChunks((effect) => appRuntime.runPromise(effect), database, user.userId, new Date(), {
+        onSettled,
+        idleMs: 100,
+      })
+      await chunks.next()
+      // The client stops reading and never cancels
+      await vi.waitFor(() => expect(onSettled).toHaveBeenCalledTimes(1), { timeout: 2000 })
+      const open = await pool.query(
+        `SELECT count(*)::int AS n FROM pg_stat_activity WHERE state LIKE 'idle in transaction%' AND query LIKE '%score_%'`,
+      )
+      expect(open.rows[0].n).toBe(0)
+      // A later read sees the download failed, not a truncated file that looks complete
+      await expect(chunks.next()).rejects.toBeDefined()
+    })
+
+    it('starts the export when asked, not on the first read, so an unread response still ends', async () => {
+      const user = await session(pool, 'export-unread@example.com')
+      const database = await runDatabase((db) => Effect.succeed(db))
+      const onSettled = vi.fn()
+      exportChunks((effect) => appRuntime.runPromise(effect), database, user.userId, new Date(), {
+        onSettled,
+        idleMs: 100,
+      })
+      await vi.waitFor(() => expect(onSettled).toHaveBeenCalledTimes(1), { timeout: 2000 })
+    })
+
+    it('answers a retryable 429 that costs nothing while every export slot is taken', async () => {
+      const user = await session(pool, 'export-busy@example.com')
+      const held = Array.from({ length: EXPORT_CONCURRENCY }, () => tryAcquireExportSlot()!)
+      try {
+        const busy = await api(user.cookie, 'GET', '/me/export')
+        expect(busy.status).toBe(429)
+        expect(busy.headers.get('retry-after')).toBe('5')
+        expect(busy.body).toMatchObject({ code: 'TOO_MANY_REQUESTS', data: { retryAfterSeconds: 5 } })
+      } finally {
+        for (const release of held) release()
+      }
+      // The busy answer used none of the 5 daily exports
+      for (let i = 0; i < 5; i++) expect((await api(user.cookie, 'GET', '/me/export')).status).toBe(200)
+      expect((await api(user.cookie, 'GET', '/me/export')).status).toBe(429)
     })
   })
 
