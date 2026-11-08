@@ -7,7 +7,7 @@ import { etag, RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { Authentication } from './auth'
 import { viewerFromSession } from './proofs/viewer-is'
-import { Data, Effect, Option } from 'effect'
+import { Clock, Data, Effect, Option } from 'effect'
 import { HttpBody } from 'effect/http'
 import { appRuntime, runApp, superviseApp } from './runtime'
 import { refuseWhileDraining } from './lifecycle'
@@ -29,7 +29,7 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc/server/plugins'
-import { onError } from '@orpc/server'
+import { onError, ORPCError } from '@orpc/server'
 import { netErrorTags, Sentry, shouldCaptureSentryError } from './lib/functions/sentry'
 import { Database } from './db/index'
 import {
@@ -75,12 +75,83 @@ import { MCP_SERVER_CARD_PATH, serverCardResponse } from './services/mcp/listing
 import { McpUsage, observeMcpRequest, rateLimitedTelemetry, reportMcpInternalError } from './services/mcp/telemetry'
 import { isPrefetchOrBot, McpAnalyticsService, mcpLogFields, sanitizeVia } from './services/mcp/analytics'
 import { clientAddress } from './services/mcp/client-key'
+import { FeatureFlags } from './services/feature-flags'
+import { cloudSaveRateLimits } from './services/rate-limit'
+import { exportChunks, exportHeaders } from './services/cloud-save/export'
+import { CLOUD_SAVE_BODY_LIMIT_BYTES, CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES } from './services/cloud-save/limits'
 class HttpAdapterError extends Data.TaggedError('HttpAdapterError')<{
   readonly operation: string
   readonly cause: unknown
 }> {}
 
 const app = new Hono<EvlogVariables>()
+
+/** An oRPC-shaped error response (with the v1 `status` field) for routes served outside the oRPC handler */
+const orpcErrorResponse = (error: ORPCError<string, unknown>, headers: Record<string, string> = {}) => {
+  const status =
+    error.code === 'PAYLOAD_TOO_LARGE'
+      ? 413
+      : (COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500)
+  return new Response(JSON.stringify({ ...error.toJSON(), status }), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...headers },
+  })
+}
+
+/**
+ * Refuses request bodies over `maxSize` bytes with an oRPC-shaped 413: at once when `Content-Length` says so,
+ * otherwise (a chunked upload) by counting the bytes as the handler reads them and answering 413 in place of
+ * whatever the handler made of the cut-off body.
+ */
+const cloudSaveBodyLimitOf = (maxSize: number) =>
+  createMiddleware(async (c, next) => {
+    const tooLarge = () => {
+      // The rest of the upload is not read: close the connection after the answer (Node), so a client does not send
+      // its next request on a connection the server is about to drop
+      const outgoing = (c.env as { outgoing?: { shouldKeepAlive?: boolean } } | undefined)?.outgoing
+      if (outgoing) outgoing.shouldKeepAlive = false
+      return orpcErrorResponse(
+        new ORPCError('PAYLOAD_TOO_LARGE', { message: `The request body is over ${maxSize} bytes` }),
+      )
+    }
+    const body = c.req.raw.body
+    if (!body) return next()
+    const contentLength = c.req.raw.headers.get('content-length')
+    if (contentLength !== null && !c.req.raw.headers.has('transfer-encoding')) {
+      if (Number.parseInt(contentLength, 10) > maxSize) return tooLarge()
+      return next()
+    }
+    let size = 0
+    let exceeded = false
+    const counted = body.pipeThrough(
+      new TransformStream<Uint8Array, Uint8Array>({
+        transform(chunk, controller) {
+          size += chunk.byteLength
+          if (size > maxSize) {
+            exceeded = true
+            controller.error(new Error('Payload Too Large'))
+            return
+          }
+          controller.enqueue(chunk)
+        },
+      }),
+    )
+    c.req.raw = new Request(c.req.raw, { body: counted, duplex: 'half' } as RequestInit)
+    await next()
+    if (exceeded) {
+      // keep the headers other middleware set, but not the body headers of the handler's answer
+      const previous = c.res
+      const response = tooLarge()
+      for (const [key, value] of previous.headers) {
+        if (key !== 'content-type' && key !== 'content-length' && key !== 'set-cookie') response.headers.set(key, value)
+      }
+      c.res = undefined
+      c.res = response
+    }
+  })
+const cloudSaveBodyLimit = cloudSaveBodyLimitOf(CLOUD_SAVE_BODY_LIMIT_BYTES)
+const largeCloudSaveBodyLimit = cloudSaveBodyLimitOf(CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES)
+const isLargeCloudSaveUpload = (path: string) => /^\/api\/v1\/saves\/[^/]+\/(replace|client-imports)$/.test(path)
 
 const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
 const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATALOG_PROFILE_URL}"`
@@ -263,7 +334,8 @@ const apiCors = cors({
     return null
   },
   allowHeaders: ['Content-Type', 'Authorization', 'sentry-trace', 'baggage', 'x-captcha-response', API_CLIENT_HEADER],
-  allowMethods: ['POST', 'GET', 'OPTIONS'],
+  // PATCH and DELETE: cloud save routes (rename and delete a save)
+  allowMethods: ['POST', 'GET', 'PATCH', 'DELETE', 'OPTIONS'],
   exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
   maxAge: 600,
   credentials: true,
@@ -835,9 +907,67 @@ const viewerPrivateCacheHeaders = createMiddleware((c, next) =>
     { signal: c.req.raw.signal },
   ),
 )
-for (const path of ['/api/v1/comments', '/api/v1/me', '/api/v1/me/*']) {
+for (const path of [
+  '/api/v1/comments',
+  '/api/v1/me',
+  '/api/v1/me/*',
+  '/api/v1/saves',
+  '/api/v1/saves/*',
+  '/api/v1/imports/*',
+]) {
   app.use(path, viewerPrivateCacheHeaders)
 }
+
+// Cloud save request bodies (design §11.4): 2 MB for whole-save uploads, 1 MB for everything else.
+for (const path of ['/api/v1/saves', '/api/v1/saves/*', '/api/v1/imports/*', '/api/v1/me/*']) {
+  app.use(path, (c, next) =>
+    (isLargeCloudSaveUpload(c.req.path) ? largeCloudSaveBodyLimit : cloudSaveBodyLimit)(c, next),
+  )
+}
+
+// The cloud save export streams (§11.3): it is answered here, ahead of the oRPC handler, with the same session,
+// feature flag and rate limit rules as the `cloudSave.export` procedure.
+// Both spellings: the oRPC router would also match `/me/export/`, and only this route streams.
+const streamExport = (c: Context) =>
+  runApp(
+    Effect.gen(function* () {
+      const auth = yield* Authentication
+      const session = yield* auth.session(c.req.raw.headers)
+      if (!session?.user) return orpcErrorResponse(new ORPCError('UNAUTHORIZED'))
+      const featureFlags = yield* FeatureFlags
+      if (!(yield* featureFlags.isEnabled('cloud_save', session.user.id))) {
+        return orpcErrorResponse(new ORPCError('NOT_FOUND'))
+      }
+      const retryAfterSeconds = cloudSaveRateLimits.export.take(session.user.id)
+      if (retryAfterSeconds > 0) {
+        return orpcErrorResponse(
+          new ORPCError('TOO_MANY_REQUESTS', {
+            message: `Too many requests. Retry in ${retryAfterSeconds} seconds.`,
+            data: { retryAfterSeconds },
+          }),
+          { 'Retry-After': String(retryAfterSeconds) },
+        )
+      }
+      const database = yield* Database
+      const exportedAt = new Date(yield* Clock.currentTimeMillis)
+      const signal = c.req.raw.signal
+      const chunks = exportChunks((effect) => runApp(effect, { signal }), database, session.user.id, exportedAt)
+      const encoder = new TextEncoder()
+      const body = new ReadableStream<Uint8Array>({
+        async pull(controller) {
+          const next = await chunks.next()
+          if (next.done) controller.close()
+          else controller.enqueue(encoder.encode(next.value))
+        },
+        async cancel() {
+          await chunks.return(undefined)
+        },
+      })
+      return new Response(body, { status: 200, headers: exportHeaders(exportedAt) })
+    }),
+    { signal: c.req.raw.signal },
+  )
+for (const path of ['/api/v1/me/export', '/api/v1/me/export/']) app.get(path, streamExport)
 
 app.all('/api/v1/*', (c) =>
   runApp(

@@ -66,6 +66,10 @@ export const CLOUD_SAVE_MAX_REPLACE_RECORDS = 10000
 export const CLOUD_SAVE_MAX_IMPORT_CHUNKS = 10
 /** Maximum records per `changes` page */
 export const CLOUD_SAVE_MAX_CHANGES_LIMIT = 1000
+/** Maximum nesting depth of a snapshot's opaque `detail` (the object itself is depth 1) */
+export const CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_DEPTH = 16
+/** Maximum length of a snapshot's `detail` serialized as JSON */
+export const CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH = 32 * 1024
 
 // --- Identifiers and values ---
 
@@ -88,13 +92,21 @@ export const ComboFlagSchema = z.enum(['fc', 'fcp', 'ap', 'app']).nullable() sat
 export const SyncFlagSchema = z.enum(['fs', 'fsp', 'fsd', 'fsdp', 'sync']).nullable() satisfies z.ZodType<SyncFlag>
 export const Best50BucketSchema = z.enum(['b15', 'b35']) satisfies z.ZodType<Best50Bucket>
 export const DxScoreSchema = z.number().int().min(0).max(100000)
-export const ProviderRecordIdSchema = z.string().min(1).max(128)
+/**
+ * PostgreSQL text and JSONB hold neither U+0000 nor an unpaired UTF-16 surrogate, so a free-form string that reaches
+ * the database refuses them here: the request (or the one import item) is a validation error, never a 500 that rolls
+ * back the rest of the write.
+ */
+const LONE_SURROGATE = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/
+const isStorableText = (value: string) => !value.includes('\u0000') && !LONE_SURROGATE.test(value)
+const STORABLE_TEXT_MESSAGE = 'must be well-formed Unicode without U+0000'
+export const ProviderRecordIdSchema = z.string().min(1).max(128).refine(isStorableText, STORABLE_TEXT_MESSAGE)
 /** A provider a client upload claims (e.g. `lxns` inside a DXRating JSON); stored as `claimed_source` only */
 export const ClaimedSourceSchema = z
   .string()
   .regex(/^[\w.-]{1,64}$/)
   .refine((source) => source.toLowerCase() !== 'demo', { message: 'demo data is never synced' })
-export const SourceAccountIdSchema = z.string().trim().min(1).max(128)
+export const SourceAccountIdSchema = z.string().trim().min(1).max(128).refine(isStorableText, STORABLE_TEXT_MESSAGE)
 export const PayloadSha256Schema = z.string().regex(/^[0-9a-f]{64}$/)
 export const CloudSaveRegionSchema = z.enum(['jp', 'intl', 'cn', '_generic'])
 /** dxdata version slug (`festival-plus` … `circle-plus`) */
@@ -102,10 +114,21 @@ export const GameVersionSchema = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   .max(32)
+export const SaveNameSchema = z.string().trim().min(1).max(64).refine(isStorableText, STORABLE_TEXT_MESSAGE)
 export const ClientProfileKeySchema = z.string().regex(/^[\w.-]{1,64}$/)
 export const RevisionSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
-const TimestampSchema = z.iso.datetime({ offset: true })
+/**
+ * Years a timestamp keeps once normalized to UTC: PostgreSQL rejects year 0 as written (`0000-01-01T…`) and a
+ * 5-digit year, so either would fail the whole write instead of the one value
+ */
+const isStorableTimestamp = (value: string) => {
+  const year = new Date(value).getUTCFullYear()
+  return year >= 1 && year <= 9999
+}
+const TimestampSchema = z.iso.datetime({ offset: true }).refine(isStorableTimestamp, 'Out of the storable range')
 const CountSchema = z.number().int().nonnegative()
+/** A count the client sends that lands in a PostgreSQL `integer` column: out of range is a 400, not a 500 */
+const StoredCountSchema = CountSchema.max(2_147_483_647)
 
 const SaveIdParamSchema = { id: SaveIdSchema }
 /** Server import triggers; `migration` is for client jobs only */
@@ -217,7 +240,10 @@ export type ChecksumDTO = z.output<typeof ChecksumDTOSchema>
 export const ChangesDTOSchema = z.object({
   /** Ordered by revision; tombstones included */
   records: z.array(RecordDTOSchema),
-  /** The highest revision of this page (`since` when the page is empty) */
+  /**
+   * The cursor of the next pull: the highest revision of this page, or the save's revision on the last page (so a
+   * finished pull, even of a save whose newest changes were purged tombstones, resumes past the tombstone horizon)
+   */
   nextSince: RevisionSchema,
   hasMore: z.boolean(),
   /** The save's current revision */
@@ -276,7 +302,7 @@ export type RecordEventDTO = z.output<typeof RecordEventDTOSchema>
 // --- Inputs (all strict) ---
 
 export const CreateSaveInputSchema = z.strictObject({
-  name: z.string().trim().min(1).max(64),
+  name: SaveNameSchema,
   region: CloudSaveRegionSchema,
   gameVersion: GameVersionSchema.nullish(),
   /** iOS profile ID or Web `web-local`; creating a save with a key that already has one returns that save */
@@ -286,7 +312,7 @@ export const CreateSaveInputSchema = z.strictObject({
 export const UpdateSaveInputSchema = z
   .strictObject({
     ...SaveIdParamSchema,
-    name: z.string().trim().min(1).max(64).optional(),
+    name: SaveNameSchema.optional(),
     /** `null` clears it (follow the client's version) */
     gameVersion: GameVersionSchema.nullish(),
   })
@@ -296,9 +322,18 @@ export const UpdateSaveInputSchema = z
 
 export const SaveIdInputSchema = z.strictObject(SaveIdParamSchema)
 
+/**
+ * `incremental` (default): changes after `since`, tombstones included; `resetRequired` when `since` is older than the
+ * tombstone horizon (§5.6). `full`: a full pull (§5.6). `since = 0` is always a full pull (live records only); its
+ * later pages pass `mode=full` with the previous `nextSince`, so they are never reset by the horizon (they include
+ * the tombstones of records deleted while paging).
+ */
+export const ChangesModeSchema = z.enum(['incremental', 'full'])
+
 export const ChangesInputSchema = z.strictObject({
   ...SaveIdParamSchema,
   since: z.coerce.number().pipe(RevisionSchema).default(0),
+  mode: ChangesModeSchema.default('incremental'),
   limit: z.coerce.number().int().min(1).max(CLOUD_SAVE_MAX_CHANGES_LIMIT).default(CLOUD_SAVE_MAX_CHANGES_LIMIT),
 })
 
@@ -468,15 +503,43 @@ export const RecordEventsInputSchema = z.strictObject({
   sheetId: CloudSaveSheetIdSchema,
 })
 
+/**
+ * Whether `value` stays within the snapshot detail bounds. Walks iteratively (no recursion) and checks the depth and
+ * the number of values before anything recursive (`z.json()`, `JSON.stringify`) touches it, so a deeply nested body
+ * is a 400 rather than a stack overflow.
+ */
+function isBoundedSnapshotDetail(value: unknown): boolean {
+  const pending: [unknown, number][] = [[value, 1]]
+  let visited = 0
+  while (pending.length > 0) {
+    const [current, depth] = pending.pop()!
+    // every value takes at least one character of the JSON
+    if (++visited > CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH) return false
+    if (typeof current === 'string' && !isStorableText(current)) return false
+    if (typeof current !== 'object' || current === null) continue
+    if (depth > CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_DEPTH) return false
+    if (!Array.isArray(current) && Object.keys(current).some((key) => !isStorableText(key))) return false
+    for (const child of Array.isArray(current) ? current : Object.values(current)) pending.push([child, depth + 1])
+  }
+  return (JSON.stringify(value) ?? '').length <= CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH
+}
+
+/** A snapshot's opaque `detail`: a JSON object of bounded depth and size, with well-formed keys and strings (no U+0000) */
+export const SnapshotDetailSchema = z
+  .custom<unknown>(isBoundedSnapshotDetail, {
+    message: `detail must be JSON nested at most ${CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_DEPTH} deep and at most ${CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH} characters long, with well-formed strings without U+0000`,
+  })
+  .pipe(z.record(z.string(), z.json()))
+
 export const CreateSnapshotInputSchema = z.strictObject({
   ...SaveIdParamSchema,
   atRevision: RevisionSchema,
-  b15Sum: CountSchema,
-  b35Sum: CountSchema,
-  b50Sum: CountSchema,
-  recordCount: CountSchema,
+  b15Sum: StoredCountSchema,
+  b35Sum: StoredCountSchema,
+  b50Sum: StoredCountSchema,
+  recordCount: StoredCountSchema,
   gameVersion: GameVersionSchema,
-  detail: z.record(z.string(), z.json()).optional(),
+  detail: SnapshotDetailSchema.optional(),
 })
 
 export const ListSnapshotsInputSchema = z.strictObject({

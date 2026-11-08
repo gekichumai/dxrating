@@ -75,6 +75,11 @@ src/
 - `POST /monitoring/tunnel` — Sentry error tunnel
 - `POST /maimai/fetch-records` — Fetch MaimaiNET records
 - `GET /me/features`, `POST /me/features/cloud-save/opt-in` — Session-only cloud save flags (tagged `internal`, kept out of `/spec.json`)
+- Cloud save (`cloudSave.*`, tagged `internal`, behind `cloud_save`): `GET|POST /saves`, `PATCH|DELETE /saves/{id}`,
+  `GET /saves/{id}/changes`, `POST /saves/{id}/mutations`, `GET /saves/{id}/records/{sheetId}/events`,
+  `POST /saves/{id}/replace`, `GET|POST /saves/{id}/snapshots`, `GET /saves/{id}/imports`, `GET /imports/{jobId}`,
+  `GET /me/export` (streamed by a direct Hono route). `client-imports` and the server imports answer 501 until
+  design PR 6.
 
 ### Direct Routes
 
@@ -140,6 +145,27 @@ servers see it within 60 seconds):
 pnpm --filter @gekichumai/backend flag:set cloud_save owner@example.com on
 node dist/flag-set.js cloud_save owner@example.com off   # in the production image
 ```
+
+### Cloud save services (`src/services/cloud-save/`)
+
+- Every write locks the save row `FOR UPDATE` (`lockSave`, waits bounded by `lock_timeout` 5 s -> `CloudSaveBusy`,
+  429) and goes through `RecordWriter` (`records.ts`): each
+  bumped row takes the next revision (`save.revision + k`), statements hold at most 1000 rows, and events are written
+  for effective changes only (plus the domain's `superseded` event for a superseded manual edit). Ownership is always `user_id`-scoped; another user's save is a plain 404.
+- `merge.ts` applies `@gekichumai/maimai-domain` `decideImportMerge` (shared by server and client jobs, PR 6);
+  `mutations.ts` applies `decideManualMutation` with the `score_mutations` idempotency ledger; `replace.ts` is the
+  explicit whole-document replace; `changes.ts` is the cursor pull; `export.ts` the streamed export.
+- `cleanup.ts` runs daily under the request runner (`index.ts`, only while `CLOUD_SAVE_MODE` is not `off`):
+  tombstones > 90 days (moving `tombstone_horizon`), events beyond 20 per record, ledger rows > 30 days, saves
+  soft-deleted > 30 days, snapshots beyond 100 per save. A transaction-scoped advisory lock keeps it to one
+  instance at a time.
+- Limits (`src/services/rate-limit.ts`, in memory per instance): `rateLimit` oRPC middleware answers 429 with
+  `Retry-After`; `writeConcurrency` lets a user run at most 2 write requests at a time (429 beyond), so waiting
+  writers cannot take the whole 5-connection pool; bodies are capped at 1 MB (2 MB for `replace` /
+  `client-imports`: a replace carries a whole save, up to 10000 records); snapshot `detail` is at most 16 deep and
+  32 KB of JSON.
+- `changes`: `since=0` is a full pull; its later pages pass `mode=full` (never reset by the tombstone horizon); the
+  last page's `nextSince` is the save's revision.
 
 ### Backup gate and rollback
 

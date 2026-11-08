@@ -13,9 +13,9 @@ const CLOUD_SAVE_TABLES = [
   'score_save_snapshots',
 ]
 
-// The API-level deletion test (account-deletion.test.ts: create a save, run a stubbed LXNS
-// import and a mutation through the API, delete the account, expect zero rows) belongs to
-// the PRs that add those endpoints (design §14 PR 5 and 6).
+// The API-level deletion test (account-deletion.test.ts) creates a save, mutations, a snapshot and a client
+// import job through the API and the merge module and deletes the account; its stubbed LXNS import
+// arrives with the server imports (design §14 PR 6).
 describe('Account deletion database relationships', () => {
   beforeAll(async () => {
     await setupTestServer()

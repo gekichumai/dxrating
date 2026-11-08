@@ -1,5 +1,12 @@
 import pg from 'pg'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+
+// config.ts reads the environment once, at import: cloud save is on for everyone in this file.
+vi.hoisted(() => {
+  process.env.CLOUD_SAVE_MODE = 'on'
+})
+
+import { api, deleteMutation, importRecords, setMutation, sheetId } from './cloud-save-helpers'
 import {
   authenticatedFetch,
   cleanDatabase,
@@ -103,6 +110,94 @@ describe('Account deletion', () => {
 
       const replacement = await signUp('delete@example.com', 'password123', 'Replacement')
       expect(replacement.status).toBe(200)
+    } finally {
+      await pool.end()
+    }
+  })
+
+  // Design §11.1: cloud save data created through the API is gone with the account. The stubbed LXNS server import
+  // joins this test with design PR 6; until then the client job runs through the shared merge module.
+  it('deletes every cloud save row of the account created through the API', async () => {
+    await signUp('delete@example.com', 'password123', 'Delete Me')
+    await signUp('survivor@example.com', 'password123', 'Survivor')
+    const cookie = extractSessionCookie(await signIn('delete@example.com', 'password123'))
+    const survivorCookie = extractSessionCookie(await signIn('survivor@example.com', 'password123'))
+
+    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+    try {
+      const users = await pool.query<{ id: string; email: string }>(
+        `SELECT id, email FROM "user" WHERE email IN ('delete@example.com', 'survivor@example.com')`,
+      )
+      const deletedUserId = users.rows.find((user) => user.email === 'delete@example.com')!.id
+      const survivorId = users.rows.find((user) => user.email === 'survivor@example.com')!.id
+      await pool.query(
+        `INSERT INTO feature_flag_overrides (flag, user_id, enabled, source, consent_version)
+         VALUES ('cloud_save', $1, true, 'opt_in', '2026-11-01'), ('cloud_save', $2, true, 'opt_in', '2026-11-01')`,
+        [deletedUserId, survivorId],
+      )
+
+      const seed = async (sessionCookie: string, userId: string) => {
+        const save = await api(sessionCookie, 'POST', '/saves', { name: 'JP', region: 'jp' })
+        expect(save.status).toBe(200)
+        const saveId = save.body.id as string
+        const mutations = await api(sessionCookie, 'POST', `/saves/${saveId}/mutations`, {
+          mutations: [setMutation(sheetId(1), 1000000), setMutation(sheetId(2), 990000)],
+        })
+        expect(mutations.status).toBe(200)
+        await api(sessionCookie, 'POST', `/saves/${saveId}/mutations`, {
+          mutations: [deleteMutation(sheetId(2))],
+        })
+        const snapshot = await api(sessionCookie, 'POST', `/saves/${saveId}/snapshots`, {
+          atRevision: 3,
+          b15Sum: 1,
+          b35Sum: 2,
+          b50Sum: 3,
+          recordCount: 1,
+          gameVersion: 'prism',
+        })
+        expect(snapshot.status).toBe(200)
+        await importRecords(userId, saveId, 'dxrating-json', [
+          { sheetId: sheetId(3), achievement: 1005000, comboFlag: null, syncFlag: null, claimedSource: 'lxns' },
+        ])
+      }
+      await seed(cookie, deletedUserId)
+      await seed(survivorCookie, survivorId)
+
+      const counts = async (userId: string) =>
+        (
+          await pool.query(
+            `SELECT
+              (SELECT count(*)::integer FROM feature_flag_overrides WHERE user_id = $1) AS flags,
+              (SELECT count(*)::integer FROM score_saves WHERE user_id = $1) AS saves,
+              (SELECT count(*)::integer FROM score_import_jobs WHERE user_id = $1) AS jobs,
+              (SELECT count(*)::integer FROM score_records WHERE user_id = $1) AS records,
+              (SELECT count(*)::integer FROM score_record_events WHERE user_id = $1) AS events,
+              (SELECT count(*)::integer FROM score_mutations WHERE user_id = $1) AS mutations,
+              (SELECT count(*)::integer FROM score_save_snapshots WHERE user_id = $1) AS snapshots`,
+            [userId],
+          )
+        ).rows[0]
+      const seeded = { flags: 1, saves: 1, jobs: 1, records: 3, events: 4, mutations: 3, snapshots: 1 }
+      expect(await counts(deletedUserId)).toEqual(seeded)
+
+      const response = await authenticatedFetch(`${getBaseUrl()}/api/auth/delete-user`, cookie, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: 'password123' }),
+      })
+      expect(response.status).toBe(200)
+
+      expect(await counts(deletedUserId)).toEqual({
+        flags: 0,
+        saves: 0,
+        jobs: 0,
+        records: 0,
+        events: 0,
+        mutations: 0,
+        snapshots: 0,
+      })
+      expect(await counts(survivorId)).toEqual(seeded)
+      expect((await api(survivorCookie, 'GET', '/saves')).body.saves).toHaveLength(1)
     } finally {
       await pool.end()
     }

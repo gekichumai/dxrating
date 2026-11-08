@@ -1,3 +1,4 @@
+import { cloudSaveContract } from './cloud-save.ts'
 import { featuresContract } from './features.ts'
 
 export * from './features.ts'
@@ -9,4 +10,5 @@ export * from './features.ts'
  */
 export const privateContractRoutes = {
   features: featuresContract,
+  cloudSave: cloudSaveContract,
 }
