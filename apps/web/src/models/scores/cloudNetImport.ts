@@ -1,4 +1,5 @@
 import {
+  CLOUD_SAVE_EXPECTED_USER_HEADER,
   CLOUD_SAVE_NET_IMPORT_ROUTE,
   type ImportResultDTO,
   type NetImportInput,
@@ -21,6 +22,8 @@ export type NetImportStreamEvent =
 export interface NetImportRequest {
   saveId: string
   body: NetImportInput
+  /** The account the import is for (`X-DXRating-Expected-User`): the server refuses it for another one (§10) */
+  expectedUserId?: string
 }
 
 /** Opens the stream; throws {@link CloudImportHttpError} when the route answers without one (409, 404, 429…) */
@@ -74,7 +77,11 @@ export const streamNetImport: NetImportTransport = (request, signal) => ({
     void fetchEventSource(netImportUrl(request.saveId), {
       method: CLOUD_SAVE_NET_IMPORT_ROUTE.method,
       body: JSON.stringify(request.body),
-      headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+        ...(request.expectedUserId ? { [CLOUD_SAVE_EXPECTED_USER_HEADER]: request.expectedUserId } : {}),
+      },
       credentials: 'include',
       openWhenHidden: true,
       signal: controller.signal,

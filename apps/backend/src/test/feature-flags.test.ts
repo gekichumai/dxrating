@@ -12,11 +12,13 @@ vi.hoisted(() => {
   process.env.SERVER_IMPORTS = 'off'
 })
 
+import { CLOUD_SAVE_EXPECTED_USER_HEADER } from '@gekichumai/api-contract'
 import { requireFeature, requireSession } from '../orpc-middleware'
 import type { ApiContext } from '../router'
 import { appRuntime } from '../runtime'
 import {
   authenticatedFetch,
+  bindCookieToUser,
   cleanDatabase,
   extractSessionCookie,
   getBaseUrl,
@@ -35,6 +37,7 @@ const session = async (email: string, { verified = false } = {}) => {
   if (verified) await pool.query('UPDATE "user" SET email_verified = true WHERE email = $1', [email.toLowerCase()])
   const cookie = extractSessionCookie(await signIn(email, 'password123'))
   const user = await pool.query<{ id: string }>('SELECT id FROM "user" WHERE email = $1', [email.toLowerCase()])
+  bindCookieToUser(cookie, user.rows[0]!.id)
   return { cookie, userId: user.rows[0]!.id }
 }
 
@@ -136,6 +139,30 @@ describe('feature flags (CLOUD_SAVE_MODE=optin)', () => {
       [userId],
     )
     expect(rows.rows).toEqual([{ flag: 'cloud_save', enabled: true, source: 'opt_in', consent_version: '2026-11-01' }])
+  })
+
+  it('records the consent only for the account the request names (409 for another one, 400 without one)', async () => {
+    const giver = await session('consent-giver@example.com')
+    const switched = await session('consent-switched@example.com')
+    const header = CLOUD_SAVE_EXPECTED_USER_HEADER
+    // The session became `switched` while the consent `giver` gave was on its way
+    const mismatch = await authenticatedFetch(`${getBaseUrl()}/api/v1/me/features/cloud-save/opt-in`, switched.cookie, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', [header]: giver.userId },
+      body: JSON.stringify({ consentVersion: '2026-11-01' }),
+    })
+    expect(mismatch.status).toBe(409)
+    expect(await mismatch.json()).toMatchObject({ code: 'CONFLICT', data: { reason: 'ACCOUNT_MISMATCH' } })
+    const missing = await authenticatedFetch(`${getBaseUrl()}/api/v1/me/features/cloud-save/opt-in`, switched.cookie, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', [header]: '' },
+      body: JSON.stringify({ consentVersion: '2026-11-01' }),
+    })
+    expect(missing.status).toBe(400)
+    const rows = await pool.query('SELECT 1 FROM feature_flag_overrides WHERE user_id = ANY($1)', [
+      [giver.userId, switched.userId],
+    ])
+    expect(rows.rowCount).toBe(0)
   })
 
   it('applies flag:set admin overrides, which an opt-in cannot replace', async () => {

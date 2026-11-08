@@ -53,6 +53,12 @@ export type MigrationMode = 'fresh' | 'merge' | 'cloud-only' | 'replace'
  */
 export interface MigrationWriteGuard {
   signal?: AbortSignal
+  /**
+   * The account the write is for, sent as `X-DXRating-Expected-User`: the server refuses the write (409
+   * `ACCOUNT_MISMATCH`, read as {@link MigrationCancelledError}) when the session became another account after
+   * {@link beforeSend}, which a check in the browser cannot rule out
+   */
+  expectedUserId?: string
   /** Throws {@link MigrationCancelledError} when the migration was cancelled or the session is another account now */
   beforeSend(): Promise<void>
 }
@@ -491,7 +497,7 @@ export async function runCloudMigration(options: MigrationOptions): Promise<Migr
     if (current !== options.userId) throw new MigrationCancelledError()
   }
 
-  const guard: MigrationWriteGuard = { signal, beforeSend: ensureSameAccount }
+  const guard: MigrationWriteGuard = { signal, beforeSend: ensureSameAccount, expectedUserId: options.userId }
 
   const withRetries = async <T>(
     request: (guard: MigrationWriteGuard) => Promise<T>,

@@ -129,12 +129,14 @@ export const defaultActiveSaveDependencies: ActiveSaveDependencies = {
     return (await client.cloudSave.saves.list()).saves as SaveDTO[]
   },
   async openCloudRepository(options) {
-    const [{ CloudScoreRepository }, { streamNetImport }, client, Sentry] = await Promise.all([
+    const [{ CloudScoreRepository }, { streamNetImport }, { privateApiClientFor }, Sentry] = await Promise.all([
       import('./CloudScoreRepository'),
       import('./cloudNetImport'),
-      loadPrivateApi(),
+      import('../../lib/privateApi'),
       import('@sentry/tanstackstart-react'),
     ])
+    // Every request of the repository names its account: the server refuses one the session no longer is (§10)
+    const client = privateApiClientFor(options.userId)
     const { imports } = client.cloudSave
     return CloudScoreRepository.open({
       ...options,

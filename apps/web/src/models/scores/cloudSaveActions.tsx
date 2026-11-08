@@ -1,7 +1,7 @@
 import type { ImportJobDTO, ImportResultDTO, SaveDTO, UserFeatures } from '@gekichumai/api-contract'
 import { createContext, useContext } from 'react'
 import { authClient } from '../../lib/auth-client'
-import type { CloudMigrationApi, MigrationWriteGuard } from './cloudMigration'
+import { MigrationCancelledError, type CloudMigrationApi, type MigrationWriteGuard } from './cloudMigration'
 
 /**
  * The account-level cloud save requests of the web: the first sign-in migration (§10), the beta opt-in (§11.2,
@@ -30,6 +30,29 @@ export interface CloudSaveActions {
 
 const loadPrivateApi = () => import('../../lib/privateApi').then((module) => module.privateApiClient)
 
+/** The client of a write: bound to the guard's account when it names one (§10) */
+const loadWriteApi = async (guard?: MigrationWriteGuard) => {
+  const module = await import('../../lib/privateApi')
+  return guard?.expectedUserId ? module.privateApiClientFor(guard.expectedUserId) : module.privateApiClient
+}
+
+/** The server refused a write for another account than the session's: the work stops as if cancelled */
+export function isAccountMismatch(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false
+  const { code, data } = error as { code?: unknown; data?: unknown }
+  return code === 'CONFLICT' && (data as { reason?: unknown } | null | undefined)?.reason === 'ACCOUNT_MISMATCH'
+}
+
+/** Sends a guarded write; an `ACCOUNT_MISMATCH` refusal becomes {@link MigrationCancelledError} */
+async function sendGuarded<T>(send: () => Promise<T>): Promise<T> {
+  try {
+    return await send()
+  } catch (error) {
+    if (isAccountMismatch(error)) throw new MigrationCancelledError()
+    throw error
+  }
+}
+
 /** The file name of a `Content-Disposition` header; a dated default otherwise */
 export function exportFileName(headers: Record<string, string | string[] | undefined>, now: Date = new Date()) {
   const header = Object.entries(headers).find(([key]) => key.toLowerCase() === 'content-disposition')?.[1]
@@ -57,19 +80,23 @@ export const defaultCloudSaveActions: CloudSaveActions = {
       return (await client.cloudSave.saves.list()).saves as SaveDTO[]
     },
     async createSave(input, guard) {
-      const client = await loadPrivateApi()
+      const client = await loadWriteApi(guard)
       await guard?.beforeSend()
-      return (await client.cloudSave.saves.create(input, { signal: guard?.signal })) as SaveDTO
+      return sendGuarded(async () => (await client.cloudSave.saves.create(input, { signal: guard?.signal })) as SaveDTO)
     },
     async clientImport(input, guard) {
-      const client = await loadPrivateApi()
+      const client = await loadWriteApi(guard)
       await guard?.beforeSend()
-      return (await client.cloudSave.imports.client(input, { signal: guard?.signal })) as ImportResultDTO
+      return sendGuarded(
+        async () => (await client.cloudSave.imports.client(input, { signal: guard?.signal })) as ImportResultDTO,
+      )
     },
     async replace(input, guard) {
-      const client = await loadPrivateApi()
+      const client = await loadWriteApi(guard)
       await guard?.beforeSend()
-      return (await client.cloudSave.records.replace(input, { signal: guard?.signal })) as ImportResultDTO
+      return sendGuarded(
+        async () => (await client.cloudSave.records.replace(input, { signal: guard?.signal })) as ImportResultDTO,
+      )
     },
     async getImportJob(jobId) {
       const client = await loadPrivateApi()
@@ -82,9 +109,11 @@ export const defaultCloudSaveActions: CloudSaveActions = {
     },
   },
   async optIn(consentVersion, guard) {
-    const client = await loadPrivateApi()
+    const client = await loadWriteApi(guard)
     await guard?.beforeSend()
-    return (await client.features.optInCloudSave({ consentVersion }, { signal: guard?.signal })) as UserFeatures
+    return sendGuarded(
+      async () => (await client.features.optInCloudSave({ consentVersion }, { signal: guard?.signal })) as UserFeatures,
+    )
   },
   async exportData() {
     const client = await loadPrivateApi()

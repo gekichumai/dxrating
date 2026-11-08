@@ -160,7 +160,7 @@ export const CloudSaveOptIn: FC = () => {
     }
     setBusy(true)
     try {
-      await actions.optIn(CLOUD_SAVE_CONSENT_VERSION, { signal, beforeSend })
+      await actions.optIn(CLOUD_SAVE_CONSENT_VERSION, { signal, beforeSend, expectedUserId: userId })
       captureAnalyticsEvent('cloudsave_enabled', { via: 'opt_in' })
       setConsentOpen(false)
       focusScopeAfterOptIn.current = rootRef.current?.parentElement ?? null

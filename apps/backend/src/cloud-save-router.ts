@@ -5,7 +5,7 @@ import { Clock, Effect } from 'effect'
 import { log } from 'evlog'
 import { appContract } from './contract'
 import { Database } from './db/index'
-import { rateLimit, requireFeature, requireSession, writeConcurrency } from './orpc-middleware'
+import { rateLimit, requireExpectedUser, requireFeature, requireSession, writeConcurrency } from './orpc-middleware'
 import type { ApiContext } from './router'
 import { listRecordEvents, pullChanges } from './services/cloud-save/changes'
 import {
@@ -94,11 +94,15 @@ const feature = requireFeature('cloud_save')
 const limit = (name: keyof typeof cloudSaveRateLimits) => rateLimit(cloudSaveRateLimits[name])
 // Write routes also run at most CLOUD_SAVE_WRITE_CONCURRENCY at a time per user (a waiting writer holds a connection)
 const writes = writeConcurrency(CLOUD_SAVE_WRITE_CONCURRENCY)
+/** Writes must name the account they are for; reads are checked when they do (§10) */
+const bound = requireExpectedUser(true)
+const boundIfSent = requireExpectedUser(false)
 
 const savesHandler = {
   list: cloudSave.saves.list
     .use(session)
     .use(feature)
+    .use(boundIfSent)
     .use(limit('default'))
     .handler(
       handlerGen(function* ({ context }) {
@@ -109,6 +113,7 @@ const savesHandler = {
   create: cloudSave.saves.create
     .use(session)
     .use(feature)
+    .use(bound)
     .use(limit('createSave'))
     .use(writes)
     .handler(
@@ -120,6 +125,7 @@ const savesHandler = {
   update: cloudSave.saves.update
     .use(session)
     .use(feature)
+    .use(bound)
     .use(limit('default'))
     .use(writes)
     .handler(
@@ -133,6 +139,7 @@ const savesHandler = {
   delete: cloudSave.saves.delete
     .use(session)
     .use(feature)
+    .use(bound)
     .use(limit('default'))
     .use(writes)
     .handler(
@@ -147,6 +154,7 @@ const recordsHandler = {
   changes: cloudSave.records.changes
     .use(session)
     .use(feature)
+    .use(boundIfSent)
     .use(limit('changes'))
     .handler(
       handlerGen(function* ({ context, input }) {
@@ -157,6 +165,7 @@ const recordsHandler = {
   mutate: cloudSave.records.mutate
     .use(session)
     .use(feature)
+    .use(bound)
     .use(limit('mutations'))
     .use(rateLimit(cloudSaveRateLimits.mutationItems, (input: { mutations: unknown[] }) => input.mutations.length))
     .use(writes)
@@ -194,6 +203,7 @@ const recordsHandler = {
   events: cloudSave.records.events
     .use(session)
     .use(feature)
+    .use(boundIfSent)
     .use(limit('default'))
     .handler(
       handlerGen(function* ({ context, input }) {
@@ -204,6 +214,7 @@ const recordsHandler = {
   replace: cloudSave.records.replace
     .use(session)
     .use(feature)
+    .use(bound)
     .use(limit('replace'))
     .use(writes)
     .handler(
@@ -271,6 +282,7 @@ const importsHandler = {
   client: cloudSave.imports.client
     .use(session)
     .use(feature)
+    .use(bound)
     .use(limit('clientImports'))
     .use(writes)
     .handler(
@@ -314,6 +326,7 @@ const importsHandler = {
     .use(session)
     .use(feature)
     .use(serverImports)
+    .use(bound)
     .use(limit('serverImports'))
     .use(serverImportSlot)
     .handler(
@@ -333,6 +346,7 @@ const importsHandler = {
     .use(session)
     .use(feature)
     .use(serverImports)
+    .use(bound)
     .use(limit('serverImports'))
     .use(serverImportSlot)
     .handler(
@@ -344,6 +358,7 @@ const importsHandler = {
   get: cloudSave.imports.get
     .use(session)
     .use(feature)
+    .use(boundIfSent)
     .use(limit('default'))
     .handler(
       handlerGen(function* ({ context, input }) {
@@ -354,6 +369,7 @@ const importsHandler = {
   list: cloudSave.imports.list
     .use(session)
     .use(feature)
+    .use(boundIfSent)
     .use(limit('default'))
     .handler(
       handlerGen(function* ({ context, input }) {
@@ -368,6 +384,7 @@ const snapshotsHandler = {
   create: cloudSave.snapshots.create
     .use(session)
     .use(feature)
+    .use(bound)
     .use(limit('default'))
     .use(writes)
     .handler(
@@ -380,6 +397,7 @@ const snapshotsHandler = {
   list: cloudSave.snapshots.list
     .use(session)
     .use(feature)
+    .use(boundIfSent)
     .use(limit('default'))
     .handler(
       handlerGen(function* ({ context, input }) {

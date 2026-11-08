@@ -48,6 +48,7 @@ vi.mock('../services/cloud-save/import-catalog', async () => {
 import { api, deleteMutation, setMutation, sheetId } from './cloud-save-helpers'
 import {
   authenticatedFetch,
+  bindCookieToUser,
   cleanDatabase,
   extractSessionCookie,
   getBaseUrl,
@@ -169,6 +170,8 @@ describe('Account deletion', () => {
       )
       const deletedUserId = users.rows.find((user) => user.email === 'delete@example.com')!.id
       const survivorId = users.rows.find((user) => user.email === 'survivor@example.com')!.id
+      bindCookieToUser(cookie, deletedUserId)
+      bindCookieToUser(survivorCookie, survivorId)
       await pool.query(
         `INSERT INTO feature_flag_overrides (flag, user_id, enabled, source, consent_version)
          VALUES ('cloud_save', $1, true, 'opt_in', '2026-11-01'), ('cloud_save', $2, true, 'opt_in', '2026-11-01')`,

@@ -9,6 +9,7 @@ vi.hoisted(() => {
 
 import { runCloudSaveCleanup } from '../services/cloud-save/cleanup'
 import { canonicalSha256 } from '../services/cloud-save/jobs'
+import { CLOUD_SAVE_EXPECTED_USER_HEADER } from '@gekichumai/api-contract'
 import { CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES, CLOUD_SAVE_MAX_RECORDS_PER_SAVE } from '../services/cloud-save/limits'
 import {
   api,
@@ -369,7 +370,12 @@ describe('cloud save API (design §5)', () => {
             {
               method: 'POST',
               agent: false,
-              headers: { 'Content-Type': 'application/json', Cookie: user.cookie, 'Transfer-Encoding': 'chunked' },
+              headers: {
+                'Content-Type': 'application/json',
+                Cookie: user.cookie,
+                'Transfer-Encoding': 'chunked',
+                [CLOUD_SAVE_EXPECTED_USER_HEADER]: user.userId,
+              },
             },
             (response) => {
               let data = ''
@@ -547,6 +553,83 @@ describe('cloud save API (design §5)', () => {
         status: 'succeeded',
       })
       expect((await api(owner.cookie, 'GET', `/saves/${save.id}/imports`)).body).toHaveLength(1)
+    })
+  })
+
+  describe('account binding (§10)', () => {
+    const header = CLOUD_SAVE_EXPECTED_USER_HEADER
+
+    it('refuses a request that names another account with 409 ACCOUNT_MISMATCH, before any write', async () => {
+      // Another tab signed B in while A's request was on its way: the cookie is B's, the request names A
+      const a = await session(pool, 'bound-a@example.com')
+      const b = await session(pool, 'bound-b@example.com')
+      const saveOfB = await newSave(b.cookie)
+      const writes: Array<[string, string, unknown]> = [
+        ['POST', '/saves', { name: 'A main', region: 'jp' }],
+        ['PATCH', `/saves/${saveOfB.id}`, { name: 'Renamed' }],
+        ['POST', `/saves/${saveOfB.id}/mutations`, { mutations: [setMutation(sheetId(1), 1000000)] }],
+        [
+          'POST',
+          `/saves/${saveOfB.id}/replace`,
+          { ifRevision: 0, idempotencyKey: 'bound-replace-01', source: 'dxrating-json', records: [] },
+        ],
+        [
+          'POST',
+          `/saves/${saveOfB.id}/client-imports`,
+          {
+            id: uuidv7(),
+            idempotencyKey: 'bound-import-0001',
+            source: 'aqua-dx',
+            trigger: 'user',
+            sourceAccountId: null,
+            chunkIndex: 0,
+            chunkCount: 1,
+            records: [{ sheetId: sheetId(2), achievement: 1000000, comboFlag: null, syncFlag: null }],
+          },
+        ],
+        ['DELETE', `/saves/${saveOfB.id}`, undefined],
+      ]
+      for (const [method, path, body] of writes) {
+        const response = await api(b.cookie, method, path, body, { [header]: a.userId })
+        expect(response.status, `${method} ${path}`).toBe(409)
+        expect(response.body, `${method} ${path}`).toMatchObject({
+          code: 'CONFLICT',
+          data: { reason: 'ACCOUNT_MISMATCH' },
+        })
+      }
+      // Nothing was written under B
+      const saves = (await api(b.cookie, 'GET', '/saves')).body.saves
+      expect(saves).toEqual([expect.objectContaining({ id: saveOfB.id, name: 'JP main', revision: 0 })])
+      // Reads that name A are refused too; B's own requests go through
+      expect(
+        (await api(b.cookie, 'GET', `/saves/${saveOfB.id}/changes?since=0`, undefined, { [header]: a.userId })).status,
+      ).toBe(409)
+      expect((await api(b.cookie, 'GET', `/saves/${saveOfB.id}/changes?since=0`)).status).toBe(200)
+    })
+
+    it('requires the header on writes (400) and not on reads; a disabled feature stays a 404', async () => {
+      const user = await session(pool, 'unbound@example.com')
+      const save = await newSave(user.cookie)
+      const none = { [header]: '' }
+      const created = await api(user.cookie, 'POST', '/saves', { name: 'x', region: 'jp' }, none)
+      expect(created.status).toBe(400)
+      expect(created.body).toMatchObject({ code: 'BAD_REQUEST' })
+      const mutated = await api(
+        user.cookie,
+        'POST',
+        `/saves/${save.id}/mutations`,
+        { mutations: [setMutation(sheetId(1), 1)] },
+        none,
+      )
+      expect(mutated.status).toBe(400)
+      expect((await api(user.cookie, 'GET', '/saves', undefined, none)).status).toBe(200)
+      expect((await api(user.cookie, 'GET', `/saves/${save.id}/changes?since=0`, undefined, none)).status).toBe(200)
+
+      const off = await session(pool, 'unbound-off@example.com', { cloudSave: false })
+      expect((await api(off.cookie, 'POST', '/saves', { name: 'x', region: 'jp' }, none)).status).toBe(404)
+      expect(
+        (await api(off.cookie, 'POST', '/saves', { name: 'x', region: 'jp' }, { [header]: user.userId })).status,
+      ).toBe(404)
     })
   })
 

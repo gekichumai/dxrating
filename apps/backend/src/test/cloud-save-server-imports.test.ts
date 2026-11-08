@@ -70,6 +70,7 @@ vi.mock('../services/cloud-save/import-catalog', async () => {
 
 import { canonicalSha256 } from '../services/cloud-save/jobs'
 import { NET_IMPORT_GLOBAL_CONCURRENCY, runningNetImports } from '../services/cloud-save/net-import-route'
+import { CLOUD_SAVE_EXPECTED_USER_HEADER } from '@gekichumai/api-contract'
 import { cloudSaveRateLimits } from '../services/rate-limit'
 import { CloudSaveBusy } from '../services/cloud-save/errors'
 import { SAVE_LOCK_TIMEOUT_MS } from '../services/cloud-save/saves'
@@ -301,6 +302,25 @@ describe('maimai NET server import', () => {
     expect(last).toMatchObject({ event: 'error', data: { code: 'INVALID_CREDENTIALS' } })
     expect(await jobRow(last.data.jobId)).toMatchObject({ status: 'failed', error_code: 'invalid_credentials' })
     expect(await records(user.saveId)).toHaveLength(0)
+  })
+
+  it('binds the NET import to its account: 409 for another one, 400 without one, before any fetch or job', async () => {
+    const user = await newUser()
+    const other = await newUser()
+    let fetched = false
+    const net = createFakeNet({ id: SEGA_ID, password: PASSWORD })
+    upstream.net = (url, init) => {
+      fetched = true
+      return net.fetch(url, init)
+    }
+    const header = CLOUD_SAVE_EXPECTED_USER_HEADER
+    const mismatch = await postNetImport(user.cookie, user.saveId, netBody(), { headers: { [header]: other.userId } })
+    expect(mismatch.status).toBe(409)
+    expect(mismatch.json).toMatchObject({ code: 'CONFLICT', data: { reason: 'ACCOUNT_MISMATCH' } })
+    const missing = await postNetImport(user.cookie, user.saveId, netBody(), { headers: { [header]: '' } })
+    expect(missing.status).toBe(400)
+    expect(fetched).toBe(false)
+    expect((await pool.query('SELECT 1 FROM score_import_jobs WHERE save_id = $1', [user.saveId])).rowCount).toBe(0)
   })
 
   it('answers 409 IMPORT_IN_PROGRESS with the running job, and replays an idempotency key', async () => {

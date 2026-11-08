@@ -104,6 +104,15 @@ describe('streamNetImport', () => {
     expect(init).toMatchObject({ method: 'POST', credentials: 'include', body: JSON.stringify(REQUEST.body) })
   })
 
+  it('names the account the import is for in X-DXRating-Expected-User', async () => {
+    fetchMock.mockResolvedValue(streamResponse([sse('done', RESULT)]))
+    const events: NetImportStreamEvent[] = []
+    for await (const event of streamNetImport({ ...REQUEST, expectedUserId: 'user-a' })) events.push(event)
+    expect(events).toEqual([{ type: 'done', result: RESULT }])
+    const [, init] = fetchMock.mock.calls[0]!
+    expect(new Headers(init?.headers).get('X-DXRating-Expected-User')).toBe('user-a')
+  })
+
   it('yields the error event as the last event', async () => {
     fetchMock.mockResolvedValue(
       streamResponse([sse('error', { code: 'INVALID_CREDENTIALS', message: 'Wrong password', jobId: 'dimp_job1' })]),

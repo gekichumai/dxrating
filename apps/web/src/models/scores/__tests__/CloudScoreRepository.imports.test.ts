@@ -930,6 +930,8 @@ describe('CloudScoreRepository server imports', () => {
     expect(net.requests[0]).toEqual({
       saveId: 'dsav_one',
       body: { idempotencyKey: 'auto-net-dsav_one-0', trigger: 'auto', region: 'jp', id: 'sega-id', password: 'secret' },
+      // Bound to the repository's account: the server refuses it once the session is another one (§10)
+      expectedUserId: 'user-1',
     })
     expect(progress.map((item) => item.stage)).toEqual([
       'auth:in-progress',

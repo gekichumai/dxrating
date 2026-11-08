@@ -657,7 +657,11 @@ export class CloudScoreRepository implements WebScoreRepository {
     if (!transport) throw new UnsupportedScoreOperationError('maimai NET import', this.kind)
     for (let attempt = 1; ; attempt++) {
       try {
-        for await (const event of transport({ saveId: this.saveId, body }) as AsyncIterable<NetImportStreamEvent>) {
+        for await (const event of transport({
+          saveId: this.saveId,
+          body,
+          expectedUserId: this.userId,
+        }) as AsyncIterable<NetImportStreamEvent>) {
           if (event.type === 'progress') {
             yield {
               stage: event.state,

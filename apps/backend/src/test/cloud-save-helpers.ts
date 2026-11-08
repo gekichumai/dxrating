@@ -6,7 +6,7 @@ import { Database } from '../db/index'
 import { appRuntime } from '../runtime'
 import { completeImportJob, type MergeRecord } from '../services/cloud-save/merge'
 import { startImportJob } from '../services/cloud-save/jobs'
-import { authenticatedFetch, extractSessionCookie, getBaseUrl, signIn, signUp } from './setup'
+import { authenticatedFetch, bindCookieToUser, extractSessionCookie, getBaseUrl, signIn, signUp } from './setup'
 
 const SHEET_ALPHABET = '23456789abcdefghjkmnpqrstvwxyz'
 
@@ -40,6 +40,7 @@ export async function session(pool: pg.Pool, email: string, { cloudSave = true }
   const cookie = extractSessionCookie(await signIn(email, 'password123'))
   const { rows } = await pool.query<{ id: string }>('SELECT id FROM "user" WHERE email = $1', [email.toLowerCase()])
   const userId = rows[0]!.id
+  bindCookieToUser(cookie, userId)
   if (cloudSave) {
     await pool.query(
       `INSERT INTO feature_flag_overrides (flag, user_id, enabled, source) VALUES ('cloud_save', $1, true, 'admin')`,
@@ -61,11 +62,12 @@ export async function api<T = any>(
   method: string,
   path: string,
   body?: unknown,
+  headers: Record<string, string> = {},
 ): Promise<ApiResponse<T>> {
-  const init: RequestInit = { method }
+  const init: RequestInit = { method, headers: { ...headers } }
   if (body !== undefined) {
     init.body = typeof body === 'string' ? body : JSON.stringify(body)
-    init.headers = { 'Content-Type': 'application/json' }
+    init.headers = { 'Content-Type': 'application/json', ...headers }
   }
   const url = `${getBaseUrl()}/api/v1${path}`
   const response = cookie ? await authenticatedFetch(url, cookie, init) : await fetch(url, init)
