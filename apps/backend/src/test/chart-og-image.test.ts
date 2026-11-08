@@ -12,6 +12,8 @@ import {
   getTitleLayout,
   resolveChartOgImageData,
   resolveChartOgImageDataEffect,
+  resolveOgLocale,
+  resolveSongOgImageData,
 } from '../services/functions/chart-og-image/index'
 import { setupTestServer, teardownTestServer } from './setup'
 
@@ -87,8 +89,41 @@ describe('chart OG image endpoint', () => {
       'inline; filename="chart-og.png"; filename*=utf-8\'\'chart-og.png',
     )
     expect(res.headers.get('etag')).toMatch(/^"sha256-[a-f0-9]{64}"$/)
+    expect(res.headers.get('cache-tag')).toBe('og-image')
     expect(res.headers.get('x-content-type-options')).toBe('nosniff')
     expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0)
+  })
+
+  it('renders the same chart image for the same inputs, and another one per language', async () => {
+    const path = `/api/v1/songs/${song.id}/${sheet.type}/${sheet.difficulty}/og-image`
+    const [english, again, japanese, unknown] = await Promise.all([
+      app.request(path),
+      app.request(path),
+      app.request(`${path}?locale=ja`),
+      app.request(`${path}?locale=xx`),
+    ])
+
+    expect(again.headers.get('etag')).toBe(english.headers.get('etag'))
+    expect(japanese.headers.get('etag')).not.toBe(english.headers.get('etag'))
+    expect(unknown.headers.get('etag')).toBe(english.headers.get('etag'))
+  })
+
+  it('serves song images, without a chart selected', async () => {
+    const res = await app.request(`/api/v1/songs/${song.id}/og-image?locale=zh-Hans`)
+
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('image/png')
+    expect(res.headers.get('content-disposition')).toBe(
+      'inline; filename="song-og.png"; filename*=utf-8\'\'song-og.png',
+    )
+    expect(res.headers.get('cache-tag')).toBe('og-image')
+    expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0)
+  })
+
+  it('answers 404 for a song image of a song the published catalog does not have', async () => {
+    const res = await app.request('/api/v1/songs/dsng_zzzzzzzzzz/og-image')
+
+    expect(res.status).toBe(404)
   })
 
   it('serves Utage chart images with custom difficulty labels', async () => {
@@ -112,6 +147,7 @@ describe('chart OG image endpoint', () => {
     const spec = await res.json()
 
     expect(spec.paths).not.toHaveProperty('/songs/{songId}/{type}/{difficulty}/og-image')
+    expect(spec.paths).not.toHaveProperty('/songs/{songId}/og-image')
   })
 })
 
@@ -143,8 +179,22 @@ describe('chart OG image handler', () => {
         songId: song.id,
         title: song.title,
         type: sheet.type,
+        bpm: 120,
       }),
+      'en',
     )
+  })
+
+  it('passes the page language on, and English for any other value', async () => {
+    const renderImage = vi.fn(async () => new Uint8Array([1]))
+    const app = new Hono()
+    app.get('/og/:songId/:type/:difficulty', createChartOgImageHandler(lookupSong, renderImage))
+
+    await app.request(`/og/${song.id}/${sheet.type}/${sheet.difficulty}?locale=zh-Hant`)
+    await app.request(`/og/${song.id}/${sheet.type}/${sheet.difficulty}?locale=fr`)
+
+    expect(renderImage).toHaveBeenNthCalledWith(1, expect.objectContaining({ songId: song.id }), 'zh-Hant')
+    expect(renderImage).toHaveBeenNthCalledWith(2, expect.objectContaining({ songId: song.id }), 'en')
   })
 
   it('keeps serving legacy song IDs, also when crawlers encode them a second time', async () => {
@@ -159,7 +209,7 @@ describe('chart OG image handler', () => {
 
     expect(once.status).toBe(200)
     expect(twice.status).toBe(200)
-    expect(renderImage).toHaveBeenCalledWith(expect.objectContaining({ songId: song.id }))
+    expect(renderImage).toHaveBeenCalledWith(expect.objectContaining({ songId: song.id }), 'en')
   })
 
   it('returns 404 without rendering when the chart does not exist', async () => {
@@ -213,12 +263,61 @@ describe('chart OG image level label', () => {
   })
 })
 
+describe('song OG image data', () => {
+  it('groups the charts by type, in difficulty order', () => {
+    const data = resolveSongOgImageData({
+      ...song,
+      sheets: [
+        { ...sheet, type: 'dx', difficulty: 'remaster', internalLevelValue: 14.1 },
+        { ...sheet, type: 'std', difficulty: 'master', internalLevelValue: 13.4 },
+        { ...sheet, type: 'dx', difficulty: 'basic', internalLevelValue: 3 },
+      ],
+    })
+
+    expect(
+      data?.groups.map((group) => [group.type, group.sheets.map((s) => [s.difficultyLabel, s.internalLevelValue])]),
+    ).toEqual([
+      [
+        'dx',
+        [
+          ['BASIC', 3],
+          ['Re:MASTER', 14.1],
+        ],
+      ],
+      ['std', [['MASTER', 13.4]]],
+    ])
+  })
+
+  it('keeps Utage charts with their own difficulty labels', () => {
+    expect(resolveSongOgImageData(utageSong)?.groups).toEqual([
+      { type: 'utage', sheets: [expect.objectContaining({ difficultyLabel: '【習】', internalLevelValue: 12.7 })] },
+    ])
+  })
+})
+
+describe('OG image locale', () => {
+  it('accepts the languages of the web app and falls back to English', () => {
+    expect(resolveOgLocale('ja')).toBe('ja')
+    expect(resolveOgLocale('zh-Hans')).toBe('zh-Hans')
+    expect(resolveOgLocale('zh-hans')).toBe('en')
+    expect(resolveOgLocale(undefined)).toBe('en')
+  })
+})
+
 describe('chart OG image title layout', () => {
-  it('uses a compact layout for the longest song title of the catalog', () => {
+  it('keeps short titles on one large line', () => {
+    expect(getTitleLayout('ChaosBlue')).toEqual({ fontSize: 76, lines: 1 })
+  })
+
+  it('wraps long kana titles onto two lines', () => {
+    expect(getTitleLayout('ガヴリールドロップキック')).toEqual({ fontSize: 60, lines: 2 })
+  })
+
+  it('uses the smallest size, cut to two lines, for the longest song title of the catalog', () => {
     expect(
       getTitleLayout(
         'False Amber (from the Black Bazaar, Or by A Kervan Trader from the Lands Afar, Or Buried Beneath the Shifting Sands That Lead Everywhere but Nowhere)',
       ),
-    ).toEqual({ fontSize: 25, lineHeight: 1.1, maxHeight: 150 })
+    ).toEqual({ fontSize: 40, lines: 2 })
   })
 })

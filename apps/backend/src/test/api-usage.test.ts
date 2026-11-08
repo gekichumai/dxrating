@@ -71,6 +71,9 @@ describe('API usage classification', () => {
     expect(resolve('GET', '/api/v1/songs/some%20song/dx/master/og-image', '/api/v1/*')).toBe(
       '/api/v1/songs/{songId}/{type}/{difficulty}/og-image',
     )
+    expect(resolve('GET', '/api/v1/songs/dsng_yavm46geyf/og-image', '/api/v1/*')).toBe(
+      '/api/v1/songs/{songId}/og-image',
+    )
     expect(resolve('GET', '/api/v1/dxdata', '/api/v1/dxdata')).toBe('/api/v1/dxdata')
     expect(resolve('POST', '/functions/fetch-net-records/v1/intl', '/functions/fetch-net-records/v1/:region')).toBe(
       '/functions/fetch-net-records/v1/:region',
