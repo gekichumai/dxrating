@@ -1,3 +1,4 @@
+export * from './src/canonical-json.ts'
 export * from './src/contract.ts'
 export * from './src/announcements.ts'
 export * from './src/locales.ts'

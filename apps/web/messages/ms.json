@@ -1323,5 +1323,206 @@
   "announcement_severity_critical": "Penting",
   "announcement_learnMore": "Ketahui lebih lanjut",
   "announcement_dismiss": "Tutup pengumuman",
-  "ratingCalculator_cloudSave_saveMissing": "Simpanan awan anda tidak ditemui, jadi peranti ini menggunakan simpanan setempatnya."
+  "ratingCalculator_cloudSave_saveMissing": "Simpanan awan anda tidak ditemui, jadi peranti ini menggunakan simpanan setempatnya.",
+  "ratingCalculator_cloudSave_title": "Simpanan awan",
+  "ratingCalculator_cloudSave_description": "Skor anda disimpan di DXRating dan kekal segerak merentas peranti anda.",
+  "ratingCalculator_cloudSave_provenance_verified": "Disahkan",
+  "ratingCalculator_cloudSave_provenance_friendCode": "kod rakan {id}",
+  "ratingCalculator_cloudSave_provenance_account": "akaun {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "diambil {date}",
+  "ratingCalculator_cloudSave_provenance_edited": "Diedit (asalnya diimport)",
+  "ratingCalculator_cloudSave_provenance_manual": "Manual",
+  "ratingCalculator_cloudSave_provenance_notVerified": "tidak disahkan",
+  "ratingCalculator_cloudSave_provenance_fromFile": "Daripada fail ({source})",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "Daripada fail (didakwa: {source})",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "Daripada peranti ini",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "Daripada peranti ini (didakwa: {source})",
+  "ratingCalculator_cloudSave_status_idle": "Terkini",
+  "ratingCalculator_cloudSave_status_syncing": "Menyegerak…",
+  "ratingCalculator_cloudSave_status_offline": "Luar talian",
+  "ratingCalculator_cloudSave_status_error": "Tidak dapat menyegerak sekarang",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{count} perubahan menunggu untuk disegerakkan"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{count} isu penyegerakan"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "Isu penyegerakan",
+  "ratingCalculator_cloudSave_issues_empty": "Tiada isu penyegerakan.",
+  "ratingCalculator_cloudSave_issues_yourValue": "Perubahan anda: {value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "dibuang",
+  "ratingCalculator_cloudSave_issues_method_typed": "ditaip",
+  "ratingCalculator_cloudSave_issues_method_keypad": "pad kekunci",
+  "ratingCalculator_cloudSave_issues_method_photo": "foto",
+  "ratingCalculator_cloudSave_issues_superseded": "Skor tersahih yang lebih baharu dikekalkan.",
+  "ratingCalculator_cloudSave_issues_rejected": "Perubahan ini tidak diterima, jadi skor yang tersimpan dikekalkan.",
+  "ratingCalculator_cloudSave_issues_useMine": "Tetap guna nilai saya",
+  "ratingCalculator_cloudSave_issues_dismiss": "Tutup",
+  "ratingCalculator_cloudSave_saves_title": "Simpanan",
+  "ratingCalculator_cloudSave_saves_description": "Pilih simpanan yang dipaparkan dan diedit oleh pelayar ini.",
+  "ratingCalculator_cloudSave_saves_loading": "Memuatkan simpanan…",
+  "ratingCalculator_cloudSave_saves_error": "Tidak dapat memuatkan simpanan anda.",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} rekod"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "disegerakkan kali terakhir {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "Mana-mana rantau",
+  "ratingCalculator_cloudSave_history_title": "Sejarah import",
+  "ratingCalculator_cloudSave_history_loading": "Memuatkan import…",
+  "ratingCalculator_cloudSave_history_error": "Tidak dapat memuatkan sejarah import.",
+  "ratingCalculator_cloudSave_history_empty": "Belum ada import.",
+  "ratingCalculator_cloudSave_history_running": "Sedang berjalan…",
+  "ratingCalculator_cloudSave_history_trigger_user": "Oleh anda",
+  "ratingCalculator_cloudSave_history_trigger_auto": "Automatik",
+  "ratingCalculator_cloudSave_history_trigger_migration": "Dipindahkan daripada pelayar ini",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} baharu"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} bertambah baik"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} kini disahkan"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} tidak berubah"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} mengekalkan suntingan anda"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} dilangkau (dipadam)"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} ditolak"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "Tiada perubahan",
+  "ratingCalculator_cloudSave_import_success": "Diimport daripada {source}: {summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "Import ini terhenti sebelum selesai. Cuba lagi.",
+  "ratingCalculator_cloudSave_import_errors_generic": "Tidak dapat menyelesaikan import ini. Cuba lagi.",
+  "ratingCalculator_cloudSave_saves_empty": "Belum ada simpanan awan.",
+  "ratingCalculator_cloudSave_retry": "Cuba lagi",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Import {count} skor ke dalam simpanan awan anda?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "Setiap chart mengekalkan skornya yang lebih baik, jadi tiada apa yang anda ada akan menjadi lebih teruk. Untuk bermula semula, kosongkan simpanan dahulu.",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "Batal",
+  "ratingCalculator_cloudSave_importConfirm_merge": "Import",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "Kosongkan simpanan dahulu…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "Kosongkan simpanan, kemudian import?",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "Setiap skor dalam simpanan ini dipadam pada semua peranti anda, kemudian fail diimport. Skor tersahih yang berubah sejak peranti ini disegerak kali terakhir dikekalkan.",
+  "ratingCalculator_cloudSave_importConfirm_back": "Kembali",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "Kosongkan dan import",
+  "ratingCalculator_cloudSave_unreachable": "Simpanan awan anda belum dapat dicapai. Perubahan yang anda buat sekarang kekal dalam pelayar ini.",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} rekod tidak sepadan dengan mana-mana chart dan tidak diimport."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "Tiada rekod ini yang boleh diimport: ia tidak sepadan dengan mana-mana chart atau mempunyai nilai di luar julat. Simpanan awan anda tidak diubah.",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} rekod mempunyai nilai yang tidak boleh disimpan, seperti DX score di luar julat, dan tidak diimport."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} rekod tidak boleh diimport kerana tidak sepadan dengan mana-mana chart atau mempunyai nilai di luar julat. Ia akan ditinggalkan."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "Import lain daripada sumber ini sedang berjalan pada simpanan awan anda. Cuba lagi selepas ia selesai.",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "Fail ini terlalu besar untuk dimuat naik dalam satu import. Simpanan awan anda tidak diubah.",
+  "ratingCalculator_cloudSave_history_failure_generic": "Tidak selesai",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "Terhenti sebelum selesai",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "Tidak selesai: maimai NET sedang diselenggara",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "Tidak selesai: log masuk maimai NET gagal",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "Tidak selesai: tiada kad Aime yang boleh digunakan",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} chart tidak dikenali"
+      }
+    }
+  ]
 }

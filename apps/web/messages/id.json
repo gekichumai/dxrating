@@ -1323,5 +1323,206 @@
   "announcement_severity_critical": "Penting",
   "announcement_learnMore": "Pelajari lebih lanjut",
   "announcement_dismiss": "Tutup pengumuman",
-  "ratingCalculator_cloudSave_saveMissing": "Simpanan cloud kamu tidak ditemukan, jadi perangkat ini memakai simpanan lokalnya."
+  "ratingCalculator_cloudSave_saveMissing": "Simpanan cloud kamu tidak ditemukan, jadi perangkat ini memakai simpanan lokalnya.",
+  "ratingCalculator_cloudSave_title": "Cloud save",
+  "ratingCalculator_cloudSave_description": "Skormu disimpan di DXRating dan tetap sinkron di semua perangkatmu.",
+  "ratingCalculator_cloudSave_provenance_verified": "Terverifikasi",
+  "ratingCalculator_cloudSave_provenance_friendCode": "friend code {id}",
+  "ratingCalculator_cloudSave_provenance_account": "akun {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "diambil {date}",
+  "ratingCalculator_cloudSave_provenance_edited": "Diedit (awalnya diimpor)",
+  "ratingCalculator_cloudSave_provenance_manual": "Manual",
+  "ratingCalculator_cloudSave_provenance_notVerified": "belum terverifikasi",
+  "ratingCalculator_cloudSave_provenance_fromFile": "Dari file ({source})",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "Dari file (klaim: {source})",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "Dari perangkat ini",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "Dari perangkat ini (klaim: {source})",
+  "ratingCalculator_cloudSave_status_idle": "Sudah terbaru",
+  "ratingCalculator_cloudSave_status_syncing": "Menyinkronkan…",
+  "ratingCalculator_cloudSave_status_offline": "Offline",
+  "ratingCalculator_cloudSave_status_error": "Tidak bisa menyinkronkan saat ini",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{count} perubahan menunggu sinkronisasi"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{count} masalah sinkronisasi"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "Masalah sinkronisasi",
+  "ratingCalculator_cloudSave_issues_empty": "Tidak ada masalah sinkronisasi.",
+  "ratingCalculator_cloudSave_issues_yourValue": "Perubahanmu: {value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "dihapus",
+  "ratingCalculator_cloudSave_issues_method_typed": "diketik",
+  "ratingCalculator_cloudSave_issues_method_keypad": "keypad",
+  "ratingCalculator_cloudSave_issues_method_photo": "foto",
+  "ratingCalculator_cloudSave_issues_superseded": "Skor terverifikasi yang lebih baru dipertahankan.",
+  "ratingCalculator_cloudSave_issues_rejected": "Perubahan ini tidak diterima, jadi skor yang tersimpan dipertahankan.",
+  "ratingCalculator_cloudSave_issues_useMine": "Tetap pakai nilaiku",
+  "ratingCalculator_cloudSave_issues_dismiss": "Tutup",
+  "ratingCalculator_cloudSave_saves_title": "Save",
+  "ratingCalculator_cloudSave_saves_description": "Pilih save yang ditampilkan dan diedit di browser ini.",
+  "ratingCalculator_cloudSave_saves_loading": "Memuat save…",
+  "ratingCalculator_cloudSave_saves_error": "Gagal memuat save-mu.",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} catatan"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "terakhir disinkronkan {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "Region mana pun",
+  "ratingCalculator_cloudSave_history_title": "Riwayat impor",
+  "ratingCalculator_cloudSave_history_loading": "Memuat impor…",
+  "ratingCalculator_cloudSave_history_error": "Gagal memuat riwayat impor.",
+  "ratingCalculator_cloudSave_history_empty": "Belum ada impor.",
+  "ratingCalculator_cloudSave_history_running": "Sedang berjalan…",
+  "ratingCalculator_cloudSave_history_trigger_user": "Oleh kamu",
+  "ratingCalculator_cloudSave_history_trigger_auto": "Otomatis",
+  "ratingCalculator_cloudSave_history_trigger_migration": "Dipindahkan dari browser ini",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} baru"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} meningkat"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} kini terverifikasi"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} tidak berubah"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} mempertahankan editanmu"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} dilewati (dihapus)"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} ditolak"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "Tidak ada perubahan",
+  "ratingCalculator_cloudSave_import_success": "Diimpor dari {source}: {summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "Impor ini berhenti sebelum selesai. Coba lagi.",
+  "ratingCalculator_cloudSave_import_errors_generic": "Gagal menyelesaikan impor ini. Coba lagi.",
+  "ratingCalculator_cloudSave_saves_empty": "Belum ada cloud save.",
+  "ratingCalculator_cloudSave_retry": "Coba lagi",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Impor {count} skor ke cloud save-mu?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "Setiap chart mempertahankan skor yang lebih baik, jadi skor yang sudah kamu punya tidak akan turun. Untuk memulai dari awal, kosongkan save terlebih dahulu.",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "Batal",
+  "ratingCalculator_cloudSave_importConfirm_merge": "Impor",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "Kosongkan save dulu…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "Kosongkan save, lalu impor?",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "Semua skor di save ini dihapus di semua perangkatmu, lalu file diimpor. Skor terverifikasi yang berubah sejak perangkat ini terakhir disinkronkan tetap dipertahankan.",
+  "ratingCalculator_cloudSave_importConfirm_back": "Kembali",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "Kosongkan dan impor",
+  "ratingCalculator_cloudSave_unreachable": "Belum bisa menjangkau cloud save-mu. Perubahan yang kamu buat sekarang tetap tersimpan di browser ini.",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} catatan tidak cocok dengan chart mana pun dan tidak diimpor."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "Tidak ada catatan yang bisa diimpor: tidak cocok dengan chart mana pun atau nilainya di luar rentang. Cloud save-mu tidak diubah.",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} catatan memiliki nilai yang tidak bisa disimpan, misalnya DX score di luar rentang, dan tidak diimpor."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} catatan tidak bisa diimpor karena tidak cocok dengan chart mana pun atau nilainya di luar rentang. Catatan ini akan dilewati."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "Impor lain dari sumber ini sedang berjalan di cloud save-mu. Coba lagi setelah selesai.",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "File ini terlalu besar untuk diunggah dalam satu impor. Cloud save-mu tidak diubah.",
+  "ratingCalculator_cloudSave_history_failure_generic": "Tidak selesai",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "Berhenti sebelum selesai",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "Tidak selesai: maimai NET sedang maintenance",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "Tidak selesai: gagal masuk ke maimai NET",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "Tidak selesai: tidak ada kartu Aime yang bisa dipakai",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} chart tidak dikenal"
+      }
+    }
+  ]
 }

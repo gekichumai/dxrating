@@ -1323,5 +1323,206 @@
   "announcement_severity_critical": "Quan trọng",
   "announcement_learnMore": "Tìm hiểu thêm",
   "announcement_dismiss": "Đóng thông báo",
-  "ratingCalculator_cloudSave_saveMissing": "Không tìm thấy bản lưu đám mây của bạn, nên thiết bị này đang dùng bản lưu cục bộ."
+  "ratingCalculator_cloudSave_saveMissing": "Không tìm thấy bản lưu đám mây của bạn, nên thiết bị này đang dùng bản lưu cục bộ.",
+  "ratingCalculator_cloudSave_title": "Lưu đám mây",
+  "ratingCalculator_cloudSave_description": "Điểm của bạn được lưu trên DXRating và đồng bộ giữa các thiết bị.",
+  "ratingCalculator_cloudSave_provenance_verified": "Đã xác minh",
+  "ratingCalculator_cloudSave_provenance_friendCode": "friend code {id}",
+  "ratingCalculator_cloudSave_provenance_account": "tài khoản {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "lấy lúc {date}",
+  "ratingCalculator_cloudSave_provenance_edited": "Đã chỉnh sửa (ban đầu là nhập)",
+  "ratingCalculator_cloudSave_provenance_manual": "Thủ công",
+  "ratingCalculator_cloudSave_provenance_notVerified": "chưa xác minh",
+  "ratingCalculator_cloudSave_provenance_fromFile": "Từ tệp ({source})",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "Từ tệp (khai báo: {source})",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "Từ thiết bị này",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "Từ thiết bị này (khai báo: {source})",
+  "ratingCalculator_cloudSave_status_idle": "Đã cập nhật",
+  "ratingCalculator_cloudSave_status_syncing": "Đang đồng bộ…",
+  "ratingCalculator_cloudSave_status_offline": "Ngoại tuyến",
+  "ratingCalculator_cloudSave_status_error": "Hiện không thể đồng bộ",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{count} thay đổi đang chờ đồng bộ"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{count} sự cố đồng bộ"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "Sự cố đồng bộ",
+  "ratingCalculator_cloudSave_issues_empty": "Không có sự cố đồng bộ.",
+  "ratingCalculator_cloudSave_issues_yourValue": "Thay đổi của bạn: {value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "đã xóa",
+  "ratingCalculator_cloudSave_issues_method_typed": "nhập tay",
+  "ratingCalculator_cloudSave_issues_method_keypad": "bàn phím số",
+  "ratingCalculator_cloudSave_issues_method_photo": "ảnh",
+  "ratingCalculator_cloudSave_issues_superseded": "Đã giữ điểm mới hơn đã được xác minh.",
+  "ratingCalculator_cloudSave_issues_rejected": "Thay đổi này không được chấp nhận nên điểm đã lưu được giữ nguyên.",
+  "ratingCalculator_cloudSave_issues_useMine": "Vẫn dùng giá trị của tôi",
+  "ratingCalculator_cloudSave_issues_dismiss": "Bỏ qua",
+  "ratingCalculator_cloudSave_saves_title": "Bản lưu",
+  "ratingCalculator_cloudSave_saves_description": "Chọn bản lưu mà trình duyệt này hiển thị và chỉnh sửa.",
+  "ratingCalculator_cloudSave_saves_loading": "Đang tải bản lưu…",
+  "ratingCalculator_cloudSave_saves_error": "Không tải được các bản lưu của bạn.",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} bản ghi"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "đồng bộ lần cuối {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "Mọi khu vực",
+  "ratingCalculator_cloudSave_history_title": "Lịch sử nhập",
+  "ratingCalculator_cloudSave_history_loading": "Đang tải các lần nhập…",
+  "ratingCalculator_cloudSave_history_error": "Không tải được lịch sử nhập.",
+  "ratingCalculator_cloudSave_history_empty": "Chưa có lần nhập nào.",
+  "ratingCalculator_cloudSave_history_running": "Đang thực hiện…",
+  "ratingCalculator_cloudSave_history_trigger_user": "Bởi bạn",
+  "ratingCalculator_cloudSave_history_trigger_auto": "Tự động",
+  "ratingCalculator_cloudSave_history_trigger_migration": "Chuyển từ trình duyệt này",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} mới"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} được cải thiện"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} đã được xác minh"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} không đổi"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} giữ chỉnh sửa của bạn"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} bị bỏ qua (đã xóa)"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} bị từ chối"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "Không có thay đổi",
+  "ratingCalculator_cloudSave_import_success": "Đã nhập từ {source}: {summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "Lần nhập này đã dừng trước khi hoàn tất. Hãy thử lại.",
+  "ratingCalculator_cloudSave_import_errors_generic": "Không hoàn tất được lần nhập này. Hãy thử lại.",
+  "ratingCalculator_cloudSave_saves_empty": "Chưa có bản lưu đám mây nào.",
+  "ratingCalculator_cloudSave_retry": "Thử lại",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "Nhập {count} điểm vào bản lưu đám mây của bạn?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "Mỗi chart giữ điểm tốt hơn nên những gì bạn đang có sẽ không bị giảm. Muốn bắt đầu lại từ đầu, hãy xóa bản lưu trước.",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "Hủy",
+  "ratingCalculator_cloudSave_importConfirm_merge": "Nhập",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "Xóa bản lưu trước…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "Xóa bản lưu rồi nhập?",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "Mọi điểm trong bản lưu này sẽ bị xóa trên tất cả thiết bị của bạn, sau đó tệp sẽ được nhập. Các điểm đã xác minh thay đổi kể từ lần đồng bộ gần nhất của thiết bị này sẽ được giữ lại.",
+  "ratingCalculator_cloudSave_importConfirm_back": "Quay lại",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "Xóa và nhập",
+  "ratingCalculator_cloudSave_unreachable": "Chưa kết nối được với bản lưu đám mây của bạn. Các thay đổi bạn thực hiện lúc này sẽ ở lại trong trình duyệt này.",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} bản ghi không khớp với chart nào và không được nhập."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "Không có bản ghi nào nhập được: chúng không khớp với chart nào hoặc có giá trị ngoài phạm vi. Bản lưu đám mây của bạn không thay đổi.",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} bản ghi có giá trị không thể lưu, chẳng hạn DX score ngoài phạm vi, và không được nhập."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} bản ghi không thể nhập vì không khớp với chart nào hoặc có giá trị ngoài phạm vi. Chúng sẽ bị bỏ qua."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "Một lần nhập khác từ nguồn này đang chạy trên bản lưu đám mây của bạn. Hãy thử lại khi nó xong.",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "Tệp này quá lớn để tải lên trong một lần nhập. Bản lưu đám mây của bạn không thay đổi.",
+  "ratingCalculator_cloudSave_history_failure_generic": "Chưa hoàn tất",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "Đã dừng trước khi hoàn tất",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "Chưa hoàn tất: maimai NET đang bảo trì",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "Chưa hoàn tất: đăng nhập maimai NET thất bại",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "Chưa hoàn tất: không có thẻ Aime dùng được",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} chart không xác định"
+      }
+    }
+  ]
 }

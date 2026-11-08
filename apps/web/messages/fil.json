@@ -1323,5 +1323,213 @@
   "announcement_severity_critical": "Mahalaga",
   "announcement_learnMore": "Alamin pa",
   "announcement_dismiss": "Isara ang anunsyo",
-  "ratingCalculator_cloudSave_saveMissing": "Hindi mahanap ang iyong cloud save, kaya ginagamit ng device na ito ang lokal nitong save."
+  "ratingCalculator_cloudSave_saveMissing": "Hindi mahanap ang iyong cloud save, kaya ginagamit ng device na ito ang lokal nitong save.",
+  "ratingCalculator_cloudSave_title": "Cloud save",
+  "ratingCalculator_cloudSave_description": "Nakaimbak sa DXRating ang iyong mga score at naka-sync ang mga ito sa lahat ng iyong device.",
+  "ratingCalculator_cloudSave_provenance_verified": "Verified",
+  "ratingCalculator_cloudSave_provenance_friendCode": "friend code {id}",
+  "ratingCalculator_cloudSave_provenance_account": "account {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "nakuha noong {date}",
+  "ratingCalculator_cloudSave_provenance_edited": "Na-edit (orihinal na na-import)",
+  "ratingCalculator_cloudSave_provenance_manual": "Manual",
+  "ratingCalculator_cloudSave_provenance_notVerified": "hindi verified",
+  "ratingCalculator_cloudSave_provenance_fromFile": "Mula sa file ({source})",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "Mula sa file (ayon sa file: {source})",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "Mula sa device na ito",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "Mula sa device na ito (ayon sa device: {source})",
+  "ratingCalculator_cloudSave_status_idle": "Napapanahon",
+  "ratingCalculator_cloudSave_status_syncing": "Nagsi-sync…",
+  "ratingCalculator_cloudSave_status_offline": "Offline",
+  "ratingCalculator_cloudSave_status_error": "Hindi makapag-sync ngayon",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} pagbabagong naghihintay ma-sync",
+        "countPlural=*": "{count} pagbabagong naghihintay ma-sync"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} isyu sa sync",
+        "countPlural=*": "{count} isyu sa sync"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "Mga isyu sa sync",
+  "ratingCalculator_cloudSave_issues_empty": "Walang isyu sa sync.",
+  "ratingCalculator_cloudSave_issues_yourValue": "Pagbabago mo: {value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "inalis",
+  "ratingCalculator_cloudSave_issues_method_typed": "tinype",
+  "ratingCalculator_cloudSave_issues_method_keypad": "keypad",
+  "ratingCalculator_cloudSave_issues_method_photo": "litrato",
+  "ratingCalculator_cloudSave_issues_superseded": "Pinanatili ang mas bagong verified na score.",
+  "ratingCalculator_cloudSave_issues_rejected": "Hindi tinanggap ang pagbabagong ito, kaya pinanatili ang naka-save na score.",
+  "ratingCalculator_cloudSave_issues_useMine": "Gamitin pa rin ang value ko",
+  "ratingCalculator_cloudSave_issues_dismiss": "Isara",
+  "ratingCalculator_cloudSave_saves_title": "Mga save",
+  "ratingCalculator_cloudSave_saves_description": "Piliin kung aling save ang ipapakita at ie-edit ng browser na ito.",
+  "ratingCalculator_cloudSave_saves_loading": "Nilo-load ang mga save…",
+  "ratingCalculator_cloudSave_saves_error": "Hindi ma-load ang iyong mga save.",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} record"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "huling na-sync noong {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "Anumang region",
+  "ratingCalculator_cloudSave_history_title": "Kasaysayan ng import",
+  "ratingCalculator_cloudSave_history_loading": "Nilo-load ang mga import…",
+  "ratingCalculator_cloudSave_history_error": "Hindi ma-load ang kasaysayan ng import.",
+  "ratingCalculator_cloudSave_history_empty": "Wala pang import.",
+  "ratingCalculator_cloudSave_history_running": "Isinasagawa…",
+  "ratingCalculator_cloudSave_history_trigger_user": "Ikaw ang nag-import",
+  "ratingCalculator_cloudSave_history_trigger_auto": "Awtomatiko",
+  "ratingCalculator_cloudSave_history_trigger_migration": "Inilipat mula sa browser na ito",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} bago"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} bumuti"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} na verified na ngayon"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} walang pagbabago"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} pinanatili ang edit mo"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} nilaktawan (na-delete)"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} tinanggihan"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "Walang pagbabago",
+  "ratingCalculator_cloudSave_import_success": "Na-import mula sa {source}: {summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "Huminto ang import na ito bago natapos. Subukang muli.",
+  "ratingCalculator_cloudSave_import_errors_generic": "Hindi natapos ang import na ito. Subukang muli.",
+  "ratingCalculator_cloudSave_saves_empty": "Wala pang cloud save.",
+  "ratingCalculator_cloudSave_retry": "Subukang muli",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "I-import ang {count} score sa iyong cloud save?",
+        "countPlural=*": "I-import ang {count} score sa iyong cloud save?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "Pinananatili ng bawat chart ang mas mataas na score nito, kaya walang bababa sa mayroon ka na. Para magsimula ulit, i-clear muna ang save.",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "Kanselahin",
+  "ratingCalculator_cloudSave_importConfirm_merge": "I-import",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "I-clear muna ang save…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "I-clear ang save, tapos mag-import?",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "Made-delete ang lahat ng score sa save na ito sa lahat ng iyong device, tapos ii-import ang file. Pananatilihin ang mga verified na score na nagbago mula nang huling mag-sync ang device na ito.",
+  "ratingCalculator_cloudSave_importConfirm_back": "Bumalik",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "I-clear at i-import",
+  "ratingCalculator_cloudSave_unreachable": "Hindi pa maabot ang iyong cloud save. Mananatili sa browser na ito ang mga pagbabagong gagawin mo ngayon.",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} record ang hindi tumugma sa anumang chart kaya hindi na-import.",
+        "countPlural=*": "{countNumber} record ang hindi tumugma sa anumang chart kaya hindi na-import."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "Walang record dito ang puwedeng i-import: walang tumutugmang chart o wala sa saklaw ang mga value. Hindi nagbago ang iyong cloud save.",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} record ang may value na hindi mase-save, gaya ng DX score na wala sa saklaw, kaya hindi na-import.",
+        "countPlural=*": "{countNumber} record ang may value na hindi mase-save, gaya ng DX score na wala sa saklaw, kaya hindi na-import."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} record ang hindi ma-import dahil walang tumutugmang chart o wala sa saklaw ang value. Hindi ito isasama.",
+        "countPlural=*": "{countNumber} record ang hindi ma-import dahil walang tumutugmang chart o wala sa saklaw ang value. Hindi ito isasama."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "May ibang import mula sa source na ito na tumatakbo sa iyong cloud save. Subukang muli kapag natapos na ito.",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "Masyadong malaki ang file na ito para i-upload sa isang import. Hindi nagbago ang iyong cloud save.",
+  "ratingCalculator_cloudSave_history_failure_generic": "Hindi natapos",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "Huminto bago natapos",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "Hindi natapos: nasa maintenance ang maimai NET",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "Hindi natapos: nabigo ang pag-sign in sa maimai NET",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "Hindi natapos: walang magagamit na Aime card",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} hindi kilalang chart",
+        "countPlural=*": "{countNumber} hindi kilalang chart"
+      }
+    }
+  ]
 }

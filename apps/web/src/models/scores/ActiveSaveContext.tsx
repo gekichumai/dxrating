@@ -1,4 +1,4 @@
-import type { SaveDTO, UserFeatures } from '@gekichumai/api-contract'
+import type { ImportJobDTO, SaveDTO, UserFeatures } from '@gekichumai/api-contract'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useLocale } from '@/i18n/LocaleProvider'
@@ -61,6 +61,8 @@ export interface OpenCloudRepositoryOptions {
   userId: string
   saveId: string
   onStopped?: CloudScoreRepositoryOptions['onStopped']
+  /** `serverImports` of `/me/features` (§7.4) */
+  serverImports?: boolean
 }
 
 /** What the active save decision talks to; replaced in tests */
@@ -72,7 +74,20 @@ export interface ActiveSaveDependencies {
   /** `GET /saves` */
   listSaves(): Promise<readonly SaveDTO[]>
   openCloudRepository(options: OpenCloudRepositoryOptions): Promise<CloudScoreRepository>
+  /** How long the decision may wait on the network before it stops holding work back; {@link DECISION_TIMEOUT_MS} */
+  decisionTimeoutMs?: number
 }
+
+/**
+ * How long the decision may wait on the network before it stops holding back the work that waits for it (§8.2).
+ * With no cloud save chosen the answer can only be the local save: it is final then, so the automatic maimai NET
+ * import runs as it did before cloud save. With a cloud save chosen the requests keep going and the cloud save opens
+ * when they answer; until then the visitor is told that changes stay in this browser, and the automatic import waits.
+ */
+export const DECISION_TIMEOUT_MS = 5_000
+
+/** The toast shown while a chosen cloud save cannot be reached; dismissed once the decision is made */
+const UNREACHABLE_TOAST_ID = 'cloud-save-unreachable'
 
 const isNotFound = (error: unknown) =>
   typeof error === 'object' &&
@@ -113,17 +128,27 @@ export const defaultActiveSaveDependencies: ActiveSaveDependencies = {
     return (await client.cloudSave.saves.list()).saves as SaveDTO[]
   },
   async openCloudRepository(options) {
-    const [{ CloudScoreRepository }, client, Sentry] = await Promise.all([
+    const [{ CloudScoreRepository }, { streamNetImport }, client, Sentry] = await Promise.all([
       import('./CloudScoreRepository'),
+      import('./cloudNetImport'),
       loadPrivateApi(),
       import('@sentry/tanstackstart-react'),
     ])
+    const { imports } = client.cloudSave
     return CloudScoreRepository.open({
       ...options,
       api: {
         changes: (input) => client.cloudSave.records.changes(input),
         mutate: (input) => client.cloudSave.records.mutate(input),
       },
+      imports: {
+        client: (input) => imports.client(input as Parameters<typeof imports.client>[0]),
+        lxns: (input) => imports.lxns(input),
+        divingFish: (input) => imports.divingFish(input as Parameters<typeof imports.divingFish>[0]),
+        get: (input) => imports.get(input) as Promise<ImportJobDTO>,
+        list: (input) => imports.list(input) as Promise<ImportJobDTO[]>,
+      },
+      netImport: streamNetImport,
       // Counts and sums only: no user, save or chart identifiers
       reportChecksumMismatch: (report) => {
         Sentry.metrics.count('cloudsave.checksum_mismatch', 1)
@@ -137,6 +162,13 @@ export const ActiveSaveDependenciesContext = createContext<ActiveSaveDependencie
 
 export interface ActiveSave {
   kind: 'local' | 'cloud'
+  /**
+   * Whether the choice between the local save and a cloud save is made for the current session (signed out: once
+   * the session has loaded; signed in: once `/me/features`, and for a cloud save the save list, have answered, or
+   * after {@link DECISION_TIMEOUT_MS} when no cloud save is chosen). Work that must go to the right save, such as the
+   * automatic maimai NET import, waits for it.
+   */
+  decided: boolean
   /** The active cloud save, `null` for the local save */
   saveId: string | null
   /** The cloud repository while a cloud save is active */
@@ -148,14 +180,18 @@ export interface ActiveSave {
   setActiveSaveId(saveId: string | null): void
   /** Sends what the cloud save still has to send, for at most 3 s; call before signing out */
   flushBeforeSignOut(): Promise<void>
+  /** The signed-in user's cloud saves (`GET /saves`), for the save selector */
+  listSaves(): Promise<readonly SaveDTO[]>
 }
 
 export const ActiveSaveContext = createContext<ActiveSave>({
   kind: 'local',
+  decided: true,
   saveId: null,
   cloudRepository: null,
   setActiveSaveId: () => {},
   flushBeforeSignOut: async () => {},
+  listSaves: async () => [],
 })
 
 export const useActiveSave = (): ActiveSave => useContext(ActiveSaveContext)
@@ -171,7 +207,7 @@ function browserLocalStorage(): Storage | null {
 
 declare global {
   interface Window {
-    /** Dev builds only: choose the active cloud save from the console until the save selector ships */
+    /** Dev builds only: choose the active cloud save from the console (the save selector lists existing saves only) */
     dxratingActiveSave?: { set(saveId: string | null): void }
   }
 }
@@ -188,14 +224,19 @@ export function useActiveSaveDecision(): ActiveSave {
   // Read when a toast shows, not a reason to decide again
   const localeRef = useRef(locale)
   localeRef.current = locale
+  // The decision this render shows is final for the session and selection (see `ActiveSave.decided`)
+  const decisionKey = userId === undefined ? undefined : userId === null ? 'anonymous' : `${userId}:${selectionVersion}`
+  const [decidedKey, setDecidedKey] = useState<string | null>(null)
 
   useEffect(() => {
     // The session is still loading: keep what is shown
     if (userId === undefined) return
     if (userId === null) {
       setCloudRepository(null)
+      setDecidedKey('anonymous')
       return
     }
+    const key = `${userId}:${selectionVersion}`
     // Another user signed in without a sign-out in between: never show the previous user's save to them, nor queue
     // their changes in it. No flush either, the session is no longer the previous user's
     const previous = cloudRef.current
@@ -209,6 +250,20 @@ export function useActiveSaveDecision(): ActiveSave {
     const fallBackToLocal = () => {
       if (!cancelled) setCloudRepository(null)
     }
+
+    // A stalled network does not end the decision: the requests keep going (see DECISION_TIMEOUT_MS)
+    let settled = false
+    const timeout = setTimeout(() => {
+      if (cancelled || settled) return
+      if (!readActiveSaveId(storage, userId)) {
+        setDecidedKey(key)
+        return
+      }
+      toast(m.ratingCalculator_cloudSave_unreachable({}, { locale: localeRef.current }), {
+        id: UNREACHABLE_TOAST_ID,
+        duration: 8_000,
+      })
+    }, dependencies.decisionTimeoutMs ?? DECISION_TIMEOUT_MS)
 
     void (async () => {
       const features = await getUserFeatures(userId, dependencies.fetchFeatures)
@@ -245,7 +300,12 @@ export function useActiveSaveDecision(): ActiveSave {
         }
         setCloudRepository((current) => (current === opened ? null : current))
       }
-      const repository = await dependencies.openCloudRepository({ userId, saveId, onStopped })
+      const repository = await dependencies.openCloudRepository({
+        userId,
+        saveId,
+        onStopped,
+        serverImports: features.serverImports,
+      })
       opened = repository
       if (cancelled) {
         void repository.dispose({ flushTimeoutMs: 0 })
@@ -253,14 +313,22 @@ export function useActiveSaveDecision(): ActiveSave {
       }
       repository.start()
       setCloudRepository(repository)
-    })().catch((error: unknown) => {
-      // Saves unavailable (offline, IndexedDB refused): the local save, as before
-      console.warn('[cloud-save] Using the local save', error)
-      fallBackToLocal()
-    })
+    })()
+      .catch((error: unknown) => {
+        // Saves unavailable (offline, IndexedDB refused): the local save, as before
+        console.warn('[cloud-save] Using the local save', error)
+        fallBackToLocal()
+      })
+      .finally(() => {
+        settled = true
+        clearTimeout(timeout)
+        toast.dismiss(UNREACHABLE_TOAST_ID)
+        if (!cancelled) setDecidedKey(key)
+      })
 
     return () => {
       cancelled = true
+      clearTimeout(timeout)
     }
   }, [userId, selectionVersion, dependencies])
 
@@ -301,14 +369,20 @@ export function useActiveSaveDecision(): ActiveSave {
     await exposedRepository?.flush()
   }, [exposedRepository])
 
+  const listSaves = useCallback(() => dependencies.listSaves(), [dependencies])
+
+  const decided = decisionKey !== undefined && decidedKey === decisionKey
+
   return useMemo(
     () => ({
       kind: exposedRepository ? 'cloud' : 'local',
+      decided,
       saveId: exposedRepository?.saveId ?? null,
       cloudRepository: exposedRepository,
       setActiveSaveId,
       flushBeforeSignOut,
+      listSaves,
     }),
-    [exposedRepository, setActiveSaveId, flushBeforeSignOut],
+    [exposedRepository, decided, setActiveSaveId, flushBeforeSignOut, listSaves],
   )
 }

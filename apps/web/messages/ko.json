@@ -1323,5 +1323,214 @@
   "announcement_severity_critical": "중요",
   "announcement_learnMore": "자세히 보기",
   "announcement_dismiss": "공지 닫기",
-  "ratingCalculator_cloudSave_saveMissing": "클라우드 저장 데이터를 찾을 수 없어 이 기기의 로컬 저장 데이터를 사용합니다."
+  "ratingCalculator_cloudSave_saveMissing": "클라우드 저장 데이터를 찾을 수 없어 이 기기의 로컬 저장 데이터를 사용합니다.",
+  "ratingCalculator_cloudSave_title": "클라우드 저장",
+  "ratingCalculator_cloudSave_description": "점수는 DXRating에 저장되고 모든 기기에서 동기화됩니다.",
+  "ratingCalculator_cloudSave_provenance_verified": "검증됨",
+  "ratingCalculator_cloudSave_provenance_friendCode": "친구 코드 {id}",
+  "ratingCalculator_cloudSave_provenance_account": "계정 {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "{date} 가져옴",
+  "ratingCalculator_cloudSave_provenance_edited": "편집됨 (원래 가져온 기록)",
+  "ratingCalculator_cloudSave_provenance_manual": "직접 입력",
+  "ratingCalculator_cloudSave_provenance_notVerified": "검증되지 않음",
+  "ratingCalculator_cloudSave_provenance_fromFile": "파일에서 ({source})",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "파일에서 (출처 주장: {source})",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "이 기기에서",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "이 기기에서 (출처 주장: {source})",
+  "ratingCalculator_cloudSave_status_idle": "최신 상태",
+  "ratingCalculator_cloudSave_status_syncing": "동기화 중…",
+  "ratingCalculator_cloudSave_status_offline": "오프라인",
+  "ratingCalculator_cloudSave_status_error": "지금은 동기화할 수 없음",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "동기화 대기 중인 변경 {count}개",
+        "countPlural=*": "동기화 대기 중인 변경 {count}개"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "동기화 문제 {count}개",
+        "countPlural=*": "동기화 문제 {count}개"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "동기화 문제",
+  "ratingCalculator_cloudSave_issues_empty": "동기화 문제가 없습니다.",
+  "ratingCalculator_cloudSave_issues_yourValue": "내 변경: {value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "삭제",
+  "ratingCalculator_cloudSave_issues_method_typed": "입력",
+  "ratingCalculator_cloudSave_issues_method_keypad": "키패드",
+  "ratingCalculator_cloudSave_issues_method_photo": "사진",
+  "ratingCalculator_cloudSave_issues_superseded": "더 최근에 검증된 점수가 유지되었습니다.",
+  "ratingCalculator_cloudSave_issues_rejected": "이 변경은 받아들여지지 않아 저장된 점수가 유지되었습니다.",
+  "ratingCalculator_cloudSave_issues_useMine": "그래도 내 값 사용",
+  "ratingCalculator_cloudSave_issues_dismiss": "무시",
+  "ratingCalculator_cloudSave_saves_title": "저장 데이터",
+  "ratingCalculator_cloudSave_saves_description": "이 브라우저에서 보고 편집할 저장 데이터를 선택하세요.",
+  "ratingCalculator_cloudSave_saves_loading": "저장 데이터를 불러오는 중…",
+  "ratingCalculator_cloudSave_saves_error": "저장 데이터를 불러오지 못했습니다.",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "기록 {formatted}개",
+        "countPlural=*": "기록 {formatted}개"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "마지막 동기화 {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "지역 무관",
+  "ratingCalculator_cloudSave_history_title": "가져오기 기록",
+  "ratingCalculator_cloudSave_history_loading": "가져오기 기록을 불러오는 중…",
+  "ratingCalculator_cloudSave_history_error": "가져오기 기록을 불러오지 못했습니다.",
+  "ratingCalculator_cloudSave_history_empty": "아직 가져온 기록이 없습니다.",
+  "ratingCalculator_cloudSave_history_running": "진행 중…",
+  "ratingCalculator_cloudSave_history_trigger_user": "직접 실행",
+  "ratingCalculator_cloudSave_history_trigger_auto": "자동",
+  "ratingCalculator_cloudSave_history_trigger_migration": "이 브라우저에서 옮김",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "새 기록 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "향상 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "검증됨으로 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "변경 없음 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "내 편집 유지 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "삭제되어 건너뜀 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "거부 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "변경 없음",
+  "ratingCalculator_cloudSave_import_success": "{source}에서 가져왔습니다: {summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "가져오기가 끝나기 전에 멈췄습니다. 다시 시도하세요.",
+  "ratingCalculator_cloudSave_import_errors_generic": "가져오기를 완료하지 못했습니다. 다시 시도하세요.",
+  "ratingCalculator_cloudSave_saves_empty": "아직 클라우드 저장 데이터가 없습니다.",
+  "ratingCalculator_cloudSave_retry": "다시 시도",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "점수 {count}개를 클라우드 저장에 가져올까요?",
+        "countPlural=*": "점수 {count}개를 클라우드 저장에 가져올까요?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "채보마다 더 좋은 점수가 남으므로 기존 점수가 낮아지지 않습니다. 처음부터 다시 하려면 먼저 저장 데이터를 비우세요.",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "취소",
+  "ratingCalculator_cloudSave_importConfirm_merge": "가져오기",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "먼저 비우기…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "저장 데이터를 비운 뒤 가져올까요?",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "이 저장 데이터의 모든 점수가 모든 기기에서 삭제된 뒤 파일을 가져옵니다. 이 기기의 마지막 동기화 이후 바뀐 검증된 점수는 유지됩니다.",
+  "ratingCalculator_cloudSave_importConfirm_back": "뒤로",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "비우고 가져오기",
+  "ratingCalculator_cloudSave_unreachable": "아직 클라우드 세이브에 연결할 수 없습니다. 지금 바꾼 내용은 이 브라우저에만 저장됩니다.",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "기록 {countNumber}개는 맞는 채보가 없어 가져오지 않았습니다.",
+        "countPlural=*": "기록 {countNumber}개는 맞는 채보가 없어 가져오지 않았습니다."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "가져올 수 있는 기록이 없습니다. 맞는 채보가 없거나 범위를 벗어난 값이 있습니다. 클라우드 세이브는 바뀌지 않았습니다.",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "기록 {countNumber}개는 저장할 수 없는 값(범위를 벗어난 DX 점수 등)이 있어 가져오지 않았습니다.",
+        "countPlural=*": "기록 {countNumber}개는 저장할 수 없는 값(범위를 벗어난 DX 점수 등)이 있어 가져오지 않았습니다."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "기록 {countNumber}개는 맞는 채보가 없거나 범위를 벗어난 값이 있어 가져올 수 없습니다. 이 기록은 제외됩니다.",
+        "countPlural=*": "기록 {countNumber}개는 맞는 채보가 없거나 범위를 벗어난 값이 있어 가져올 수 없습니다. 이 기록은 제외됩니다."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "이 소스의 다른 가져오기가 클라우드 세이브에서 진행 중입니다. 끝난 뒤 다시 시도하세요.",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "이 파일은 너무 커서 한 번에 가져올 수 없습니다. 클라우드 세이브는 바뀌지 않았습니다.",
+  "ratingCalculator_cloudSave_history_failure_generic": "완료되지 않음",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "끝나기 전에 멈춤",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "완료되지 않음: maimai NET 점검 중",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "완료되지 않음: maimai NET 로그인 실패",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "완료되지 않음: 사용할 수 있는 Aime 카드 없음",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "알 수 없는 채보 {countNumber}",
+        "countPlural=*": "알 수 없는 채보 {countNumber}"
+      }
+    }
+  ]
 }

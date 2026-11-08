@@ -1323,5 +1323,214 @@
   "announcement_severity_critical": "Important",
   "announcement_learnMore": "Learn more",
   "announcement_dismiss": "Dismiss announcement",
-  "ratingCalculator_cloudSave_saveMissing": "Your cloud save could not be found, so this device is using its local save."
+  "ratingCalculator_cloudSave_saveMissing": "Your cloud save could not be found, so this device is using its local save.",
+  "ratingCalculator_cloudSave_title": "Cloud save",
+  "ratingCalculator_cloudSave_description": "Your scores are stored on DXRating and stay in sync across your devices.",
+  "ratingCalculator_cloudSave_provenance_verified": "Verified",
+  "ratingCalculator_cloudSave_provenance_friendCode": "friend code {id}",
+  "ratingCalculator_cloudSave_provenance_account": "account {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "fetched {date}",
+  "ratingCalculator_cloudSave_provenance_edited": "Edited (originally imported)",
+  "ratingCalculator_cloudSave_provenance_manual": "Manual",
+  "ratingCalculator_cloudSave_provenance_notVerified": "not verified",
+  "ratingCalculator_cloudSave_provenance_fromFile": "From file ({source})",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "From file (claimed: {source})",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "From this device",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "From this device (claimed: {source})",
+  "ratingCalculator_cloudSave_status_idle": "Up to date",
+  "ratingCalculator_cloudSave_status_syncing": "Syncing…",
+  "ratingCalculator_cloudSave_status_offline": "Offline",
+  "ratingCalculator_cloudSave_status_error": "Can't sync right now",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} change waiting to sync",
+        "countPlural=*": "{count} changes waiting to sync"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} sync issue",
+        "countPlural=*": "{count} sync issues"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "Sync issues",
+  "ratingCalculator_cloudSave_issues_empty": "No sync issues.",
+  "ratingCalculator_cloudSave_issues_yourValue": "Your change: {value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "removed",
+  "ratingCalculator_cloudSave_issues_method_typed": "typed",
+  "ratingCalculator_cloudSave_issues_method_keypad": "keypad",
+  "ratingCalculator_cloudSave_issues_method_photo": "photo",
+  "ratingCalculator_cloudSave_issues_superseded": "A newer verified score was kept.",
+  "ratingCalculator_cloudSave_issues_rejected": "This change wasn't accepted, so the saved score was kept.",
+  "ratingCalculator_cloudSave_issues_useMine": "Use my value anyway",
+  "ratingCalculator_cloudSave_issues_dismiss": "Dismiss",
+  "ratingCalculator_cloudSave_saves_title": "Saves",
+  "ratingCalculator_cloudSave_saves_description": "Choose which save this browser shows and edits.",
+  "ratingCalculator_cloudSave_saves_loading": "Loading saves…",
+  "ratingCalculator_cloudSave_saves_error": "Couldn't load your saves.",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{formatted} record",
+        "countPlural=*": "{formatted} records"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "last synced {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "Any region",
+  "ratingCalculator_cloudSave_history_title": "Import history",
+  "ratingCalculator_cloudSave_history_loading": "Loading imports…",
+  "ratingCalculator_cloudSave_history_error": "Couldn't load the import history.",
+  "ratingCalculator_cloudSave_history_empty": "No imports yet.",
+  "ratingCalculator_cloudSave_history_running": "In progress…",
+  "ratingCalculator_cloudSave_history_trigger_user": "By you",
+  "ratingCalculator_cloudSave_history_trigger_auto": "Automatic",
+  "ratingCalculator_cloudSave_history_trigger_migration": "Moved from this browser",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} new"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} improved"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} now verified"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} unchanged"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} kept your edit"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} skipped (deleted)"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} rejected"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "No changes",
+  "ratingCalculator_cloudSave_import_success": "Imported from {source}: {summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "This import stopped before it finished. Try again.",
+  "ratingCalculator_cloudSave_import_errors_generic": "Couldn't finish this import. Try again.",
+  "ratingCalculator_cloudSave_saves_empty": "No cloud saves yet.",
+  "ratingCalculator_cloudSave_retry": "Try again",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Import {count} score into your cloud save?",
+        "countPlural=*": "Import {count} scores into your cloud save?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "Each chart keeps its better score, so nothing you already have gets worse. To start over instead, clear the save first.",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "Cancel",
+  "ratingCalculator_cloudSave_importConfirm_merge": "Import",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "Clear save first…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "Clear the save, then import?",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "Every score in this save is deleted on all your devices, then the file is imported. Verified scores that changed since this device last synced are kept.",
+  "ratingCalculator_cloudSave_importConfirm_back": "Back",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "Clear and import",
+  "ratingCalculator_cloudSave_unreachable": "Can't reach your cloud save yet. Changes you make now stay in this browser.",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} record didn't match a chart and wasn't imported.",
+        "countPlural=*": "{countNumber} records didn't match a chart and weren't imported."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "None of these records can be imported: they match no chart or have values out of range. Your cloud save wasn't changed.",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} record has a value that can't be saved, such as a DX score out of range, and wasn't imported.",
+        "countPlural=*": "{countNumber} records have values that can't be saved, such as a DX score out of range, and weren't imported."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} record can't be imported because it matches no chart or has a value out of range. It will be left out.",
+        "countPlural=*": "{countNumber} records can't be imported because they match no chart or have values out of range. They will be left out."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "Another import from this source is running on your cloud save. Try again when it finishes.",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "This file is too large to upload in one import. Your cloud save wasn't changed.",
+  "ratingCalculator_cloudSave_history_failure_generic": "Didn't finish",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "Stopped before it finished",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "Didn't finish: maimai NET was under maintenance",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "Didn't finish: maimai NET sign-in failed",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "Didn't finish: no usable Aime card",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} unknown chart",
+        "countPlural=*": "{countNumber} unknown charts"
+      }
+    }
+  ]
 }

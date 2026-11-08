@@ -15,6 +15,8 @@ import { LocaleSelector } from '../global/preferences/LocaleSelector'
 import { DisplayPreferencesMenu, ThemeSelector } from '../global/preferences/ThemeSelector'
 import { UserChip } from '../global/preferences/UserChip'
 import { About } from '../global/site-meta/About'
+import { SyncStatusIndicator } from '../cloud-save/SyncStatusIndicator'
+import { useCloudSaveStatus } from '../../models/scores/CloudSaveUiContext'
 import { type HeaderTint, headerTintStyle } from './headerTints'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
@@ -80,8 +82,9 @@ const Tinted = ({ tint, children }: { tint: HeaderTint; children: ReactNode }) =
 
 const PILL_DIVIDER = <span className="mx-1 h-5 w-px shrink-0 bg-black/12" aria-hidden />
 
-// Small screens fold the community and developer links into one menu so the header stays a single row
-const CommunityMenu = () => {
+// Small screens fold the community and developer links into one menu so the header stays a single row. `compact` keeps
+// the single glyph on wider phones too, where the three brand discs would push the pill into the logo
+const CommunityMenu = ({ compact = false }: { compact?: boolean }) => {
   const locale = useLocale()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
@@ -95,13 +98,14 @@ const CommunityMenu = () => {
         aria-expanded={anchorEl ? 'true' : undefined}
         className={clsx(
           HEADER_ACTION_CLASS_NAME,
-          'header-tint header-tint-target 2xs:w-auto 2xs:gap-0.5 2xs:pl-1 2xs:pr-1.5 2xs:!bg-transparent 2xs:hover:!bg-white/60',
+          'header-tint header-tint-target',
+          !compact && '2xs:w-auto 2xs:gap-0.5 2xs:pl-1 2xs:pr-1.5 2xs:!bg-transparent 2xs:hover:!bg-white/60',
         )}
         style={headerTintStyle('discord')}
       >
         {/* Below 375px one tinted glyph; wider phones show the three brand discs, as before the glass header */}
-        <MdiAccountGroupOutline aria-hidden className="size-5 2xs:hidden" />
-        <span className="hidden 2xs:flex items-center" aria-hidden>
+        <MdiAccountGroupOutline aria-hidden className={clsx('size-5', !compact && '2xs:hidden')} />
+        <span className={clsx('hidden items-center', !compact && '2xs:flex')} aria-hidden>
           {COMMUNITY_LINKS.map(({ key, Icon, tint }, index) => (
             <span
               key={key}
@@ -115,7 +119,7 @@ const CommunityMenu = () => {
             </span>
           ))}
         </span>
-        <MdiChevronDown aria-hidden className="hidden 2xs:block size-4 text-fg-2" />
+        <MdiChevronDown aria-hidden className={clsx('hidden size-4 text-fg-2', !compact && '2xs:block')} />
       </ButtonBase>
 
       <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
@@ -168,6 +172,8 @@ const CommunityMenu = () => {
 /** The header's top row: the site name and build on the left, one glass pill of actions on the right. */
 export const TopBar = () => {
   const locale = useLocale()
+  // The sync pill only renders on a cloud save; without it the header is exactly the local-save layout
+  const hasSyncPill = useCloudSaveStatus() != null
 
   return (
     <div className="page-gutter flex items-center justify-between gap-2 pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:pt-[calc(env(safe-area-inset-top)+1rem)]">
@@ -224,8 +230,14 @@ export const TopBar = () => {
           {PILL_DIVIDER}
         </div>
 
-        <div className="flex sm:hidden">
-          <CommunityMenu />
+        {/* Below 375px a cloud save's sync pill takes the community menu's place, so the pill keeps the local-save
+            width and clears the logo (320px phones). From 375px up the menu is back as its single glyph: the three
+            brand discs would push the pill into the logo up to the sm breakpoint */}
+        <div
+          className={hasSyncPill ? 'hidden 2xs:flex sm:hidden' : 'flex sm:hidden'}
+          data-sync-pill={hasSyncPill ? 'true' : undefined}
+        >
+          <CommunityMenu compact={hasSyncPill} />
         </div>
 
         {/* Phones get one combined language + appearance button so the row keeps its width (DisplayPreferencesMenu) */}
@@ -245,6 +257,8 @@ export const TopBar = () => {
         <Tinted tint="about">
           <About />
         </Tinted>
+        {/* Cloud saves only: without one the header is exactly the local-save layout */}
+        <SyncStatusIndicator className="header-tint header-tint-target" style={headerTintStyle('sync')} />
         <Tinted tint="account">
           <UserChip />
         </Tinted>

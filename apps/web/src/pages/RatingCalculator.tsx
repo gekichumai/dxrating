@@ -42,6 +42,7 @@ import {
 import IconMdiArrowUp from '~icons/mdi/arrow-up'
 import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import IconMdiTrashCan from '~icons/mdi/trash-can'
+import { RecordProvenanceIcon } from '../components/cloud-save/ProvenanceBadge'
 import {
   type ComboFlag,
   type PlayEntry,
@@ -442,7 +443,13 @@ const RatingCalculatorDxScoreCell: FC<{
 
 const RatingCalculatorAchievementRateCell: FC<{
   row: Row<Entry>
-}> = ({ row }) => <span className="num">{row.original.achievementRate.toFixed(4)}%</span>
+}> = ({ row }) => (
+  <>
+    <span className="num">{row.original.achievementRate.toFixed(4)}%</span>
+    {/* Cloud saves only: where the score came from */}
+    <RecordProvenanceIcon sheetId={row.original.sheetId} className="rating-provenance-icon ms-1" />
+  </>
+)
 
 const RATING_COLUMN_IDS = [
   'chart',

@@ -1,8 +1,11 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LocalScoreRepository } from '@/models/scores/LocalScoreRepository'
 import { ScoreRepositoryContext } from '@/models/scores/useScoreRepository'
+import { CloudImportConfirmDialog } from '@/components/cloud-save/CloudImportConfirmDialog'
+import { NothingToImportError } from '@/models/scores/cloudImports'
+import type { ScoreRepository } from '@/models/scores/ScoreRepository'
 import { ImportFromJSONButtonListItem } from '../ImportFromJSONButtonListItem'
 import { importReviewController } from '@/models/scores/importReview'
 import { ImportReviewHost } from '../ImportReviewDialog'
@@ -154,5 +157,66 @@ describe('ImportFromJSONButtonListItem', () => {
     await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1))
     expect(toastError.mock.calls[0]![0]).toMatch(/^Unable to import this file\. /)
     expect(repository.entries()).toEqual(SAVED)
+  })
+
+  describe('on a cloud save', () => {
+    function renderCloud(applyImport: ScoreRepository['applyImport']) {
+      cleanup()
+      const cloud = { kind: 'cloud', serverImportsEnabled: true, applyImport: vi.fn(applyImport) }
+      render(
+        <ScoreRepositoryContext.Provider value={cloud as never}>
+          <ImportFromJSONButtonListItem onClose={() => {}} />
+          <CloudImportConfirmDialog />
+        </ScoreRepositoryContext.Provider>,
+      )
+      return cloud
+    }
+
+    const entries = [
+      { sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100.5 },
+      { sheetId: 'dsht_5mk3yr8gme', achievementRate: 99 },
+      { sheetId: 'dsht_23456789ab', achievementRate: 101.5 },
+    ]
+
+    it('counts what the server took and says how many were left out', async () => {
+      renderCloud(async () => ({ count: 2, skipped: 1, rejected: 1 }))
+      await importFile(JSON.stringify(entries))
+      await act(async () => fireEvent.click(await screen.findByRole('button', { name: 'Import' })))
+
+      await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Imported 2 records'))
+      expect(toast).toHaveBeenCalledWith("1 record didn't match a chart and wasn't imported.")
+      expect(toast).toHaveBeenCalledWith(
+        "1 record has a value that can't be saved, such as a DX score out of range, and wasn't imported.",
+      )
+    })
+
+    it("shows an error and never clears the save when no record passes the server's schema", async () => {
+      const cloud = renderCloud(async () => ({ count: 1 }))
+      await importFile(JSON.stringify([{ sheetId: 'dsht_e5nsvt8k2a', achievementRate: 100.5, dxScore: 100001 }]))
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith(
+          "None of these records can be imported: they match no chart or have values out of range. Your cloud save wasn't changed.",
+        ),
+      )
+      expect(screen.queryByRole('dialog')).toBeNull()
+      expect(cloud.applyImport).not.toHaveBeenCalled()
+      expect(toastSuccess).not.toHaveBeenCalled()
+    })
+
+    it('says nothing was imported, and the save kept, when no record matches a chart', async () => {
+      renderCloud(async () => {
+        throw new NothingToImportError(3)
+      })
+      await importFile(JSON.stringify(entries))
+      await act(async () => fireEvent.click(await screen.findByRole('button', { name: 'Import' })))
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith(
+          "None of these records can be imported: they match no chart or have values out of range. Your cloud save wasn't changed.",
+        ),
+      )
+      expect(toastSuccess).not.toHaveBeenCalled()
+    })
   })
 })

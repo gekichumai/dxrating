@@ -4,9 +4,11 @@ import { authClient } from '@/lib/auth-client'
 import { identifyAnalyticsUser, registerAnalyticsContext, resetAnalyticsUser } from '@/lib/analytics'
 import type { DXVersion, Region } from '@/models/context/AppContext'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
-import { type FC, memo, useEffect } from 'react'
+import { type FC, memo, useEffect, useRef } from 'react'
 import { useEffectOnce } from 'react-use'
 import { useScoreRepository } from '../../models/scores/useScoreRepository'
+import { useActiveSave } from '../../models/scores/ActiveSaveContext'
+import { autoNetImportKey } from '../../models/scores/cloudImports'
 import { useVersionTheme } from '../../utils/useVersionTheme'
 import toast from 'react-hot-toast'
 import IconMdiCached from '~icons/mdi/cached'
@@ -39,17 +41,19 @@ const SideEffectorLocaleMeta: FC = () => {
   return null
 }
 
-const SideEffectorAutoImportRating: FC = () => {
+/** @internal Exported for tests */
+export const SideEffectorAutoImportRating: FC = () => {
   const repository = useScoreRepository()
-  useLocale()
+  const activeSave = useActiveSave()
+  const locale = useLocale()
   // An import resolves records against the catalog: run it once the complete catalog has loaded
   const catalog = useCompleteSongCatalog()
+  // Into the save the visitor works on: wait until the choice of save is made. Once per catalog, as before
+  const startedForRef = useRef<typeof catalog>(null)
 
   useEffect(() => {
-    if (!catalog) return
-    // A cloud save imports from maimai NET on the server (design §8.3), which is not wired yet: never write a
-    // browser-side NET fetch into it
-    if (repository.kind !== 'local') return
+    if (!catalog || !activeSave.decided || startedForRef.current === catalog) return
+    startedForRef.current = catalog
     const mode = (() => {
       try {
         const mode = localStorage.getItem('rating-auto-import-from-net')
@@ -90,8 +94,15 @@ const SideEffectorAutoImportRating: FC = () => {
       }
     }
 
-    importFromNETRecords(catalog, repository, mode)
-  }, [catalog])
+    // A cloud save imports on the server (design §8.3, §5.5): trigger `auto`, one key per save and 15 minutes, so
+    // tabs and reloads in the same window attach to one job. With server imports off the browser fetches and
+    // uploads the records as client_reported (§7.4, see `importFromNETRecords`)
+    const cloud =
+      repository.kind === 'cloud' && activeSave.saveId
+        ? { trigger: 'auto' as const, idempotencyKey: autoNetImportKey(activeSave.saveId) }
+        : undefined
+    importFromNETRecords(catalog, repository, mode, undefined, undefined, cloud)
+  }, [catalog, activeSave.decided, activeSave.saveId, repository, locale])
 
   return null
 }

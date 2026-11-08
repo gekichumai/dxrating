@@ -1323,5 +1323,214 @@
   "announcement_severity_critical": "重要",
   "announcement_learnMore": "了解更多",
   "announcement_dismiss": "关闭公告",
-  "ratingCalculator_cloudSave_saveMissing": "找不到你的云存档，本设备将使用本地存档。"
+  "ratingCalculator_cloudSave_saveMissing": "找不到你的云存档，本设备将使用本地存档。",
+  "ratingCalculator_cloudSave_title": "云存档",
+  "ratingCalculator_cloudSave_description": "你的成绩保存在 DXRating 上，并在所有设备间同步。",
+  "ratingCalculator_cloudSave_provenance_verified": "已验证",
+  "ratingCalculator_cloudSave_provenance_friendCode": "好友码 {id}",
+  "ratingCalculator_cloudSave_provenance_account": "账号 {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "{date} 抓取",
+  "ratingCalculator_cloudSave_provenance_edited": "已编辑（原为导入）",
+  "ratingCalculator_cloudSave_provenance_manual": "手动输入",
+  "ratingCalculator_cloudSave_provenance_notVerified": "未验证",
+  "ratingCalculator_cloudSave_provenance_fromFile": "来自文件（{source}）",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "来自文件（声称：{source}）",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "来自本设备",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "来自本设备（声称：{source}）",
+  "ratingCalculator_cloudSave_status_idle": "已同步",
+  "ratingCalculator_cloudSave_status_syncing": "正在同步…",
+  "ratingCalculator_cloudSave_status_offline": "离线",
+  "ratingCalculator_cloudSave_status_error": "暂时无法同步",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} 项更改等待同步",
+        "countPlural=*": "{count} 项更改等待同步"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} 个同步问题",
+        "countPlural=*": "{count} 个同步问题"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "同步问题",
+  "ratingCalculator_cloudSave_issues_empty": "没有同步问题。",
+  "ratingCalculator_cloudSave_issues_yourValue": "你的更改：{value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "删除",
+  "ratingCalculator_cloudSave_issues_method_typed": "手动输入",
+  "ratingCalculator_cloudSave_issues_method_keypad": "数字键盘",
+  "ratingCalculator_cloudSave_issues_method_photo": "照片",
+  "ratingCalculator_cloudSave_issues_superseded": "已保留较新的已验证成绩。",
+  "ratingCalculator_cloudSave_issues_rejected": "此更改未被接受，已保留原有成绩。",
+  "ratingCalculator_cloudSave_issues_useMine": "仍使用我的值",
+  "ratingCalculator_cloudSave_issues_dismiss": "忽略",
+  "ratingCalculator_cloudSave_saves_title": "存档",
+  "ratingCalculator_cloudSave_saves_description": "选择此浏览器显示和编辑的存档。",
+  "ratingCalculator_cloudSave_saves_loading": "正在加载存档…",
+  "ratingCalculator_cloudSave_saves_error": "无法加载存档。",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{formatted} 条记录",
+        "countPlural=*": "{formatted} 条记录"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "上次同步 {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "不限地区",
+  "ratingCalculator_cloudSave_history_title": "导入历史",
+  "ratingCalculator_cloudSave_history_loading": "正在加载导入历史…",
+  "ratingCalculator_cloudSave_history_error": "无法加载导入历史。",
+  "ratingCalculator_cloudSave_history_empty": "还没有导入记录。",
+  "ratingCalculator_cloudSave_history_running": "进行中…",
+  "ratingCalculator_cloudSave_history_trigger_user": "手动",
+  "ratingCalculator_cloudSave_history_trigger_auto": "自动",
+  "ratingCalculator_cloudSave_history_trigger_migration": "从此浏览器迁移",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "新增 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "提升 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "转为已验证 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "未变 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "保留你的编辑 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "已删除而跳过 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "被拒绝 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "没有变化",
+  "ratingCalculator_cloudSave_import_success": "已从 {source} 导入：{summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "导入未完成就中断了，请重试。",
+  "ratingCalculator_cloudSave_import_errors_generic": "无法完成此次导入，请重试。",
+  "ratingCalculator_cloudSave_saves_empty": "还没有云存档。",
+  "ratingCalculator_cloudSave_retry": "重试",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "要将 {count} 条成绩导入云存档吗？",
+        "countPlural=*": "要将 {count} 条成绩导入云存档吗？"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "每个谱面保留较好的成绩，已有成绩不会变差。如果想从头开始，请先清空存档。",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "取消",
+  "ratingCalculator_cloudSave_importConfirm_merge": "导入",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "先清空…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "清空存档后再导入？",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "此存档中的所有成绩将在你的所有设备上删除，然后再导入文件。自本设备上次同步后更新过的已验证成绩会被保留。",
+  "ratingCalculator_cloudSave_importConfirm_back": "返回",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "清空并导入",
+  "ratingCalculator_cloudSave_unreachable": "暂时连不上云存档。现在做的修改只会保存在此浏览器中。",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "有 {countNumber} 条记录没有对应的谱面，未导入。",
+        "countPlural=*": "有 {countNumber} 条记录没有对应的谱面，未导入。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "这些记录都无法导入：没有对应的谱面或含有超出范围的值。云存档未作改动。",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "有 {countNumber} 条记录含有无法保存的值（例如超出范围的 DX 分数），未导入。",
+        "countPlural=*": "有 {countNumber} 条记录含有无法保存的值（例如超出范围的 DX 分数），未导入。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "有 {countNumber} 条记录没有对应的谱面或含有超出范围的值，无法导入，将被略过。",
+        "countPlural=*": "有 {countNumber} 条记录没有对应的谱面或含有超出范围的值，无法导入，将被略过。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "云存档中正在进行来自该来源的另一次导入，请在其完成后重试。",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "该文件过大，无法一次导入。云存档未作改动。",
+  "ratingCalculator_cloudSave_history_failure_generic": "未完成",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "中途停止",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "未完成：maimai NET 正在维护",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "未完成：maimai NET 登录失败",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "未完成：没有可用的 Aime 卡",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "未知谱面 {countNumber}",
+        "countPlural=*": "未知谱面 {countNumber}"
+      }
+    }
+  ]
 }

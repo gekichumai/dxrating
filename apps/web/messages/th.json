@@ -1323,5 +1323,206 @@
   "announcement_severity_critical": "สำคัญ",
   "announcement_learnMore": "ดูเพิ่มเติม",
   "announcement_dismiss": "ปิดประกาศ",
-  "ratingCalculator_cloudSave_saveMissing": "ไม่พบเซฟบนคลาวด์ของคุณ อุปกรณ์นี้จึงใช้เซฟในเครื่องแทน"
+  "ratingCalculator_cloudSave_saveMissing": "ไม่พบเซฟบนคลาวด์ของคุณ อุปกรณ์นี้จึงใช้เซฟในเครื่องแทน",
+  "ratingCalculator_cloudSave_title": "เซฟบนคลาวด์",
+  "ratingCalculator_cloudSave_description": "สกอร์ของคุณถูกเก็บไว้บน DXRating และซิงค์ตรงกันทุกอุปกรณ์",
+  "ratingCalculator_cloudSave_provenance_verified": "ยืนยันแล้ว",
+  "ratingCalculator_cloudSave_provenance_friendCode": "รหัสเพื่อน {id}",
+  "ratingCalculator_cloudSave_provenance_account": "บัญชี {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "ดึงข้อมูลเมื่อ {date}",
+  "ratingCalculator_cloudSave_provenance_edited": "แก้ไขแล้ว (เดิมนำเข้ามา)",
+  "ratingCalculator_cloudSave_provenance_manual": "กรอกเอง",
+  "ratingCalculator_cloudSave_provenance_notVerified": "ยังไม่ได้ยืนยัน",
+  "ratingCalculator_cloudSave_provenance_fromFile": "จากไฟล์ ({source})",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "จากไฟล์ (ระบุว่า: {source})",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "จากอุปกรณ์นี้",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "จากอุปกรณ์นี้ (ระบุว่า: {source})",
+  "ratingCalculator_cloudSave_status_idle": "เป็นปัจจุบันแล้ว",
+  "ratingCalculator_cloudSave_status_syncing": "กำลังซิงค์…",
+  "ratingCalculator_cloudSave_status_offline": "ออฟไลน์",
+  "ratingCalculator_cloudSave_status_error": "ซิงค์ไม่ได้ในขณะนี้",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "มี {count} การเปลี่ยนแปลงรอซิงค์"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "มีปัญหาการซิงค์ {count} รายการ"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "ปัญหาการซิงค์",
+  "ratingCalculator_cloudSave_issues_empty": "ไม่มีปัญหาการซิงค์",
+  "ratingCalculator_cloudSave_issues_yourValue": "สิ่งที่คุณแก้: {value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "ลบออก",
+  "ratingCalculator_cloudSave_issues_method_typed": "พิมพ์",
+  "ratingCalculator_cloudSave_issues_method_keypad": "แป้นตัวเลข",
+  "ratingCalculator_cloudSave_issues_method_photo": "รูปถ่าย",
+  "ratingCalculator_cloudSave_issues_superseded": "เก็บสกอร์ที่ยืนยันแล้วซึ่งใหม่กว่าไว้",
+  "ratingCalculator_cloudSave_issues_rejected": "ไม่รับการเปลี่ยนแปลงนี้ จึงเก็บสกอร์ที่บันทึกไว้เดิม",
+  "ratingCalculator_cloudSave_issues_useMine": "ใช้ค่าของฉันต่อไป",
+  "ratingCalculator_cloudSave_issues_dismiss": "ปิด",
+  "ratingCalculator_cloudSave_saves_title": "เซฟ",
+  "ratingCalculator_cloudSave_saves_description": "เลือกเซฟที่เบราว์เซอร์นี้จะแสดงและแก้ไข",
+  "ratingCalculator_cloudSave_saves_loading": "กำลังโหลดเซฟ…",
+  "ratingCalculator_cloudSave_saves_error": "โหลดเซฟของคุณไม่ได้",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{formatted} เรคคอร์ด"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "ซิงค์ล่าสุด {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "ทุกภูมิภาค",
+  "ratingCalculator_cloudSave_history_title": "ประวัติการนำเข้า",
+  "ratingCalculator_cloudSave_history_loading": "กำลังโหลดการนำเข้า…",
+  "ratingCalculator_cloudSave_history_error": "โหลดประวัติการนำเข้าไม่ได้",
+  "ratingCalculator_cloudSave_history_empty": "ยังไม่มีการนำเข้า",
+  "ratingCalculator_cloudSave_history_running": "กำลังดำเนินการ…",
+  "ratingCalculator_cloudSave_history_trigger_user": "โดยคุณ",
+  "ratingCalculator_cloudSave_history_trigger_auto": "อัตโนมัติ",
+  "ratingCalculator_cloudSave_history_trigger_migration": "ย้ายมาจากเบราว์เซอร์นี้",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} รายการใหม่"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} รายการดีขึ้น"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} รายการยืนยันแล้ว"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} รายการไม่เปลี่ยน"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "คงการแก้ไขของคุณไว้ {countNumber} รายการ"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "ข้าม {countNumber} รายการ (ลบแล้ว)"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "ไม่รับ {countNumber} รายการ"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "ไม่มีการเปลี่ยนแปลง",
+  "ratingCalculator_cloudSave_import_success": "นำเข้าจาก {source} แล้ว: {summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "การนำเข้านี้หยุดก่อนเสร็จ ลองอีกครั้ง",
+  "ratingCalculator_cloudSave_import_errors_generic": "นำเข้าไม่สำเร็จ ลองอีกครั้ง",
+  "ratingCalculator_cloudSave_saves_empty": "ยังไม่มีเซฟบนคลาวด์",
+  "ratingCalculator_cloudSave_retry": "ลองอีกครั้ง",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "นำเข้า {count} สกอร์ไปยังเซฟบนคลาวด์ของคุณไหม?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "แต่ละชาร์ตจะเก็บสกอร์ที่ดีกว่าไว้ สกอร์ที่คุณมีอยู่จึงไม่แย่ลง หากต้องการเริ่มใหม่ ให้ล้างเซฟก่อน",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "ยกเลิก",
+  "ratingCalculator_cloudSave_importConfirm_merge": "นำเข้า",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "ล้างเซฟก่อน…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "ล้างเซฟแล้วนำเข้าไหม?",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "สกอร์ทั้งหมดในเซฟนี้จะถูกลบจากทุกอุปกรณ์ของคุณ แล้วจึงนำเข้าไฟล์ สกอร์ที่ยืนยันแล้วซึ่งเปลี่ยนไปหลังการซิงค์ครั้งล่าสุดของอุปกรณ์นี้จะถูกเก็บไว้",
+  "ratingCalculator_cloudSave_importConfirm_back": "กลับ",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "ล้างและนำเข้า",
+  "ratingCalculator_cloudSave_unreachable": "ยังเชื่อมต่อเซฟบนคลาวด์ของคุณไม่ได้ การเปลี่ยนแปลงที่ทำตอนนี้จะอยู่ในเบราว์เซอร์นี้",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} เรคคอร์ดไม่ตรงกับชาร์ตใด จึงไม่ถูกนำเข้า"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "ไม่มีเรคคอร์ดใดนำเข้าได้ เพราะไม่ตรงกับชาร์ตใดหรือค่าอยู่นอกช่วง เซฟบนคลาวด์ของคุณไม่เปลี่ยนแปลง",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} เรคคอร์ดมีค่าที่บันทึกไม่ได้ เช่น DX score อยู่นอกช่วง จึงไม่ถูกนำเข้า"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "{countNumber} เรคคอร์ดนำเข้าไม่ได้ เพราะไม่ตรงกับชาร์ตใดหรือค่าอยู่นอกช่วง จะถูกข้ามไป"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "กำลังนำเข้าจากแหล่งนี้ไปยังเซฟบนคลาวด์ของคุณอยู่ ลองอีกครั้งเมื่อเสร็จ",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "ไฟล์นี้ใหญ่เกินกว่าจะอัปโหลดในการนำเข้าครั้งเดียว เซฟบนคลาวด์ของคุณไม่เปลี่ยนแปลง",
+  "ratingCalculator_cloudSave_history_failure_generic": "ไม่สำเร็จ",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "หยุดก่อนเสร็จ",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "ไม่สำเร็จ: maimai NET อยู่ระหว่างปิดปรับปรุง",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "ไม่สำเร็จ: เข้าสู่ระบบ maimai NET ไม่ได้",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "ไม่สำเร็จ: ไม่มีบัตร Aime ที่ใช้งานได้",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=*": "ชาร์ตที่ไม่รู้จัก {countNumber} ชาร์ต"
+      }
+    }
+  ]
 }
