@@ -1696,5 +1696,6 @@
   "ratingCalculator_cloudSave_export_rateLimited": "Hôm nay bạn đã tải dữ liệu nhiều lần. Hãy thử lại vào ngày mai.",
   "ratingCalculator_cloudSave_exportImport_pickTitle": "Chọn bản lưu để nhập",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "Tệp này có nhiều hơn một bản lưu.",
-  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Được nhập là “chưa xác minh”: nguồn gốc của các bản ghi được hiển thị theo khai báo của tệp."
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Được nhập là “chưa xác minh”: nguồn gốc của các bản ghi được hiển thị theo khai báo của tệp.",
+  "share_image_footerCaption": "Quét để mở trên DXRating"
 }

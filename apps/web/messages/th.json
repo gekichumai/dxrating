@@ -1696,5 +1696,6 @@
   "ratingCalculator_cloudSave_export_rateLimited": "วันนี้คุณดาวน์โหลดข้อมูลหลายครั้งแล้ว ลองอีกครั้งพรุ่งนี้",
   "ratingCalculator_cloudSave_exportImport_pickTitle": "เลือกเซฟที่จะนำเข้า",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "ไฟล์นี้มีมากกว่าหนึ่งเซฟ",
-  "ratingCalculator_cloudSave_exportImport_claimedOnly": "นำเข้าเป็น “ยังไม่ได้ยืนยัน”: ที่มาของเรคคอร์ดแสดงตามที่ไฟล์ระบุ"
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "นำเข้าเป็น “ยังไม่ได้ยืนยัน”: ที่มาของเรคคอร์ดแสดงตามที่ไฟล์ระบุ",
+  "share_image_footerCaption": "สแกนเพื่อเปิดใน DXRating"
 }

@@ -1714,5 +1714,6 @@
   "ratingCalculator_cloudSave_export_rateLimited": "今日は何度もダウンロードしています。明日もう一度お試しください。",
   "ratingCalculator_cloudSave_exportImport_pickTitle": "インポートするセーブを選択",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "このファイルには複数のセーブがあります。",
-  "ratingCalculator_cloudSave_exportImport_claimedOnly": "「未検証」としてインポートしました。記録の出どころはファイルの申告として表示されます。"
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "「未検証」としてインポートしました。記録の出どころはファイルの申告として表示されます。",
+  "share_image_footerCaption": "スキャンして DXRating で開く"
 }

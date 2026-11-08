@@ -1696,5 +1696,6 @@
   "ratingCalculator_cloudSave_export_rateLimited": "Kamu sudah mengunduh datamu beberapa kali hari ini. Coba lagi besok.",
   "ratingCalculator_cloudSave_exportImport_pickTitle": "Pilih save untuk diimpor",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "File ini berisi lebih dari satu save.",
-  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Diimpor sebagai “belum terverifikasi”: asal catatan ditampilkan sesuai klaim di file."
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Diimpor sebagai “belum terverifikasi”: asal catatan ditampilkan sesuai klaim di file.",
+  "share_image_footerCaption": "Pindai untuk membuka di DXRating"
 }

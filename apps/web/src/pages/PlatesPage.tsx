@@ -22,6 +22,7 @@ import {
   plateExistsInRegion,
   plateRegionToFollow,
   platePath,
+  plateRegionSearch,
   plateScript,
   progressPercent,
 } from '@/components/plates/plateData'
@@ -33,6 +34,7 @@ import { useAppContext } from '@/models/context/useAppContext'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
 import { coverImageUrl } from '@/utils/shareImage/shareImage'
+import { shareLink } from '@/utils/shareImage/shareFooter'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
@@ -429,7 +431,9 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
                         unplayed: m.plates_share_unplayed({}, { locale }),
                         more: (count) => m.plates_share_more({ count }, { locale }),
                         allDone: m.plates_share_allDone({}, { locale }),
+                        footerCaption: m.share_image_footerCaption({}, { locale }),
                       },
+                      link: shareLink(platePath(data.plateId), plateRegionSearch(data.region)),
                     })
                   }
                   onExported={(outcome) =>

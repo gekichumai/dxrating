@@ -8,6 +8,7 @@ import {
   roundedRectPath,
   type ShareImageSpec,
 } from '@/utils/shareImage/shareImage'
+import { drawShareFooter, loadShareLogo, SHARE_FOOTER_HEIGHT, type ShareLink } from '@/utils/shareImage/shareFooter'
 import {
   paintShareBackground,
   paintSharePanel,
@@ -137,6 +138,8 @@ export interface PlateShareImageLabels {
   /** e.g. "ほか 120 曲" */
   more: (count: number) => string
   allDone: string
+  /** The line under the footer URL, e.g. "Scan to open on DXRating" */
+  footerCaption: string
 }
 
 export interface PlateShareImageInput {
@@ -145,6 +148,8 @@ export interface PlateShareImageInput {
   progress: PlateUserProgress
   records: ReadonlyMap<string, PlateRecord>
   labels: PlateShareImageLabels
+  /** Where a scan of the footer QR goes, and the short URL printed beside it */
+  link: ShareLink
 }
 
 const truncate = (context: CanvasRenderingContext2D, text: string, maxWidth: number) => {
@@ -165,6 +170,7 @@ export function buildPlateShareImage({
   progress,
   records,
   labels,
+  link,
 }: PlateShareImageInput): ShareImageSpec {
   const entries = rankRemainingSongs(progress, kind, records)
   const shown = entries.slice(0, PLATE_SHARE_MAX_SONGS)
@@ -174,13 +180,14 @@ export function buildPlateShareImage({
   const sectionTop = 262
   const listTop = sectionTop + 112
   const rows = Math.ceil(shown.length / COLUMNS)
-  const height =
-    entries.length === 0 ? sectionTop + 120 : listTop + rows * ROW_HEIGHT + (hidden > 0 ? 44 : 0) + PADDING + 40
+  const contentBottom = entries.length === 0 ? sectionTop + 56 : listTop + rows * ROW_HEIGHT + (hidden > 0 ? 44 : 0)
+  const height = contentBottom + SHARE_FOOTER_HEIGHT + PADDING
 
   return {
     width: WIDTH,
     height,
     draw: async (context) => {
+      const logoPromise = loadShareLogo()
       const accent = readAccent()
       paintShareBackground(context, WIDTH, height, accent)
       paintSharePanel(context, WIDTH, height)
@@ -307,10 +314,11 @@ export function buildPlateShareImage({
         context.fillStyle = 'rgba(255, 255, 255, 0.72)'
         context.fillText(labels.more(hidden), PADDING, listTop + rows * ROW_HEIGHT + 8)
       }
-      context.fillStyle = 'rgba(255, 255, 255, 0.5)'
-      context.textAlign = 'right'
-      context.fillText('dxrating.net', WIDTH - PADDING, height - PADDING - 30)
-      context.textAlign = 'left'
+      drawShareFooter(
+        context,
+        { top: contentBottom, width: WIDTH, inset: PADDING },
+        { link, caption: labels.footerCaption, logo: await logoPromise, font: FONT },
+      )
     },
   }
 }

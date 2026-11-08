@@ -24,6 +24,7 @@ import {
   toToplistRow,
 } from '@/components/toplists/toplistData'
 import { drawToplistShareImage } from '@/components/toplists/toplistShareImage'
+import { shareLink } from '@/utils/shareImage/shareFooter'
 import { captureAnalyticsEvent, type ToplistKind } from '@/lib/analytics'
 import { DxScoreProgressText } from '@/components/scores/DxScoreProgressText'
 import { useUserRecords } from '@/models/useUserRecords'
@@ -194,6 +195,9 @@ export const ToplistsPage: FC = () => {
               drawToplistShareImage(rows, {
                 title: tabLabel,
                 subtitle: [level, SORT_LABELS[sort]({}, { locale })].filter(Boolean).join(' · '),
+                // The page shows the scanner's own records, in the same list
+                link: shareLink('/me/records', { tab: search.tab, sort: search.sort, level }),
+                footerCaption: m.share_image_footerCaption({}, { locale }),
               })
             }
             onExported={(outcome) => captureAnalyticsEvent('toplist_share_exported', { kind, outcome })}

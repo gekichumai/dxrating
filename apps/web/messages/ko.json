@@ -1714,5 +1714,6 @@
   "ratingCalculator_cloudSave_export_rateLimited": "오늘 여러 번 내려받았습니다. 내일 다시 시도하세요.",
   "ratingCalculator_cloudSave_exportImport_pickTitle": "가져올 저장 선택",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "이 파일에는 저장이 여러 개 있습니다.",
-  "ratingCalculator_cloudSave_exportImport_claimedOnly": "“검증되지 않음”으로 가져왔습니다. 기록의 출처는 파일이 주장하는 대로 표시됩니다."
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "“검증되지 않음”으로 가져왔습니다. 기록의 출처는 파일이 주장하는 대로 표시됩니다.",
+  "share_image_footerCaption": "스캔하여 DXRating에서 열기"
 }

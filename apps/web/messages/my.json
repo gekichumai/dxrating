@@ -1696,5 +1696,6 @@
   "ratingCalculator_cloudSave_export_rateLimited": "ယနေ့ သင့်ဒေတာကို အကြိမ်များစွာ ဒေါင်းလုဒ်လုပ်ပြီးပါပြီ။ မနက်ဖြန် ထပ်စမ်းကြည့်ပါ။",
   "ratingCalculator_cloudSave_exportImport_pickTitle": "တင်သွင်းရန် save ရွေးပါ",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "ဤဖိုင်တွင် save တစ်ခုထက်ပို၍ ပါသည်။",
-  "ratingCalculator_cloudSave_exportImport_claimedOnly": "“အတည်မပြုရသေး” အဖြစ် တင်သွင်းထားသည်: မှတ်တမ်းများ၏ ရင်းမြစ်ကို ဖိုင်က ဆိုထားသည့်အတိုင်း ပြထားသည်။"
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "“အတည်မပြုရသေး” အဖြစ် တင်သွင်းထားသည်: မှတ်တမ်းများ၏ ရင်းမြစ်ကို ဖိုင်က ဆိုထားသည့်အတိုင်း ပြထားသည်။",
+  "share_image_footerCaption": "DXRating တွင် ဖွင့်ရန် စကင်ဖတ်ပါ"
 }
