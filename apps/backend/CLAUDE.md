@@ -191,7 +191,7 @@ node dist/flag-set.js cloud_save owner@example.com off   # in the production ima
 
 ### Backup gate and rollback
 
-The cloud save migrations (`*_feature_flags`, `*_cloud_save`) only add tables
+The cloud save migrations (`*_feature_flags`, `*_cloud_save`) and `*_tag_song_votes` only add tables
 and indexes, and each folder carries a hand-written `down.sql` that the
 Drizzle migrator never reads. CI runs up -> every `down.sql` newest first ->
 up (`pnpm test:migration-roundtrip`).
