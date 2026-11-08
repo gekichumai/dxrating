@@ -7,7 +7,7 @@ import {
   normalizeLxnsScores,
   normalizeMaimaiNetRecords,
   normalizeMuNetRows,
-  difficultyFromGameLevel,
+  difficultyFromLevelIndex,
   ratingEntryAchievementInt,
   withAchievementInt,
 } from '../import-normalizers'
@@ -568,24 +568,23 @@ describe('Rating Import normalizers', () => {
     expect(invalidDxScore.entries[0]).not.toHaveProperty('dxScore')
   })
 })
-// Game enums, as documented in gekichumai/meta#54 and gekichumai/meta#55 (maimai DX 1.70)
-const GAME_LEVELS: [number, DifficultyEnum][] = [
+// Level indexes and lamp statuses, see gekichumai/meta#54 and gekichumai/meta#55
+const LEVEL_INDEXES: [number, DifficultyEnum][] = [
   [0, DifficultyEnum.Basic],
   [1, DifficultyEnum.Advanced],
   [2, DifficultyEnum.Expert],
   [3, DifficultyEnum.Master],
   [4, DifficultyEnum.ReMaster],
 ]
-// `PlayComboflagID`
-const GAME_COMBO_STATUSES: [number, string | null][] = [
+const COMBO_STATUSES: [number, string | null][] = [
   [0, null],
   [1, 'fc'],
   [2, 'fcp'],
   [3, 'ap'],
   [4, 'app'],
 ]
-// `PlaySyncflagID`: SYNC PLAY is 5, not 1
-const GAME_SYNC_STATUSES: [number, string | null][] = [
+// SYNC PLAY is 5, not 1
+const SYNC_STATUSES: [number, string | null][] = [
   [0, null],
   [1, 'fs'],
   [2, 'fsp'],
@@ -600,7 +599,7 @@ const allDifficultiesCatalog = buildSongCatalog(
     songs: [
       {
         ...data.songs[0]!,
-        sheets: GAME_LEVELS.map(([level, difficulty]) => ({
+        sheets: LEVEL_INDEXES.map(([level, difficulty]) => ({
           ...data.songs[0]!.sheets[0]!,
           id: `dsht_level${level}xxxx`,
           difficulty,
@@ -612,16 +611,16 @@ const allDifficultiesCatalog = buildSongCatalog(
 )
 const musicIdMap = { '10001': { name: 'Song A' } }
 
-describe('game enum mappings (gekichumai/meta#54, gekichumai/meta#55)', () => {
-  it.each(GAME_LEVELS)('maps MusicDifficultyID %i to %s', (level, difficulty) => {
-    expect(difficultyFromGameLevel(level)).toBe(difficulty)
+describe('Aqua level and lamp mappings (gekichumai/meta#54, gekichumai/meta#55)', () => {
+  it.each(LEVEL_INDEXES)('maps level index %i to %s', (level, difficulty) => {
+    expect(difficultyFromLevelIndex(level)).toBe(difficulty)
   })
 
   it.each([-1, 5, 6, 1.5, Number.NaN])('maps no difficulty to level %s (5 and up is UTAGE)', (level) => {
-    expect(difficultyFromGameLevel(level)).toBeUndefined()
+    expect(difficultyFromLevelIndex(level)).toBeUndefined()
   })
 
-  it.each(GAME_LEVELS)('imports AquaDX level %i onto the %s chart', (level, difficulty) => {
+  it.each(LEVEL_INDEXES)('imports AquaDX level %i onto the %s chart', (level, difficulty) => {
     const result = normalizeAquaDxRows(
       allDifficultiesCatalog,
       [{ musicId: 10001, level, achievement: 1005000 }],
@@ -637,12 +636,12 @@ describe('game enum mappings (gekichumai/meta#54, gekichumai/meta#55)', () => {
   it('imports every AquaDX difficulty of one song as its own entry', () => {
     const result = normalizeAquaDxRows(
       allDifficultiesCatalog,
-      GAME_LEVELS.map(([level]) => ({ musicId: 10001, level, achievement: 1000000 + level })),
+      LEVEL_INDEXES.map(([level]) => ({ musicId: 10001, level, achievement: 1000000 + level })),
       musicIdMap,
     )
 
     expect(result.entries.map((entry) => entry.identity.difficulty).sort()).toEqual(
-      GAME_LEVELS.map(([, difficulty]) => difficulty).sort(),
+      LEVEL_INDEXES.map(([, difficulty]) => difficulty).sort(),
     )
   })
 
@@ -657,7 +656,7 @@ describe('game enum mappings (gekichumai/meta#54, gekichumai/meta#55)', () => {
     expect(result.warnings.map((warning) => warning.code)).toEqual(['invalid-difficulty'])
   })
 
-  it.each(GAME_LEVELS)('imports MuNET level %i onto the %s chart', (level, difficulty) => {
+  it.each(LEVEL_INDEXES)('imports MuNET level %i onto the %s chart', (level, difficulty) => {
     const result = normalizeMuNetRows(
       allDifficultiesCatalog,
       [{ musicId: 10001, level, achievement: 1005000 }],
@@ -667,7 +666,7 @@ describe('game enum mappings (gekichumai/meta#54, gekichumai/meta#55)', () => {
     expect(result.entries[0]?.identity.difficulty).toBe(difficulty)
   })
 
-  it.each(GAME_COMBO_STATUSES)('maps AquaDX comboStatus %i to %s', (comboStatus, flag) => {
+  it.each(COMBO_STATUSES)('maps AquaDX comboStatus %i to %s', (comboStatus, flag) => {
     const result = normalizeAquaDxRows(
       allDifficultiesCatalog,
       [{ musicId: 10001, level: 3, achievement: 1005000, comboStatus }],
@@ -677,7 +676,7 @@ describe('game enum mappings (gekichumai/meta#54, gekichumai/meta#55)', () => {
     expect(result.entries[0]!.comboFlag).toBe(flag)
   })
 
-  it.each(GAME_SYNC_STATUSES)('maps AquaDX syncStatus %i to %s', (syncStatus, flag) => {
+  it.each(SYNC_STATUSES)('maps AquaDX syncStatus %i to %s', (syncStatus, flag) => {
     const result = normalizeAquaDxRows(
       allDifficultiesCatalog,
       [{ musicId: 10001, level: 3, achievement: 1005000, syncStatus }],
@@ -714,11 +713,11 @@ describe('game enum mappings (gekichumai/meta#54, gekichumai/meta#55)', () => {
       ],
     }).entries[0]!
 
-  it.each(GAME_COMBO_STATUSES)('maps Aqua SQLite combo_status %i to %s', (combo_status, flag) => {
+  it.each(COMBO_STATUSES)('maps Aqua SQLite combo_status %i to %s', (combo_status, flag) => {
     expect(aquaSqliteRow({ combo_status }).comboFlag).toBe(flag)
   })
 
-  it.each(GAME_SYNC_STATUSES)('maps Aqua SQLite sync_status %i to %s', (sync_status, flag) => {
+  it.each(SYNC_STATUSES)('maps Aqua SQLite sync_status %i to %s', (sync_status, flag) => {
     expect(aquaSqliteRow({ sync_status }).syncFlag).toBe(flag)
   })
 
