@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import useSWR, { useSWRConfig } from 'swr'
+import useSWR from 'swr'
 import type { z } from 'zod'
 import { authClient } from '../../../lib/auth-client'
 import { TAG_SONG_HIDDEN_SCORE_THRESHOLD, type SheetTagSongSchema } from '../../../lib/contract'
@@ -23,7 +23,6 @@ export const userTagVotesKey = (userId: string | undefined, tagSongIds: readonly
  */
 export const useSheetTagsDetailed = (sheet: FlattenedSheet) => {
   const { data: combinedTags } = useCombinedTags()
-  const { mutate: globalMutate } = useSWRConfig()
 
   const { data, isLoading, error, mutate } = useSWR(sheetTagsDetailedKey(sheet), async () =>
     client.tags.sheetTags({
@@ -50,11 +49,11 @@ export const useSheetTagsDetailed = (sheet: FlattenedSheet) => {
     })
     .sort((a, b) => groupOrder.indexOf(a.tag.group_id ?? -1) - groupOrder.indexOf(b.tag.group_id ?? -1))
 
-  // Attaching, detaching and voting all move scores, which the global list uses
-  // as its quality gate, so both caches are refreshed together.
+  // Only the per-sheet list is refetched: the global list is served from the edge cache, so refetching it right after
+  // a write would bring back the copy from before the write (and drop an attachment added locally).
   const refresh = useCallback(async () => {
-    await Promise.all([mutate(), globalMutate('tags.list')])
-  }, [mutate, globalMutate])
+    await mutate()
+  }, [mutate])
 
   return {
     data: entries,

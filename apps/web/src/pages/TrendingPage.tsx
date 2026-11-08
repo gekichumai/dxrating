@@ -2,12 +2,13 @@ import { useCatalogDocument } from '@/catalog/CatalogContext'
 import { Alert, Button, CircularProgress, Skeleton } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, type FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import { buildTrendingChartLinks } from '@/components/chartDiscovery/trendingCharts'
 import { SheetListItem } from '@/components/sheet/SheetListItem'
+import { SHEET_ROW_INSET, SHEET_ROW_INSET_IMPORTANT } from '@/components/sheet/sheetRowLayout'
 import { orpc, type RouterOutputs } from '@/lib/orpc'
-import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
 import { formatSheetReleaseDateParts, sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 type TrendingData = RouterOutputs['analytics']['trending']
 
@@ -32,11 +33,14 @@ export const buildTrendingQueryOptions = (initialTrendingData?: TrendingData, is
 const formatTrendingDate = (date: string, locale: string) =>
   formatSheetReleaseDateParts(date, locale, sheetReleaseDateTimestamp(date)).absoluteDate
 
+// From lg the list fills two columns in rank order (#1 and #2 share the first line)
+const TRENDING_LIST_GRID = 'lg:grid lg:grid-cols-2 lg:gap-x-2'
+
 const TrendingChartsSkeleton: FC<{ label: string }> = ({ label }) => (
-  <div aria-busy="true" aria-label={label} className="glass w-full p-1" role="status">
-    {Array.from({ length: 6 }, (_, index) => (
-      <div className="w-full px-2 md:px-3 py-1" key={index}>
-        <div className="flex items-center w-full p-1 gap-2 tabular-nums relative">
+  <div aria-busy="true" aria-label={label} className={`glass w-full p-1 ${TRENDING_LIST_GRID}`} role="status">
+    {Array.from({ length: 8 }, (_, index) => (
+      <div className={`w-full ${SHEET_ROW_INSET} py-1`} key={index}>
+        <div className="flex items-center w-full p-1 gap-2 num relative">
           <Skeleton variant="rounded" className="!h-12 !w-12 !min-w-[3rem] !rounded" />
           <div className="ml-2 flex-1 min-w-0">
             <div className="flex flex-col gap-2">
@@ -60,8 +64,7 @@ const TrendingChartsSkeleton: FC<{ label: string }> = ({ label }) => (
 )
 
 export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => {
-  const { t, i18n } = useTranslation(['sheet'])
-  const locale = toSupportedLocale(i18n.resolvedLanguage ?? i18n.language) ?? DEFAULT_LOCALE
+  const locale = useLocale()
   const isServerRender = import.meta.env.SSR
   const trendingQuery = useQuery(buildTrendingQueryOptions(initialTrendingData, isServerRender))
   const trendingData = isServerRender ? initialTrendingData : trendingQuery.data
@@ -76,25 +79,28 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
 
   return (
     <div
-      className="flex-container w-full max-w-5xl px-4 pb-global"
+      className="flex-container w-full max-w-5xl lg:max-w-7xl px-4 pb-global"
       itemScope
       itemType="https://schema.org/CollectionPage"
     >
       <div className="w-full flex flex-col gap-4">
         <header className="w-full flex flex-col gap-2">
           <h1 className="page-title m-0" itemProp="name">
-            {t('sheet:chart-discovery.trending.title')}
+            {m.sheet_chartDiscovery_trending_title({}, { locale })}
           </h1>
           {/* The count only means something once the list has loaded */}
           {!isLoading && !trendingQuery.isError && charts.length > 0 && (
             <p className="page-description m-0" itemProp="description">
               {hasDateRange
-                ? t('sheet:chart-discovery.trending.description-with-dates', {
-                    count: charts.length,
-                    dateFrom: formatTrendingDate(trendingData!.dateFrom!, locale),
-                    dateTo: formatTrendingDate(trendingData!.dateTo!, locale),
-                  })
-                : t('sheet:chart-discovery.trending.description', { count: charts.length })}
+                ? m.sheet_chartDiscovery_trending_descriptionWithDates(
+                    {
+                      count: charts.length,
+                      dateFrom: formatTrendingDate(trendingData!.dateFrom!, locale),
+                      dateTo: formatTrendingDate(trendingData!.dateTo!, locale),
+                    },
+                    { locale },
+                  )
+                : m.sheet_chartDiscovery_trending_description({ count: charts.length }, { locale })}
             </p>
           )}
         </header>
@@ -114,20 +120,20 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
                 {trendingQuery.isRefetching ? (
                   <CircularProgress color="inherit" size="1rem" />
                 ) : (
-                  t('sheet:chart-discovery.retry')
+                  m.sheet_chartDiscovery_retry({}, { locale })
                 )}
               </Button>
             }
           >
-            {t('sheet:chart-discovery.trending.error')}
+            {m.sheet_chartDiscovery_trending_error({}, { locale })}
           </Alert>
         )}
 
         {isLoading ? (
-          <TrendingChartsSkeleton label={t('sheet:chart-discovery.trending.loading')} />
+          <TrendingChartsSkeleton label={m.sheet_chartDiscovery_trending_loading({}, { locale })} />
         ) : trendingQuery.isError ? null : charts.length > 0 ? (
           <ol
-            className="glass w-full list-none p-1 m-0"
+            className={`glass w-full list-none p-1 m-0 ${TRENDING_LIST_GRID}`}
             itemProp="mainEntity"
             itemScope
             itemType="https://schema.org/ItemList"
@@ -167,14 +173,27 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
                       <meta itemProp="value" content={chart.level} />
                     </span>
                     {chart.releaseDate && <meta itemProp="datePublished" content={chart.releaseDate} />}
-                    <SheetListItem sheet={chart} analytics={{ source: 'trending', position: index + 1 }} />
+                    <SheetListItem
+                      sheet={chart}
+                      analytics={{ source: 'trending', position: index + 1 }}
+                      insetClassName={SHEET_ROW_INSET_IMPORTANT}
+                      // Two columns hide the ranking's order, so from lg each row shows its rank (the list is an ol)
+                      startAdornment={
+                        <span
+                          aria-hidden="true"
+                          className="hidden lg:block w-5 mr-1 shrink-0 text-right text-sm font-semibold num text-fg-2"
+                        >
+                          {index + 1}
+                        </span>
+                      }
+                    />
                   </div>
                 </li>
               )
             })}
           </ol>
         ) : (
-          <Alert severity="info">{t('sheet:chart-discovery.trending.empty')}</Alert>
+          <Alert severity="info">{m.sheet_chartDiscovery_trending_empty({}, { locale })}</Alert>
         )}
       </div>
     </div>

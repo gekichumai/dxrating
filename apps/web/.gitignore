@@ -36,3 +36,4 @@ android/
 
 # Auto-generated route tree
 src/routeTree.gen.ts
+search-eval.txt

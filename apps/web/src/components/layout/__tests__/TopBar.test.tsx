@@ -1,8 +1,8 @@
 import { AppContextProvider } from '@/models/context/AppContext'
-import { initI18n } from '@/setup/init-i18n'
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { TopBar } from '../TopBar'
+import { type CloudSaveUi, CloudSaveUiContext } from '@/models/scores/CloudSaveUiContext'
 
 vi.mock('~icons/mdi/github', () => ({
   default: ({ className }: { className?: string }) => <svg className={className} />,
@@ -57,11 +57,24 @@ vi.mock('../../../utils/bundle', () => ({
   },
 }))
 
-describe('TopBar', () => {
-  beforeAll(() => {
-    initI18n()
-  })
+function cloudUi(status: CloudSaveUi['controller']['status']): CloudSaveUi {
+  return {
+    controller: {
+      kind: 'cloud',
+      saveId: 'dsav_main',
+      status,
+      subscribe: () => () => {},
+      get: () => undefined,
+      reapplyIssue: () => {},
+      dismissIssue: () => {},
+      listImportJobs: async () => [],
+    },
+    listSaves: async () => [],
+    setActiveSaveId: () => {},
+  }
+}
 
+describe('TopBar', () => {
   it('names icon-only community links for assistive technology', () => {
     render(
       <AppContextProvider>
@@ -135,5 +148,69 @@ describe('TopBar', () => {
     )
 
     expect(screen.getByText(/v1\.6\.138/).className).toContain('text-fg-1')
+  })
+
+  it('shows no sync status on the local save', () => {
+    render(
+      <AppContextProvider>
+        <TopBar />
+      </AppContextProvider>,
+    )
+    expect(screen.queryByRole('button', { name: /^Cloud save/ })).toBeNull()
+  })
+
+  it('puts the sync pill in the header action pill, before the account button, and keeps every other control', () => {
+    render(
+      <AppContextProvider>
+        <CloudSaveUiContext.Provider
+          value={cloudUi({ state: 'error', pendingCount: 3, lastSyncedRevision: 3, issues: [] })}
+        >
+          <TopBar />
+        </CloudSaveUiContext.Provider>
+      </AppContextProvider>,
+    )
+    const sync = screen.getByRole('button', { name: /^Cloud save/ })
+    const account = screen.getByRole('button', { name: 'User profile' })
+    // Same glass pill, and the sync state sits right before the account it belongs to
+    expect(sync.closest('.glass-thin')).toBe(account.closest('.glass-thin'))
+    // Tinted like every other header action
+    expect(sync.className).toContain('header-tint')
+    expect(sync.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(sync.className).toContain('size-9')
+    for (const name of ['Community', 'About DXRating']) expect(screen.getByRole('button', { name })).toBeTruthy()
+    // Below 375px the sync pill takes the community menu's place, so the pill keeps the local-save width
+    const community = screen.getByRole('button', { name: 'Community' }).closest('[data-sync-pill]')
+    expect(community?.className).toContain('hidden')
+    expect(community?.className).toContain('2xs:flex')
+    // From 375px up it stays one glyph: the brand discs and chevron never widen it while the sync pill is there
+    const communityButton = screen.getByRole('button', { name: 'Community' })
+    expect(communityButton.className).not.toContain('2xs:w-auto')
+    expect(communityButton.querySelector('[class*="2xs:flex"]')).toBeNull()
+  })
+
+  it('shows the sync status while a cloud save is active', () => {
+    const status = { state: 'offline', pendingCount: 2, lastSyncedRevision: 3, issues: [] } as const
+    const ui = {
+      controller: {
+        kind: 'cloud',
+        saveId: 'dsav_main',
+        status,
+        subscribe: () => () => {},
+        get: () => undefined,
+        reapplyIssue: () => {},
+        dismissIssue: () => {},
+        listImportJobs: async () => [],
+      },
+      listSaves: async () => [],
+      setActiveSaveId: () => {},
+    } satisfies CloudSaveUi
+    render(
+      <AppContextProvider>
+        <CloudSaveUiContext.Provider value={ui}>
+          <TopBar />
+        </CloudSaveUiContext.Provider>
+      </AppContextProvider>,
+    )
+    expect(screen.getByRole('button', { name: 'Cloud save, Offline, 2 changes waiting to sync' })).toBeTruthy()
   })
 })

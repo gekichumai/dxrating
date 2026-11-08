@@ -1,13 +1,8 @@
 import { render, screen } from '@testing-library/react'
-import { beforeAll, describe, expect, it } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { describe, expect, it } from 'vitest'
 import { NotFoundContent } from '../NotFoundContent'
 
 describe('NotFoundContent', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('shows polished not-found copy and a home link', () => {
     render(<NotFoundContent />)
 

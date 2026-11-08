@@ -24,3 +24,19 @@ export const useCombinedTags = () => {
     },
   )
 }
+
+/**
+ * The list with an association the viewer just attached. The shared list comes through the edge cache, which can
+ * take a few minutes to include a new attachment, so the viewer's own write is added locally instead of refetched.
+ */
+export const withAttachedTag = (current: CombinedTags | undefined, tagSong: TagSong): CombinedTags | undefined => {
+  if (!current) return current
+  const exists = current.tagSongs.some(
+    (existing) =>
+      existing.tag_id === tagSong.tag_id &&
+      existing.song_id === tagSong.song_id &&
+      existing.sheet_type === tagSong.sheet_type &&
+      existing.sheet_difficulty === tagSong.sheet_difficulty,
+  )
+  return exists ? current : { ...current, tagSongs: [...current.tagSongs, tagSong] }
+}

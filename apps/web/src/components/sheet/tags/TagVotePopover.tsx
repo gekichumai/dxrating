@@ -2,7 +2,6 @@ import { ButtonBase, Popover } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import IconMdiThumbDown from '~icons/mdi/thumb-down'
 import IconMdiThumbDownOutline from '~icons/mdi/thumb-down-outline'
 import IconMdiThumbUp from '~icons/mdi/thumb-up'
@@ -13,6 +12,8 @@ import { apiClient as client } from '../../../lib/orpc'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import { Markdown } from '../../global/Markdown'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 import type { SheetTagEntry } from './useSheetTagsDetailed'
 
 /** Matches the backend's `TAG_SONG_DETACH_WINDOW_MS`. */
@@ -61,7 +62,7 @@ export const TagVotePopover: FC<{
   onClose: () => void
   onChanged: () => void
 }> = ({ entry, anchorEl, userVote, currentUserId, onClose, onChanged }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const localizeMessage = useLocalizedMessageTranslation()
   const { session, openLoginDialog, LoginDialog } = useAuth()
   const [pending, setPending] = useState(false)
@@ -83,10 +84,10 @@ export const TagVotePopover: FC<{
     try {
       await client.tags.vote({ tagSongId: entry.id, value })
       onChanged()
-      toast.success(t('sheet:tags.vote.vote-success'), { id: `tag-vote-success:${entry.id}` })
+      toast.success(m.sheet_tags_vote_voteSuccess({}, { locale }), { id: `tag-vote-success:${entry.id}` })
     } catch (error) {
       console.error('Failed to vote on tag', error)
-      toast.error(t('sheet:tags.vote.vote-failed', { error: formatErrorMessage(error) }), {
+      toast.error(m.sheet_tags_vote_voteFailed({ error: formatErrorMessage(error) }, { locale }), {
         id: `tag-vote-failed:${entry.id}`,
       })
     } finally {
@@ -100,10 +101,10 @@ export const TagVotePopover: FC<{
       await client.tags.detach({ tagSongId: entry.id })
       onChanged()
       onClose()
-      toast.success(t('sheet:tags.vote.remove-success'), { id: `tag-remove-success:${entry.id}` })
+      toast.success(m.sheet_tags_vote_removeSuccess({}, { locale }), { id: `tag-remove-success:${entry.id}` })
     } catch (error) {
       console.error('Failed to remove tag', error)
-      toast.error(t('sheet:tags.vote.remove-failed', { error: formatErrorMessage(error) }), {
+      toast.error(m.sheet_tags_vote_removeFailed({ error: formatErrorMessage(error) }, { locale }), {
         id: `tag-remove-failed:${entry.id}`,
       })
     } finally {
@@ -132,7 +133,9 @@ export const TagVotePopover: FC<{
             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-fg-1">
               {localizeMessage(entry.tag.localized_name)}
             </span>
-            <span className="num shrink-0 text-xs text-fg-2">{t('sheet:tags.vote.score', { score: entry.score })}</span>
+            <span className="num shrink-0 text-xs text-fg-2">
+              {m.sheet_tags_vote_score({ score: entry.score }, { locale })}
+            </span>
           </div>
 
           <div className="text-xs leading-normal text-fg-2 [&_p]:my-0">
@@ -144,7 +147,7 @@ export const TagVotePopover: FC<{
               variant="up"
               active={userVote === 1}
               disabled={pending}
-              label={t('sheet:tags.vote.upvote')}
+              label={m.sheet_tags_vote_upvote({}, { locale })}
               count={entry.upvotes}
               onClick={() => vote(1)}
             />
@@ -152,7 +155,7 @@ export const TagVotePopover: FC<{
               variant="down"
               active={userVote === -1}
               disabled={pending}
-              label={t('sheet:tags.vote.downvote')}
+              label={m.sheet_tags_vote_downvote({}, { locale })}
               count={entry.downvotes}
               onClick={() => vote(-1)}
             />
@@ -163,7 +166,7 @@ export const TagVotePopover: FC<{
                 disabled={pending}
               >
                 <IconMdiTrashCanOutline aria-hidden="true" className="h-4 w-4" />
-                {t('sheet:tags.vote.remove')}
+                {m.sheet_tags_vote_remove({}, { locale })}
               </ButtonBase>
             )}
           </div>
@@ -174,11 +177,13 @@ export const TagVotePopover: FC<{
               className="link cursor-pointer border-none bg-transparent p-0 text-left text-xs"
               onClick={openLoginDialog}
             >
-              {t('sheet:tags.vote.login-required')}
+              {m.sheet_tags_vote_loginRequired({}, { locale })}
             </button>
           )}
 
-          {isCreator && !canDetach && <div className="text-xs text-fg-2">{t('sheet:tags.vote.remove-expired')}</div>}
+          {isCreator && !canDetach && (
+            <div className="text-xs text-fg-2">{m.sheet_tags_vote_removeExpired({}, { locale })}</div>
+          )}
         </div>
       </Popover>
     </>

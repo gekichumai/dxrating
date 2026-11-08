@@ -1,9 +1,10 @@
 import { Button } from '@mui/material'
 import { Home } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export function NotFoundContent() {
-  const { t } = useTranslation(['root'])
+  const locale = useLocale()
 
   return (
     <div className="page-gutter flex min-h-80 items-center justify-center py-12">
@@ -13,12 +14,19 @@ export function NotFoundContent() {
         </div>
 
         <div className="flex flex-col items-center gap-2">
-          <h1 className="page-title m-0 sm:text-4xl">{t('root:not-found.title')}</h1>
-          <p className="page-description m-0 max-w-sm">{t('root:not-found.description')}</p>
+          <h1 className="page-title m-0 sm:text-4xl">{m.root_notFound_title({}, { locale })}</h1>
+          <p className="page-description m-0 max-w-md text-balance [word-break:auto-phrase]">
+            {m.root_notFound_description({}, { locale })}
+          </p>
         </div>
 
-        <Button variant="contained" href="/" startIcon={<Home className="size-4" aria-hidden="true" />}>
-          {t('root:not-found.back-to-home')}
+        <Button
+          variant="contained"
+          href="/"
+          className="!min-h-10"
+          startIcon={<Home className="size-4" aria-hidden="true" />}
+        >
+          {m.root_notFound_backToHome({}, { locale })}
         </Button>
       </section>
     </div>

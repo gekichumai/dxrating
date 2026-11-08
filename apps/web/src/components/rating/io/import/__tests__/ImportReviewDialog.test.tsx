@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { describe, expect, it, vi } from 'vitest'
 import { planImport } from '@/models/scores/importPlan'
 import { ImportReviewController } from '@/models/scores/importReview'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
@@ -23,10 +22,6 @@ const countOf = (label: string) => {
 }
 
 describe('ImportReviewDialog', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('shows the counts and lists the charts that would be lowered or removed', () => {
     const plan = planImport(SAVE, IMPORTED, { source: 'lxns', mode: 'replace' })
     render(<ImportReviewDialog open plan={plan} trigger="manual" onConfirm={() => {}} onCancel={() => {}} />)
@@ -68,10 +63,6 @@ describe('ImportReviewDialog', () => {
 })
 
 describe('ImportReviewHost', () => {
-  beforeAll(() => {
-    initI18n()
-  })
-
   it('shows the pending preview and resolves it with the visitor answer', async () => {
     const controller = new ImportReviewController()
     render(<ImportReviewHost controller={controller} />)

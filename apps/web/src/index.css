@@ -1,10 +1,12 @@
 @import '@unocss/reset/tailwind-compat.css';
 @import './styles/tokens.css';
 @import './styles/dark.css';
+@import './styles/header-tints.css';
 
 :root {
   /* Hiragino Maru Gothic Pro, */
-  font-family: Torus, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-sans: Torus, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   color: var(--fg-1);
   line-height: 1.5;
   font-weight: 400;
@@ -25,6 +27,23 @@
   font-weight: 100 500;
   font-style: normal;
   font-display: swap;
+}
+
+/* Digits for `num` (tokens.css, Numbers). Torus has no tnum feature and its digits are proportional, so small numbers
+   come from a self-hosted Nunito subset whose digits are tabular by default. unicode-range keeps letters, CJK and
+   spaces on the locale font. size-adjust matches Torus's digit height (0.659em vs 0.713em) and the overrides give it
+   Torus's line box (ascent 1.0em, descent 0.2em), so swapping it in changes neither row heights nor baselines. */
+@font-face {
+  font-family: 'DXR Numeric';
+  src: url('./assets/fonts/nunito-numeric.woff2') format('woff2');
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0025, U+002B-002F, U+0030-003A, U+00B1, U+00D7, U+2013-2014, U+2212;
+  size-adjust: 92.4%;
+  ascent-override: 108.2%;
+  descent-override: 21.6%;
+  line-gap-override: 0%;
 }
 
 /* Keep route-managed head stylesheets same-origin. React 19 represents newly
@@ -190,19 +209,29 @@ html {
   }
 }
 
+/* Visually hidden until keyboard focus. Not translated off-screen: iOS Safari draws the page under its translucent
+   status bar and toolbar, and a rubber-band pull at the top reveals fixed content placed above the viewport */
 .skip-to-content {
   position: fixed;
   top: 1rem;
   left: 1rem;
   z-index: 1500;
-  padding: 0.75rem 1rem;
-  color: CanvasText;
-  background: Canvas;
-  transform: translateY(calc(-100% - 2rem));
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
 }
 
 .skip-to-content:focus-visible {
-  transform: none;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  white-space: normal;
+  clip-path: none;
+  padding: 0.75rem 1rem;
+  color: CanvasText;
+  background: Canvas;
   outline: auto;
 }
 
@@ -219,13 +248,21 @@ html {
   outline-offset: 2px;
 }
 
+/* An outlined field hides its placeholder while the label rests inside it (MUI: label[data-shrink=false] + the
+   input). In server-rendered HTML, Emotion puts a <style> between the label and the input, so that adjacent-sibling
+   rule misses until hydration and the label overlaps the placeholder; a general-sibling rule survives the <style> */
+label[data-shrink='false'] ~ .MuiInputBase-formControl .MuiInputBase-input::placeholder {
+  opacity: 0 !important;
+}
+
 /* Route changes move focus to <main> by script (it has tabIndex -1); it never takes keyboard focus, so no ring */
 #main-content:focus {
   outline: none;
 }
 
-/* Version switcher: a large logo over the region chip on the home page; a small logo beside it on inner pages and on
-   phones in landscape, where the header would otherwise fill most of the first screen */
+/* Version switcher: a large logo over the region chip on the home page; a small logo beside it on inner pages, on
+   phones in landscape, where the header would otherwise fill most of the first screen, and on desktop
+   (components/layout/app-chrome.css) */
 .version-switcher__value {
   flex-direction: column;
 }
@@ -274,5 +311,103 @@ html {
     forced-color-adjust: none;
     background: Highlight;
     color: HighlightText;
+  }
+}
+/* Edge fade for horizontal scrollers, driven by the scroller's own scroll position. At the start only the end edge
+   fades, mid-scroll both do, and at the end only the start edge. A row that fits has an inactive scroll timeline, so
+   both lengths stay at 0 and nothing fades. Browsers without scroll-driven animations get no fade either: the cut-off
+   item at the edge still shows there is more, and a static fade would wrongly dim rows that fit.
+   The animation only follows scrolling and never runs on its own, so it stays on under reduced motion.
+   `scroll-fade-x-none` (uno.config.ts) turns it off where a breakpoint stops the row scrolling, since a mask also
+   clips focus rings and shadows past the border box. */
+@property --scroll-fade-start {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --scroll-fade-end {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+.scroll-fade-x {
+  -webkit-mask-image: var(
+    --scroll-fade-x-mask,
+    linear-gradient(
+      to right,
+      transparent,
+      #000 var(--scroll-fade-start),
+      #000 calc(100% - var(--scroll-fade-end)),
+      transparent
+    )
+  );
+  mask-image: var(
+    --scroll-fade-x-mask,
+    linear-gradient(
+      to right,
+      transparent,
+      #000 var(--scroll-fade-start),
+      #000 calc(100% - var(--scroll-fade-end)),
+      transparent
+    )
+  );
+}
+
+/* For a table whose first column sticks while the rest scrolls under it: only the end edge fades, so the pinned
+   column keeps full contrast mid-scroll. */
+.scroll-fade-x.scroll-fade-x-end-only {
+  -webkit-mask-image: var(
+    --scroll-fade-x-mask,
+    linear-gradient(to right, #000 calc(100% - var(--scroll-fade-end)), transparent)
+  );
+  mask-image: var(
+    --scroll-fade-x-mask,
+    linear-gradient(to right, #000 calc(100% - var(--scroll-fade-end)), transparent)
+  );
+}
+
+/* While keyboard focus is inside, drop the fade: snapping can rest a focused item inside the faded edge, which would
+   dim its label and focus ring. Through the variable, so the end-only variant follows too. */
+.scroll-fade-x:has(:focus-visible) {
+  --scroll-fade-x-mask: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  .scroll-fade-x {
+    animation: scroll-fade-x linear both;
+    animation-timeline: scroll(self inline);
+  }
+}
+
+@keyframes scroll-fade-x {
+  from {
+    --scroll-fade-start: 0px;
+    --scroll-fade-end: 24px;
+  }
+  10% {
+    --scroll-fade-start: 24px;
+  }
+  90% {
+    --scroll-fade-end: 24px;
+  }
+  to {
+    --scroll-fade-start: 24px;
+    --scroll-fade-end: 0px;
+  }
+}
+/* The DX chart type's multicolour lettering (--dx-lettering in tokens.css); forced colours keep the system text */
+.dx-lettering {
+  background-image: var(--dx-lettering);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (forced-colors: active) {
+  .dx-lettering {
+    background-image: none;
+    color: CanvasText;
   }
 }

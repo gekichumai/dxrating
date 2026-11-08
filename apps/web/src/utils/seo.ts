@@ -1,8 +1,9 @@
 import { ServerEnum, TypeEnum, type DifficultyEnum, type NoteCounts, type Sheet, type Song } from '@gekichumai/dxdata'
 import type { SupportedLocale } from '@/setup/locale'
 import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
-import { createServerI18n } from '@/setup/init-i18n'
-import { buildSheetLink, songHubPath } from '@/components/sheet/sheetLinks'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
+import { buildSheetLink, buildSheetTolerancePath, songHubPath } from '@/components/sheet/sheetLinks'
 import { getSheetPageTitle, getSheetTitleLabel, getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { buildChartOgImageAlt, buildChartOgImageUrl } from '@/routes/-chart-og-meta'
 
@@ -41,21 +42,12 @@ const OG_LOCALES: Record<SupportedLocale, string> = {
   ko: 'ko_KR',
   'zh-Hans': 'zh_CN',
   'zh-Hant': 'zh_TW',
-}
-
-const i18nCache = new Map<SupportedLocale, ReturnType<typeof createServerI18n>>()
-
-function getSeoI18n(locale: SupportedLocale) {
-  const cached = i18nCache.get(locale)
-  if (cached) return cached
-
-  const instance = createServerI18n(locale)
-  i18nCache.set(locale, instance)
-  return instance
-}
-
-function t(locale: SupportedLocale, key: string, values?: Record<string, unknown>) {
-  return getSeoI18n(locale).t(key, values)
+  ms: 'ms_MY',
+  id: 'id_ID',
+  fil: 'fil_PH',
+  vi: 'vi_VN',
+  th: 'th_TH',
+  my: 'my_MM',
 }
 
 function readLocaleFromContext(context: unknown): SupportedLocale | null {
@@ -106,18 +98,18 @@ export function resolveRootHeadState(match: RootHeadMatch, matches: readonly Roo
 
 /** The not-found page's title and `noindex` */
 export function buildNotFoundSeoMeta(locale: SupportedLocale): SeoMeta[] {
-  return [{ title: formatSeoTitle(t(locale, 'root:not-found.title')) }, { name: 'robots', content: 'noindex' }]
+  return [{ title: formatSeoTitle(m.root_notFound_title({}, { locale })) }, { name: 'robots', content: 'noindex' }]
 }
 
 export function buildRootSeoMeta(locale: SupportedLocale, options: { includeTitle?: boolean } = {}): SeoMeta[] {
   const includeTitle = options.includeTitle ?? true
   const title = 'DXRating'
-  const description = t(locale, 'root:seo.description')
+  const description = m.root_seo_description({}, { locale })
 
   return [
     ...(includeTitle ? [{ title }] : []),
     { name: 'description', content: description },
-    { name: 'keywords', content: t(locale, 'root:seo.keywords') },
+    { name: 'keywords', content: m.root_seo_keywords({}, { locale }) },
     { property: 'og:site_name', content: 'DXRating' },
     { property: 'og:locale', content: OG_LOCALES[locale] },
     { property: 'og:type', content: 'website' },
@@ -135,8 +127,8 @@ export function buildRootSeoMeta(locale: SupportedLocale, options: { includeTitl
 }
 
 export function buildSearchSeo(locale: SupportedLocale) {
-  const title = formatSeoTitle(t(locale, 'root:pages.search.seo-title'))
-  const description = t(locale, 'root:pages.search.seo-description')
+  const title = formatSeoTitle(m.root_pages_search_seoTitle({}, { locale }))
+  const description = m.root_pages_search_seoDescription({}, { locale })
 
   return {
     title,
@@ -157,8 +149,8 @@ export function buildSearchSeo(locale: SupportedLocale) {
 }
 
 export function buildDevelopersSeo(locale: SupportedLocale) {
-  const title = formatSeoTitle(t(locale, 'developers:seo-title'))
-  const description = t(locale, 'developers:seo-description')
+  const title = formatSeoTitle(m.developers_seoTitle({}, { locale }))
+  const description = m.developers_seoDescription({}, { locale })
 
   return {
     title,
@@ -179,8 +171,8 @@ export function buildDevelopersSeo(locale: SupportedLocale) {
 }
 
 export function buildRecentChartsSeo(locale: SupportedLocale) {
-  const title = formatSeoTitle(t(locale, 'root:pages.recent.seo-title'))
-  const description = t(locale, 'root:pages.recent.seo-description')
+  const title = formatSeoTitle(m.root_pages_recent_seoTitle({}, { locale }))
+  const description = m.root_pages_recent_seoDescription({}, { locale })
 
   return {
     title,
@@ -201,8 +193,8 @@ export function buildRecentChartsSeo(locale: SupportedLocale) {
 }
 
 export function buildTrendingChartsSeo(locale: SupportedLocale) {
-  const title = formatSeoTitle(t(locale, 'root:pages.trending.seo-title'))
-  const description = t(locale, 'root:pages.trending.seo-description')
+  const title = formatSeoTitle(m.root_pages_trending_seoTitle({}, { locale }))
+  const description = m.root_pages_trending_seoDescription({}, { locale })
 
   return {
     title,
@@ -222,9 +214,16 @@ export function buildTrendingChartsSeo(locale: SupportedLocale) {
   }
 }
 
+const RATING_FAQ: { question: PlainMessage; answer: PlainMessage }[] = [
+  { question: m.ratingExplainer_faq_q1, answer: m.ratingExplainer_faq_a1 },
+  { question: m.ratingExplainer_faq_q2, answer: m.ratingExplainer_faq_a2 },
+  { question: m.ratingExplainer_faq_q3, answer: m.ratingExplainer_faq_a3 },
+  { question: m.ratingExplainer_faq_q4, answer: m.ratingExplainer_faq_a4 },
+]
+
 export function buildRatingSeo(locale: SupportedLocale) {
-  const title = formatSeoTitle(t(locale, 'root:pages.rating.seo-title'))
-  const description = t(locale, 'root:pages.rating.seo-description')
+  const title = formatSeoTitle(m.root_pages_rating_seoTitle({}, { locale }))
+  const description = m.root_pages_rating_seoDescription({}, { locale })
   const url = 'https://dxrating.net/rating'
 
   const structuredData = {
@@ -233,7 +232,7 @@ export function buildRatingSeo(locale: SupportedLocale) {
       {
         '@type': 'WebApplication',
         '@id': `${url}#app`,
-        name: t(locale, 'root:pages.rating.seo-title'),
+        name: m.root_pages_rating_seoTitle({}, { locale }),
         description,
         url,
         applicationCategory: 'GameApplication',
@@ -247,10 +246,10 @@ export function buildRatingSeo(locale: SupportedLocale) {
         '@id': `${url}#faq`,
         inLanguage: locale,
         // Mirrors the visible FAQ in RatingExplainer
-        mainEntity: ['1', '2', '3', '4'].map((key) => ({
+        mainEntity: RATING_FAQ.map(({ question, answer }) => ({
           '@type': 'Question',
-          name: t(locale, `rating-explainer:faq.q${key}`),
-          acceptedAnswer: { '@type': 'Answer', text: t(locale, `rating-explainer:faq.a${key}`) },
+          name: question({}, { locale }),
+          acceptedAnswer: { '@type': 'Answer', text: answer({}, { locale }) },
         })),
       },
     ],
@@ -275,7 +274,7 @@ export function buildRatingSeo(locale: SupportedLocale) {
   }
 }
 
-type SongSheetSeoSheet = {
+export type SongSheetSeoSheet = {
   type: TypeEnum
   difficulty: DifficultyEnum | string
 } & Partial<Pick<Sheet, 'internalLevelValue' | 'level' | 'noteCounts' | 'noteDesigner' | 'version'>>
@@ -287,12 +286,14 @@ const formatConstant = (sheet: SongSheetSeoSheet) =>
  * Chart page titles lead with what people search for: the song, the chart and its internal level (譜面定数).
  * Sheets without level data (tests, partial catalog slices) keep the plain `<title> [<chart>]` form.
  */
-function buildSongSheetTitle(song: { title: string }, sheet: SongSheetSeoSheet, locale: SupportedLocale) {
+export function buildSongSheetTitle(song: { title: string }, sheet: SongSheetSeoSheet, locale: SupportedLocale) {
   if (!sheet.level) return getSheetPageTitle(song, sheet, locale)
 
   const constant = formatConstant(sheet)
   const values = { title: song.title, sheetLabel: getSheetTitleLabel(sheet, locale), level: sheet.level, constant }
-  return t(locale, constant ? 'song:seo.title' : 'song:seo.title-no-constant', values)
+  return constant
+    ? m.song_seo_title({ ...values, constant }, { locale })
+    : m.song_seo_titleNoConstant(values, { locale })
 }
 
 function buildSongSheetDescription(
@@ -302,28 +303,31 @@ function buildSongSheetDescription(
   locale: SupportedLocale,
 ) {
   if (!sheet.level) {
-    return t(locale, 'song:seo.description-basic', { title: song.title, artist: song.artist, sheetLabel })
+    return m.song_seo_descriptionBasic({ title: song.title, artist: song.artist, sheetLabel }, { locale })
   }
 
   const constant = formatConstant(sheet)
   const facts = [
-    constant && t(locale, 'song:seo.fact.constant', { value: constant }),
+    constant && m.song_seo_fact_constant({ value: constant }, { locale }),
     sheet.noteCounts?.total &&
-      t(locale, 'song:seo.fact.notes', { value: sheet.noteCounts.total.toLocaleString('en-US') }),
-    song.bpm && t(locale, 'song:seo.fact.bpm', { value: song.bpm }),
+      m.song_seo_fact_notes({ value: sheet.noteCounts.total.toLocaleString('en-US') }, { locale }),
+    song.bpm && m.song_seo_fact_bpm({ value: song.bpm }, { locale }),
     sheet.noteDesigner &&
       sheet.noteDesigner !== '-' &&
-      t(locale, 'song:seo.fact.designer', { value: sheet.noteDesigner }),
-    sheet.version && t(locale, 'song:seo.fact.version', { value: sheet.version }),
+      m.song_seo_fact_designer({ value: sheet.noteDesigner }, { locale }),
+    sheet.version && m.song_seo_fact_version({ value: sheet.version }, { locale }),
   ].filter(Boolean)
 
-  return t(locale, 'song:seo.description', {
-    title: song.title,
-    artist: song.artist,
-    sheetLabel,
-    level: sheet.level,
-    facts: facts.join(t(locale, 'song:seo.fact-separator')),
-  })
+  return m.song_seo_description(
+    {
+      title: song.title,
+      artist: song.artist,
+      sheetLabel,
+      level: sheet.level,
+      facts: facts.join(m.song_seo_factSeparator({}, { locale })),
+    },
+    { locale },
+  )
 }
 
 export function buildSongSheetSeo(
@@ -406,17 +410,20 @@ type SongHubSeoSong = Pick<Song, 'artist' | 'category' | 'id' | 'imageName' | 't
 /** Song hub titles carry the BPM, since "<song> bpm" is a common search; without a BPM they fall back to the song alone */
 export function buildSongHubTitle(song: { title: string; bpm?: number | null }, locale: SupportedLocale) {
   return song.bpm
-    ? t(locale, 'song:seo.hub-title', { title: song.title, bpm: song.bpm })
-    : t(locale, 'song:seo.hub-title-no-bpm', { title: song.title })
+    ? m.song_seo_hubTitle({ title: song.title, bpm: song.bpm }, { locale })
+    : m.song_seo_hubTitleNoBpm({ title: song.title }, { locale })
 }
 
 export function buildSongHubSeo(song: SongHubSeoSong, locale: SupportedLocale) {
   const title = buildSongHubTitle(song, locale)
-  const description = t(locale, 'song:seo.hub-description', {
-    title: song.title,
-    artist: song.artist,
-    bpmFact: song.bpm ? t(locale, 'song:seo.hub-bpm-fact', { bpm: song.bpm }) : '',
-  })
+  const description = m.song_seo_hubDescription(
+    {
+      title: song.title,
+      artist: song.artist,
+      bpmFact: song.bpm ? m.song_seo_hubBpmFact({ bpm: song.bpm }, { locale }) : '',
+    },
+    { locale },
+  )
   const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
   const url = songHubUrl(song.id)
   const websiteId = 'https://dxrating.net/#website'
@@ -656,8 +663,8 @@ export function buildConstantTableIndexSeo(locale: SupportedLocale) {
   return buildCollectionSeo(
     locale,
     '/constants',
-    t(locale, 'constants:index.seo-title'),
-    t(locale, 'constants:index.seo-description'),
+    m.constants_index_seoTitle({}, { locale }),
+    m.constants_index_seoDescription({}, { locale }),
   )
 }
 
@@ -669,8 +676,8 @@ export function buildConstantTableSeo(
   const seo = buildCollectionSeo(
     locale,
     table.path,
-    t(locale, 'constants:seo-title', values),
-    t(locale, 'constants:seo-description', values),
+    m.constants_seoTitle(values, { locale }),
+    m.constants_seoDescription(values, { locale }),
   )
 
   const structuredData = {
@@ -680,7 +687,7 @@ export function buildConstantTableSeo(
         '@type': 'CollectionPage',
         '@id': `${seo.url}#webpage`,
         url: seo.url,
-        name: t(locale, 'constants:title', values),
+        name: m.constants_title(values, { locale }),
         description: seo.description,
         inLanguage: locale,
         isPartOf: { '@id': 'https://dxrating.net/#website' },
@@ -694,7 +701,7 @@ export function buildConstantTableSeo(
           {
             '@type': 'ListItem',
             position: 2,
-            name: t(locale, 'constants:breadcrumb'),
+            name: m.constants_breadcrumb({}, { locale }),
             item: 'https://dxrating.net/constants',
           },
           { '@type': 'ListItem', position: 3, name: `Lv.${table.level}`, item: seo.url },
@@ -709,8 +716,8 @@ export function buildVersionIndexSeo(locale: SupportedLocale) {
   return buildCollectionSeo(
     locale,
     '/versions',
-    t(locale, 'versions:index.seo-title'),
-    t(locale, 'versions:index.seo-description'),
+    m.versions_index_seoTitle({}, { locale }),
+    m.versions_index_seoDescription({}, { locale }),
   )
 }
 
@@ -722,8 +729,8 @@ export function buildVersionPageSeo(
   const seo = buildCollectionSeo(
     locale,
     page.path,
-    t(locale, 'versions:seo-title', values),
-    t(locale, 'versions:seo-description', values),
+    m.versions_seoTitle(values, { locale }),
+    m.versions_seoDescription(values, { locale }),
   )
 
   const structuredData = {
@@ -733,7 +740,7 @@ export function buildVersionPageSeo(
         '@type': 'CollectionPage',
         '@id': `${seo.url}#webpage`,
         url: seo.url,
-        name: t(locale, 'versions:title', values),
+        name: m.versions_title(values, { locale }),
         description: seo.description,
         inLanguage: locale,
         isPartOf: { '@id': 'https://dxrating.net/#website' },
@@ -747,7 +754,7 @@ export function buildVersionPageSeo(
           {
             '@type': 'ListItem',
             position: 2,
-            name: t(locale, 'versions:breadcrumb'),
+            name: m.versions_breadcrumb({}, { locale }),
             item: 'https://dxrating.net/versions',
           },
           { '@type': 'ListItem', position: 3, name: page.version, item: seo.url },
@@ -761,31 +768,75 @@ export function buildVersionPageSeo(
 /** Per-user achievement summary (`/me/progress`): titled but never indexed */
 export function buildProgressSummarySeo(locale: SupportedLocale) {
   return {
-    meta: [{ title: formatSeoTitle(t(locale, 'completion:progress.title')) }, { name: 'robots', content: 'noindex' }],
+    meta: [
+      { title: formatSeoTitle(m.completion_progress_title({}, { locale })) },
+      { name: 'robots', content: 'noindex' },
+    ],
   }
 }
 
 /** Per-user top lists (`/me/records`): titled but never indexed */
 export function buildToplistsSeo(locale: SupportedLocale) {
   return {
-    meta: [{ title: formatSeoTitle(t(locale, 'toplists:title')) }, { name: 'robots', content: 'noindex' }],
+    meta: [{ title: formatSeoTitle(m.toplists_title({}, { locale })) }, { name: 'robots', content: 'noindex' }],
   }
 }
 
 /** SEO for the public calculator pages under /tools (tools:<tool>.seo-title / seo-description) */
-export function buildToolPageSeo(locale: SupportedLocale, tool: 'tolerance' | 'rating') {
+/** One chart's tolerance calculator, titled after the chart, at its own URL */
+export function buildSheetToleranceSeo(
+  locale: SupportedLocale,
+  sheet: { songId: string; title: string; type: TypeEnum; difficulty: DifficultyEnum | string },
+) {
+  const values = { title: sheet.title, sheetLabel: getSheetTitleLabel(sheet, locale) }
   const seo = buildCollectionSeo(
     locale,
-    `/tools/${tool}`,
-    t(locale, `tools:${tool}.seo-title`),
-    t(locale, `tools:${tool}.seo-description`),
+    buildSheetTolerancePath(sheet),
+    m.tools_tolerance_sheetSeoTitle(values, { locale }),
+    m.tools_tolerance_sheetSeoDescription(values, { locale }),
   )
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
     '@id': `${seo.url}#webapp`,
     url: seo.url,
-    name: t(locale, `tools:${tool}.title`),
+    name: seo.title,
+    description: seo.description,
+    applicationCategory: 'UtilityApplication',
+    operatingSystem: 'Any',
+    inLanguage: locale,
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  }
+  return { ...seo, structuredData }
+}
+
+const TOOL_SEO = {
+  tolerance: {
+    title: m.tools_tolerance_title,
+    seoTitle: m.tools_tolerance_seoTitle,
+    seoDescription: m.tools_tolerance_seoDescription,
+  },
+  rating: {
+    title: m.tools_rating_title,
+    seoTitle: m.tools_rating_seoTitle,
+    seoDescription: m.tools_rating_seoDescription,
+  },
+} satisfies Record<'tolerance' | 'rating', Record<'title' | 'seoTitle' | 'seoDescription', PlainMessage>>
+
+export function buildToolPageSeo(locale: SupportedLocale, tool: 'tolerance' | 'rating') {
+  const seo = buildCollectionSeo(
+    locale,
+    `/tools/${tool}`,
+    TOOL_SEO[tool].seoTitle({}, { locale }),
+    TOOL_SEO[tool].seoDescription({}, { locale }),
+  )
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    '@id': `${seo.url}#webapp`,
+    url: seo.url,
+    name: TOOL_SEO[tool].title({}, { locale }),
     description: seo.description,
     applicationCategory: 'UtilityApplication',
     operatingSystem: 'Any',

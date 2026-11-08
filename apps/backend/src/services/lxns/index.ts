@@ -16,6 +16,8 @@ const TOKEN_SAFETY_MARGIN_MS = 30 * 1000
 export class LxnsError extends Data.TaggedError('LxnsError')<{
   readonly message: string
   readonly cause?: unknown
+  /** Why, for callers that branch on it (cloud save imports record it as the job's error code) */
+  readonly reason?: 'not_configured' | 'not_connected' | 'connection_expired'
 }> {}
 
 const configured = Effect.gen(function* () {
@@ -24,6 +26,7 @@ const configured = Effect.gen(function* () {
     return yield* Effect.fail(
       new LxnsError({
         message: 'LXNS OAuth is not configured (missing LXNS_CLIENT_ID or LXNS_CLIENT_SECRET)',
+        reason: 'not_configured',
       }),
     )
   }
@@ -61,19 +64,48 @@ export const generateAuthorizationUrl = Effect.fn('Lxns.generateAuthorizationUrl
   return `${LXNS_BASE}/oauth/authorize?${params.toString()}`
 })
 
-// Once an upstream token is issued, finish persisting it even if the caller disconnects.
-export const exchangeCodeForTokens = Effect.fn('Lxns.exchangeCodeForTokens')(function* (code: string, state: string) {
+/** The OAuth state is unknown, already used, or expired: the authorization has to start over. */
+export class LxnsStateInvalid extends Data.TaggedError('LxnsStateInvalid')<{ readonly message: string }> {}
+
+/**
+ * The OAuth state was issued to another DXRating user than the one completing it (`signedIn: true`), or nobody is
+ * signed in (`signedIn: false`). The state is consumed either way and no token is saved.
+ */
+export class LxnsStateMismatch extends Data.TaggedError('LxnsStateMismatch')<{
+  readonly message: string
+  readonly signedIn: boolean
+}> {}
+
+/**
+ * Completes an LXNS authorization for the signed-in user `viewerId` (undefined without a session). The state is
+ * consumed first and exactly once; only when it was issued to `viewerId` is the code exchanged and the tokens saved.
+ * Once an upstream token is issued, finish persisting it even if the caller disconnects.
+ */
+export const completeAuthorization = Effect.fn('Lxns.completeAuthorization')(function* (
+  viewerId: string | undefined,
+  code: string,
+  state: string,
+) {
   const config = yield* configured
   const database = yield* Database
   const http = yield* HttpClient
-  // Delete/return atomically: concurrent callbacks must not exchange the same state twice.
+  // Delete/return atomically: concurrent completions must not exchange the same state twice.
   const [stateRow] = yield* database.query('Consume LXNS OAuth state', (db) =>
     db.delete(lxnsOauthStates).where(eq(lxnsOauthStates.state, state)).returning(),
   )
-  if (!stateRow) return yield* Effect.fail(new LxnsError({ message: 'Invalid or expired OAuth state' }))
+  if (!stateRow) return yield* new LxnsStateInvalid({ message: 'Invalid or expired OAuth state' })
   const timestamp = yield* Clock.currentTimeMillis
   if (timestamp - stateRow.created_at.getTime() > STATE_TTL_MS) {
-    return yield* Effect.fail(new LxnsError({ message: 'OAuth state expired' }))
+    return yield* new LxnsStateInvalid({ message: 'OAuth state expired' })
+  }
+  if (viewerId === undefined) {
+    return yield* new LxnsStateMismatch({ message: 'Sign in to finish connecting LXNS', signedIn: false })
+  }
+  if (viewerId !== stateRow.user_id) {
+    return yield* new LxnsStateMismatch({
+      message: 'This LXNS authorization was started by another account',
+      signedIn: true,
+    })
   }
   const tokenData = yield* Effect.gen(function* () {
     const response = yield* http.post(LXNS_TOKEN_URL, {
@@ -117,7 +149,10 @@ const refreshAccessToken = Effect.fn('Lxns.refreshAccessToken')(function* (userI
   const [token] = yield* database.query('Read LXNS refresh token', (db) =>
     db.select().from(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)).limit(1),
   )
-  if (!token) return yield* Effect.fail(new LxnsError({ message: 'No LXNS connection found. Please authorize first.' }))
+  if (!token)
+    return yield* Effect.fail(
+      new LxnsError({ message: 'No LXNS connection found. Please authorize first.', reason: 'not_connected' }),
+    )
   const tokenData = yield* Effect.gen(function* () {
     const response = yield* http.post(LXNS_TOKEN_URL, {
       headers: { 'Content-Type': 'application/json' },
@@ -130,7 +165,12 @@ const refreshAccessToken = Effect.fn('Lxns.refreshAccessToken')(function* (userI
     })
     if (response.status < 200 || response.status >= 300) {
       yield* disconnect(userId)
-      return yield* Effect.fail(new LxnsError({ message: 'LXNS connection expired. Please reconnect your account.' }))
+      return yield* Effect.fail(
+        new LxnsError({
+          message: 'LXNS connection expired. Please reconnect your account.',
+          reason: 'connection_expired',
+        }),
+      )
     }
     return yield* decodeTokens(yield* response.json)
   }).pipe(Effect.scoped, Effect.timeout('30 seconds'))
@@ -155,7 +195,10 @@ const getValidAccessToken = Effect.fn('Lxns.getValidAccessToken')(function* (use
   const [token] = yield* database.query('Read LXNS access token', (db) =>
     db.select().from(lxnsOauthTokens).where(eq(lxnsOauthTokens.user_id, userId)).limit(1),
   )
-  if (!token) return yield* Effect.fail(new LxnsError({ message: 'No LXNS connection found. Please authorize first.' }))
+  if (!token)
+    return yield* Effect.fail(
+      new LxnsError({ message: 'No LXNS connection found. Please authorize first.', reason: 'not_connected' }),
+    )
   const now = yield* Clock.currentTimeMillis
   return token.expires_at.getTime() - TOKEN_SAFETY_MARGIN_MS < now
     ? yield* refreshAccessToken(userId)
@@ -163,7 +206,10 @@ const getValidAccessToken = Effect.fn('Lxns.getValidAccessToken')(function* (use
 })
 
 export const fetchPlayerScores = Effect.fn('Lxns.fetchPlayerScores')(function* (userId: string) {
-  const accessToken = yield* getValidAccessToken(userId)
+  return yield* requestPlayerScores(yield* getValidAccessToken(userId))
+})
+
+const requestPlayerScores = Effect.fn('Lxns.requestPlayerScores')(function* (accessToken: string) {
   const http = yield* HttpClient
   return yield* Effect.gen(function* () {
     const response = yield* http.get(`${LXNS_BASE}/api/v0/user/maimai/player/scores`, {
@@ -178,6 +224,42 @@ export const fetchPlayerScores = Effect.fn('Lxns.fetchPlayerScores')(function* (
       try: () => LxnsScoresResponseSchema.parse(unwrapLxnsResponse(json)),
       catch: (cause) =>
         new LxnsError({ message: cause instanceof Error ? cause.message : 'Invalid LXNS scores response', cause }),
+    })
+  }).pipe(Effect.scoped, Effect.timeout('30 seconds'))
+})
+
+/**
+ * The LXNS player of the connected account (`GET /api/v0/user/maimai/player`, scope `read_player`): its friend code
+ * is the source account of server imports (design §6.2).
+ */
+export const fetchPlayer = Effect.fn('Lxns.fetchPlayer')(function* (userId: string) {
+  return yield* requestPlayer(yield* getValidAccessToken(userId))
+})
+
+/**
+ * The player and every score of one LXNS connection: both requests use one access token, so a reconnect to another
+ * account in between cannot pair one account's friend code with another account's scores.
+ */
+export const fetchPlayerWithScores = Effect.fn('Lxns.fetchPlayerWithScores')(function* (userId: string) {
+  const accessToken = yield* getValidAccessToken(userId)
+  const player = yield* requestPlayer(accessToken)
+  const scores = yield* requestPlayerScores(accessToken)
+  return { player, scores }
+})
+
+const requestPlayer = Effect.fn('Lxns.requestPlayer')(function* (accessToken: string) {
+  const http = yield* HttpClient
+  return yield* Effect.gen(function* () {
+    const response = yield* http.get(`${LXNS_BASE}/api/v0/user/maimai/player`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    if (response.status < 200 || response.status >= 300) {
+      return yield* Effect.fail(new LxnsError({ message: `LXNS API error: ${response.status}` }))
+    }
+    const json = yield* response.json
+    return yield* Effect.try({
+      try: () => LxnsPlayerSchema.parse(unwrapLxnsResponse(json)),
+      catch: (cause) => new LxnsError({ message: 'Invalid LXNS player response', cause }),
     })
   }).pipe(Effect.scoped, Effect.timeout('30 seconds'))
 })
@@ -239,6 +321,10 @@ const LxnsScoreSchema = z.object({
   fs: FSTypeSchema,
   type: z.enum(['standard', 'dx', 'utage']),
   dx_score: z.number().optional(),
+})
+
+const LxnsPlayerSchema = z.object({
+  friend_code: z.union([z.number().int().nonnegative(), z.string().regex(/^\d{1,32}$/)]).transform(String),
 })
 
 export const LxnsScoresResponseSchema = z.array(LxnsScoreSchema)

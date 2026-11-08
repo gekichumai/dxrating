@@ -2,10 +2,6 @@
   --rating-row-height: 88px;
 }
 
-.rating-records--compact {
-  --rating-row-height: 72px;
-}
-
 .rating-table {
   width: 100%;
   border-spacing: 0;
@@ -27,15 +23,50 @@
 .rating-table .rating-col--actions {
   width: 64px;
 }
+.rating-table .rating-col--internalLevel {
+  width: 64px;
+}
+.rating-table .rating-col--dxScore {
+  width: 96px;
+}
 
+/* Raised by the sticky gap (tokens.css), so it leaves the viewport the moment the header sticks */
+.rating-table-sentinel {
+  position: relative;
+  top: calc(-1 * var(--sticky-top-gap));
+  height: 0;
+}
+
+/* TableVirtuoso pins the header with an inline top: 0. On iOS it sticks a little below the edge (see --sticky-top-gap) */
+.rating-table thead {
+  top: var(--sticky-top-gap) !important;
+}
+
+/* The header is part of the records panel, like the form above it: no fill of its own, and one hairline under it as
+   the only separator. Labels sit on the bottom line of the row, so a label that wraps on a phone keeps its last line
+   on the same baseline as the others. */
 .rating-table thead th {
   position: relative;
-  padding: 8px;
-  /* Sticky over the rows: the glass material, so the header stays legible without a flat fill */
+  padding: 4px 8px 6px;
+  vertical-align: bottom;
+  color: var(--fg-2);
+  font-weight: 500;
+  background: transparent;
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 12%);
+  transition: background-color 150ms;
+}
+
+/* Stuck over the rows, it takes the glass material so the rows scrolling under it stay out of the way */
+.rating-table-wrap[data-stuck] .rating-table thead th {
   background: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--glass-border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rating-table thead th {
+    transition: none;
+  }
 }
 
 .rating-table-sort {
@@ -47,12 +78,69 @@
   border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
-  gap: 3px;
-  min-height: 36px;
+  gap: 2px;
+  min-height: 32px;
   width: 100%;
   text-align: inherit;
   font: inherit;
-  line-height: 1.2;
+  line-height: 1.25;
+}
+
+/* The sorted column: its label in the text colour and a little heavier, so the state reads without a badge */
+.rating-table-sort[data-sorted] {
+  color: var(--fg-1);
+  font-weight: 600;
+}
+
+.rating-table-sort-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rating-table-sort-indicator {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.rating-table-sort-chevron {
+  width: 1.15em;
+  height: 1.15em;
+  margin: 0;
+  transition: rotate 150ms;
+}
+
+.rating-table-sort-priority {
+  /* A tiny superscript: the order among the sorted columns */
+  margin-inline-start: 1px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: super;
+  /* Same as the `num` utility (uno.config.ts) */
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+}
+
+/* An unsorted column shows its chevron, faintly, only on hover or focus; at rest it takes no room */
+.rating-table-sort:not([data-sorted]) .rating-table-sort-indicator {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+.rating-table-sort:not([data-sorted]):hover .rating-table-sort-indicator,
+.rating-table-sort:not([data-sorted]):focus-visible .rating-table-sort-indicator {
+  max-width: 2em;
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rating-table-sort-chevron {
+    transition: none;
+  }
 }
 
 .rating-table-sort:enabled {
@@ -75,10 +163,6 @@
 
 .rating-table-sort:disabled {
   opacity: 1;
-}
-
-.rating-table-sort > div > span {
-  padding: 0 3px;
 }
 
 .rating-table-sort:focus-visible {
@@ -126,9 +210,12 @@
 
 .rating-chart-copy {
   display: flex;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  /* Sized by the cell, not its text: the difficulty pill below switches to its compact form by this width */
+  container: rating-chart-copy / inline-size;
 }
 
 .rating-chart-title {
@@ -136,19 +223,18 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  overflow-wrap: anywhere;
+  /* Wraps between words; a single word longer than the whole line (rare at these widths) still breaks, then the
+     clamp ellipsis ends the second line. The full title is the link's title attribute */
+  overflow-wrap: break-word;
   font-size: 0.875rem;
   line-height: 1.2;
   font-weight: 600;
 }
 
-.rating-records--compact .rating-chart-title {
-  -webkit-line-clamp: 1;
-}
-
 .rating-chart-meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   column-gap: 5px;
   font-size: 0.75rem;
   line-height: 1.33;
@@ -161,9 +247,46 @@
 .rating-mobile-action {
   display: none;
 }
+/* The bucket badge, and on phones the combo and sync lamps stacked under it */
+.rating-bucket-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
+}
 .rating-value-cell {
   font-size: 1.125rem;
   font-weight: 600;
+}
+/* The rating stays on the row's centre line like every other cell; the next step hangs under it */
+.rating-value-stack {
+  position: relative;
+  display: inline-block;
+}
+/* The next B50 step: quiet, desktop only (the phone rating column has no room) */
+.rating-next-target {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: -2px;
+  display: none;
+  align-items: center;
+  gap: 1px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+.rating-next-target-icon {
+  width: 0.95em;
+  height: 0.95em;
+  color: var(--accent-strong);
+}
+@media (min-width: 1024px) {
+  .rating-next-target {
+    display: inline-flex;
+  }
 }
 .rating-table .rating-row-remove {
   width: 44px;
@@ -181,24 +304,24 @@
   }
 
   .rating-table .rating-col--includedIn {
-    width: 50px;
+    width: 58px;
     text-align: center;
   }
-  .rating-table td.rating-col--includedIn > span {
+  .rating-table td.rating-col--includedIn .rating-bucket-badge {
     width: 2.5rem;
     font-size: 0.75rem;
   }
 
   .rating-table .rating-col--achievementRate {
-    width: 86px;
+    width: 80px;
     text-align: end;
   }
   .rating-table .rating-col--rating {
-    width: 56px;
+    width: 60px;
     text-align: end;
   }
   .rating-table thead th {
-    padding: 8px 6px;
+    padding: 4px 6px 6px;
     font-size: 0.75rem;
   }
   .rating-table-row > td {
@@ -221,18 +344,20 @@
     gap: 2px;
   }
   .rating-chart-meta {
-    column-gap: 4px;
+    gap: 2px 4px;
     font-size: 0.75rem;
     line-height: 1.33;
   }
   .rating-mobile-flags {
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 3px;
-    height: 16px;
   }
   .rating-table .rating-mobile-flags > * {
     width: auto;
+    min-width: 0;
+    height: 16px;
     padding: 0 6px;
     font-size: 0.75rem;
     line-height: 1.33;
@@ -255,26 +380,55 @@
     font-size: 0.8125rem;
     letter-spacing: -0.02em;
   }
+  /* Cloud saves: no room beside the achievement on phones; the chart dialog shows the provenance */
+  .rating-table .rating-provenance-icon {
+    display: none;
+  }
+  /* Narrow columns: the label may wrap, and the chevron follows its last line as text does */
   .rating-table-sort {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 2px;
+    display: block;
+    min-height: 0;
   }
-  .rating-col--chart .rating-table-sort {
-    justify-content: flex-start;
+  .rating-table-sort-label {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
-  .rating-col--includedIn .rating-table-sort {
-    justify-content: center;
+  .rating-table-sort-indicator {
+    vertical-align: -0.15em;
   }
-  .rating-table-sort > div,
-  .rating-table-sort > div > span {
-    font-size: 0.75rem;
+  .rating-table-sort-chevron {
+    width: 0.95em;
+    height: 0.95em;
   }
+  /* No room for the priority in a phone's columns; screen readers still hear it */
+  .rating-table-sort-priority {
+    display: none;
+  }
+  /* The narrow columns give the label and its chevron one line: 收录于⌄, Bucket⌄, Rating⌄ */
+  .rating-table thead th {
+    padding-inline: 4px;
+  }
+}
+
+/* The level as text after the type badge: only where the two-tone difficulty pill is too wide for the column */
+.rating-chart-meta-narrow-level {
+  display: none;
 }
 
 @media (max-width: 359px) {
   .rating-chart-cover {
     display: none;
+  }
+}
+
+/* Too narrow for the whole two-tone pill (Re:MAS | 14.9 is about 86px): phones from 320 to 375px, and tablets once
+   the extra columns return. The pill keeps its difficulty half and the level moves next to the type badge */
+@container rating-chart-copy (max-width: 5.75rem) {
+  .rating-chart-meta .rating-chart-meta-level {
+    display: none;
+  }
+  .rating-chart-meta .rating-chart-meta-narrow-level {
+    display: inline;
   }
 }
 
@@ -289,14 +443,109 @@
 .rating-table-row[data-bucket='b35'] {
   background: rgb(var(--c-cyan-100) / 55%);
 }
-.rating-table-sort svg {
-  margin: 0;
-  flex-shrink: 0;
-}
 
 @media (min-width: 768px) {
-  .rating-table-sort > span {
+  .rating-table .rating-col--includedIn {
+    width: 96px;
+  }
+}
+
+/* Tablets: the lamp, achievement, rating and action columns appear at their desktop widths, which left the chart
+   about 64px and broke titles mid-word ("Desperad/o"). The tighter widths of the sidebar layout (1280px) give the
+   chart column the rest */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .rating-table thead th {
+    padding-inline: 6px;
+    font-size: 0.8125rem;
+  }
+  .rating-table-row > td {
+    padding-inline: 6px;
+  }
+  .rating-table .rating-col--includedIn {
+    width: 88px;
+  }
+  .rating-table .rating-col--comboFlag,
+  .rating-table .rating-col--syncFlag {
+    width: 64px;
+  }
+  .rating-table .rating-col--achievementRate {
+    width: 112px;
+  }
+  .rating-table .rating-col--rating {
+    width: 128px;
+  }
+  /* The action column keeps its width: on a touch screen the remove button stays a 44px target */
+}
+
+/* The level and DX score columns need the desktop width; under it the level stays in the chart meta */
+@media (max-width: 1023px) {
+  .rating-table .rating-col--internalLevel,
+  .rating-table .rating-col--dxScore {
+    display: none;
+  }
+}
+
+/* Desktop: one-line rows. Keep the heights in sync with ROW_HEIGHTS in RatingCalculator.tsx */
+@media (min-width: 1024px) {
+  .rating-records {
+    --rating-row-height: 56px;
+  }
+  .rating-table .rating-col--achievementRate {
+    width: 156px;
+  }
+  .rating-table .rating-chart-link {
+    container-type: inline-size;
+    padding-block: 6px !important;
+  }
+  .rating-chart-cover {
+    flex-basis: 36px;
+    width: 36px;
+    height: 36px;
+  }
+  .rating-chart-copy {
+    gap: 2px;
+  }
+  .rating-chart-title {
+    display: block;
+    -webkit-line-clamp: unset;
     white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .rating-chart-meta {
+    flex-wrap: nowrap;
+  }
+  /* The level half of the difficulty pill: two classes, to win over its utility `flex` */
+  .rating-chart-meta .rating-chart-meta-level {
+    display: none;
+  }
+  .rating-table .rating-row-remove {
+    width: 36px;
+    height: 36px;
+  }
+  /* A column of trash buttons needs no visible heading; the label stays for screen readers */
+  .rating-table th.rating-col--actions .rating-table-sort-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* A wide chart cell puts the difficulty and type on the title's line */
+@container (min-width: 420px) {
+  .rating-chart-copy {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .rating-chart-title {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .rating-chart-meta {
+    flex: 0 0 auto;
   }
 }
 .rating-calculator {
@@ -321,8 +570,97 @@
 .rating-tools .MuiButton-root {
   max-width: 100%;
 }
+/* The primary action spans the card like the rows of buttons under it. Its label is too long for one line on the
+   narrowest cards: break between phrases (文節), not mid-word */
+.rating-oneshot .MuiButton-root {
+  width: 100%;
+  word-break: auto-phrase;
+}
+/* Import and maimai NET settings, then export and clear: whole buttons wrap, never their labels. Each takes its label's
+   width and the row shares out the rest, so pairs share a line instead of a short label stretching across one alone.
+   When the card has room for all four, they share one row in equal widths */
+.rating-tools > section {
+  container-type: inline-size;
+}
+.rating-io-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rating-io-actions > .MuiButton-root {
+  flex: 1 1 auto;
+  min-width: max-content;
+  white-space: nowrap;
+}
+@container (min-width: 34rem) {
+  .rating-io-actions > .MuiButton-root {
+    flex-basis: 0;
+  }
+}
 .rating-statistics {
   min-width: 0;
+}
+/* The empty state: what the page does, then the ways to get scores in. Steps sit side by side once each has room */
+.rating-onboarding {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  container-type: inline-size;
+}
+.rating-onboarding-steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rating-onboarding-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  gap: 8px 12px;
+  padding: 16px;
+}
+.rating-onboarding-step-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  font-size: 20px;
+  color: var(--accent-strong);
+  background-color: color-mix(in oklab, var(--accent) 16%, transparent);
+}
+.rating-onboarding-step-action {
+  grid-column: 2;
+  align-self: end;
+}
+.rating-onboarding-step-action .MuiButton-root {
+  max-width: 100%;
+}
+/* The recommended source: a hairline of the accent, never a solid fill */
+.rating-onboarding-step[data-recommended] {
+  border-color: color-mix(in oklab, var(--accent) 45%, transparent);
+}
+@container (min-width: 48rem) {
+  .rating-onboarding {
+    padding: 24px;
+  }
+  .rating-onboarding-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .rating-onboarding-step {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+  }
+  .rating-onboarding-step-action {
+    grid-column: 1;
+    padding-top: 4px;
+  }
 }
 .rating-table-controls {
   display: flex;
@@ -337,9 +675,13 @@
 .rating-table-controls .MuiFormControlLabel-label {
   font-size: 0.875rem;
 }
+/* The view switches lead; the link to another page sits apart at the end of the row */
+.rating-table-controls > .MuiButton-root {
+  margin-inline-start: auto;
+}
 .rating-add-form {
-  padding: 12px 16px 16px;
-  border-bottom: 1px solid rgb(var(--ink-rgb) / 8%);
+  /* No rule under the form: the table header's hairline is the one separator between the form and the rows */
+  padding: 12px 16px 8px;
 }
 .rating-add-fields {
   display: flex;
@@ -362,8 +704,7 @@
 }
 .rating-add-fields .rating-add-submit {
   min-height: 40px;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 .rating-add-preview {
   display: flex;
@@ -378,6 +719,11 @@
 .rating-records .MuiTableContainer-root {
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   box-shadow: none;
+  /* The theme gives every Paper the glass material; this one sits on the records panel, which is already glass, so a
+     second border and blur would draw the table as a separate box */
+  border: 0;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .rating-table th.rating-col--chart {
   padding-inline-start: 16px;
@@ -385,13 +731,61 @@
 .rating-table .rating-chart-link {
   padding-inline-start: 16px !important;
 }
+/* Wide desktop: the overview becomes a sidebar beside the records, so the first rows sit at the top of the page */
 @media (min-width: 1280px) {
-  .rating-statistics .rating-statistics-overview {
+  .rating-calculator.flex-container {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: 360px minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
   }
+  .rating-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* The total on one line with its label; B15 and B35 stack below it */
   .rating-statistics-overview > :first-child {
-    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .rating-statistics-overview .text-3xl {
+    font-size: 1.5rem;
+  }
+  /* The sidebar leaves the table less width: tighter fixed columns and header text, so the chart titles keep room */
+  .rating-table thead th {
+    padding-inline: 6px;
+    font-size: 0.8125rem;
+  }
+  .rating-table-row > td {
+    padding-inline: 6px;
+  }
+  .rating-table .rating-col--includedIn {
+    width: 88px;
+  }
+  .rating-table .rating-col--comboFlag,
+  .rating-table .rating-col--syncFlag {
+    width: 64px;
+  }
+  .rating-table .rating-col--internalLevel {
+    width: 56px;
+  }
+  .rating-table .rating-col--dxScore {
+    width: 88px;
+  }
+  .rating-table .rating-col--achievementRate {
+    width: 112px;
+  }
+  .rating-table .rating-col--rating {
+    width: 128px;
+  }
+  .rating-table .rating-col--actions {
+    width: 48px;
+  }
+}
+@media (min-width: 1280px) and (min-height: 760px) {
+  .rating-overview {
+    position: sticky;
+    top: 16px;
   }
 }
 @media (max-width: 400px) {

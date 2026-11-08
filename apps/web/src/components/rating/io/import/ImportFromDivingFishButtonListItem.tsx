@@ -18,7 +18,6 @@ import {
 } from '@mui/material'
 import { type FC, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import { useLocalStorage } from 'react-use'
 import CarbonFish from '~icons/carbon/fish'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
@@ -29,6 +28,18 @@ import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import type { ImportJobDTO } from '@gekichumai/api-contract'
+import {
+  importFallbackEntries,
+  importPath,
+  runServerImportToEnd,
+  maskedRowsNotice,
+  summarizeImportJob,
+} from './cloudImport'
+import { importFailureMessage } from '@/components/cloud-save/importFailureMessage'
+import { ServerImportFailedError } from '@/models/scores/cloudImports'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const haptics = new WebHaptics()
 
@@ -46,6 +57,10 @@ type DivingFishRequestBody = {
 type DivingFishImportMessages = {
   loading: string
   success: (count: number) => string
+  /** A cloud save: what the server's job changed */
+  serverSuccess: (job: ImportJobDTO) => string
+  /** A cloud save: the failed job's code in words */
+  serverError?: (code: string) => string
   error: (error: string) => string
   cancelled: string
 }
@@ -91,6 +106,22 @@ const fetchDivingFish = async (
   const toastId = toast.loading(messages.loading)
   const analytics = createRatingImportTracker('diving_fish')
   try {
+    const path = importPath(repository)
+    if (path === 'server') {
+      // A cloud save: the server queries Diving-Fish and keeps the records verified; this page pulls them after
+      const profile = divingFishProfile?.username
+        ? { username: divingFishProfile.username }
+        : divingFishProfile?.qq
+          ? { qq: divingFishProfile.qq }
+          : null
+      if (!profile) throw new Error('No Diving Fish Profile')
+      const job = await runServerImportToEnd(repository, 'diving-fish', profile)
+      analytics.succeeded(job.counts.fetched, 0)
+      haptics.trigger('success')
+      toast.success(messages.serverSuccess(job), { id: toastId })
+      return
+    }
+
     const body: DivingFishRequestBody = {
       b50: 1,
     }
@@ -123,16 +154,22 @@ const fetchDivingFish = async (
       console.warn('[ImportFromDivingFishButtonListItem]', warning.message, warning.row)
     }
 
-    const { applied } = await reviewAndApplyImport(
-      repository,
-      entries,
-      { source: 'diving-fish', mode: 'replace' },
-      { trigger: 'manual' },
-    )
-    if (!applied) {
-      analytics.failed('cancelled_by_user')
-      toast(messages.cancelled, { id: toastId })
-      return
+    if (path === 'client-fallback') {
+      // Server imports are off (§7.4): uploaded as client_reported, never verified
+      await importFallbackEntries(repository, entries, 'diving-fish')
+    } else {
+      // The local save: previewed and confirmed, and it can be undone (meta#35)
+      const { applied } = await reviewAndApplyImport(
+        repository,
+        entries,
+        { source: 'diving-fish', mode: 'replace' },
+        { trigger: 'manual' },
+      )
+      if (!applied) {
+        analytics.failed('cancelled_by_user')
+        toast(messages.cancelled, { id: toastId })
+        return
+      }
     }
     analytics.succeeded(entries.length, importResult.warnings.length)
     haptics.trigger('success')
@@ -144,7 +181,12 @@ const fetchDivingFish = async (
       error instanceof Error && error.message === 'No Diving Fish Profile' ? 'missing_profile' : 'provider_error',
     )
     console.error('There was a problem with the fetch operation:', error)
-    toast.error(messages.error(String(formatErrorMessage(error))), {
+    // A cloud save's server import that failed: what happened in words, not its code
+    const message =
+      error instanceof ServerImportFailedError
+        ? (messages.serverError?.(error.code) ?? messages.error(''))
+        : messages.error(String(formatErrorMessage(error)))
+    toast.error(message, {
       id: toastId,
     })
   }
@@ -156,7 +198,7 @@ export const ImportDivingFishDialogContent: FC<{
   const loadCatalog = useSongCatalogLoader()
   const repository = useScoreRepository()
   const [busy, setBusy] = useState(false)
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const [divingFishConfig, setDivingFishConfig] = useLocalStorage<DivingFishProfile | null>('diving-fish-profile', null)
 
   const invalidReason = useMemo(() => {
@@ -168,18 +210,20 @@ export const ImportDivingFishDialogContent: FC<{
 
   return (
     <>
-      <DialogTitle>{t('rating-calculator:io.import.diving-fish.title')}</DialogTitle>
+      <DialogTitle>{m.ratingCalculator_io_import_divingFish_title({}, { locale })}</DialogTitle>
       <DialogContent className="flex flex-col items-start gap-2">
-        <div className="text-sm text-secondary mb-2">{t('rating-calculator:io.import.diving-fish.description')}</div>
+        <div className="text-sm text-secondary mb-2">
+          {m.ratingCalculator_io_import_divingFish_description({}, { locale })}
+        </div>
 
         <Alert severity="warning" className="w-full">
-          <AlertTitle>{t('rating-calculator:io.import.diving-fish.warning.title')}</AlertTitle>
-          {t('rating-calculator:io.import.diving-fish.warning.description')}
+          <AlertTitle>{m.ratingCalculator_io_import_divingFish_warning_title({}, { locale })}</AlertTitle>
+          {m.ratingCalculator_io_import_divingFish_warning_description({}, { locale })}
         </Alert>
 
         <TextField
           fullWidth
-          label={t('settings:import-provider.diving-fish.username')}
+          label={m.settings_importProvider_divingFish_username({}, { locale })}
           value={divingFishConfig?.username ?? ''}
           onChange={(e) => {
             setDivingFishConfig({
@@ -191,9 +235,9 @@ export const ImportDivingFishDialogContent: FC<{
           error={invalidReason === 'excessive'}
           helperText={
             invalidReason === 'missing'
-              ? t('rating-calculator:io.import.diving-fish.missing-profile-info')
+              ? m.ratingCalculator_io_import_divingFish_missingProfileInfo({}, { locale })
               : invalidReason === 'excessive'
-                ? t('rating-calculator:io.import.diving-fish.only-one-of-the-two-fields-should-be-filled')
+                ? m.ratingCalculator_io_import_divingFish_onlyOneOfTheTwoFieldsShouldBeFilled({}, { locale })
                 : undefined
           }
           autoComplete="off"
@@ -204,14 +248,14 @@ export const ImportDivingFishDialogContent: FC<{
         <div className="w-full flex items-center gap-2 select-none">
           <div className="h-px w-full bg-zinc-200" />
           <span className="text-sm text-secondary whitespace-nowrap uppercase tracking-[0.05em]">
-            {t('rating-calculator:io.import.diving-fish.or')}
+            {m.ratingCalculator_io_import_divingFish_or({}, { locale })}
           </span>
           <div className="h-px w-full bg-zinc-200" />
         </div>
 
         <TextField
           fullWidth
-          label={t('settings:import-provider.diving-fish.qq')}
+          label={m.settings_importProvider_divingFish_qq({}, { locale })}
           value={divingFishConfig?.qq ?? ''}
           onChange={(e) => {
             setDivingFishConfig({
@@ -234,20 +278,35 @@ export const ImportDivingFishDialogContent: FC<{
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>{t('rating-calculator:io.import.diving-fish.close')}</Button>
+        <Button onClick={onClose}>{m.ratingCalculator_io_import_divingFish_close({}, { locale })}</Button>
         <Button
           onClick={async () => {
             setBusy(true)
             try {
               if (invalidReason) {
-                toast.error(t('rating-calculator:io.import.diving-fish.invalid-profile'))
+                toast.error(m.ratingCalculator_io_import_divingFish_invalidProfile({}, { locale }))
                 return
               }
               await fetchDivingFish(await loadCatalog(), divingFishConfig!, repository, {
-                loading: t('rating-calculator:io.import.diving-fish.loading'),
-                success: (count) => t('rating-calculator:io.import.diving-fish.success', { count }),
-                error: (error) => t('rating-calculator:io.import.diving-fish.error', { error }),
-                cancelled: t('rating-calculator:io.import.review.cancelled'),
+                loading: m.ratingCalculator_io_import_divingFish_loading({}, { locale }),
+                success: (count) => m.ratingCalculator_io_import_divingFish_success({ count }, { locale }),
+                serverSuccess: (job) =>
+                  [
+                    m.ratingCalculator_cloudSave_import_success(
+                      {
+                        source: 'Diving-Fish',
+                        summary: summarizeImportJob(job, locale),
+                      },
+                      { locale },
+                    ),
+                    // Rows the player hid on Diving-Fish: said apart, as nothing here can import them
+                    maskedRowsNotice(job, locale),
+                  ]
+                    .filter(Boolean)
+                    .join(' '),
+                serverError: (code) => importFailureMessage(code, locale),
+                error: (error) => m.ratingCalculator_io_import_divingFish_error({ error }, { locale }),
+                cancelled: m.ratingCalculator_io_import_review_cancelled({}, { locale }),
               })
               onClose()
             } finally {
@@ -260,10 +319,10 @@ export const ImportDivingFishDialogContent: FC<{
           {busy ? (
             <div className="flex gap-2 items-center">
               <CircularProgress size="1rem" />
-              <span>{t('rating-calculator:io.import.diving-fish.importing')}</span>
+              <span>{m.ratingCalculator_io_import_divingFish_importing({}, { locale })}</span>
             </div>
           ) : (
-            t('rating-calculator:io.import.diving-fish.import')
+            m.ratingCalculator_io_import_divingFish_import({}, { locale })
           )}
         </Button>
       </DialogActions>
@@ -274,7 +333,7 @@ export const ImportDivingFishDialogContent: FC<{
 export const ImportFromDivingFishButtonListItem: FC<{
   onClose: () => void
 }> = ({ onClose }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const [open, setOpen] = useState(false)
 
   const handleClose = () => {
@@ -293,7 +352,7 @@ export const ImportFromDivingFishButtonListItem: FC<{
           <CarbonFish />
         </ListItemIcon>
         <ListItemText
-          primary={t('rating-calculator:io.import.diving-fish.title')}
+          primary={m.ratingCalculator_io_import_divingFish_title({}, { locale })}
           secondary={
             <span className="flex gap-1">
               <ImportRegionSupportTag region="cn" />

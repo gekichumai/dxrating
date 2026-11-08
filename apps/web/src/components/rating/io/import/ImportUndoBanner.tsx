@@ -10,13 +10,14 @@ import {
 } from '@mui/material'
 import { type FC, useCallback, useId, useState, useSyncExternalStore } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import MdiClose from '~icons/mdi/close'
 import MdiUndo from '~icons/mdi/undo'
 import { getImportUndoStore, undoDiscardsLaterChanges, undoLastImport } from '@/models/scores/importReview'
 import type { ImportUndoSnapshot } from '@/models/scores/importUndo'
 import { useHydrated, useScoreEntries, useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importSourceLabel } from './importSourceLabel'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const noopSubscribe = () => () => {}
 const noSnapshot = () => null
@@ -34,7 +35,7 @@ const formatDateTime = (timestamp: number, locale: string) => {
  * hydration only: the snapshot is in the browser storage, and the times are in the visitor's time zone.
  */
 export const ImportUndoBanner: FC = () => {
-  const { t, i18n } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const repository = useScoreRepository()
   const hydrated = useHydrated()
   // Re-renders on every save change, so an edit while the confirmation is open updates its warning
@@ -52,14 +53,14 @@ export const ImportUndoBanner: FC = () => {
   const handleUndo = useCallback(() => {
     setConfirming(false)
     const result = undoLastImport(repository)
-    if (result === 'restored') toast.success(t('rating-calculator:io.import.undo.done'))
-    else if (result === 'failed') toast.error(t('rating-calculator:io.import.undo.failed'))
-    else toast.error(t('rating-calculator:io.import.undo.expired'))
-  }, [repository, t])
+    if (result === 'restored') toast.success(m.ratingCalculator_io_import_undo_done({}, { locale }))
+    else if (result === 'failed') toast.error(m.ratingCalculator_io_import_undo_failed({}, { locale }))
+    else toast.error(m.ratingCalculator_io_import_undo_expired({}, { locale }))
+  }, [repository, locale])
 
   if (!store || !snapshot || snapshot.id === dismissedId) return null
 
-  const source = importSourceLabel(t, snapshot.source)
+  const source = importSourceLabel(locale, snapshot.source)
   const discardsLaterChanges = confirming && undoDiscardsLaterChanges(repository, snapshot)
 
   return (
@@ -72,7 +73,7 @@ export const ImportUndoBanner: FC = () => {
         action={
           <IconButton
             size="small"
-            aria-label={t('rating-calculator:io.import.undo.dismiss')}
+            aria-label={m.ratingCalculator_io_import_undo_dismiss({}, { locale })}
             onClick={() => setDismissedId(snapshot.id)}
           >
             <MdiClose />
@@ -82,45 +83,54 @@ export const ImportUndoBanner: FC = () => {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <div className="min-w-0 flex-1 basis-60">
             <div className="font-semibold text-fg-1">
-              {t('rating-calculator:io.import.undo.title', {
-                count: snapshot.importedCount,
-                source,
-                time: formatDateTime(snapshot.createdAt, i18n.language),
-              })}
+              {m.ratingCalculator_io_import_undo_title(
+                {
+                  count: snapshot.importedCount,
+                  source,
+                  time: formatDateTime(snapshot.createdAt, locale),
+                },
+                { locale },
+              )}
             </div>
             <div className="text-sm text-secondary">
-              {t('rating-calculator:io.import.undo.description', {
-                time: formatDateTime(store.expiresAt(snapshot), i18n.language),
-              })}
+              {m.ratingCalculator_io_import_undo_description(
+                {
+                  time: formatDateTime(store.expiresAt(snapshot), locale),
+                },
+                { locale },
+              )}
             </div>
           </div>
           <Button size="small" variant="outlined" color="inherit" onClick={() => setConfirming(true)}>
-            {t('rating-calculator:io.import.undo.button')}
+            {m.ratingCalculator_io_import_undo_button({}, { locale })}
           </Button>
         </div>
       </Alert>
 
       <Dialog open={confirming} onClose={() => setConfirming(false)} aria-labelledby={titleId} maxWidth="xs">
-        <DialogTitle id={titleId}>{t('rating-calculator:io.import.undo.confirm.title')}</DialogTitle>
+        <DialogTitle id={titleId}>{m.ratingCalculator_io_import_undo_confirm_title({}, { locale })}</DialogTitle>
         <DialogContent className="flex flex-col gap-2">
           <DialogContentText>
-            {t('rating-calculator:io.import.undo.confirm.description', {
-              count: snapshot.previousEntries.length,
-              source,
-            })}
+            {m.ratingCalculator_io_import_undo_confirm_description(
+              {
+                count: snapshot.previousEntries.length,
+                source,
+              },
+              { locale },
+            )}
           </DialogContentText>
           {discardsLaterChanges && (
             <DialogContentText className="text-danger font-semibold">
-              {t('rating-calculator:io.import.undo.confirm.later-changes')}
+              {m.ratingCalculator_io_import_undo_confirm_laterChanges({}, { locale })}
             </DialogContentText>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirming(false)} color="inherit">
-            {t('rating-calculator:io.import.undo.confirm.cancel')}
+            {m.ratingCalculator_io_import_undo_confirm_cancel({}, { locale })}
           </Button>
           <Button onClick={handleUndo} variant="contained" color={discardsLaterChanges ? 'error' : 'primary'}>
-            {t('rating-calculator:io.import.undo.confirm.submit')}
+            {m.ratingCalculator_io_import_undo_confirm_submit({}, { locale })}
           </Button>
         </DialogActions>
       </Dialog>

@@ -37,6 +37,9 @@ const jsonRpcError = (status: number, code: number, message: string, headers: Re
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers },
   })
 
+/** What the SDK's stateless transport answers a 2025-era POST that does not accept both of its response types */
+export const NOT_ACCEPTABLE = 'Not Acceptable: Client must accept both application/json and text/event-stream'
+
 /** The MCP server of a request, wrapped for Sentry tracing when there is a Sentry client */
 function serverFor(catalog: McpCatalog | undefined) {
   // a span per MCP message with the OpenTelemetry MCP attributes (mcp.method.name, gen_ai.tool.name, ...), the
@@ -84,6 +87,12 @@ export async function handleMcpRequest(request: Request, catalog: McpCatalog | u
 
 /** A 2025-era request: initialize or a request after it, answered by a server and transport of its own */
 async function handleLegacyRequest(request: Request, catalog: McpCatalog | undefined): Promise<Response> {
+  // The transport answers this 406 too, but reports it through onerror first, which the Sentry wrapper captures as a
+  // server error. It is the client's mistake, so it is answered here, the same way, before the transport sees it.
+  const accept = request.headers.get('accept') ?? ''
+  if (!accept.includes('application/json') || !accept.includes('text/event-stream')) {
+    return jsonRpcError(406, -32000, NOT_ACCEPTABLE)
+  }
   const server = serverFor(catalog)
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
@@ -101,27 +110,9 @@ async function handleLegacyRequest(request: Request, catalog: McpCatalog | undef
 /**
  * A fixed-window limit of the requests of each client, in memory: each replica counts its own. The limit is high
  * enough for an assistant answering a question (a handful of calls), and stops a script crawling the catalog, which
- * /api/v1/dxdata serves whole.
+ * /api/v1/dxdata serves whole. The limiter is the generic one in `services/rate-limit.ts`.
  */
-export function createRateLimiter({ limit, windowMs }: { limit: number; windowMs: number }) {
-  const windows = new Map<string, { start: number; count: number }>()
-  return {
-    /** The seconds to wait before retrying, or 0 when the request is allowed */
-    take(key: string, now = Date.now()): number {
-      let window = windows.get(key)
-      if (!window || now - window.start >= windowMs) {
-        // forget the windows that ended, so the map holds the clients of the current window only
-        if (windows.size > 10_000) {
-          for (const [k, w] of windows) if (now - w.start >= windowMs) windows.delete(k)
-        }
-        window = { start: now, count: 0 }
-        windows.set(key, window)
-      }
-      window.count += 1
-      return window.count > limit ? Math.ceil((window.start + windowMs - now) / 1000) : 0
-    },
-  }
-}
+export { createRateLimiter } from '../rate-limit'
 
 export const MCP_RATE_LIMIT = { limit: 300, windowMs: 60_000 }
 

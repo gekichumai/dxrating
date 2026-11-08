@@ -1,9 +1,10 @@
 import type { Breakpoint } from '@mui/material'
 import { Dialog, DialogContent, Fade, Grow, IconButton, SwipeableDrawer, useMediaQuery } from '@mui/material'
 import { type FC, type ReactNode, useEffect, useId, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiClose from '~icons/mdi/close'
 import { useIsLargeDevice } from '../../utils/breakpoints'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const ResponsiveDialog: FC<{
   open: boolean
@@ -15,9 +16,24 @@ export const ResponsiveDialog: FC<{
   title?: ReactNode
   /** Id of a heading inside the content that names the dialog, when the content renders its own */
   labelledBy?: string
+  /** The content renders its own close button (e.g. in a header row with other actions), so the shared one is left out */
+  hideCloseButton?: boolean
+  /** Runs once the close transition has finished and the dialog is off screen */
+  onExited?: () => void
   children?: () => ReactNode
-}> = ({ open, setOpen, maxWidth = 'md', disableClose, drawerHeight, title, labelledBy, children }) => {
-  const { t } = useTranslation(['global'])
+}> = ({
+  open,
+  setOpen,
+  maxWidth = 'md',
+  disableClose,
+  drawerHeight,
+  title,
+  labelledBy,
+  hideCloseButton,
+  onExited,
+  children,
+}) => {
+  const locale = useLocale()
   const isLargeDevice = useIsLargeDevice()
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const generatedTitleId = useId()
@@ -53,8 +69,8 @@ export const ResponsiveDialog: FC<{
     <IconButton
       onClick={() => setOpen(false)}
       disabled={disableClose}
-      aria-label={t('global:dialog.close')}
-      title={t('global:dialog.close')}
+      aria-label={m.global_dialog_close({}, { locale })}
+      title={m.global_dialog_close({}, { locale })}
       size="small"
       className="!-me-1.5 !shrink-0 !text-fg-2"
     >
@@ -84,10 +100,11 @@ export const ResponsiveDialog: FC<{
           maxWidth={maxWidth}
           fullWidth
           TransitionComponent={reducedMotion ? Fade : Grow}
+          TransitionProps={{ onExited }}
           aria-labelledby={titleId}
         >
           <DialogContent>
-            {header(true)}
+            {header(!hideCloseButton)}
             {children?.()}
           </DialogContent>
         </Dialog>
@@ -104,6 +121,7 @@ export const ResponsiveDialog: FC<{
           onClose={() => !disableClose && setOpen(false)}
           onOpen={() => setOpen(true)}
           transitionDuration={reducedMotion ? 150 : undefined}
+          SlideProps={{ onExited }}
           sx={{
             '& .MuiDrawer-paper': {
               height: drawerHeight ?? 'calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 4rem)',
@@ -118,7 +136,7 @@ export const ResponsiveDialog: FC<{
           <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-black/15 my-3" aria-hidden="true" />
           <div className="overflow-auto overscroll-contain h-full p-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
             {/* The drawer closes by swiping down or tapping outside; a titled one also gets a close button */}
-            {header(!!title)}
+            {header(!!title && !hideCloseButton)}
             {children?.()}
           </div>
         </SwipeableDrawer>

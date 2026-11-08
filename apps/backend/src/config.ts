@@ -56,7 +56,27 @@ const envSchema = z.object({
   // PostHog (for analytics API queries)
   POSTHOG_PROJECT_ID: optionalString,
   POSTHOG_API_KEY: optionalString,
+
+  // === Feature flags (cloud save) ===
+  // `off` is the kill switch and overrides every per-user override.
+  CLOUD_SAVE_MODE: z.preprocess(emptyStringToUndefined, z.enum(['off', 'allowlist', 'optin', 'on']).default('off')),
+  // Comma-separated, case-insensitive emails that get cloud save while the mode is not `off`.
+  CLOUD_SAVE_ALLOWLIST_EMAILS: optionalString,
+  // Server-side imports write into cloud saves; off until they are explicitly enabled.
+  SERVER_IMPORTS: z.preprocess(emptyStringToUndefined, z.enum(['on', 'off']).default('off')),
+  // Cloudflare edge cache purge (services/edge-cache.ts); both unset disables it
+  CLOUDFLARE_ZONE_ID: optionalString,
+  CLOUDFLARE_CACHE_PURGE_TOKEN: optionalString,
 })
+
+export const parseEmailAllowlist = (value: string | undefined): readonly string[] => [
+  ...new Set(
+    (value ?? '')
+      .split(',')
+      .map((email) => email.trim().toLowerCase())
+      .filter((email) => email.length > 0),
+  ),
+]
 
 export const deriveCrossSubDomainCookieDomain = ({
   authURL,
@@ -120,6 +140,15 @@ export const config = {
     projectId: env.POSTHOG_PROJECT_ID,
     apiKey: env.POSTHOG_API_KEY,
   },
+  featureFlags: {
+    cloudSaveMode: env.CLOUD_SAVE_MODE,
+    cloudSaveAllowlistEmails: parseEmailAllowlist(env.CLOUD_SAVE_ALLOWLIST_EMAILS),
+    serverImports: env.SERVER_IMPORTS === 'on',
+  },
+  edgeCache:
+    env.CLOUDFLARE_ZONE_ID && env.CLOUDFLARE_CACHE_PURGE_TOKEN
+      ? { zoneId: env.CLOUDFLARE_ZONE_ID, token: env.CLOUDFLARE_CACHE_PURGE_TOKEN }
+      : undefined,
 } as const
 
 export class AppConfig extends Context.Service<AppConfig, typeof config>()('dxrating/AppConfig') {}

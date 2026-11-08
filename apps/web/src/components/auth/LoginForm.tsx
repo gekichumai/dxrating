@@ -1,10 +1,10 @@
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { useResolvedTheme } from '@/utils/useResolvedTheme'
 import { Alert, Button, Chip, CircularProgress, Divider, TextField, useMediaQuery } from '@mui/material'
+import clsx from 'clsx'
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { Trans, useTranslation } from 'react-i18next'
 import { useEffectOnce as useMountEffect } from 'react-use'
 import { useWebHaptics } from 'web-haptics/react'
 import IconLogosGithub from '~icons/logos/github-icon'
@@ -13,6 +13,9 @@ import IconPasskey from '~icons/material-symbols/passkey'
 import { authClient } from '../../lib/auth-client'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
 import { PasswordVisibilityAdornment } from './PasswordVisibilityAdornment'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { ParaglideMessage } from '@inlang/paraglide-js-react'
+import { m } from '@/paraglide/messages'
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
 
@@ -34,12 +37,18 @@ export const LoginForm = ({
   idPrefix = 'auth',
   onPendingChange,
   onSuccess,
+  hideTitleFromMd = false,
 }: {
   idPrefix?: string
   onPendingChange?: (pending: boolean) => void
   onSuccess?: () => void
+  /**
+   * From md up, hides the sign-in heading visually but keeps it for screen readers (it still names the form), for a
+   * page that sets its own heading beside the form at that width
+   */
+  hideTitleFromMd?: boolean
 }) => {
-  const { t } = useTranslation(['auth'])
+  const locale = useLocale()
   const {
     register,
     handleSubmit: handleFormSubmit,
@@ -87,7 +96,7 @@ export const LoginForm = ({
 
   const onSubmit = async (data: LoginFormValues) => {
     if (waitingForTurnstile) {
-      setError(t('auth:form.captcha-pending'))
+      setError(m.auth_form_captchaPending({}, { locale }))
       return
     }
     setActiveProvider('email')
@@ -102,7 +111,7 @@ export const LoginForm = ({
         })
         if (error) throw error
         haptic.trigger('success')
-        toast.success(t('auth:sign-up.toast-success'))
+        toast.success(m.auth_signUp_toastSuccess({}, { locale }))
         setIsSignUp(false)
         setShowPassword(false)
       } else {
@@ -113,12 +122,12 @@ export const LoginForm = ({
         })
         if (error) throw error
         haptic.trigger('success')
-        toast.success(t('auth:login.toast-success'))
+        toast.success(m.auth_login_toastSuccess({}, { locale }))
         onSuccess?.()
       }
     } catch (e: unknown) {
       haptic.trigger('error')
-      setError(formatErrorMessage(e, t('auth:form.error-generic')))
+      setError(formatErrorMessage(e, m.auth_form_errorGeneric({}, { locale })))
     } finally {
       setActiveProvider(null)
       turnstileRef.current?.reset()
@@ -143,11 +152,11 @@ export const LoginForm = ({
       const { error } = await authClient.signIn.passkey()
       if (error) throw error
       haptic.trigger('success')
-      toast.success(t('auth:login.toast-success'))
+      toast.success(m.auth_login_toastSuccess({}, { locale }))
       onSuccess?.()
     } catch (e: unknown) {
       haptic.trigger('error')
-      setError(formatErrorMessage(e, t('auth:form.error-passkey')))
+      setError(formatErrorMessage(e, m.auth_form_errorPasskey({}, { locale })))
     } finally {
       setActiveProvider(null)
     }
@@ -173,21 +182,27 @@ export const LoginForm = ({
         onSubmit={handleFormSubmit(onSubmit)}
         noValidate
       >
-        <div className="text-center mb-1">
+        {/* A switch to sign-up still shows its heading, since the page around the form only talks about signing in */}
+        <div className={clsx('text-center mb-1', hideTitleFromMd && !isSignUp && 'md:sr-only')}>
           <h2 id={formTitleId} className="text-xl font-semibold leading-tight text-fg-1 m-0">
-            {isSignUp ? t('auth:sign-up.title') : t('auth:form.title')}
+            {isSignUp ? m.auth_signUp_title({}, { locale }) : m.auth_form_title({}, { locale })}
           </h2>
           <p className="text-sm text-fg-2 mt-1 mb-0 text-pretty">
-            {isSignUp ? t('auth:sign-up.subtitle') : t('auth:form.subtitle')}
+            {isSignUp ? m.auth_signUp_subtitle({}, { locale }) : m.auth_form_subtitle({}, { locale })}
           </p>
         </div>
 
         <p className="m-0 text-center text-xs leading-relaxed text-fg-2 text-pretty">
-          <Trans
-            t={t}
-            i18nKey="auth:terms.notice"
-            components={{
-              terms: <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="link" />,
+          <ParaglideMessage
+            message={m.auth_terms_notice}
+            inputs={{}}
+            options={{ locale }}
+            markup={{
+              terms: ({ children }) => (
+                <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="link">
+                  {children}
+                </a>
+              ),
             }}
           />
         </p>
@@ -209,7 +224,7 @@ export const LoginForm = ({
             endIcon={
               isLastUsed('github') ? (
                 <Chip
-                  label={t('auth:form.last-used')}
+                  label={m.auth_form_lastUsed({}, { locale })}
                   size="small"
                   color="primary"
                   className={LAST_USED_BUTTON_CHIP_CLASS}
@@ -221,7 +236,7 @@ export const LoginForm = ({
             className="!py-2.5 !text-sm"
             fullWidth
           >
-            {t('auth:form.continue-with-github')}
+            {m.auth_form_continueWithGithub({}, { locale })}
           </Button>
           <Button
             type="button"
@@ -232,7 +247,7 @@ export const LoginForm = ({
             endIcon={
               isLastUsed('google') ? (
                 <Chip
-                  label={t('auth:form.last-used')}
+                  label={m.auth_form_lastUsed({}, { locale })}
                   size="small"
                   color="primary"
                   className={LAST_USED_BUTTON_CHIP_CLASS}
@@ -244,7 +259,7 @@ export const LoginForm = ({
             className="!py-2.5 !text-sm"
             fullWidth
           >
-            {t('auth:form.continue-with-google')}
+            {m.auth_form_continueWithGoogle({}, { locale })}
           </Button>
           {!isSignUp && (
             <Button
@@ -256,7 +271,7 @@ export const LoginForm = ({
               endIcon={
                 isLastUsed('passkey') ? (
                   <Chip
-                    label={t('auth:form.last-used')}
+                    label={m.auth_form_lastUsed({}, { locale })}
                     size="small"
                     color="primary"
                     className={LAST_USED_BUTTON_CHIP_CLASS}
@@ -268,16 +283,21 @@ export const LoginForm = ({
               className="!py-2.5 !text-sm"
               fullWidth
             >
-              {t('auth:form.sign-in-with-passkey')}
+              {m.auth_form_signInWithPasskey({}, { locale })}
             </Button>
           )}
         </div>
 
         <Divider className="!my-1">
           {isLastUsed('email') ? (
-            <Chip label={t('auth:form.last-used')} size="small" color="primary" className={LAST_USED_CHIP_CLASS} />
+            <Chip
+              label={m.auth_form_lastUsed({}, { locale })}
+              size="small"
+              color="primary"
+              className={LAST_USED_CHIP_CLASS}
+            />
           ) : (
-            <span className="text-xs text-fg-2">{t('auth:form.or')}</span>
+            <span className="text-xs text-fg-2">{m.auth_form_or({}, { locale })}</span>
           )}
         </Divider>
 
@@ -285,13 +305,13 @@ export const LoginForm = ({
           <TextField
             id={emailId}
             {...register('email', {
-              required: t('auth:form.validation.email-required'),
+              required: m.auth_form_validation_emailRequired({}, { locale }),
               pattern: {
                 value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: t('auth:form.validation.email-invalid'),
+                message: m.auth_form_validation_emailInvalid({}, { locale }),
               },
             })}
-            label={t('auth:form.email')}
+            label={m.auth_form_email({}, { locale })}
             type="email"
             autoComplete={isSignUp ? 'email' : 'username webauthn'}
             required
@@ -304,13 +324,13 @@ export const LoginForm = ({
           <TextField
             id={passwordId}
             {...register('password', {
-              required: t('auth:form.validation.password-required'),
+              required: m.auth_form_validation_passwordRequired({}, { locale }),
               minLength: {
                 value: 8,
-                message: t('auth:form.validation.password-min-length'),
+                message: m.auth_form_validation_passwordMinLength({}, { locale }),
               },
             })}
-            label={t('auth:form.password')}
+            label={m.auth_form_password({}, { locale })}
             type={showPassword ? 'text' : 'password'}
             autoComplete={isSignUp ? 'new-password' : 'current-password webauthn'}
             required
@@ -323,7 +343,7 @@ export const LoginForm = ({
               endAdornment: (
                 <PasswordVisibilityAdornment
                   visible={showPassword}
-                  fieldLabel={t('auth:form.password')}
+                  fieldLabel={m.auth_form_password({}, { locale })}
                   inputId={passwordId}
                   onToggle={() => setShowPassword((visible) => !visible)}
                 />
@@ -340,7 +360,7 @@ export const LoginForm = ({
             onSuccess={(token) => {
               setTurnstileToken(token)
               // The "wait for the security check" message is stale once the check passes
-              setError((current) => (current === t('auth:form.captcha-pending') ? null : current))
+              setError((current) => (current === m.auth_form_captchaPending({}, { locale }) ? null : current))
             }}
             onExpire={() => setTurnstileToken(null)}
             options={{
@@ -362,11 +382,11 @@ export const LoginForm = ({
           fullWidth
         >
           {buttonLoading ? (
-            <CircularProgress size={20} color="inherit" aria-label={t('auth:form.pending')} />
+            <CircularProgress size={20} color="inherit" aria-label={m.auth_form_pending({}, { locale })} />
           ) : isSignUp ? (
-            t('auth:sign-up.label')
+            m.auth_signUp_label({}, { locale })
           ) : (
-            t('auth:form.continue')
+            m.auth_form_continue({}, { locale })
           )}
         </Button>
       </form>
@@ -380,13 +400,12 @@ export const LoginForm = ({
         fullWidth
         size="small"
       >
-        {isSignUp ? t('auth:form.has-account') : t('auth:form.no-account')}
+        {isSignUp ? m.auth_form_hasAccount({}, { locale }) : m.auth_form_noAccount({}, { locale })}
       </Button>
     </div>
   )
 }
 function ConditionalPasskey({ onSuccess }: { onSuccess?: () => void }) {
-  const { t } = useTranslation('auth')
   const haptic = useWebHaptics()
   useMountEffect(() => {
     let active = true
@@ -406,7 +425,7 @@ function ConditionalPasskey({ onSuccess }: { onSuccess?: () => void }) {
       if (!active || error) return
 
       haptic.trigger('success')
-      toast.success(t('auth:login.toast-success'))
+      toast.success(m.auth_login_toastSuccess({}))
       onSuccess?.()
     }
 

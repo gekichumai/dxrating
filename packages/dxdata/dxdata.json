@@ -89145,7 +89145,7 @@
                     "type": "std",
                     "difficulty": "advanced",
                     "level": "7+",
-                    "internalLevelValue": 7.0,
+                    "internalLevelValue": 7.7,
                     "noteDesigner": "-",
                     "noteCounts": {
                         "tap": 242,
@@ -89179,7 +89179,7 @@
                     "type": "std",
                     "difficulty": "expert",
                     "level": "10+",
-                    "internalLevelValue": 9.0,
+                    "internalLevelValue": 10.7,
                     "noteDesigner": "はっぴー",
                     "noteCounts": {
                         "tap": 384,
@@ -89213,7 +89213,7 @@
                     "type": "std",
                     "difficulty": "master",
                     "level": "13",
-                    "internalLevelValue": 13.0,
+                    "internalLevelValue": 13.3,
                     "noteDesigner": "Jack",
                     "noteCounts": {
                         "tap": 540,
@@ -256274,5 +256274,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-11-06T02:00:17.623611312+00:00"
+    "updateTime": "2026-11-07T10:02:55.402479527+00:00"
 }

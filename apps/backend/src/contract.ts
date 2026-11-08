@@ -1,4 +1,4 @@
-import { publicContractRoutes } from '@gekichumai/api-contract'
+import { privateContractRoutes, publicContractRoutes } from '@gekichumai/api-contract'
 import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
@@ -56,6 +56,7 @@ const ChartOgImageOutputSchema = z.object({
 
 export const appContract = oc.router({
   ...publicContractRoutes,
+  ...privateContractRoutes,
   maimai: {
     fetchRecords: oc
       .meta(

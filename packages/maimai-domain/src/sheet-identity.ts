@@ -19,8 +19,12 @@ export function formatLegacySheetId(identity: LegacySheetIdentity): string {
   return [identity.legacySongId, identity.type, identity.difficulty].join(LEGACY_SHEET_ID_SEPARATOR)
 }
 
-/** Parses a legacy sheet ID, as saved by DXRating before it moved to public sheet IDs */
-export function parseLegacySheetId(value: string): LegacySheetIdentity | null {
+/**
+ * Parses a legacy sheet ID, as saved by DXRating before it moved to public sheet IDs. Saved data is not validated, so
+ * anything other than a string (a missing `sheetId`) is not one.
+ */
+export function parseLegacySheetId(value: unknown): LegacySheetIdentity | null {
+  if (typeof value !== 'string') return null
   const parts = value.split(LEGACY_SHEET_ID_SEPARATOR)
   if (parts.length !== 3) return null
 

@@ -65,6 +65,7 @@ src/
 
 ### oRPC (`/api/v1/*`)
 
+- `GET /announcements` — Current and upcoming global announcements (every language and target; clients filter)
 - `GET /tags` — List tags, groups, and song associations
 - `POST /tags/attach` — Attach tag to song sheet (auth required)
 - `GET /tags/sheet` — List one sheet's tag associations with vote breakdowns, including buried ones
@@ -77,6 +78,13 @@ src/
 - `POST /aliases` — Create song alias (auth required)
 - `POST /monitoring/tunnel` — Sentry error tunnel
 - `POST /maimai/fetch-records` — Fetch MaimaiNET records
+- `GET /me/features`, `POST /me/features/cloud-save/opt-in` — Session-only cloud save flags (tagged `internal`, kept out of `/spec.json`)
+- Cloud save (`cloudSave.*`, tagged `internal`, behind `cloud_save`): `GET|POST /saves`, `PATCH|DELETE /saves/{id}`,
+  `GET /saves/{id}/changes`, `POST /saves/{id}/mutations`, `GET /saves/{id}/records/{sheetId}/events`,
+  `POST /saves/{id}/replace`, `GET|POST /saves/{id}/snapshots`, `GET /saves/{id}/imports`, `GET /imports/{jobId}`,
+  `GET /me/export` (streamed by a direct Hono route), `POST /saves/{id}/client-imports` (chunked client uploads,
+  `client_reported`), and the server imports `POST /saves/{id}/imports/lxns|diving-fish` (oRPC) and
+  `POST /saves/{id}/imports/maimai-net` (SSE, a direct Hono route), which also need `server_imports`.
 
 ### Direct Routes
 
@@ -110,6 +118,92 @@ Optional:
 - `VAULT_SECRET_PATH` — Optional vault secrets file
 - `MCP_ANALYTICS_SECRET` — HMAC secret of the daily-rotating MCP analytics distinct_id (random per process if unset)
 - `MCP_POSTHOG_KEY`, `MCP_POSTHOG_HOST`, `MCP_ANALYTICS_SAMPLE_RATE`, `MCP_ANALYTICS_DAILY_CAP` — MCP PostHog events (see `src/services/mcp/analytics.ts`)
+- `CLOUD_SAVE_MODE` — `off` (default) | `allowlist` | `optin` | `on`; see "Feature flags" below
+- `CLOUD_SAVE_ALLOWLIST_EMAILS` — Comma-separated emails that get cloud save while the mode is not `off` (verified emails only; email/password sign-ups are unverified, so grant those with `flag:set`)
+- `SERVER_IMPORTS` — `off` (default) | `on`; server-side imports into cloud saves
+- `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_CACHE_PURGE_TOKEN` — purge the edge's public Cache-Tags at startup and invalidate `dxdata` on each new publication (see `src/services/edge-cache.ts`). The token needs only Zone → Cache Purge → Purge on dxrating.net
+
+## Feature flags (cloud save, gekichumai/meta#17)
+
+`src/services/feature-flags.ts` (`FeatureFlags`) answers `isEnabled(flag, userId)`
+and caches each user's state in memory for 60 seconds. Precedence for
+`cloud_save`:
+
+1. `CLOUD_SAVE_MODE=off` is the kill switch and overrides everything.
+2. A `feature_flag_overrides` row decides for its user (`enabled=false` turns one user off).
+3. A verified email in `CLOUD_SAVE_ALLOWLIST_EMAILS` turns it on.
+4. Otherwise `on` enables everyone; `allowlist` and `optin` enable nobody.
+
+`server_imports` additionally needs `SERVER_IMPORTS=on` and cloud save; an
+`enabled=false` row turns one user off. It defaults to `off` so that enabling
+cloud save never also starts server-side writes into saves.
+
+Routes behind a flag use `requireSession` then `requireFeature(flag)` from
+`src/orpc-middleware.ts`; a disabled feature answers 404 NOT_FOUND. Their
+contracts live in `packages/api-contract/src/private/`, are tagged
+`['internal', 'cloud-save']` and never join `publicContractRoutes`.
+
+Grant or revoke a flag for one user (upserts an `admin` override; running
+servers see it within 60 seconds):
+
+```bash
+pnpm --filter @gekichumai/backend flag:set cloud_save owner@example.com on
+node dist/flag-set.js cloud_save owner@example.com off   # in the production image
+```
+
+### Cloud save services (`src/services/cloud-save/`)
+
+- Every write locks the save row `FOR UPDATE` (`lockSave`, waits bounded by `lock_timeout` 5 s -> `CloudSaveBusy`,
+  429) and goes through `RecordWriter` (`records.ts`): each
+  bumped row takes the next revision (`save.revision + k`), statements hold at most 1000 rows, and events are written
+  for effective changes only (plus the domain's `superseded` event for a superseded manual edit). Ownership is always `user_id`-scoped; another user's save is a plain 404.
+- `merge.ts` applies `@gekichumai/maimai-domain` `decideImportMerge` (shared by server and client jobs, PR 6);
+  `mutations.ts` applies `decideManualMutation` with the `score_mutations` idempotency ledger; `replace.ts` is the
+  explicit whole-document replace; `changes.ts` is the cursor pull; `export.ts` the streamed export.
+- `cleanup.ts` runs daily under the request runner (`index.ts`, only while `CLOUD_SAVE_MODE` is not `off`):
+  tombstones > 90 days (moving `tombstone_horizon`), events beyond 20 per record, ledger rows > 30 days, saves
+  soft-deleted > 30 days, snapshots beyond 100 per save. A transaction-scoped advisory lock keeps it to one
+  instance at a time.
+- Limits (`src/services/rate-limit.ts`, in memory per instance): `rateLimit` oRPC middleware answers 429 with
+  `Retry-After`; `writeConcurrency` lets a user run at most 2 write requests at a time (429 beyond), so waiting
+  writers cannot take the whole 5-connection pool; bodies are capped at 1 MB (2 MB for `replace` /
+  `client-imports`: a replace carries a whole save, up to 10000 records); snapshot `detail` is at most 16 deep and
+  32 KB of JSON.
+- Server imports (`server-imports.ts`, `upstream-imports.ts`, `net-import-route.ts`, design §7): the server fetches
+  maimai NET (JP/intl), LXNS (stored OAuth token) or the public Diving-Fish B50 and writes `verified` records itself;
+  the client never relays them. All or nothing: any failed fetch (after the #368 page retry) fails the job and writes
+  nothing. Records resolve through the published catalog (`import-catalog.ts`); unknown charts count as
+  `skippedUnknownSheet`. NET: 6/h and 30/day per user, 30/h per address, one per user and four in total at a time.
+  Jobs running for 15 minutes are failed as `abandoned` at startup, by the daily cleanup, and when they block a new
+  job. `client-imports.ts`: 5000 records per chunk, each chunk its own transaction, resumable by idempotency key.
+- Account binding (§10): every write (saves, mutations, replace, client and server imports, the NET import, the beta
+  opt-in) must name its account in `X-DXRating-Expected-User` (`CLOUD_SAVE_EXPECTED_USER_HEADER`), or it is answered
+  400; a session that is another account is answered 409 `{ reason: 'ACCOUNT_MISMATCH' }` before anything is written.
+  Reads check the header when sent. `requireExpectedUser` in `src/orpc-middleware.ts` runs after the feature guard, so
+  a disabled feature stays a 404; the opt-in checks it after the opt-in phase. The web sends it through
+  `privateApiClientFor(userId)`.
+- Credential hygiene (`src/lib/credential-hygiene.ts`, §7.2): SEGA IDs and passwords are never stored or logged. The
+  NET and LXNS routes get a scrubbing evlog logger; Sentry never attaches their bodies and scrubs every event,
+  breadcrumb and log (keys and the values of running NET requests); PostHog events are scrubbed the same way.
+  `src/test/credential-hygiene.test.ts` drives failing imports through every NET route and greps every channel.
+- `changes`: `since=0` is a full pull; its later pages pass `mode=full` (never reset by the tombstone horizon); the
+  last page's `nextSince` is the save's revision.
+
+### Backup gate and rollback
+
+The cloud save migrations (`*_feature_flags`, `*_cloud_save`) only add tables
+and indexes, and each folder carries a hand-written `down.sql` that the
+Drizzle migrator never reads. CI runs up -> every `down.sql` newest first ->
+up (`pnpm test:migration-roundtrip`).
+
+- Before the first production deploy that contains them: confirm the Coolify
+  Postgres backup schedule exists and that a restore from it has been tested,
+  then take a manual `pg_dump` right before deploying.
+- Rollback: set `CLOUD_SAVE_MODE=off`, roll back the image and keep the
+  tables. Old images run unchanged on the new schema.
+- Run a `down.sql` only after `pg_dump -t 'score_*' -t feature_flag_overrides`
+  has produced a verified backup; run them newest first. Each one also removes
+  its migration ledger row so a later deploy applies the migration again.
 
 ## Deployment
 
@@ -131,6 +225,7 @@ When working on Coolify deployment or integration, use context7 to query the Coo
 
 - API contracts defined in `contract.ts` using oRPC + Zod, implementations in `router.ts`
 - Auth context passed through oRPC handler context (`context.user`)
+- Authorization proofs (gdp-ts): functions that read or change one user's private data demand a proof about their exact arguments. See `src/proofs/README.md`.
 - Database schema changes go through Drizzle migrations (`drizzle-kit`)
 - ES modules with extensionless relative TypeScript imports. TypeScript uses `bundler` module resolution; esbuild resolves local modules into the production bundle. Keep extensions on actual output and asset paths.
 - CORS allows `localhost` for dev, `https://dxrating.net` for production, and `*.dxrating.pages.dev` for preview deployments

@@ -1,0 +1,19 @@
+/* The home page's version switcher on desktop. Below 1024px the full switcher (a large logo over the region chip) sits
+   centred above the navigation. From 1024px the header row is the same on every page (routes/__root.tsx): the switcher
+   on the left at the compact size, the navigation on the right, so the navigation does not move between pages and the
+   search starts above the fold. The sizes match .version-switcher--compact (index.css, VersionRegionSwitcher): a
+   34px logo and 6px of block padding, so the switcher is the same height as on every other page. Two classes each, to
+   outrank the single-class .version-switcher rules in index.css and the switcher's own padding utility. */
+@media (min-width: 1024px) {
+  .app-chrome--full .version-switcher__value {
+    flex-direction: row;
+  }
+
+  .app-chrome--full .version-switcher__logo {
+    height: 2.125rem;
+  }
+
+  html body .app-chrome--full .version-switcher {
+    padding-block: 6px;
+  }
+}

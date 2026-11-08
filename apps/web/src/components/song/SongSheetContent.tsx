@@ -1,5 +1,4 @@
 import { SERVER_BADGE_ORDER } from '@/models/constants'
-import { getArcadeSongsUrl } from '@/catalog/arcadeSongs'
 import { CommentActions } from '../comments/CommentActions'
 import { filterComments, useCommentVisibility } from '../comments/commentVisibility'
 import { MULTIVER_AVAILABLE_VERSIONS, TypeEnum, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
@@ -16,7 +15,6 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Trans, useTranslation } from 'react-i18next'
 import { useAsyncFn } from 'react-use'
 import useSWR from 'swr'
 import { match } from 'ts-pattern'
@@ -29,15 +27,15 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { FlattenedSheet } from '../../songs'
 import { formatSheetReleaseDateParts } from '../../utils/dateFormatting'
-import { calculateRating } from '../../utils/rating'
 import { useRenderedAt } from '../../utils/renderEnvironment'
-import { DXRank } from '../global/DXRank'
 import { MaterialSurface } from '../global/MaterialSurface'
+import { AchievementRatingTable } from '../sheet/AchievementRatingTable'
 import { SheetTags } from '../sheet/tags/SheetTags'
 import { SheetDifficulty } from '../sheet/SheetListItem'
-import { SHEET_TYPE_IMAGES, getSheetTypeAltTextKey } from '../sheet/sheetTypeAssets'
-
-const PRESET_ACHIEVEMENT_RATES = [100.5, 100, 99.5, 99, 98, 97, 94, 90, 80, 75, 70, 60, 50]
+import { SHEET_TYPE_IMAGES, getSheetTypeAltText } from '../sheet/sheetTypeAssets'
+import { useLocale } from '@/i18n/LocaleProvider'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
 
 // Hairline dividers only: rows carry no fill, so the glass panel behind them stays the one surface
 const tableSx = {
@@ -63,7 +61,7 @@ const Section: FC<PropsWithChildren<{ title: ReactNode }>> = ({ title, children 
 }
 
 const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const direction = match(delta)
     .when(
       (d) => d > 0,
@@ -76,10 +74,10 @@ const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
     .otherwise(() => 'neutral')
   const altText =
     delta > 0
-      ? t('sheet:internal-level-history.delta.increased')
+      ? m.sheet_internalLevelHistory_delta_increased({}, { locale })
       : delta < 0
-        ? t('sheet:internal-level-history.delta.decreased')
-        : t('sheet:internal-level-history.delta.unchanged')
+        ? m.sheet_internalLevelHistory_delta_decreased({}, { locale })
+        : m.sheet_internalLevelHistory_delta_unchanged({}, { locale })
 
   return (
     <img
@@ -91,22 +89,8 @@ const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
   )
 }
 
-const SheetAchievementRate: FC<{ value: number }> = ({ value }) => {
-  const integer = Math.floor(value)
-  const decimal = value % 1
-
-  return (
-    <span className="inline-flex items-center tabular-nums">
-      <span className="font-semibold">{integer}</span>
-      <span>.</span>
-      <span className={clsx(decimal === 0 && 'text-fg-2')}>{decimal.toFixed(4).slice(2)}</span>
-      <span>%</span>
-    </span>
-  )
-}
-
 const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const appVersion = useAppContextDXDataVersion()
   const scrollableContainer = useRef<HTMLDivElement>(null)
   const multiverInternalLevelValues = useMemo(
@@ -146,7 +130,7 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   }, [multiverInternalLevelValues])
 
   return (
-    <div className="relative overflow-x-auto -mx-1 px-1" ref={scrollableContainer}>
+    <div className="scroll-fade-x relative overflow-x-auto -mx-1 px-1" ref={scrollableContainer}>
       {multiverInternalLevelValues.filter((v) => v.internalLevelValue !== undefined).length > 0 ? (
         <Table size="small" sx={tableSx}>
           <TableHead>
@@ -163,7 +147,7 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                         ? '/images/versions/magical/logo.webp'
                         : `https://shama.dxrating.net/images/version-title/${VERSION_SLUG_MAP.get(version)}.png`
                     }
-                    alt={t('sheet:version-title-alt', { version })}
+                    alt={m.sheet_versionTitleAlt({ version }, { locale })}
                     className={clsx(
                       'h-40.75px w-83px min-w-[83px] -ml-1 touch-callout-none',
                       !available && 'opacity-50',
@@ -183,13 +167,13 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                       <span aria-hidden>{available ? '—' : '／'}</span>
                       <span className="sr-only">
                         {available
-                          ? t('sheet:internal-level-history.no-value')
-                          : t('sheet:internal-level-history.not-in-version')}
+                          ? m.sheet_internalLevelHistory_noValue({}, { locale })
+                          : m.sheet_internalLevelHistory_notInVersion({}, { locale })}
                       </span>
                     </span>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <span className="font-semibold tabular-nums">{internalLevelValue?.toFixed(1)}</span>
+                      <span className="font-semibold num">{internalLevelValue?.toFixed(1)}</span>
                       {delta !== undefined && <DeltaArrow delta={delta} />}
                     </div>
                   )}
@@ -199,14 +183,14 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           </TableBody>
         </Table>
       ) : (
-        <p className="m-0 text-sm text-fg-2">{t('sheet:internal-level-history.empty')}</p>
+        <p className="m-0 text-sm text-fg-2">{m.sheet_internalLevelHistory_empty({}, { locale })}</p>
       )}
     </div>
   )
 }
 
 const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t, i18n } = useTranslation(['auth', 'sheet', 'global'])
+  const locale = useLocale()
   const { session, user, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
   const visibility = useCommentVisibility(user?.id)
   const [content, setContent] = useState<string>('')
@@ -229,8 +213,8 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   })
   // Comments load on the client only, so formatting them in the app locale cannot cause a hydration mismatch
   const dateFormat = useMemo(
-    () => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }),
-    [i18n.language],
+    () => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }),
+    [locale],
   )
 
   const [{ loading: submitting }, handleSubmit] = useAsyncFn(async () => {
@@ -259,8 +243,8 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       <div className="flex gap-2 relative">
         <TextField
           className="flex-grow"
-          placeholder={t('sheet:comments.placeholder')}
-          inputProps={{ 'aria-label': t('sheet:comments.input-label') }}
+          placeholder={m.sheet_comments_placeholder({}, { locale })}
+          inputProps={{ 'aria-label': m.sheet_comments_inputLabel({}, { locale }) }}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           minRows={1}
@@ -270,7 +254,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           disabled={!session}
         />
         <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
-          {submitting ? <CircularProgress size={24} /> : t('global:submit')}
+          {submitting ? <CircularProgress size={24} /> : m.global_submit({}, { locale })}
         </Button>
 
         {!session && (
@@ -280,7 +264,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             onClick={openLoginDialog}
           >
             <span className="font-semibold text-sm text-accent-strong underline underline-offset-2">
-              {t('auth:form.login-or-register-to-comment')}
+              {m.auth_form_loginOrRegisterToComment({}, { locale })}
             </span>
           </button>
         )}
@@ -294,10 +278,10 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             <li key={comment.id} className="glass-inset flex flex-col gap-1 px-3 py-2">
               <div className="text-fg-2 flex items-center gap-1">
                 <span className="text-sm font-semibold text-fg-1">
-                  {comment.display_name ?? t('sheet:comments.anonymous')}
+                  {comment.display_name ?? m.sheet_comments_anonymous({}, { locale })}
                 </span>
                 <CommentActions comment={comment} />
-                <time className="text-xs ml-auto tabular-nums" dateTime={comment.created_at}>
+                <time className="text-xs ml-auto num" dateTime={comment.created_at}>
                   {dateFormat.format(new Date(comment.created_at))}
                 </time>
               </div>
@@ -312,7 +296,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           ))}
         </ul>
       ) : (
-        <p className="glass-inset m-0 p-4 text-center text-sm text-fg-2">{t('sheet:comments.empty')}</p>
+        <p className="glass-inset m-0 p-4 text-center text-sm text-fg-2">{m.sheet_comments_empty({}, { locale })}</p>
       )}
     </div>
   )
@@ -320,7 +304,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
 /** The utage kind (宴 / 協 / 光 …) as the list shows it, since utage charts have no difficulty pill */
 const UtageKindBadge: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const kind = sheet.difficulty.replace(/[【】]/g, '')
   return (
     <span className="relative inline-flex h-26px w-95.875px items-center justify-center select-none">
@@ -333,18 +317,18 @@ const UtageKindBadge: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       <span className="relative text-white text-xs text-shadow-[0_1px_0_rgb(0_0_0_/_0.35)]" aria-hidden>
         {kind}
       </span>
-      <span className="sr-only">{`${t(getSheetTypeAltTextKey(sheet.type))} ${kind}`}</span>
+      <span className="sr-only">{`${getSheetTypeAltText(sheet.type, locale)} ${kind}`}</span>
     </span>
   )
 }
 
 /** The chart at a glance: difficulty and internal level, release date and tags (sits under the chart tabs) */
 export const SongSheetSummary: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t, i18n } = useTranslation(['sheet'])
+  const locale = useLocale()
   const renderedAt = useRenderedAt()
   const releaseDateParts = useMemo(
-    () => (sheet.releaseDate ? formatSheetReleaseDateParts(sheet.releaseDate, i18n.language, renderedAt) : null),
-    [sheet.releaseDate, i18n.language, renderedAt],
+    () => (sheet.releaseDate ? formatSheetReleaseDateParts(sheet.releaseDate, locale, renderedAt) : null),
+    [sheet.releaseDate, locale, renderedAt],
   )
 
   return (
@@ -353,12 +337,12 @@ export const SongSheetSummary: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         {sheet.isTypeUtage ? (
           <>
             <UtageKindBadge sheet={sheet} />
-            <span className="text-2xl font-semibold leading-tight tabular-nums text-fg-1">{sheet.level}</span>
+            <span className="text-2xl font-semibold leading-tight display-num text-fg-1">{sheet.level}</span>
           </>
         ) : (
           <>
             <SheetDifficulty difficulty={sheet.difficulty} serverIds={sheet.serverIds} isLocked={sheet.isLocked} />
-            <span className="text-2xl font-semibold leading-tight tabular-nums text-fg-1">
+            <span className="text-2xl font-semibold leading-tight display-num text-fg-1">
               {sheet.internalLevelValue.toFixed(1)}
             </span>
           </>
@@ -372,7 +356,7 @@ export const SongSheetSummary: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         </p>
       )}
 
-      {releaseDateParts && <p className="m-0 text-sm text-fg-2">{t('sheet:release-date', releaseDateParts)}</p>}
+      {releaseDateParts && <p className="m-0 text-sm text-fg-2">{m.sheet_releaseDate(releaseDateParts, { locale })}</p>}
 
       <div className="flex flex-wrap gap-1">
         <SheetTags sheet={sheet} />
@@ -383,7 +367,11 @@ export const SongSheetSummary: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
 const DetailRow: FC<PropsWithChildren<{ label: ReactNode; indent?: boolean }>> = ({ label, indent, children }) => (
   <TableRow>
-    <TableCell component="th" scope="row" className={clsx('w-2/5 !font-normal !text-fg-2', indent && '!pl-4')}>
+    <TableCell
+      component="th"
+      scope="row"
+      className={clsx('w-2/5 lg:w-[9em] lg:whitespace-nowrap !font-normal !text-fg-2', indent && '!pl-4')}
+    >
       {label}
     </TableCell>
     <TableCell>{children}</TableCell>
@@ -392,8 +380,16 @@ const DetailRow: FC<PropsWithChildren<{ label: ReactNode; indent?: boolean }>> =
 
 const NOTE_TYPES = ['tap', 'hold', 'slide', 'touch', 'break'] as const
 
+const NOTE_TYPE_LABELS = {
+  tap: m.sheet_details_notesStatistics_tap,
+  hold: m.sheet_details_notesStatistics_hold,
+  slide: m.sheet_details_notesStatistics_slide,
+  touch: m.sheet_details_notesStatistics_touch,
+  break: m.sheet_details_notesStatistics_break,
+} satisfies Record<(typeof NOTE_TYPES)[number], PlainMessage>
+
 const RegionalAvailability: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   return (
     <ul className="m-0 p-0 list-none flex flex-wrap items-center gap-1.5">
       {SERVER_BADGE_ORDER.map((region) => {
@@ -419,8 +415,8 @@ const RegionalAvailability: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             </span>
             <span className="sr-only">
               {available
-                ? t('sheet:details.region-available', { region: label })
-                : t('sheet:details.region-unavailable', { region: label })}
+                ? m.sheet_details_regionAvailable({ region: label }, { locale })
+                : m.sheet_details_regionUnavailable({ region: label }, { locale })}
             </span>
           </li>
         )
@@ -431,44 +427,34 @@ const RegionalAvailability: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
 export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }> = memo(
   ({ sheet, isActive = true }) => {
-    const { t } = useTranslation(['sheet', 'song', 'global'])
-    const ratings = useMemo(
-      () =>
-        [...PRESET_ACHIEVEMENT_RATES]
-          .sort((a, b) => b - a)
-          .map((rate) => ({
-            achievementRate: rate,
-            rating: calculateRating(sheet.internalLevelValue, rate),
-          })),
-      [sheet.internalLevelValue],
-    )
+    const locale = useLocale()
     const designer = sheet.noteDesigner && sheet.noteDesigner !== '-' ? sheet.noteDesigner : '—'
 
     return (
       <>
         {!sheet.isTypeUtage && (
-          <Section title={t('sheet:internal-level-history.title')}>
+          <Section title={m.sheet_internalLevelHistory_title({}, { locale })}>
             <InternalLevelHistory sheet={sheet} />
           </Section>
         )}
 
-        <Section title={t('sheet:details.title')}>
-          <Table size="small" sx={tableSx} className="tabular-nums">
+        <Section title={m.sheet_details_title({}, { locale })}>
+          <Table size="small" sx={tableSx} className="num">
             <TableBody>
-              <DetailRow label={t('sheet:details.category')}>
+              <DetailRow label={m.sheet_details_category({}, { locale })}>
                 <span lang="ja">{sheet.category}</span>
               </DetailRow>
-              <DetailRow label={t('sheet:details.song-artist')}>
+              <DetailRow label={m.sheet_details_songArtist({}, { locale })}>
                 <span lang="ja" translate="no" className="break-words">
                   {sheet.artist}
                 </span>
               </DetailRow>
-              {sheet.version && <DetailRow label={t('song:hub.version')}>{sheet.version}</DetailRow>}
+              {sheet.version && <DetailRow label={m.song_hub_version({}, { locale })}>{sheet.version}</DetailRow>}
 
               {!sheet.isTypeUtage && (
                 <>
-                  <DetailRow label={t('sheet:details.bpm')}>{sheet.bpm}</DetailRow>
-                  <DetailRow label={t('sheet:details.chart-designer')}>
+                  <DetailRow label={m.sheet_details_bpm({}, { locale })}>{sheet.bpm}</DetailRow>
+                  <DetailRow label={m.sheet_details_chartDesigner({}, { locale })}>
                     <span translate="no" className="break-words">
                       {designer}
                     </span>
@@ -476,11 +462,11 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
 
                   {(sheet.noteCounts.tap ?? 0) > 0 && (
                     <>
-                      <DetailRow label={t('sheet:details.notes-statistics.title')}>
+                      <DetailRow label={m.sheet_details_notesStatistics_title({}, { locale })}>
                         <span className="font-semibold">{sheet.noteCounts.total?.toLocaleString('en-US')}</span>
                       </DetailRow>
                       {NOTE_TYPES.map((noteType) => (
-                        <DetailRow key={noteType} label={t(`sheet:details.notes-statistics.${noteType}`)} indent>
+                        <DetailRow key={noteType} label={NOTE_TYPE_LABELS[noteType]({}, { locale })} indent>
                           {sheet.noteCounts[noteType] ?? 0}
                         </DetailRow>
                       ))}
@@ -489,83 +475,33 @@ export const SongSheetContent: FC<{ sheet: FlattenedSheet; isActive?: boolean }>
                 </>
               )}
 
-              <DetailRow label={t('sheet:details.regional-availability')}>
+              <DetailRow label={m.sheet_details_regionalAvailability({}, { locale })}>
                 <RegionalAvailability sheet={sheet} />
               </DetailRow>
 
-              <DetailRow label={t('sheet:details.unlock')}>
+              <DetailRow label={m.sheet_details_unlock({}, { locale })}>
                 {sheet.isLocked ? (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-status-warning text-on-accent text-xs font-semibold">
                     <MdiLock aria-hidden className="h-3.5 w-3.5" />
-                    {t('sheet:details.unlock-status.required')}
+                    {m.sheet_details_unlockStatus_required({}, { locale })}
                   </span>
                 ) : (
-                  t('sheet:details.unlock-status.not-required')
+                  m.sheet_details_unlockStatus_notRequired({}, { locale })
                 )}
               </DetailRow>
             </TableBody>
           </Table>
-
-          <p className="m-0 text-xs text-fg-2 text-right">
-            <Trans
-              i18nKey="sheet:details.credits"
-              components={{
-                link: (
-                  <a href={getArcadeSongsUrl(sheet)} rel="noreferrer" target="_blank" className="link">
-                    arcade-songs.zetaraku.dev
-                  </a>
-                ),
-              }}
-            />
-          </p>
         </Section>
 
         {isActive && (
-          <Section title={t('sheet:comments.title')}>
+          <Section title={m.sheet_comments_title({}, { locale })}>
             <Comments sheet={sheet} />
           </Section>
         )}
 
         {!sheet.isTypeUtage && (
-          <Section title={t('sheet:details.achievement-to-rating.title')}>
-            <Table className="tabular-nums" size="small" sx={tableSx}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t('sheet:details.achievement-to-rating.achievement')}</TableCell>
-                  <TableCell>{t('sheet:details.achievement-to-rating.rating')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {ratings.map((rating, i) => {
-                  const nextRating = i === ratings.length - 1 ? null : ratings[i + 1]
-                  const step = nextRating ? rating.rating.ratingAwardValue - nextRating.rating.ratingAwardValue : null
-
-                  return (
-                    <TableRow key={rating.achievementRate}>
-                      <TableCell component="th" scope="row" className="!font-normal">
-                        <div className="flex items-center gap-1">
-                          <DXRank rank={rating.rating.rank} className="h-8" />
-                          <SheetAchievementRate value={rating.achievementRate} />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">{rating.rating.ratingAwardValue}</span>
-                          {step !== null && (
-                            <span className="glass-inset rounded-[var(--radius-xs)] px-1 text-xs text-fg-2">
-                              <span aria-hidden>+{step}</span>
-                              <span className="sr-only">
-                                {t('sheet:details.achievement-to-rating.step', { value: step })}
-                              </span>
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+          <Section title={m.sheet_details_achievementToRating_title({}, { locale })}>
+            <AchievementRatingTable internalLevelValue={sheet.internalLevelValue} />
           </Section>
         )}
       </>

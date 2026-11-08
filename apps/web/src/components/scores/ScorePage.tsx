@@ -1,3 +1,4 @@
+import { Breadcrumb } from '@/components/completion/TableChrome'
 import { Link } from '@tanstack/react-router'
 import clsx from 'clsx'
 import type { CSSProperties, FC, ReactNode } from 'react'
@@ -6,26 +7,47 @@ import { DIFFICULTIES } from '@/models/difficulties'
 
 /**
  * Shared frame for the score-derived pages (top records, level progress, rating boosts, random chart), so they line
- * up at the same width, gutter and heading position, and show empty and demo states the same way.
+ * up at the same width, gutter and heading position, and show empty and demo states the same way. On desktop the top
+ * padding matches `flex-container` (py-4), so the heading sits at the same height as on the chart list pages.
+ *
+ * `me` is the one width for every `/me/*` page (records, progress, recommend), so moving between them never shifts
+ * the content: a readable column on tablets, where the records list is still cards, and from `lg` the site's
+ * `page-max-width` (uno.config.ts), the width the header, /rating and /plates use, so the heading lines up with the
+ * header logo. Every new `/me` page uses it; do not give one its own width.
  */
-export const ScorePageFrame: FC<{ width?: '3xl' | '5xl'; children: ReactNode }> = ({ width = '3xl', children }) => (
+const FRAME_WIDTHS = {
+  '3xl': 'max-w-3xl',
+  '5xl': 'max-w-5xl',
+  me: 'max-lg:max-w-3xl page-max-width',
+} as const
+
+export const ScorePageFrame: FC<{ width?: keyof typeof FRAME_WIDTHS; children: ReactNode }> = ({
+  width = '3xl',
+  children,
+}) => (
   <div
     className={clsx(
-      'mx-auto w-full flex flex-col gap-4 pt-2 pb-global',
+      'mx-auto w-full flex flex-col gap-4 pt-2 lg:pt-4 pb-global',
       'pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
-      width === '5xl' ? 'max-w-5xl' : 'max-w-3xl',
+      FRAME_WIDTHS[width],
     )}
   >
     {children}
   </div>
 )
 
-export const ScorePageHeader: FC<{ title: ReactNode; description?: ReactNode; children?: ReactNode }> = ({
-  title,
-  description,
-  children,
-}) => (
+/**
+ * A score page's heading. The breadcrumb (DXRating › the page, by default) is the way back to the rest of the site:
+ * these pages are not tabs of the main navigation, so nothing else marks where they sit.
+ */
+export const ScorePageHeader: FC<{
+  title: ReactNode
+  description?: ReactNode
+  children?: ReactNode
+  breadcrumb?: { href?: string; label: ReactNode }[]
+}> = ({ title, description, children, breadcrumb }) => (
   <header className="flex flex-col gap-1">
+    <Breadcrumb items={breadcrumb ?? [{ label: title }]} />
     <h1 className="page-title m-0">{title}</h1>
     {description && <p className="page-description m-0">{description}</p>}
     {children}

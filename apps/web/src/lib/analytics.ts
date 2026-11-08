@@ -18,7 +18,7 @@ export type SheetViewSource =
   | 'unknown'
 
 /** Where a share image was exported to */
-export type ShareImageOutcome = 'shared' | 'downloaded' | 'cancelled' | 'failed'
+export type ShareImageOutcome = 'viewed' | 'shared' | 'downloaded' | 'copied' | 'cancelled' | 'failed'
 export type ToplistKind = 'ap' | 'app' | 'fc' | 'fcp' | 'fdx' | 'fdxp' | 'highest' | 'dx_score'
 export type RatingToolKind = 'rating_for_achievement' | 'achievement_for_rating' | 'rating_table'
 export type RatingImportMode = 'merge' | 'replace'
@@ -44,7 +44,27 @@ type SheetProperties = {
   sheet_difficulty: string
 }
 
-type AnalyticsEventProperties = {
+/** How the first sign-in migration went (§10): a new save, merged into one, the cloud save only, or replaced it */
+export type CloudSaveMigrationMode = 'fresh' | 'merge' | 'cloud_only' | 'replace'
+
+/**
+ * Cloud save events (design §12.3), counted by `$device_id`. Their properties are kinds and counts only: never an
+ * account, save, job or chart ID, a name or a value.
+ */
+type CloudSaveEventProperties = {
+  /** This device turned cloud save on: the beta opt-in, or a first save activated by the migration */
+  cloudsave_enabled: { via: 'opt_in' | 'migration' }
+  cloudsave_migration_started: { mode: CloudSaveMigrationMode; record_count: number }
+  cloudsave_migration_succeeded: { mode: CloudSaveMigrationMode; record_count: number; duration_ms: number }
+  cloudsave_migration_failed: { mode: CloudSaveMigrationMode; error_code: string; duration_ms: number }
+  /** An import job of a cloud save finished; `source` is the job's source (`maimai-net-jp`, `dxrating-json`…) */
+  import_job_succeeded: { source: string; fetched_by: 'server' | 'client' }
+  import_job_failed: { source: string; fetched_by: 'server' | 'client' }
+  /** A sync issue (a change the server did not take) was shown for the first time on this page */
+  sync_conflict_shown: { kind: 'superseded' | 'rejected' }
+}
+
+type AnalyticsEventProperties = CloudSaveEventProperties & {
   about_dialog_opened: Record<string, never>
   add_sheet_alt_name_button_clicked: SheetProperties
   locale_selector_item_clicked: {
@@ -83,8 +103,11 @@ type AnalyticsEventProperties = {
     entry_count_before: number
     sheet_id: string
   }
+  rating_onboarding_action_clicked: {
+    action: 'maimai_net' | 'manual'
+  }
   rating_calculator_view_changed: {
-    setting: 'compact_mode' | 'show_only_b50' | 'ap50'
+    setting: 'show_only_b50' | 'ap50'
     enabled: boolean
   }
   rating_exported: {
@@ -133,6 +156,10 @@ type AnalyticsEventProperties = {
   sheet_search_clear_button_clicked: {
     previous_query_length: number
     result_count: number
+  }
+  sheet_list_layout_changed: {
+    layout: 'list' | 'grid'
+    previous_layout: 'list' | 'grid'
   }
   sheet_search_performed: {
     query_length: number

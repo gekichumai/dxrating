@@ -1,16 +1,18 @@
 import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
+import { announcementsContract } from './announcements.ts'
+import { SUPPORTED_LOCALES } from './locales.ts'
 
 const oc = contractBuilder.errors({})
 
 /**
  * A localized string is an object mapping language codes to translated strings.
- * Supported language codes: "en", "ja", "zh-Hans", "zh-Hant"
+ * Keys are the tags of `SUPPORTED_LOCALES` (locales.ts).
  */
 export const LocalizedStringSchema = z
   .record(z.string(), z.string())
-  .describe('Localized string. Keys are language codes: "en", "ja", "zh-Hans", "zh-Hant"')
+  .describe(`Localized string. Keys are language codes: ${SUPPORTED_LOCALES.map((tag) => `"${tag}"`).join(', ')}`)
 
 export const MaimaiNetRegionStatusSchema = z.object({
   status: z.enum(['ok', 'maintenance', 'unknown']),
@@ -335,6 +337,7 @@ export const ArcadeVenueDetailInputSchema = z.object({
 })
 
 export const publicContractRoutes = {
+  announcements: announcementsContract,
   tags: {
     list: oc
       .meta(
@@ -553,6 +556,19 @@ export const publicContractRoutes = {
         }),
       )
       .output(z.object({ url: z.string() })),
+    complete: oc
+      .meta(
+        openapi({
+          method: 'POST',
+          path: '/io/import/lxns/complete',
+          summary: 'Finish connecting LXNS with the code and state from the OAuth callback',
+          description:
+            'Requires the session of the user who started the authorization. The state is consumed on every call; a different or missing session fails with FORBIDDEN or UNAUTHORIZED (`data.reason: session_mismatch | not_signed_in`) and saves nothing. An unknown, reused or expired state fails with BAD_REQUEST (`data.reason: invalid_state`).',
+          tags: ['Import'],
+        }),
+      )
+      .input(z.object({ code: z.string().min(1).max(2048), state: z.string().min(1).max(256) }))
+      .output(z.object({ success: z.literal(true) })),
     status: oc
       .meta(
         openapi({

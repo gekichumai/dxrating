@@ -8,7 +8,7 @@ import { Database, databaseLayer } from '../db/index'
 import { HttpClient, HttpClientLive, HttpError } from '../services/http-client'
 import {
   disconnect,
-  exchangeCodeForTokens,
+  completeAuthorization,
   fetchPlayerScores,
   generateAuthorizationUrl,
   getConnectionStatus,
@@ -95,13 +95,13 @@ describe('LXNS Effect service', () => {
     upstream.mockResolvedValueOnce(envelope(tokenData))
 
     const results = await Promise.allSettled([
-      run(exchangeCodeForTokens('code', state)),
-      run(exchangeCodeForTokens('code', state)),
+      run(completeAuthorization(userId, 'code', state)),
+      run(completeAuthorization(userId, 'code', state)),
     ])
 
     expect(results.filter((result) => result.status === 'fulfilled')).toEqual([{ status: 'fulfilled', value: userId }])
     const rejected = results.find((result) => result.status === 'rejected')
-    expect(rejected).toMatchObject({ reason: { _tag: 'LxnsError', message: 'Invalid or expired OAuth state' } })
+    expect(rejected).toMatchObject({ reason: { _tag: 'LxnsStateInvalid', message: 'Invalid or expired OAuth state' } })
     expect(upstream).toHaveBeenCalledTimes(1)
     const request = upstream.mock.calls[0]
     expect(String(request[0])).toBe('https://maimai.lxns.net/api/v0/oauth/token')
@@ -130,7 +130,8 @@ describe('LXNS Effect service', () => {
       new Date(Date.now() - 11 * 60_000).toISOString(),
     ])
 
-    await expect(run(exchangeCodeForTokens('code', 'expired-state'))).rejects.toMatchObject({
+    await expect(run(completeAuthorization(userId, 'code', 'expired-state'))).rejects.toMatchObject({
+      _tag: 'LxnsStateInvalid',
       message: 'OAuth state expired',
     })
     expect((await pool.query('SELECT state FROM lxns_oauth_states')).rows).toEqual([])
@@ -141,7 +142,9 @@ describe('LXNS Effect service', () => {
     const authorization = new URL(await run(generateAuthorizationUrl(userId)))
     upstream.mockResolvedValueOnce(envelope({ access_token: 'incomplete' }))
 
-    await expect(run(exchangeCodeForTokens('code', authorization.searchParams.get('state')!))).rejects.toMatchObject({
+    await expect(
+      run(completeAuthorization(userId, 'code', authorization.searchParams.get('state')!)),
+    ).rejects.toMatchObject({
       _tag: 'LxnsError',
       message: 'Invalid LXNS token response',
     })
@@ -248,7 +251,7 @@ describe('LXNS Effect service', () => {
       const controller = new AbortController()
       const workflow =
         operation === 'exchange'
-          ? exchangeCodeForTokens('code', state!).pipe(Effect.asVoid)
+          ? completeAuthorization(userId, 'code', state!).pipe(Effect.asVoid)
           : fetchPlayerScores(userId).pipe(Effect.asVoid)
       const response = run(workflow, { signal: controller.signal })
       const rejected = expect(response).rejects.toBeDefined()

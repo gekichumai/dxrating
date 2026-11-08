@@ -1,13 +1,11 @@
-import { HeadContent, Outlet, Scripts, createRootRoute, useLocation, useRouter } from '@tanstack/react-router'
+import { HeadContent, Outlet, Scripts, createRootRoute, useRouter } from '@tanstack/react-router'
 import { CircularProgress } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import i18n from 'i18next'
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
 import clsx from 'clsx'
-import { type CSSProperties, Suspense, useEffect, useMemo, useRef } from 'react'
+import { type CSSProperties, Suspense, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
-import { I18nextProvider, useTranslation } from 'react-i18next'
 import { NetImportSettingsProvider } from '@/components/rating/io/import/NetImportSettingsContext'
 import { NetImportProgress } from '@/components/rating/io/import/NetImportProgress'
 import { ImportReviewHost } from '@/components/rating/io/import/ImportReviewDialog'
@@ -18,22 +16,39 @@ import { VersionBackground } from '@/components/global/backgrounds/VersionBackgr
 import { VersionRegionSwitcher } from '@/components/global/preferences/VersionRegionSwitcher'
 import { AppTabs } from '@/components/layout/AppTabs'
 import { ThemedBody } from '@/components/layout/ThemedBody'
+import { useResolvedPathname } from '@/components/layout/useResolvedPathname'
+import { NavigationProgress } from '@/components/layout/NavigationProgress'
+import { SkipToContentLink } from '@/components/layout/SkipToContentLink'
+import { NavigationOriginTracker } from '@/components/layout/navigationOrigins'
+import { ScrollRestorationKeeper } from '@/components/layout/ScrollRestorationKeeper'
 import { TopBar } from '@/components/layout/TopBar'
 import { VersionCustomizedThemeProvider } from '@/components/layout/VersionCustomizedThemeProvider'
 import { RegionVersionUpdatePrompt } from '@/components/global/preferences/RegionVersionUpdatePrompt'
+import { AnnouncementBanners } from '@/components/global/announcements/AnnouncementBanner'
+import { NoticeStack } from '@/components/global/NoticeStack'
 import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { CatalogProvider } from '@/catalog/CatalogContext'
 import { loadCatalogMeta } from '@/catalog/catalogSource'
-import { createServerI18n } from '@/setup/init-i18n'
+import { LocaleProvider, useLocale } from '@/i18n/LocaleProvider'
 import { buildNotFoundSeoMeta, buildRootSeoMeta, resolveRootHeadState, resolveSeoLocale } from '@/utils/seo'
 import { buildRootHeadLinks } from '@/utils/rootHeadLinks'
 import { useVersionTheme } from '@/utils/useVersionTheme'
 import { useThemeColorSync } from '@/utils/useThemeColorSync'
+import { useRevealFocusInScrollFade } from '@/utils/useRevealFocusInScrollFade'
 import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
 import { THEME_INLINE_SCRIPT } from '@/setup/theme-script'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
+// All app CSS is global and ships as one stylesheet: the base styles first, then utilities, then page styles whose
+// classes are scoped to their page (rating-table, legal-*)
+import '@/index.css'
 import 'virtual:uno.css'
+import '@/components/layout/app-chrome.css'
+import '@/components/layout/navigation-feedback.css'
+import '@/pages/rating-table.css'
+import '@/pages/legal.css'
+import type { PlainMessage } from '@/i18n/message'
+import { m } from '@/paraglide/messages'
 
 const queryClient = new QueryClient()
 
@@ -92,17 +107,18 @@ const isLegalPath = (pathname: string) => pathname === '/privacy-policy' || path
 
 /**
  * The site header: one tinted-glass band (accent solid only behind the status bar) holding the top row and, on app
- * pages, the version switcher and primary navigation. The switcher is full size on the home page only; inner pages get
- * the compact row so their content starts near the top.
+ * pages, the version switcher and primary navigation. Below 1024px the switcher is full size on the home page only;
+ * inner pages get the compact row so their content starts near the top. From 1024px every page gets the same row, so
+ * the navigation stays in place between pages. Keyed on the page on screen, not the pending destination, so the
+ * header keeps its size until the next page renders (useResolvedPathname).
  */
 function RootLayout() {
-  const { pathname } = useLocation()
+  const pathname = useResolvedPathname()
+  useRevealFocusInScrollFade()
 
   const isLegalPage = isLegalPath(pathname)
   const isDevelopersPage = pathname === '/developers'
-  const isSongPage = pathname.startsWith('/songs/')
   const showAppChrome = !isDevelopersPage && !isLegalPage
-  const showTabs = showAppChrome && !isSongPage
   const compact = pathname !== '/'
 
   return (
@@ -111,12 +127,14 @@ function RootLayout() {
       {showAppChrome && (
         <div
           className={clsx(
-            'page-gutter flex items-center justify-center pt-3',
-            compact ? 'flex-row flex-wrap gap-2 md:gap-3' : 'app-chrome--full flex-col gap-3 sm:pt-4',
+            // From 1024px one row on every page: the switcher on the left, the navigation on the right, under the site
+            // name and the action pill. The home page's switcher takes the compact size there (layout/app-chrome.css)
+            'page-gutter flex items-center justify-center pt-3 lg:flex-row lg:flex-nowrap lg:justify-between',
+            compact ? 'flex-row flex-wrap gap-2 md:gap-3' : 'app-chrome--full flex-col gap-3 sm:pt-4 lg:pt-3',
           )}
         >
           <VersionRegionSwitcher compact={compact} />
-          {showTabs && <AppTabs />}
+          {showAppChrome && <AppTabs />}
         </div>
       )}
     </header>
@@ -149,8 +167,17 @@ function RouteChangeAnnouncer() {
   return <output ref={announcerRef} aria-live="polite" aria-atomic="true" className="sr-only" />
 }
 
+// Better Auth's ?error= codes that have their own copy; any other code falls back to the default message
+const OAUTH_ERRORS: Partial<Record<string, PlainMessage>> = {
+  email_doesnt_match: m.auth_userProfile_oauthError_email_doesnt_match,
+  unable_to_link_account: m.auth_userProfile_oauthError_unable_to_link_account,
+  account_already_linked_to_different_user: m.auth_userProfile_oauthError_account_already_linked_to_different_user,
+  default: m.auth_userProfile_oauthError_default,
+  access_denied: m.auth_userProfile_oauthError_access_denied,
+}
+
 function OAuthErrorHandler() {
-  const { t } = useTranslation(['auth'])
+  const locale = useLocale()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -163,10 +190,10 @@ function OAuthErrorHandler() {
     console.warn('[oauth] sign-in returned an error', error, params.get('error_description') ?? '')
     if (error === 'access_denied') {
       // Cancelling at the provider is a choice, not a failure
-      toast(t('auth:user-profile.oauth-error.access_denied'), { id: 'oauth-error' })
+      toast(m.auth_userProfile_oauthError_access_denied({}), { id: 'oauth-error' })
     } else {
-      const message = t(`auth:user-profile.oauth-error.${error}` as const, { defaultValue: '' })
-      toast.error(message || t('auth:user-profile.oauth-error.default'), { id: 'oauth-error' })
+      const message = Object.hasOwn(OAUTH_ERRORS, error) ? OAUTH_ERRORS[error]?.({}, { locale }) : undefined
+      toast.error(message || m.auth_userProfile_oauthError_default({}), { id: 'oauth-error' })
     }
 
     params.delete('error')
@@ -175,18 +202,17 @@ function OAuthErrorHandler() {
       ? `${window.location.pathname}?${params.toString()}${window.location.hash}`
       : `${window.location.pathname}${window.location.hash}`
     window.history.replaceState({}, '', cleanURL)
-  }, [t])
+  }, [locale])
 
   return null
 }
 
 function RootComponent() {
   const { locale, renderedAt } = Route.useRouteContext()
-  const routeI18n = useMemo(() => (import.meta.env.SSR ? createServerI18n(locale) : i18n), [locale])
 
   return (
     <RenderEnvironmentProvider renderedAt={renderedAt}>
-      <I18nextProvider i18n={routeI18n}>
+      <LocaleProvider initialLocale={locale}>
         <AppContextProvider>
           <RootDocument>
             <CatalogProvider>
@@ -200,7 +226,10 @@ function RootComponent() {
                         <NetImportProgress />
                         <ImportReviewHost />
                         <OAuthErrorHandler />
-                        <RegionVersionUpdatePrompt />
+                        <NoticeStack>
+                          <AnnouncementBanners />
+                          <RegionVersionUpdatePrompt />
+                        </NoticeStack>
                         <AppLayout />
                       </NetImportSettingsProvider>
                     </PostHogProvider>
@@ -210,22 +239,23 @@ function RootComponent() {
             </CatalogProvider>
           </RootDocument>
         </AppContextProvider>
-      </I18nextProvider>
+      </LocaleProvider>
     </RenderEnvironmentProvider>
   )
 }
 
 function AppLayout() {
-  const { t } = useTranslation(['root'])
-  const { pathname } = useLocation()
+  const locale = useLocale()
+  const pathname = useResolvedPathname()
   const isLegalPage = isLegalPath(pathname)
 
   return (
     <div className="h-full w-full relative">
-      <a href="#main-content" className="skip-to-content">
-        {t('root:skip-to-content')}
-      </a>
+      <SkipToContentLink>{m.root_skipToContent({}, { locale })}</SkipToContentLink>
       <RouteChangeAnnouncer />
+      <NavigationProgress />
+      <NavigationOriginTracker />
+      <ScrollRestorationKeeper />
       <VersionBackground />
 
       <div className="h-full w-full relative">
@@ -233,11 +263,9 @@ function AppLayout() {
           <RootLayout />
           <main id="main-content" tabIndex={-1}>
             {isLegalPage ? (
-              // Legal text reads on one glass sheet instead of a full-viewport white overlay
+              // LegalLayout draws the one glass reading card (and, on desktop, the contents sidebar beside it)
               <div className="page-gutter pb-global">
-                <div className="glass mx-auto max-w-[808px]">
-                  <Outlet />
-                </div>
+                <Outlet />
               </div>
             ) : (
               <Outlet />

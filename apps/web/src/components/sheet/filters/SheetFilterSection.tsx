@@ -1,7 +1,8 @@
 import { useId, type FC, type ReactNode } from 'react'
 import { IconButton } from '@mui/material'
-import { useTranslation } from 'react-i18next'
 import MdiRestore from '~icons/mdi/restore'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 export const SheetFilterSection: FC<{
   titleLeft: ReactNode
@@ -9,7 +10,7 @@ export const SheetFilterSection: FC<{
   children: ReactNode
   reset: () => void
 }> = ({ titleLeft, titleRight, children, reset }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const titleId = useId()
   const resetId = useId()
 
@@ -25,12 +26,12 @@ export const SheetFilterSection: FC<{
           size="small"
           className="shrink-0 !text-fg-2"
           aria-labelledby={`${resetId} ${titleId}`}
-          title={t('sheet:sort-and-filter.reset.section')}
+          title={m.sheet_sortAndFilter_reset_section({}, { locale })}
           onClick={reset}
         >
           <MdiRestore aria-hidden="true" />
           <span id={resetId} className="sr-only">
-            {t('sheet:sort-and-filter.reset.section')}
+            {m.sheet_sortAndFilter_reset_section({}, { locale })}
           </span>
         </IconButton>
         <div className="flex-1" />

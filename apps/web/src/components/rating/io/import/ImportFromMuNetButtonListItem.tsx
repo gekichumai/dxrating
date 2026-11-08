@@ -4,14 +4,15 @@ import { normalizeMuNetRows, type ProviderMusicIdMap } from '@gekichumai/maimai-
 import { ListItemIcon, ListItemText, MenuItem } from '@mui/material'
 import type { FC } from 'react'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import MdiEarthArrowDown from '~icons/mdi/earth-arrow-down'
 import { useWebHaptics } from 'web-haptics/react'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
-import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
+import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
+import { m } from '@/paraglide/messages'
+import { useLocale } from '@/i18n/LocaleProvider'
 
 const MuNetUserMusicDetailSchema = z.object({
   musicId: z.number(),
@@ -26,7 +27,7 @@ const MuNetExportSchema = z.object({
 export const ImportFromMuNetButtonListItem: FC<{
   onClose: () => void
 }> = ({ onClose }) => {
-  const { t } = useTranslation(['rating-calculator'])
+  const locale = useLocale()
   const repository = useScoreRepository()
   const haptic = useWebHaptics()
   const loadCatalog = useSongCatalogLoader()
@@ -78,27 +79,27 @@ export const ImportFromMuNetButtonListItem: FC<{
                 console.warn('[ImportFromMuNetButtonListItem]', warning.message, warning.row)
               }
 
-              const { applied } = await reviewAndApplyImport(
-                repository,
-                entries,
-                { source: 'mu-net', mode: 'replace' },
-                { trigger: 'manual' },
-              )
-              if (!applied) {
+              const result = await importFileEntries(repository, entries, { source: 'mu-net', mode: 'replace' })
+              // `null`: the user cancelled the preview (local save) or the merge / clear-first choice (cloud save)
+              if (!result) {
                 analytics.failed('cancelled_by_user')
-                toast(t('rating-calculator:io.import.review.cancelled'), { id: 'import-review-cancelled' })
+                toast(m.ratingCalculator_io_import_review_cancelled({}, { locale }), { id: 'import-review-cancelled' })
                 return
               }
-              analytics.succeeded(entries.length, importResult.warnings.length)
+              analytics.succeeded(result.count, importResult.warnings.length)
               haptic.trigger('success')
-              toast.success(t('rating-calculator:io.import.mu-net.success', { count: entries.length }))
+              // A cloud save counts what the server took, not what was sent
+              toast.success(m.ratingCalculator_io_import_muNet_success({ count: result.count }, { locale }))
+              announceImportLeftOut(result, locale, (message) => toast(message))
             } catch (error) {
               analytics.failed('invalid_file')
               console.error(error)
               toast.error(
-                t('rating-calculator:io.import.mu-net.error', {
-                  error: error instanceof Error ? error.message : 'Unknown error',
-                }),
+                cloudImportErrorMessage(error, locale) ??
+                  m.ratingCalculator_io_import_muNet_error(
+                    { error: error instanceof Error ? error.message : 'Unknown error' },
+                    { locale },
+                  ),
               )
             }
           }
@@ -110,7 +111,7 @@ export const ImportFromMuNetButtonListItem: FC<{
       <ListItemIcon>
         <MdiEarthArrowDown />
       </ListItemIcon>
-      <ListItemText>{t('rating-calculator:io.import.mu-net.title')}</ListItemText>
+      <ListItemText>{m.ratingCalculator_io_import_muNet_title({}, { locale })}</ListItemText>
     </MenuItem>
   )
 }

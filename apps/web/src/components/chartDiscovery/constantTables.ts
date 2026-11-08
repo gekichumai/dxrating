@@ -29,6 +29,8 @@ export type ConstantTableChart = {
   songId: string
   title: string
   artist: string
+  /** Cover art name on the asset host */
+  imageName: string
   type: TypeEnum
   difficulty: DifficultyEnum
   internalLevelValue: number
@@ -73,6 +75,7 @@ export function buildConstantTable(document: SongCatalogDocument, level: Constan
         songId: song.id,
         title: song.title,
         artist: song.artist,
+        imageName: song.imageName,
         type: sheet.type,
         difficulty: sheet.difficulty,
         internalLevelValue: sheet.internalLevelValue,

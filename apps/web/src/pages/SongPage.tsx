@@ -1,28 +1,33 @@
 import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
-import { IconButton } from '@mui/material'
-import { type FC, type MouseEvent, useMemo } from 'react'
+import { type FC, useMemo } from 'react'
 import { Link, getRouteApi, useNavigate } from '@tanstack/react-router'
-import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { TYPE_ORDER, getHighestDifficulty } from '../models/constants'
+import { SongBackLink } from '../components/song/SongBackLink'
 import { SongHeader } from '../components/song/SongHeader'
 import { SongSheetContent, SongSheetSummary } from '../components/song/SongSheetContent'
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
 import { constantTableLevelOf, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { versionPagePath, versionSlug } from '@/components/chartDiscovery/versionPages'
-import { useTranslation } from 'react-i18next'
+import { keepLocaleSearch, withLocaleQuery } from '@/setup/locale'
 import { buildSheetPath } from '../components/sheet/sheetLinks'
 import { getVisibleSongPageSheets } from './songPageSheets'
 import { useSongSheets } from './useSongSheets'
 import { ToleranceCalculator } from '@/components/tools/ToleranceCalculator'
+import { InternalLink, LinkBehavior } from '@/components/global/InternalLink'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
 export const SongPage: FC = () => {
   const { songId, type, difficulty } = routeApi.useParams()
+  // Switching charts stays on the URL's language variant (each `?locale=` variant is its own canonical page)
+  const search = routeApi.useSearch()
+  const localeSearch = keepLocaleSearch(search)
   const navigate = useNavigate()
-  const { t } = useTranslation(['constants', 'versions', 'song'])
+  const locale = useLocale()
   const { song, flattenedSheets } = useSongSheets(songId)
 
   const availableTypes = useMemo(() => {
@@ -48,17 +53,23 @@ export const SongPage: FC = () => {
         type: newType,
         difficulty: getHighestDifficulty(sheetsOfType),
       },
+      ...localeSearch,
+      // The chart tabs switch within one page: replacing the entry keeps Back (and the back arrow) leaving the song
+      replace: true,
     })
   }
 
-  const handleDifficultyChange = (newDifficulty: DifficultyEnum) => {
+  const handleDifficultyChange = (newDifficulty: DifficultyEnum, newType: TypeEnum = activeType) => {
     navigate({
       to: '/songs/$songId/$type/$difficulty',
       params: {
         songId,
-        type: activeType,
+        type: newType,
         difficulty: newDifficulty,
       },
+      ...localeSearch,
+      // The chart tabs switch within one page: replacing the entry keeps Back (and the back arrow) leaving the song
+      replace: true,
     })
   }
 
@@ -67,26 +78,16 @@ export const SongPage: FC = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
-      <IconButton
-        component="a"
-        href="/"
-        size="small"
-        aria-label={t('song:back')}
-        onClick={(e: MouseEvent<HTMLAnchorElement>) => {
-          if (window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
-            e.preventDefault()
-            window.history.back()
-          }
-        }}
-        className="self-start -ml-2 -mb-2"
-      >
-        <MdiArrowLeft aria-hidden />
-      </IconButton>
+    <div className="max-w-2xl mx-auto px-4 pt-6 pb-global flex flex-col gap-4">
+      <SongBackLink search={search} className="self-start -ml-2 -mb-2" />
 
       {headerSheet && <SongHeader sheet={headerSheet} />}
 
-      <MaterialSurface as="section" className="p-3 flex flex-col gap-3" aria-label={t('song:chart-section-label')}>
+      <MaterialSurface
+        as="section"
+        className="p-3 flex flex-col gap-3"
+        aria-label={m.song_chartSectionLabel({}, { locale })}
+      >
         <SongSheetTabs
           sheets={song.sheets}
           availableTypes={availableTypes}
@@ -95,11 +96,15 @@ export const SongPage: FC = () => {
           onTypeChange={handleTypeChange}
           onDifficultyChange={handleDifficultyChange}
           hrefFor={(sheetType, sheetDifficulty) =>
-            buildSheetPath({
-              songId,
-              type: sheetType,
-              difficulty: sheetDifficulty ?? getHighestDifficulty(flattenedSheets.filter((s) => s.type === sheetType)),
-            })
+            withLocaleQuery(
+              buildSheetPath({
+                songId,
+                type: sheetType,
+                difficulty:
+                  sheetDifficulty ?? getHighestDifficulty(flattenedSheets.filter((s) => s.type === sheetType)),
+              }),
+              search,
+            )
           }
         />
 
@@ -107,8 +112,8 @@ export const SongPage: FC = () => {
           <SongSheetSummary key={sheet.id} sheet={sheet} />
         ))}
 
-        <Link to="/songs/$songId" params={{ songId: song.id }} className="link self-start text-sm">
-          {t('song:hub.all-charts-link')}
+        <Link to="/songs/$songId" params={{ songId: song.id }} {...localeSearch} className="link self-start text-sm">
+          {m.song_hub_allChartsLink({}, { locale })}
           <span aria-hidden> →</span>
         </Link>
       </MaterialSurface>
@@ -120,19 +125,19 @@ export const SongPage: FC = () => {
       {activeSheet && <ToleranceCalculator key={activeSheet.id} sheet={activeSheet} source="chart_page" />}
 
       {(constantTableLevel || (activeSheet && versionSlug(activeSheet.version))) && (
-        <nav className="flex flex-col gap-2 text-sm" aria-label={t('song:related-pages')}>
+        <nav className="flex flex-col gap-2 text-sm" aria-label={m.song_relatedPages({}, { locale })}>
           {constantTableLevel && (
-            <a href={constantTablePath(constantTableLevel)} className="link self-start">
-              {t('constants:chart-link', { level: constantTableLevel })}
+            <InternalLink href={constantTablePath(constantTableLevel)} className="link self-start">
+              {m.constants_chartLink({ level: constantTableLevel }, { locale })}
               <span aria-hidden> →</span>
-            </a>
+            </InternalLink>
           )}
 
           {activeSheet && versionSlug(activeSheet.version) && (
-            <a href={versionPagePath(activeSheet.version)} className="link self-start">
-              {t('versions:chart-link', { version: activeSheet.version })}
+            <InternalLink href={versionPagePath(activeSheet.version)} className="link self-start">
+              {m.versions_chartLink({ version: activeSheet.version }, { locale })}
               <span aria-hidden> →</span>
-            </a>
+            </InternalLink>
           )}
         </nav>
       )}

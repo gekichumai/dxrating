@@ -1,0 +1,72 @@
+/*
+ * Header action tints: each action in the header's glass pill keeps its own hue, as a coloured glyph on a soft wash of
+ * the same hue, so the pill reads as distinct actions rather than one row of black icons. The hue comes from the
+ * element's --tint (light) and --tint-dark (dark) custom properties (components/layout/headerTints.ts).
+ *
+ * Contrast: each glyph stays ≥ 3:1 against its own wash over the header glass, at rest and on hover, in both themes
+ * (WCAG 1.4.11, non-text UI), including the account button's per-version accent (__tests__/headerTints.test.ts).
+ * The washes are 14–26% of the hue: tints, never solid fills.
+ */
+
+.header-tint {
+  /* The glyph is the hue deepened a little at rest and more on hover; the wash is the plain hue */
+  --tint-base: var(--tint);
+  --tint-ink: color-mix(in srgb, var(--tint) 86%, #000);
+  --tint-ink-hover: color-mix(in srgb, var(--tint) 70%, #000);
+  --tint-wash: 14%;
+  --tint-wash-hover: 22%;
+}
+
+html[data-theme='dark'] .header-tint {
+  --tint-base: var(--tint-dark);
+  --tint-ink: color-mix(in srgb, var(--tint-dark) 80%, #fff);
+  --tint-ink-hover: color-mix(in srgb, var(--tint-dark) 62%, #fff);
+  --tint-wash: 16%;
+  --tint-wash-hover: 26%;
+}
+
+/* A tinted control: the element itself (.header-tint-target) or the MUI icon button a wrapper contains */
+.header-tint.header-tint-target,
+.header-tint .MuiIconButton-root {
+  color: var(--tint-ink);
+  background-color: color-mix(in srgb, var(--tint-base) var(--tint-wash), transparent);
+  transition-property: background-color, color;
+  transition-duration: var(--duration-fast);
+}
+
+.header-tint.header-tint-target:hover,
+.header-tint .MuiIconButton-root:hover {
+  color: var(--tint-ink-hover);
+  background-color: color-mix(in srgb, var(--tint-base) var(--tint-wash-hover), transparent);
+}
+
+/*
+ * A community brand disc (Discord, QQ, GitHub): the brand's own solid colour with a white logo, as the header had
+ * before the glass pill. Small discs (28–36px), not surfaces. --brand is set alongside --tint. The class is doubled
+ * to outrank MUI ButtonBase's transparent background and inherited colour.
+ */
+.header-brand-disc.header-brand-disc {
+  color: #fff;
+  background-color: var(--brand);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.14);
+  transition-property: filter;
+  transition-duration: var(--duration-fast);
+}
+
+/* The charcoal GitHub disc would vanish into dark glass: a light ring keeps every disc's edge */
+html[data-theme='dark'] .header-brand-disc.header-brand-disc {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.22);
+}
+
+.header-brand-disc.header-brand-disc:hover {
+  filter: brightness(0.92);
+}
+
+@media (forced-colors: active) {
+  .header-tint.header-tint-target,
+  .header-tint .MuiIconButton-root,
+  .header-brand-disc.header-brand-disc {
+    background-color: transparent;
+    color: ButtonText;
+  }
+}

@@ -1,7 +1,54 @@
 import pg from 'pg'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+
+// config.ts reads the environment once, at import: cloud save is on for everyone in this file.
+vi.hoisted(() => {
+  process.env.CLOUD_SAVE_MODE = 'on'
+  process.env.SERVER_IMPORTS = 'on'
+})
+
+// A stubbed LXNS behind the global fetch of the Effect HTTP client (the local test server passes through)
+vi.hoisted(() => {
+  const realFetch = globalThis.fetch
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(input instanceof Request ? input.url : String(input))
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return realFetch(input, init)
+    const envelope = (data: unknown) => Response.json({ success: true, code: 200, data })
+    if (url.href === 'https://maimai.lxns.net/api/v0/user/maimai/player') return envelope({ friend_code: 123456789 })
+    if (url.href === 'https://maimai.lxns.net/api/v0/user/maimai/player/scores') {
+      return envelope([
+        {
+          id: 181,
+          song_name: '君の知らない物語',
+          level: '12',
+          level_index: 3,
+          achievements: 100.5,
+          fc: null,
+          fs: null,
+          type: 'dx',
+        },
+      ])
+    }
+    throw new Error(`Unexpected upstream request ${url.href}`)
+  }) as typeof fetch
+})
+
+// The published catalog is not in the test database: imports resolve through the bundled snapshot
+vi.mock('../services/cloud-save/import-catalog', async () => {
+  const { Effect } = await import('effect')
+  const { getSongCatalog } = await import('@gekichumai/maimai-domain')
+  const { catalogSnapshot } = await import('@gekichumai/dxdata/snapshot')
+  const { VersionEnum } = await import('@gekichumai/dxdata')
+  return {
+    importCatalog: Effect.sync(() => getSongCatalog(catalogSnapshot, VersionEnum.MAGiCAL)),
+    ImportCatalogUnavailable: class ImportCatalogUnavailable extends Error {},
+  }
+})
+
+import { api, deleteMutation, setMutation, sheetId } from './cloud-save-helpers'
 import {
   authenticatedFetch,
+  bindCookieToUser,
   cleanDatabase,
   extractSessionCookie,
   getBaseUrl,
@@ -103,6 +150,106 @@ describe('Account deletion', () => {
 
       const replacement = await signUp('delete@example.com', 'password123', 'Replacement')
       expect(replacement.status).toBe(200)
+    } finally {
+      await pool.end()
+    }
+  })
+
+  // Design §11.1: cloud save data created through the API (a save, a stubbed LXNS server import, mutations, a snapshot)
+  // is gone with the account.
+  it('deletes every cloud save row of the account created through the API', async () => {
+    await signUp('delete@example.com', 'password123', 'Delete Me')
+    await signUp('survivor@example.com', 'password123', 'Survivor')
+    const cookie = extractSessionCookie(await signIn('delete@example.com', 'password123'))
+    const survivorCookie = extractSessionCookie(await signIn('survivor@example.com', 'password123'))
+
+    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+    try {
+      const users = await pool.query<{ id: string; email: string }>(
+        `SELECT id, email FROM "user" WHERE email IN ('delete@example.com', 'survivor@example.com')`,
+      )
+      const deletedUserId = users.rows.find((user) => user.email === 'delete@example.com')!.id
+      const survivorId = users.rows.find((user) => user.email === 'survivor@example.com')!.id
+      bindCookieToUser(cookie, deletedUserId)
+      bindCookieToUser(survivorCookie, survivorId)
+      await pool.query(
+        `INSERT INTO feature_flag_overrides (flag, user_id, enabled, source, consent_version)
+         VALUES ('cloud_save', $1, true, 'opt_in', '2026-11-01'), ('cloud_save', $2, true, 'opt_in', '2026-11-01')`,
+        [deletedUserId, survivorId],
+      )
+
+      const seed = async (sessionCookie: string, userId: string) => {
+        const save = await api(sessionCookie, 'POST', '/saves', { name: 'JP', region: 'jp' })
+        expect(save.status).toBe(200)
+        const saveId = save.body.id as string
+        const mutations = await api(sessionCookie, 'POST', `/saves/${saveId}/mutations`, {
+          mutations: [setMutation(sheetId(1), 1000000), setMutation(sheetId(2), 990000)],
+        })
+        expect(mutations.status).toBe(200)
+        await api(sessionCookie, 'POST', `/saves/${saveId}/mutations`, {
+          mutations: [deleteMutation(sheetId(2))],
+        })
+        const snapshot = await api(sessionCookie, 'POST', `/saves/${saveId}/snapshots`, {
+          atRevision: 3,
+          b15Sum: 1,
+          b35Sum: 2,
+          b50Sum: 3,
+          recordCount: 1,
+          gameVersion: 'prism',
+        })
+        expect(snapshot.status).toBe(200)
+        await pool.query(
+          `INSERT INTO lxns_oauth_tokens (user_id, access_token, refresh_token, expires_at, scope)
+           VALUES ($1, 'synthetic-access', 'synthetic-refresh', now() + interval '1 hour', 'read_user_profile read_player')`,
+          [userId],
+        )
+        const lxns = await api(sessionCookie, 'POST', `/saves/${saveId}/imports/lxns`, {
+          idempotencyKey: `lxns-${userId}`,
+          trigger: 'user',
+        })
+        expect(lxns.status).toBe(200)
+        expect(lxns.body.job).toMatchObject({ status: 'succeeded', counts: { inserted: 1 } })
+      }
+      await seed(cookie, deletedUserId)
+      await seed(survivorCookie, survivorId)
+
+      const counts = async (userId: string) =>
+        (
+          await pool.query(
+            `SELECT
+              (SELECT count(*)::integer FROM feature_flag_overrides WHERE user_id = $1) AS flags,
+              (SELECT count(*)::integer FROM score_saves WHERE user_id = $1) AS saves,
+              (SELECT count(*)::integer FROM score_import_jobs WHERE user_id = $1) AS jobs,
+              (SELECT count(*)::integer FROM score_records WHERE user_id = $1) AS records,
+              (SELECT count(*)::integer FROM score_records WHERE user_id = $1 AND verification = 'verified') AS verified,
+              (SELECT count(*)::integer FROM score_record_events WHERE user_id = $1) AS events,
+              (SELECT count(*)::integer FROM score_mutations WHERE user_id = $1) AS mutations,
+              (SELECT count(*)::integer FROM score_save_snapshots WHERE user_id = $1) AS snapshots`,
+            [userId],
+          )
+        ).rows[0]
+      const seeded = { flags: 1, saves: 1, jobs: 1, records: 3, verified: 1, events: 4, mutations: 3, snapshots: 1 }
+      expect(await counts(deletedUserId)).toEqual(seeded)
+
+      const response = await authenticatedFetch(`${getBaseUrl()}/api/auth/delete-user`, cookie, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: 'password123' }),
+      })
+      expect(response.status).toBe(200)
+
+      expect(await counts(deletedUserId)).toEqual({
+        flags: 0,
+        saves: 0,
+        jobs: 0,
+        records: 0,
+        verified: 0,
+        events: 0,
+        mutations: 0,
+        snapshots: 0,
+      })
+      expect(await counts(survivorId)).toEqual(seeded)
+      expect((await api(survivorCookie, 'GET', '/saves')).body.saves).toHaveLength(1)
     } finally {
       await pool.end()
     }

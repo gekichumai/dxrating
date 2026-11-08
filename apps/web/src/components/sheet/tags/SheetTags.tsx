@@ -1,8 +1,9 @@
 import { Chip } from '@mui/material'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'motion/react'
 import { type CSSProperties, type FC, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import IconMdiTag from '~icons/mdi/tag'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 import { useAuth } from '../../../hooks/useAuth'
 import type { FlattenedSheet } from '../../../songs'
 import { deriveColor } from '../../../utils/color'
@@ -14,7 +15,7 @@ import { TagVotePopover } from './TagVotePopover'
 import { type SheetTagEntry, useSheetTagsDetailed, useUserTagVotes } from './useSheetTagsDetailed'
 
 export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const { t } = useTranslation(['sheet'])
+  const locale = useLocale()
   const localizeMessage = useLocalizedMessageTranslation()
   const { user } = useAuth()
   const { data, isLoading, mutate } = useSheetTagsDetailed(sheet)
@@ -71,25 +72,25 @@ export const SheetTags: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       )
     }
 
-    return (
-      <>
-        {visible.map(renderChip)}
-        {hiddenExpanded && hidden.map(renderChip)}
-
-        {hidden.length > 0 && !hiddenExpanded && (
-          <MotionButtonBase
-            key="hidden-tags"
-            {...chipPresenceTransitions}
-            className="h-6 rounded-[var(--radius-md)] border border-dashed border-black/20 px-2 text-xs text-fg-2 transition-colors hover:bg-black/5"
-            onClick={() => setHiddenExpanded(true)}
-          >
-            {t('sheet:tags.vote.hidden-tags', { count: hidden.length })}
-          </MotionButtonBase>
-        )}
-
-        {addButton}
-      </>
-    )
+    // AnimatePresence gets its keyed children directly: with mode="popLayout" it clones each child with a ref, which
+    // a Fragment cannot take (React warns "Invalid prop `ref` supplied to `React.Fragment`")
+    return [
+      ...visible.map(renderChip),
+      ...(hiddenExpanded ? hidden.map(renderChip) : []),
+      ...(hidden.length > 0 && !hiddenExpanded
+        ? [
+            <MotionButtonBase
+              key="hidden-tags"
+              {...chipPresenceTransitions}
+              className="h-6 rounded-[var(--radius-md)] border border-dashed border-black/20 px-2 text-xs text-fg-2 transition-colors hover:bg-black/5"
+              onClick={() => setHiddenExpanded(true)}
+            >
+              {m.sheet_tags_vote_hiddenTags({ count: hidden.length }, { locale })}
+            </MotionButtonBase>,
+          ]
+        : []),
+      addButton,
+    ]
   }
 
   return (

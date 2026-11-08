@@ -2,7 +2,6 @@ import { ButtonBase, Chip } from '@mui/material'
 import clsx from 'clsx'
 import type { FC, ReactNode } from 'react'
 import { type Control, useController } from 'react-hook-form'
-import { useTranslation } from 'react-i18next'
 import { LongPressCallbackReason, useLongPress } from 'use-long-press'
 import MdiCheck from '~icons/mdi/check'
 import { Markdown } from '../../global/Markdown'
@@ -14,6 +13,8 @@ import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessa
 import type { SheetSortFilterForm } from '../SheetSortFilter'
 import { SheetFilterSection } from './SheetFilterSection'
 import { GestureHint } from '@/components/global/GestureHint'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const SheetTagFilterInputTag = ({
   label,
@@ -74,7 +75,7 @@ const SheetTagFilterInputTag = ({
         label={count}
         color="default"
         size="small"
-        className="!rounded-r-lg !rounded-l-none transition leading-none tabular-nums !bg-black/10"
+        className="!rounded-r-lg !rounded-l-none transition leading-none num !bg-black/10"
       />
     </ButtonBase>
   )
@@ -107,7 +108,8 @@ const SheetTagFilterInput = ({ value, onChange }: { value: number[]; onChange: (
         popper: { modifiers: [{ name: 'offset', options: { offset: [0, -8] } }] },
       }}
     >
-      <span>
+      {/* Sized to the 24px chip, so tag rows share the genre and version chip rhythm */}
+      <span className="inline-flex items-center leading-none">
         <SheetTagFilterInputTag
           label={localizeMessage(e.localized_name)}
           count={e.count ?? '--'}
@@ -177,7 +179,7 @@ export const SheetTagFilter: FC<{
   control: Control<SheetSortFilterForm>
   reset: () => void
 }> = ({ control, reset }) => {
-  const { t } = useTranslation(['sheet', 'global'])
+  const locale = useLocale()
   const {
     field: { onChange, value },
   } = useController<SheetSortFilterForm, 'filters.tags'>({
@@ -187,11 +189,11 @@ export const SheetTagFilter: FC<{
 
   return (
     <SheetFilterSection
-      titleLeft={t('sheet:filter.tags.title')}
+      titleLeft={m.sheet_filter_tags_title({}, { locale })}
       titleRight={
         <>
-          <GestureHint gesture="tap" description={t('sheet:filter.difficulty.gesture-hint.tap')} />
-          <GestureHint gesture="tap-hold" description={t('sheet:filter.difficulty.gesture-hint.tap-hold')} />
+          <GestureHint gesture="tap" description={m.sheet_filter_difficulty_gestureHint_tap({}, { locale })} />
+          <GestureHint gesture="tap-hold" description={m.sheet_filter_difficulty_gestureHint_tapHold({}, { locale })} />
         </>
       }
       reset={reset}

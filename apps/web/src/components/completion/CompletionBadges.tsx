@@ -1,17 +1,18 @@
 import type { FC } from 'react'
-import { useTranslation } from 'react-i18next'
 import { achievementRankLabel, COMBO_LABELS, type CompletionRecord, SYNC_LABELS } from './completion'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const badge = 'inline-block px-1.5 py-1 rounded-[var(--radius-sm)] text-xs font-semibold leading-none'
 
 /** Rank / FC / FS badges of one record */
 export const CompletionBadges: FC<{ record: CompletionRecord | undefined }> = ({ record }) => {
-  const { t } = useTranslation(['completion'])
+  const locale = useLocale()
   if (!record)
     return (
       <span className="text-xs text-fg-2">
         <span aria-hidden>–</span>
-        <span className="sr-only">{t('completion:status-unplayed-sr')}</span>
+        <span className="sr-only">{m.completion_statusUnplayedSr({}, { locale })}</span>
       </span>
     )
   return (

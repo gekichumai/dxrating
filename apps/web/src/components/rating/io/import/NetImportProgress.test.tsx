@@ -1,7 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { initI18n } from '@/setup/init-i18n'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NetImportProgress } from './NetImportProgress'
 import { NetImportSettingsProvider } from './NetImportSettingsContext'
 import { NetImportSettingsButton } from './NetImportSettingsButton'
@@ -11,9 +10,11 @@ import { netImportProgress } from './netImportProgressStore'
 vi.mock('./importFromNETRecords', () => ({ importFromNETRecords: vi.fn() }))
 const { netStatus } = vi.hoisted(() => ({ netStatus: { intl: false, jp: false } }))
 vi.mock('./useMaimaiNetStatus', () => ({ useMaimaiNetStatus: () => netStatus }))
-vi.mock('@/models/context/useAppContext', () => ({ useAppContextDXDataVersion: () => 'circle-plus' }))
-
-beforeAll(() => initI18n())
+const { site } = vi.hoisted(() => ({ site: { region: 'intl' } }))
+vi.mock('@/models/context/useAppContext', () => ({
+  useAppContextDXDataVersion: () => 'circle-plus',
+  useAppContext: () => ({ region: site.region }),
+}))
 beforeEach(() => {
   vi.clearAllMocks()
   const storage = new Map<string, string>()
@@ -25,6 +26,7 @@ beforeEach(() => {
   netImportProgress.update(null)
   netStatus.intl = false
   netStatus.jp = false
+  site.region = 'intl'
   sessionStorage.clear()
 })
 afterEach(cleanup)
@@ -82,9 +84,23 @@ describe('floating NET import progress', () => {
   })
 })
 describe('global auto-import settings', () => {
+  it.each([
+    ['jp', 'jp'],
+    ['intl', 'intl'],
+    ['cn', 'intl'],
+  ] as const)('signs in to the maimai NET of the site region (%s) when nothing is saved', (siteRegion, netRegion) => {
+    site.region = siteRegion
+    render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
+    fireEvent.click(screen.getByRole('button', { name: 'Import from maimai NET…' }))
+    fireEvent.change(screen.getByLabelText('SEGA ID'), { target: { value: 'fixture' } })
+    fireEvent.change(screen.getByLabelText('SEGA ID password'), { target: { value: 'fixture-password' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: /Remember credentials/ }))
+    expect(JSON.parse(localStorage.getItem('import-net-records')!).region).toBe(netRegion)
+  })
+
   it('sets up remembered credentials and auto-import without starting an import', async () => {
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    const trigger = screen.getByRole('button', { name: 'maimai NET settings' })
+    const trigger = screen.getByRole('button', { name: 'Import from maimai NET…' })
     fireEvent.click(trigger)
     for (const radio of screen.getAllByRole('radio')) expect(radio.hasAttribute('disabled')).toBe(true)
     fireEvent.change(screen.getByLabelText('SEGA ID'), { target: { value: 'fixture' } })
@@ -114,7 +130,7 @@ describe('global auto-import settings', () => {
         <NetImportSettingsButton />
       </NetImportSettingsProvider>,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import from maimai NET…' }))
     rerender(
       <NetImportSettingsProvider>
         <p>Another page</p>
@@ -130,11 +146,11 @@ describe('global auto-import settings', () => {
       JSON.stringify({ region: 'jp', username: 'fixture', password: 'fixture' }),
     )
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import from maimai NET…' }))
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     localStorage.setItem('rating-auto-import-from-net', '"merge"')
-    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import from maimai NET…' }))
     expect((screen.getByRole('radio', { name: /^Merge/ }) as HTMLInputElement).checked).toBe(true)
     fireEvent.click(screen.getByRole('radio', { name: 'Disabled' }))
     expect(localStorage.getItem('rating-auto-import-from-net')).toBe('false')
@@ -147,7 +163,7 @@ describe('global auto-import settings', () => {
     )
     localStorage.setItem('rating-auto-import-from-net', '"merge"')
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import from maimai NET…' }))
     fireEvent.click(screen.getByRole('button', { name: /Re-import now/ }))
     // the import starts once the complete catalog is there
     await waitFor(() =>
@@ -170,7 +186,7 @@ describe('global auto-import settings', () => {
 describe('SEGA maintenance notice', () => {
   const openSettings = () => {
     render(<NetImportSettingsButton />, { wrapper: NetImportSettingsProvider })
-    fireEvent.click(screen.getByRole('button', { name: 'maimai NET settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Import from maimai NET…' }))
   }
 
   it('warns before anyone types credentials while the selected region is in maintenance, until dismissed', async () => {

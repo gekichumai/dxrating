@@ -1,20 +1,22 @@
 import { getRouteApi } from '@tanstack/react-router'
-import { IconButton } from '@mui/material'
-import type { FC, MouseEvent } from 'react'
-import MdiArrowLeft from '~icons/mdi/arrow-left'
-import { useTranslation } from 'react-i18next'
+import type { FC } from 'react'
 import { NotFoundContent } from '@/components/global/NotFoundContent'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { SheetImage } from '@/components/sheet/SheetListItem'
+import { SongBackLink } from '@/components/song/SongBackLink'
 import { SongChartsTable } from '@/components/song/hub/SongChartsTable'
 import { useSongSheets } from './useSongSheets'
+import { LinkBehavior } from '@/components/global/InternalLink'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { m } from '@/paraglide/messages'
 
 const routeApi = getRouteApi('/songs_/$songId')
 
 /** `/songs/<id>`: the song's facts (artist, BPM, version, aliases) and every chart of it in one table */
 export const SongHubPage: FC = () => {
   const { songId } = routeApi.useParams()
-  const { t } = useTranslation(['song', 'sheet'])
+  const search = routeApi.useSearch()
+  const locale = useLocale()
   const { song, searchAcronyms, flattenedSheets } = useSongSheets(songId)
 
   if (!song) {
@@ -23,37 +25,26 @@ export const SongHubPage: FC = () => {
 
   const aliases = [...new Set(searchAcronyms)].filter((alias) => alias && alias !== song.title)
   const facts: { key: string; label: string; value: string }[] = [
-    { key: 'artist', label: t('sheet:details.song-artist'), value: song.artist },
-    ...(song.bpm ? [{ key: 'bpm', label: t('sheet:details.bpm'), value: String(song.bpm) }] : []),
-    ...(song.version ? [{ key: 'version', label: t('song:hub.version'), value: String(song.version) }] : []),
+    { key: 'artist', label: m.sheet_details_songArtist({}, { locale }), value: song.artist },
+    ...(song.bpm ? [{ key: 'bpm', label: m.sheet_details_bpm({}, { locale }), value: String(song.bpm) }] : []),
+    ...(song.version
+      ? [{ key: 'version', label: m.song_hub_version({}, { locale }), value: String(song.version) }]
+      : []),
   ]
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-4">
-      <IconButton
-        component="a"
-        href="/"
-        size="small"
-        aria-label={t('song:back')}
-        onClick={(e: MouseEvent<HTMLAnchorElement>) => {
-          if (window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
-            e.preventDefault()
-            window.history.back()
-          }
-        }}
-        className="self-start -ml-2 -mb-2"
-      >
-        <MdiArrowLeft aria-hidden />
-      </IconButton>
+    // Desktop (lg+): the song facts become a sticky left column and the charts table takes the rest of the width
+    <div className="max-w-2xl mx-auto px-4 pt-6 pb-global flex flex-col gap-4 lg:max-w-6xl lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">
+      <SongBackLink search={search} className="self-start justify-self-start -ml-2 -mb-2 lg:col-span-2" />
 
-      <MaterialSurface as="header" className="p-3 flex gap-3 items-start">
+      <MaterialSurface as="header" className="p-3 flex gap-3 items-start lg:flex-col lg:sticky lg:top-4">
         <SheetImage
           name={song.imageName}
           size="large"
-          alt={t('sheet:cover-art-alt', { title: song.title })}
-          className="h-20 w-20 shrink-0 rounded-lg overflow-hidden outline outline-1 -outline-offset-1 outline-black/10"
+          alt={m.sheet_coverArtAlt({ title: song.title }, { locale })}
+          className="h-20 w-20 shrink-0 rounded-lg overflow-hidden outline outline-1 -outline-offset-1 outline-black/10 lg:w-full lg:h-auto lg:aspect-square"
         />
-        <div className="min-w-0 flex flex-col gap-1">
+        <div className="min-w-0 flex flex-col gap-1 lg:w-full">
           <h1
             lang="ja"
             translate="no"
@@ -65,12 +56,12 @@ export const SongHubPage: FC = () => {
             {facts.map((fact) => (
               <div key={fact.key} className="contents" data-testid={`song-hub-${fact.key}`}>
                 <dt className="text-fg-2">{fact.label}</dt>
-                <dd className="m-0 min-w-0 break-words tabular-nums text-fg-1">{fact.value}</dd>
+                <dd className="m-0 min-w-0 break-words num text-fg-1">{fact.value}</dd>
               </div>
             ))}
             {aliases.length > 0 && (
               <div className="contents" data-testid="song-hub-aliases">
-                <dt className="text-fg-2">{t('song:hub.aliases')}</dt>
+                <dt className="text-fg-2">{m.song_hub_aliases({}, { locale })}</dt>
                 <dd className="m-0 min-w-0 break-words text-fg-1">{aliases.join(' / ')}</dd>
               </div>
             )}

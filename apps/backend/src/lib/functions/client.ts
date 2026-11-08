@@ -276,6 +276,33 @@ type ClientFetchState =
   | 'fetch:music:completed'
   | 'concluded'
 
+export interface ClientOptions {
+  strictPages?: boolean
+}
+
+/**
+ * The friend code shown on `/maimai-mobile/friend/userFriendCode/`: the one text of digits in a
+ * `see_through_block`, or else the one element whose whole text is digits. `null` unless exactly one distinct code
+ * is found. Written against synthetic fixtures; the page must be checked on real JP and intl accounts (design §16.4).
+ */
+const hasNoChildElements = (element: Element) =>
+  !Array.from(element.childNodes).some((node) => node.nodeType === NODE_ELEMENT_NODE)
+
+export function parseFriendCode(page: Document): string | null {
+  const codeOf = (element: Element) => {
+    const text = element.textContent?.replace(/\s+/g, '') ?? ''
+    return /^\d{8,20}$/.test(text) ? text : null
+  }
+  const distinct = (elements: Element[]) => [
+    ...new Set(elements.map(codeOf).filter((code): code is string => code !== null)),
+  ]
+  const blocks = distinct(Array.from(page.querySelectorAll('.see_through_block')))
+  if (blocks.length === 1) return blocks[0]!
+  if (blocks.length > 1) return null
+  const leaves = distinct(Array.from(page.querySelectorAll('div, span, p, td')).filter(hasNoChildElements))
+  return leaves.length === 1 ? leaves[0]! : null
+}
+
 export type StateUpdateCallback = (newState: ClientFetchState) => void | Promise<void>
 
 export class Client {
@@ -283,9 +310,23 @@ export class Client {
   #agent: Agent | undefined
   onUpdate?: StateUpdateCallback
 
-  constructor(cb?: StateUpdateCallback) {
+  /** Fail on any record page that is not a 200 (cloud save imports); the legacy routes keep their behavior */
+  readonly strictPages: boolean
+
+  constructor(cb?: StateUpdateCallback, options: ClientOptions = {}) {
     this.onUpdate = cb
+    this.strictPages = options.strictPages ?? false
   }
+
+  /**
+   * The player's friend code from the friend code page, or `null` when the page cannot be read or does not show
+   * exactly one code (callers fall back to a hashed SEGA ID). Never fails.
+   */
+  protected fetchFriendCodeAtEffect = (url: string) =>
+    this.fetchStrictPageEffect(url).pipe(
+      Effect.map((page) => parseFriendCode(page)),
+      Effect.orElseSucceed(() => null),
+    )
 
   setCookie(hostname: string, headers: Headers) {
     const existingCookies: Cookie[] = this.#cookies.get(hostname) ?? []
@@ -407,8 +448,34 @@ export class Client {
       })
     })
 
+  /**
+   * A page that must be a real answer: anything but a 200 (a redirect to the login page, a server error) fails with
+   * `UNKNOWN_ERROR`, which the record page retry (#368) retries. Used by cloud save imports, which are all or
+   * nothing (design §7.1): a page that silently parsed as empty would drop records.
+   */
+  protected fetchStrictPageEffect = (url: string) =>
+    Effect.gen({ self: this }, function* () {
+      const res = yield* this.fetchEffect(url)
+      if (res.status !== 200) {
+        yield* Effect.tryPromise({
+          try: () => res.body?.cancel() ?? Promise.resolve(),
+          catch: (cause) => new NetRequestError({ operation: 'release maimai NET response', cause }),
+        })
+        return yield* Effect.fail(new NetImportError('UNKNOWN_ERROR', `maimai NET answered ${res.status}`))
+      }
+      const text = yield* Effect.tryPromise({
+        try: () => res.text(),
+        catch: (cause) => new NetRequestError({ operation: 'read maimai NET response', cause }),
+      })
+      yield* this.checkMaintenanceEffect(text)
+      return yield* Effect.try({
+        try: () => new DOMParser({ errorHandler: () => {} }).parseFromString(text, 'text/html'),
+        catch: () => new NetImportError('INTERNAL_ERROR', 'failed to parse record page'),
+      })
+    })
+
   protected fetchRecordPageEffect = (url: string) =>
-    this.fetchAsDOMEffect(url).pipe(
+    (this.strictPages ? this.fetchStrictPageEffect(url) : this.fetchAsDOMEffect(url)).pipe(
       Effect.retry({
         times: 2,
         schedule: Schedule.exponential('500 millis'),
@@ -495,6 +562,8 @@ export class MaimaiNETJpClient extends Client {
 
       yield* this.progress('auth:succeeded')
     })
+
+  fetchFriendCodeEffect = () => this.fetchFriendCodeAtEffect(URLS.JP.FRIEND_CODE_PAGE)
 
   fetchRecentRecordsEffect = () =>
     Effect.gen({ self: this }, function* () {
@@ -597,6 +666,8 @@ export class MaimaiNETIntlClient extends Client {
       yield* this.progress('auth:succeeded')
     })
 
+  fetchFriendCodeEffect = () => this.fetchFriendCodeAtEffect(URLS.INTL.FRIEND_CODE_PAGE)
+
   fetchRecentRecordsEffect = () =>
     Effect.gen({ self: this }, function* () {
       yield* this.progress('fetch:recent:in-progress')
@@ -636,10 +707,13 @@ export const withMaimaiNETClient = <A, E, R>(
   region: 'jp' | 'intl',
   use: (client: MaimaiNETJpClient | MaimaiNETIntlClient) => Effect.Effect<A, E, R>,
   onProgress?: StateUpdateCallback,
+  options?: ClientOptions,
 ) =>
   Effect.scoped(
     Effect.acquireRelease(
-      Effect.sync(() => (region === 'jp' ? new MaimaiNETJpClient(onProgress) : new MaimaiNETIntlClient(onProgress))),
+      Effect.sync(() =>
+        region === 'jp' ? new MaimaiNETJpClient(onProgress, options) : new MaimaiNETIntlClient(onProgress, options),
+      ),
       (client) => client.disposeEffect().pipe(Effect.orDie),
     ).pipe(Effect.flatMap(use)),
   )

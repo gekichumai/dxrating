@@ -109,6 +109,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Migration round trip (up, every down.sql, up)
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/dxrating_test
+          BETTER_AUTH_SECRET: ci_test_secret_1234567890
+          NODE_ENV: test
+        run: pnpm --filter @gekichumai/backend test:migration-roundtrip
+
       - name: Run integration tests
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/dxrating_test

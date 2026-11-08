@@ -1,0 +1,19 @@
+{
+  "name": "@gekichumai/shenmegequ",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "tsc --noEmit && wrangler deploy --dry-run --outdir dist",
+    "lint": "oxlint .",
+    "test": "vitest run",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "7.0.2",
+    "vitest": "catalog:",
+    "wrangler": "^4.156.0"
+  }
+}
