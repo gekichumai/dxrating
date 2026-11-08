@@ -12,8 +12,8 @@ catalog:
   '@orpc/server': 2.0.0-beta.40
   '@orpc/tanstack-query': 2.0.0-beta.40
   '@orpc/zod': 2.0.0-beta.40
-  '@types/node': 25.9.0
-  '@types/pg': ^8.20.0
+  '@types/node': 25.9.9
+  '@types/pg': ^8.23.1
   '@types/react': ^19.2.14
   better-auth: 1.7.6
   clsx: ^2.1.1
