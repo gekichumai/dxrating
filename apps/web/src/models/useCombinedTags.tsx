@@ -25,18 +25,33 @@ export const useCombinedTags = () => {
   )
 }
 
+type SheetRef = { song_id: string; sheet_type: string; sheet_difficulty: string }
+
 /**
- * The list with an association the viewer just attached. The shared list comes through the edge cache, which can
- * take a few minutes to include a new attachment, so the viewer's own write is added locally instead of refetched.
+ * The list with one sheet's associations replaced by a fresh per-sheet read. Votes and removals change which
+ * associations the shared list shows (it leaves out buried ones), and refetching it would only bring back the
+ * edge-cached copy from before the write, so the viewer's own sheet is reconciled locally instead.
  */
-export const withAttachedTag = (current: CombinedTags | undefined, tagSong: TagSong): CombinedTags | undefined => {
+export const withSheetTagSongs = (
+  current: CombinedTags | undefined,
+  sheet: SheetRef,
+  associations: readonly TagSong[],
+  hiddenScoreThreshold: number,
+): CombinedTags | undefined => {
   if (!current) return current
-  const exists = current.tagSongs.some(
-    (existing) =>
-      existing.tag_id === tagSong.tag_id &&
-      existing.song_id === tagSong.song_id &&
-      existing.sheet_type === tagSong.sheet_type &&
-      existing.sheet_difficulty === tagSong.sheet_difficulty,
-  )
-  return exists ? current : { ...current, tagSongs: [...current.tagSongs, tagSong] }
+  const onSheet = (tagSong: SheetRef) =>
+    tagSong.song_id === sheet.song_id &&
+    tagSong.sheet_type === sheet.sheet_type &&
+    tagSong.sheet_difficulty === sheet.sheet_difficulty
+  const visible = associations
+    .filter((tagSong) => tagSong.score > hiddenScoreThreshold)
+    .map(({ song_id, sheet_id, sheet_type, sheet_difficulty, tag_id, score }) => ({
+      song_id,
+      ...(sheet_id === undefined ? {} : { sheet_id }),
+      sheet_type,
+      sheet_difficulty,
+      tag_id,
+      score,
+    }))
+  return { ...current, tagSongs: [...current.tagSongs.filter((tagSong) => !onSheet(tagSong)), ...visible] }
 }

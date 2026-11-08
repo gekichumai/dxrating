@@ -2,7 +2,7 @@ import { Button, Chip, Dialog, Grow } from '@mui/material'
 import clsx from 'clsx'
 import { type CSSProperties, type FC, useState } from 'react'
 import toast from 'react-hot-toast'
-import useSWR, { useSWRConfig } from 'swr'
+import useSWR from 'swr'
 import IconMdiTagPlus from '~icons/mdi/tag-plus'
 import { useAuth } from '../../../hooks/useAuth'
 import { apiClient as client } from '../../../lib/orpc'
@@ -14,7 +14,6 @@ import { chipPresenceTransitions } from '../sheetMotion'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import { Markdown } from '../../global/Markdown'
 import { SheetListItemContent } from '../SheetListItem'
-import { type CombinedTags, withAttachedTag } from '../../../models/useCombinedTags'
 import { useSheetTagsDetailed } from './useSheetTagsDetailed'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
@@ -41,7 +40,6 @@ const SheetTagsAddDialog: FC<{
     }))
   })
   const { data: existingTags, isLoading: loadingExistingTags, mutate: mutateExistingTags } = useSheetTagsDetailed(sheet)
-  const { mutate: globalMutate } = useSWRConfig()
 
   const existingTagsIDList = existingTags.map((entry) => entry.tag.id)
 
@@ -59,22 +57,8 @@ const SheetTagsAddDialog: FC<{
       toast.success(m.sheet_tags_add_toastSuccess({}, { locale }), {
         id: `tag-add-success:${tagId}`,
       })
+      // Also adds the association to the shared tag list, which comes through the edge cache
       void mutateExistingTags()
-      // The shared list comes through the edge cache, so the viewer's own attachment is added locally
-      void globalMutate(
-        'tags.list',
-        (current: CombinedTags | undefined) =>
-          withAttachedTag(current, {
-            song_id: sheet.songId,
-            sheet_id: sheet.id,
-            sheet_type: sheet.type,
-            sheet_difficulty: sheet.difficulty,
-            tag_id: tagId,
-            // The creator's own upvote
-            score: 1,
-          }),
-        { revalidate: false },
-      )
     } catch (error) {
       console.error('Failed to add tag', error)
 

@@ -1,10 +1,10 @@
 import { useCallback } from 'react'
-import useSWR from 'swr'
+import useSWR, { useSWRConfig } from 'swr'
 import type { z } from 'zod'
 import { authClient } from '../../../lib/auth-client'
 import { TAG_SONG_HIDDEN_SCORE_THRESHOLD, type SheetTagSongSchema } from '../../../lib/contract'
 import { apiClient as client } from '../../../lib/orpc'
-import { useCombinedTags } from '../../../models/useCombinedTags'
+import { type CombinedTags, useCombinedTags, withSheetTagSongs } from '../../../models/useCombinedTags'
 import type { FlattenedSheet } from '../../../songs'
 
 export type SheetTagSong = z.infer<typeof SheetTagSongSchema>
@@ -23,6 +23,7 @@ export const userTagVotesKey = (userId: string | undefined, tagSongIds: readonly
  */
 export const useSheetTagsDetailed = (sheet: FlattenedSheet) => {
   const { data: combinedTags } = useCombinedTags()
+  const { mutate: globalMutate } = useSWRConfig()
 
   const { data, isLoading, error, mutate } = useSWR(sheetTagsDetailedKey(sheet), async () =>
     client.tags.sheetTags({
@@ -49,11 +50,24 @@ export const useSheetTagsDetailed = (sheet: FlattenedSheet) => {
     })
     .sort((a, b) => groupOrder.indexOf(a.tag.group_id ?? -1) - groupOrder.indexOf(b.tag.group_id ?? -1))
 
-  // Only the per-sheet list is refetched: the global list is served from the edge cache, so refetching it right after
-  // a write would bring back the copy from before the write (and drop an attachment added locally).
+  // Attaching, detaching and voting change which associations the global list shows. Its copy comes through the edge
+  // cache, so refetching it right after a write would bring back the copy from before the write; this sheet's part of
+  // it is rebuilt from the fresh per-sheet read instead.
   const refresh = useCallback(async () => {
-    await mutate()
-  }, [mutate])
+    const fresh = await mutate()
+    if (!fresh) return
+    await globalMutate(
+      'tags.list',
+      (current: CombinedTags | undefined) =>
+        withSheetTagSongs(
+          current,
+          { song_id: sheet.songId, sheet_type: sheet.type, sheet_difficulty: sheet.difficulty },
+          fresh,
+          TAG_SONG_HIDDEN_SCORE_THRESHOLD,
+        ),
+      { revalidate: false },
+    )
+  }, [mutate, globalMutate, sheet.songId, sheet.type, sheet.difficulty])
 
   return {
     data: entries,
