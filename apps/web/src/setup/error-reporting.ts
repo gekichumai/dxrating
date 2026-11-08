@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/tanstackstart-react'
 import type { AnyRouter } from '@tanstack/react-router'
 import { sentryScrubOptions } from '@/lib/sentryScrub'
 import type { TelemetrySdk } from '@/lib/telemetry'
+import { isReloadingForNewBuild } from './stale-build'
 
 /** Where the document was loaded, before any client-side navigation */
 export type DocumentLocation = { href: string; pathname: string; search: string }
@@ -38,6 +39,8 @@ export function initErrorReporting(router: AnyRouter, documentLocation: Document
     tracesSampleRate: 0.2,
     // OAuth callbacks carry one-time code and state in the query
     ...sentryScrubOptions,
+    // While the page reloads for a new build (stale-build.ts), its failed chunk loads are expected; nothing to report
+    beforeSend: (event) => (isReloadingForNewBuild() ? null : sentryScrubOptions.beforeSend(event)),
     // Sends what the app logs with Sentry.logger (saved-data migrations, catalog API fallbacks); nothing else
     enableLogs: true,
     ignoreErrors: [
