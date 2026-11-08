@@ -185,7 +185,9 @@ describe('舞ReMASTER membership on the bundled snapshot', () => {
           sheet.serverIds.includes('jp') &&
           sheet.releaseDate !== undefined &&
           sheet.releaseDate < '2019-07-11' &&
-          ['maimai', 'MiLK PLUS', 'FiNALE'].includes(sheet.version),
+          ['maimai', 'MiLK PLUS', 'FiNALE'].includes(sheet.version) &&
+          // ジングルベル: on the 舞 exclusion list (meta#58)
+          sheet.internalId !== 70,
       ),
     )
     expect(sdRemasters.length).toBeGreaterThan(0)
@@ -259,5 +261,128 @@ describe('Re:MASTERs that differ between servers (meta#18)', () => {
     const [chart] = buildPlateCharts([pinned], mai, 'jp')
     expect(chart!.requiredSheets.map((s) => s.id)).toContain(id)
     expect(chart!.hasServerVariantRemaster).toBe(true)
+  })
+})
+describe('plate exclusion lists (meta#58)', () => {
+  const jp = getPlateVersionGroups('jp')
+  const g = (id: string) => jp.find((x) => x.id === id)!
+  const musicIds = (groupId: string, region: 'jp' | 'intl' | 'cn' = 'jp') =>
+    new Set(
+      buildPlateCharts(
+        catalogSnapshot.songs,
+        getPlateVersionGroups(region).find((x) => x.id === groupId)!,
+        region,
+      ).flatMap((c) => (c.type === TypeEnum.STD ? c.requiredSheets.map((sheet) => sheet.internalId) : [])),
+    )
+
+  it('declares the exclusions documented in the issue', () => {
+    expect(g('shin-ver').excludedMusicIds).toEqual([70])
+    expect(g('sumire').excludedMusicIds).toEqual([853])
+    expect(g('mai').excludedMusicIds).toEqual([70, 853])
+    expect(g('ha').excludedMusicIds).toEqual([70, 853])
+  })
+
+  it.each(['jp', 'intl', 'cn'] as const)(
+    'leaves ジングルベル and 前前前世 out of 真, 菫, 舞 and 覇 on %s',
+    (region) => {
+      expect(musicIds('shin-ver', region).has(70)).toBe(false)
+      expect(musicIds('sumire', region).has(853)).toBe(false)
+      for (const id of ['mai', 'ha']) {
+        expect(musicIds(id, region).has(70)).toBe(false)
+        expect(musicIds(id, region).has(853)).toBe(false)
+      }
+    },
+  )
+
+  it('still requires the songs next to them', () => {
+    // The songs stay in the catalog; only the excluding plates drop them
+    const all = catalogSnapshot.songs.flatMap((s) => s.sheets.map((sheet) => sheet.internalId))
+    expect(all).toContain(70)
+    expect(all).toContain(853)
+    expect(musicIds('murasaki').size).toBeGreaterThan(0)
+  })
+
+  it('matches a DX chart set by its own internal ID only', () => {
+    const fixture = [
+      song(
+        'std-70',
+        base('std-70', TypeEnum.STD, VersionEnum.Maimai).map((s) => ({ ...s, internalId: 70 })),
+      ),
+      // A DX chart set with the STD ID (dxdata bug, meta#56) is a different chart set: 10070
+      song(
+        'dx-70',
+        base('dx-70', TypeEnum.DX, VersionEnum.Maimai).map((s) => ({ ...s, internalId: 70 })),
+      ),
+      song(
+        'dx-853',
+        base('dx-853', TypeEnum.DX, VersionEnum.Maimai).map((s) => ({ ...s, internalId: 10853 })),
+      ),
+    ]
+    const shin = buildPlateCharts(fixture, g('shin-ver'), 'jp').map((c) => c.song.id)
+    expect(shin).toEqual(['dx-70', 'dx-853'])
+  })
+})
+
+describe('plate song counts on the bundled snapshot (meta#57, meta#58)', () => {
+  // Chart sets and required sheets per plate. 真, 菫 and 舞 / 覇 drop the excluded songs: 真 89 → 88 (−70),
+  // 菫 42 → 41 (−853), 舞 / 覇 573 → 571 (−70, −853, Re:MASTER of 70 included)
+  const expected: Record<'jp' | 'intl' | 'cn', Record<string, [charts: number, sheets: number]>> = {
+    jp: {
+      'shin-ver': [88, 352],
+      sumire: [41, 164],
+      mai: [571, 2348],
+      ha: [571, 2348],
+      irodori: [80, 320],
+      maru: [78, 312],
+      meguri: [72, 288],
+    },
+    intl: { 'shin-ver': [88, 352], sumire: [41, 164], mai: [571, 2348], ha: [571, 2348] },
+    cn: { 'shin-ver': [86, 344], sumire: [39, 156], mai: [527, 2169], ha: [527, 2169] },
+  }
+  for (const [region, plates] of Object.entries(expected) as [
+    'jp' | 'intl' | 'cn',
+    Record<string, [number, number]>,
+  ][]) {
+    it.each(Object.entries(plates))(`${region} %s`, (groupId, [charts, sheets]) => {
+      const group = getPlateVersionGroups(region).find((x) => x.id === groupId)!
+      const built = buildPlateCharts(catalogSnapshot.songs, group, region)
+      expect(built).toHaveLength(charts)
+      expect(built.reduce((n, c) => n + c.requiredSheets.length, 0)).toBe(sheets)
+    })
+  }
+})
+
+describe('廻 plates (meta#57)', () => {
+  it('lists 廻極 / 廻将 / 廻神 / 廻舞舞 for CiRCLE PLUS on JP', () => {
+    const meguri = getPlateVersionGroups('jp').find((x) => x.id === 'meguri')!
+    expect(meguri.versions).toEqual([VersionEnum.CiRCLEPLUS])
+    expect(meguri.unverified).toBeUndefined()
+    expect(
+      listPlates('jp')
+        .filter((p) => p.group.id === 'meguri')
+        .map((p) => plateName(p)),
+    ).toEqual(['廻極', '廻将', '廻神', '廻舞舞'])
+    const charts = buildPlateCharts(catalogSnapshot.songs, meguri, 'jp')
+    expect(charts.every((c) => c.version === VersionEnum.CiRCLEPLUS)).toBe(true)
+  })
+  it('confirms 彩 and 丸 on JP', () => {
+    const jp = getPlateVersionGroups('jp')
+    expect(jp.find((x) => x.id === 'irodori')!.unverified).toBeUndefined()
+    expect(jp.find((x) => x.id === 'maru')!.unverified).toBeUndefined()
+  })
+  it('is not on INTL or CN yet, and MAGiCAL has no plate', () => {
+    expect(findPlate('intl', 'meguri-shin')).toBeUndefined()
+    expect(findPlate('cn', 'meguri-shin')).toBeUndefined()
+    for (const region of ['jp', 'intl', 'cn'] as const) {
+      expect(getPlateVersionGroups(region).some((x) => x.versions.includes(VersionEnum.MAGiCAL))).toBe(false)
+    }
+  })
+  it('covers every JP version up to CiRCLE PLUS exactly once', () => {
+    const versions = getPlateVersionGroups('jp')
+      .filter((x) => x.id !== 'mai' && x.id !== 'ha')
+      .flatMap((x) => x.versions)
+    expect(new Set(versions).size).toBe(versions.length)
+    const all = Object.values(VersionEnum).filter((v) => v !== VersionEnum.MAGiCAL)
+    expect([...versions].sort()).toEqual([...all].sort())
   })
 })
