@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { clearContentHashCache } from './publications'
 import { clearCatalogFixture, createCatalogFixtureSchema, publishFixture } from './test-fixture'
 import { ANNOUNCEMENT_READER, CATALOG_READER, makeCatalogTestApp } from './test-harness'
 
@@ -16,6 +17,7 @@ suite('catalog publications (admin API)', () => {
 
   beforeAll(() => createCatalogFixtureSchema(t.pool))
   beforeEach(async () => {
+    clearContentHashCache()
     await clearCatalogFixture(t.pool)
     await publishFixture(t.pool, {
       revision: 1,
@@ -80,6 +82,59 @@ suite('catalog publications (admin API)', () => {
     expect((await t.get('/catalog/publications', t.agent(CATALOG_READER))).status).toBe(200)
     expect((await t.get('/catalog/publications', t.agent(ANNOUNCEMENT_READER))).status).toBe(403)
     expect((await t.get('/catalog/publications', {})).status).toBe(401)
+  })
+
+  it('flags whether each publication changed the catalog, ignoring the build-time updatedAt stamp', async () => {
+    await clearCatalogFixture(t.pool)
+    // Song-catalog shape: the assembly line stamps updatedAt on every build, so identical catalogs differ in body hash
+    const stamped = (title: string, at: string) => ({ schemaVersion: 1, updatedAt: at, ...catalog(title) })
+    const bodies = [
+      stamped('One', '2026-11-01T00:00:00Z'),
+      stamped('One', '2026-11-01T01:00:00Z'),
+      stamped('One', '2026-11-01T02:00:00Z'),
+      stamped('Two', '2026-11-01T03:00:00Z'),
+      stamped('Two', '2026-11-01T04:00:00Z'),
+    ]
+    for (const [index, body] of bodies.entries())
+      await publishFixture(t.pool, { revision: index + 1, body, publishedAt: body.updatedAt })
+
+    const out = (await (await t.get('/catalog/publications')).json()) as any
+    expect(out.publications.map((p: any) => [p.revision, p.changedFromPrevious])).toEqual([
+      [5, false],
+      [4, true],
+      [3, false],
+      [2, false],
+      [1, null],
+    ])
+    expect(new Set(out.publications.map((p: any) => p.bodySha256)).size).toBe(5)
+
+    // A page's last row compares with the row past the page, so a run that crosses pages stays correct
+    const first = (await (await t.get('/catalog/publications?limit=2')).json()) as any
+    expect(first.publications.map((p: any) => [p.revision, p.changedFromPrevious])).toEqual([
+      [5, false],
+      [4, true],
+    ])
+    const second = (await (await t.get('/catalog/publications?limit=2&before=4')).json()) as any
+    expect(second.publications.map((p: any) => [p.revision, p.changedFromPrevious])).toEqual([
+      [3, false],
+      [2, false],
+    ])
+  })
+
+  it('treats a legacy updateTime stamp the same way', async () => {
+    await clearCatalogFixture(t.pool)
+    await publishFixture(t.pool, {
+      revision: 1,
+      body: { ...catalog('One'), updateTime: '2026-11-01T00:00:00Z' },
+      publishedAt: '2026-11-01T00:00:00Z',
+    })
+    await publishFixture(t.pool, {
+      revision: 2,
+      body: { ...catalog('One'), updateTime: '2026-11-02T00:00:00Z' },
+      publishedAt: '2026-11-02T00:00:00Z',
+    })
+    const out = (await (await t.get('/catalog/publications')).json()) as any
+    expect(out.publications.map((p: any) => p.changedFromPrevious)).toEqual([false, null])
   })
 
   it('rejects a malformed channel or limit', async () => {

@@ -1,14 +1,14 @@
 import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { parseRoute, routeHref } from '../route'
-import { formatBytes, formatUtc, Publications } from './Publications'
+import { countDelta, formatBytes, formatUtc, groupPublications, Publications } from './Publications'
 
 const publication = (revision: number, overrides: Record<string, unknown> = {}) => ({
   revision,
   fingerprint: String(revision).padStart(64, '0'),
-  publishedAt: `2026-11-0${revision}T08:00:00.000Z`,
+  publishedAt: `2026-11-0${Math.min(revision, 9)}T08:00:00.000Z`,
   catalogRunId: String(100 + revision),
   legacyGitCommitSha: null,
   pipelineVersion: 'assembly-line@f8f5640',
@@ -129,6 +129,64 @@ describe('Publications', () => {
     )
     mount()
     expect((await screen.findByRole('alert')).textContent).toContain('Could not load publications')
+  })
+})
+
+describe('folding unchanged publications', () => {
+  const page = [
+    publication(9, { current: true, changedFromPrevious: false }),
+    publication(8, { changedFromPrevious: false, publishedAt: '2026-11-07T10:00:00.000Z' }),
+    publication(7, { changedFromPrevious: false, publishedAt: '2026-11-07T09:00:00.000Z' }),
+    publication(6, { changedFromPrevious: true, songCount: 1805, sheetCount: 7413 }),
+    publication(5, { changedFromPrevious: false }),
+  ]
+
+  it('groups runs of unchanged publications, never folding the current one', () => {
+    const items = groupPublications(page as any)
+    expect(
+      items.map((item) => (item.kind === 'row' ? item.publication.revision : item.publications.map((p) => p.revision))),
+    ).toEqual([9, [8, 7], 6, [5]])
+    const [, run, , tail] = items
+    expect(run).toMatchObject({ kind: 'run', index: 1, base: { revision: 6 } })
+    // The page's last row repeats a publication on the older page
+    expect(tail).toMatchObject({ kind: 'run', index: 4, base: null })
+  })
+
+  it('shows a run as one row that expands on click', async () => {
+    stub({ channel: 'production-v1', channels: ['production-v1'], publications: page, nextBefore: 5 })
+    mount()
+    const toggle = (await screen.findByText('2 unchanged publications')).closest('button')!
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(toggle.textContent).toContain('r7–r8 · 2026-11-07 09:00–10:00 UTC')
+    expect(toggle.textContent).toContain('same catalog as r6')
+    expect(screen.queryByText('r8')).toBeNull()
+    // The current publication stays visible, saying it changed nothing
+    expect(screen.getByText('current').closest('tr')?.textContent).toContain('no change')
+    // A changed one links its diff and says how the counts moved
+    const changed = screen.getByText('r6').closest('tr')!
+    expect(changed.querySelector('a')?.getAttribute('href')).toBe('#diff?to=6')
+    expect(changed.textContent).toContain('+2\u00a0songs · +8\u00a0sheets')
+    expect(screen.getByText('1 unchanged publication').closest('button')?.textContent).toContain(
+      'continues on the older page',
+    )
+
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByText('r8').closest('tr')?.textContent).toContain('no change')
+    expect(screen.getByText('r7')).toBeTruthy()
+    fireEvent.click(toggle)
+    expect(screen.queryByText('r8')).toBeNull()
+  })
+
+  it('formats count deltas', () => {
+    expect(
+      countDelta(
+        publication(2, { songCount: 10, sheetCount: 40 }) as any,
+        publication(1, { songCount: 11, sheetCount: 40 }) as any,
+      ),
+    ).toBe('−1\u00a0song')
+    expect(countDelta(publication(2) as any, publication(1) as any)).toBeNull()
+    expect(countDelta(publication(2) as any, undefined)).toBeNull()
   })
 })
 
