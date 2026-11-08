@@ -1,3 +1,4 @@
+import { audit } from './audit'
 import {
   type AnnouncementCreateInput,
   type AnnouncementUpdateInput,
@@ -152,8 +153,10 @@ export const createAnnouncement = (principal: Principal, input: AnnouncementCrea
   Effect.gen(function* () {
     const columns = columnsFrom(input, yield* now)
     yield* checkWindow(columns)
-    if (dryRun)
+    if (dryRun) {
+      yield* audit(principal, { action: 'announcements.create', dryRun: true, outcome: 'ok' })
       return { dryRun: true as const, preview: preview(columns), announcement: null, edgeCache: 'skipped' as const }
+    }
     const db = yield* AdminDatabase
     const [row] = yield* db.use('create announcement', (d) =>
       d
@@ -161,6 +164,8 @@ export const createAnnouncement = (principal: Principal, input: AnnouncementCrea
         .values({ ...columns, created_by: principal.actor, updated_by: principal.actor })
         .returning(),
     )
+    // Audited as soon as it is committed: a request cancelled during the edge purge below still leaves its entry
+    yield* audit(principal, { action: 'announcements.create', target: row!.id, outcome: 'ok' })
     const edgeCache = yield* invalidateEdge
     return { dryRun: false as const, preview: preview(columns), announcement: toAdminAnnouncement(row!), edgeCache }
   })
@@ -196,7 +201,10 @@ export const updateAnnouncement = (
         return { columns, revision, row: row! }
       }),
     )
-    if (!outcome) return null
+    if (!outcome) {
+      yield* audit(principal, { action: 'announcements.update', target: input.id, dryRun, outcome: 'not_found' })
+      return null
+    }
     if ('conflict' in outcome) {
       return yield* new AnnouncementRejected({
         code: 'CONFLICT',
@@ -205,6 +213,7 @@ export const updateAnnouncement = (
     }
     if ('invalidWindow' in outcome) return yield* checkWindow({ starts_at: new Date(1), ends_at: new Date(0) })
     const { columns, revision, row } = outcome
+    yield* audit(principal, { action: 'announcements.update', target: input.id, dryRun, outcome: 'ok' })
     if (!row) {
       return {
         dryRun: true as const,
@@ -248,6 +257,7 @@ export const endAnnouncement = (principal: Principal, id: number) =>
         return { row: row!, changed: true }
       }),
     )
+    yield* audit(principal, { action: 'announcements.end', target: id, outcome: outcome ? 'ok' : 'not_found' })
     if (!outcome) return null
     const edgeCache = outcome.changed ? yield* invalidateEdge : ('skipped' as const)
     return { announcement: toAdminAnnouncement(outcome.row), edgeCache }

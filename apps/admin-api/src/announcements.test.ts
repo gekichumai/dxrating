@@ -184,6 +184,24 @@ suite('announcements (admin API)', () => {
     }
   })
 
+  it('audits a committed write before the edge purge, so a request cancelled there keeps its entry', async () => {
+    const order: string[] = []
+    const log = vi.spyOn(console, 'log').mockImplementation((line) => {
+      if (typeof line === 'string' && line.includes('"admin_audit"')) order.push('audit')
+    })
+    purge.mockImplementation(async () => (order.push('purge'), Response.json({ success: true })))
+    try {
+      const created = (await (await post('/announcements', { announcement: fields() })).json()) as any
+      await post('/announcements/update', {
+        announcement: { ...fields({ body: { en: 'y' } }), id: created.announcement.id },
+      })
+      await post('/announcements/end', { id: created.announcement.id })
+      expect(order).toEqual(['audit', 'purge', 'audit', 'purge', 'audit', 'purge'])
+    } finally {
+      log.mockRestore()
+    }
+  })
+
   it('dry run validates and previews without saving or purging', async () => {
     const out = (await (await post('/announcements', { announcement: fields(), dryRun: true })).json()) as any
     expect(out).toMatchObject({ dryRun: true, announcement: null, edgeCache: 'skipped' })
