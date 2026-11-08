@@ -1,0 +1,47 @@
+/*
+ * Cloud save surfaces: the overlay glass of the design tokens (src/styles/tokens.css, dark values in dark.css), so
+ * popovers follow the tinted glass and dark mode like every other overlay. Hover feedback only where a pointer can
+ * hover.
+ */
+
+.cloud-save-surface {
+  background-color: var(--glass-overlay-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight), var(--shadow-overlay);
+  color: var(--fg-1);
+}
+
+.cloud-save-status-button {
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  /* Unless the header tints it (header-tints.css), which brings its own hover wash */
+  .cloud-save-status-button:not(.header-tint):hover {
+    background-color: rgb(var(--surface-rgb) / 0.6);
+  }
+  .cloud-save-save-option:hover:not([aria-current='true']) {
+    background-color: rgb(var(--ink-rgb) / 0.04);
+  }
+}
+
+.cloud-save-status-button:focus-visible,
+.cloud-save-save-option:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Syncing: the cloud stays put and breathes; a rotating cloud outline reads as a broken icon */
+@media (prefers-reduced-motion: no-preference) {
+  .cloud-save-pulse {
+    animation: cloud-save-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes cloud-save-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}

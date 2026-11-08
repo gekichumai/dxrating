@@ -18,8 +18,15 @@ async function envelopesFor(scrub: boolean, path = '/api/v1/io/import/lxns/compl
   Sentry.init({
     ...options,
     tracesSampler: () => 1,
-    // Without the fix: the same SDK setup with hooks that keep everything
-    ...(scrub ? {} : { beforeSend: (event) => event, beforeSendTransaction: (event) => event }),
+    // Without the fix: the same SDK setup with an HTTP integration that attaches every body and hooks that keep
+    // everything
+    ...(scrub
+      ? {}
+      : {
+          integrations: [Sentry.httpIntegration()],
+          beforeSend: (event) => event,
+          beforeSendTransaction: (event) => event,
+        }),
     transport: () => ({
       send: async (envelope) => {
         sent.push(JSON.stringify(envelope))

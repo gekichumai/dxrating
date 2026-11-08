@@ -69,8 +69,15 @@ function readLocaleFromSearch(search: unknown): SupportedLocale | null {
   return toSupportedLocale((search as Record<string, unknown>).locale as string | undefined)
 }
 
+/**
+ * The page language for a head function, called as `resolveSeoLocale([match, ...matches])`. The head's own `match` is
+ * this navigation's, with the merged context; `matches` can still be the previous navigation's snapshot, so after a
+ * language switch or Back/Forward between languages they name the old one. The first entry wins, then the deepest of
+ * the rest.
+ */
 export function resolveSeoLocale(matches?: readonly SeoRouteMatch[]): SupportedLocale {
-  for (const match of [...(matches ?? [])].reverse()) {
+  const [current, ...rest] = matches ?? []
+  for (const match of current ? [current, ...rest.reverse()] : []) {
     const locale = readLocaleFromContext(match.context) ?? readLocaleFromSearch(match.search)
     if (locale) return locale
   }

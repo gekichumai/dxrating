@@ -505,7 +505,7 @@
   "auth_accountSecurity_featureDevices": "See where you're signed in and sign out other devices",
   "auth_accountSecurity_featuresLabel": "What you can do here",
   "auth_privacy_title": "Privacy Policy",
-  "auth_privacy_updated": "Last updated: October 30, 2026",
+  "auth_privacy_updated": "Last updated: November 3, 2026",
   "auth_privacy_intro_heading": "Introduction",
   "auth_privacy_intro_body": "This Privacy Policy explains how we collect, use, process, and disclose your information when you use our service.",
   "auth_privacy_collect_heading": "Information we collect",
@@ -537,7 +537,7 @@
   "auth_privacy_retention_heading": "Data retention",
   "auth_privacy_retention_body": "We will retain your information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy. We will retain and use your information to the extent necessary to comply with our legal obligations, resolve disputes, and enforce our policies.",
   "auth_privacy_deletion_heading": "Account deletion",
-  "auth_privacy_deletion_p1": "You can permanently delete your account from the account screen in the DXRating app. Deletion removes your profile, comments, tags and tag attachments, aliases, sessions, passkeys, linked sign-in methods, and linked LXNS credentials. Linked OAuth grants are revoked when supported by the provider. After deletion, you can create a new account using the same email address or sign-in provider.",
+  "auth_privacy_deletion_p1": "You can permanently delete your account from the account screen in the DXRating app. Deletion removes your profile, comments, tags and tag attachments, aliases, sessions, passkeys, linked sign-in methods, linked LXNS credentials, and your cloud saves with their score history, import logs and rating snapshots. Linked OAuth grants are revoked when supported by the provider. After deletion, you can create a new account using the same email address or sign-in provider.",
   "auth_privacy_deletion_p2": "Account data is removed from our active systems immediately. Residual copies may remain in encrypted backups until those backups are automatically deleted, or when retention is required by law.",
   "auth_privacy_rights_heading": "Your rights",
   "auth_privacy_rights_body": "You have the following data protection rights:",
@@ -1322,5 +1322,397 @@
   "announcement_severity_warning": "Warning",
   "announcement_severity_critical": "Important",
   "announcement_learnMore": "Learn more",
-  "announcement_dismiss": "Dismiss announcement"
+  "announcement_dismiss": "Dismiss announcement",
+  "ratingCalculator_cloudSave_saveMissing": "Your cloud save could not be found, so this device is using its local save.",
+  "ratingCalculator_cloudSave_title": "Cloud save",
+  "ratingCalculator_cloudSave_description": "Your scores are stored on DXRating and stay in sync across your devices.",
+  "ratingCalculator_cloudSave_provenance_verified": "Verified",
+  "ratingCalculator_cloudSave_provenance_friendCode": "friend code {id}",
+  "ratingCalculator_cloudSave_provenance_account": "account {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "fetched {date}",
+  "ratingCalculator_cloudSave_provenance_edited": "Edited (originally imported)",
+  "ratingCalculator_cloudSave_provenance_manual": "Manual",
+  "ratingCalculator_cloudSave_provenance_notVerified": "not verified",
+  "ratingCalculator_cloudSave_provenance_fromFile": "From file ({source})",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "From file (claimed: {source})",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "From this device",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "From this device (claimed: {source})",
+  "ratingCalculator_cloudSave_status_idle": "Up to date",
+  "ratingCalculator_cloudSave_status_syncing": "Syncing…",
+  "ratingCalculator_cloudSave_status_offline": "Offline",
+  "ratingCalculator_cloudSave_status_error": "Can't sync right now",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} change waiting to sync",
+        "countPlural=*": "{count} changes waiting to sync"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} sync issue",
+        "countPlural=*": "{count} sync issues"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "Sync issues",
+  "ratingCalculator_cloudSave_issues_empty": "No sync issues.",
+  "ratingCalculator_cloudSave_issues_yourValue": "Your change: {value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "removed",
+  "ratingCalculator_cloudSave_issues_method_typed": "typed",
+  "ratingCalculator_cloudSave_issues_method_keypad": "keypad",
+  "ratingCalculator_cloudSave_issues_method_photo": "photo",
+  "ratingCalculator_cloudSave_issues_superseded": "A newer verified score was kept.",
+  "ratingCalculator_cloudSave_issues_rejected": "This change wasn't accepted, so the saved score was kept.",
+  "ratingCalculator_cloudSave_issues_useMine": "Use my value anyway",
+  "ratingCalculator_cloudSave_issues_dismiss": "Dismiss",
+  "ratingCalculator_cloudSave_saves_title": "Saves",
+  "ratingCalculator_cloudSave_saves_description": "Choose which save this browser shows and edits.",
+  "ratingCalculator_cloudSave_saves_loading": "Loading saves…",
+  "ratingCalculator_cloudSave_saves_error": "Couldn't load your saves.",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{formatted} record",
+        "countPlural=*": "{formatted} records"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "last synced {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "Any region",
+  "ratingCalculator_cloudSave_history_title": "Import history",
+  "ratingCalculator_cloudSave_history_loading": "Loading imports…",
+  "ratingCalculator_cloudSave_history_error": "Couldn't load the import history.",
+  "ratingCalculator_cloudSave_history_empty": "No imports yet.",
+  "ratingCalculator_cloudSave_history_running": "In progress…",
+  "ratingCalculator_cloudSave_history_trigger_user": "By you",
+  "ratingCalculator_cloudSave_history_trigger_auto": "Automatic",
+  "ratingCalculator_cloudSave_history_trigger_migration": "Moved from this browser",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} new"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} improved"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} now verified"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} unchanged"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} kept your edit"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} skipped (deleted)"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "{countNumber} rejected"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "No changes",
+  "ratingCalculator_cloudSave_import_success": "Imported from {source}: {summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "This import stopped before it finished. Try again.",
+  "ratingCalculator_cloudSave_import_errors_generic": "Couldn't finish this import. Try again.",
+  "ratingCalculator_cloudSave_saves_empty": "No cloud saves yet.",
+  "ratingCalculator_cloudSave_retry": "Try again",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Import {count} score into your cloud save?",
+        "countPlural=*": "Import {count} scores into your cloud save?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "Each chart keeps its better score, so nothing you already have gets worse. To start over instead, clear the save first.",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "Cancel",
+  "ratingCalculator_cloudSave_importConfirm_merge": "Import",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "Clear save first…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "Clear the save, then import?",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "Every score in this save is deleted on all your devices, then the file is imported. Verified scores that changed since this device last synced are kept.",
+  "ratingCalculator_cloudSave_importConfirm_back": "Back",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "Clear and import",
+  "ratingCalculator_cloudSave_unreachable": "Can't reach your cloud save yet. Changes you make now stay in this browser.",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} record didn't match a chart and wasn't imported.",
+        "countPlural=*": "{countNumber} records didn't match a chart and weren't imported."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "None of these records can be imported: they match no chart or have values out of range. Your cloud save wasn't changed.",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} record has a value that can't be saved, such as a DX score out of range, and wasn't imported.",
+        "countPlural=*": "{countNumber} records have values that can't be saved, such as a DX score out of range, and weren't imported."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_divingFishMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} record is hidden by the player's privacy settings on Diving-Fish and can't be imported.",
+        "countPlural=*": "{countNumber} records are hidden by the player's privacy settings on Diving-Fish and can't be imported."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} record can't be imported because it matches no chart or has a value out of range. It will be left out.",
+        "countPlural=*": "{countNumber} records can't be imported because they match no chart or have values out of range. They will be left out."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "Another import from this source is running on your cloud save. Try again when it finishes.",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "This file is too large to upload in one import. Your cloud save wasn't changed.",
+  "ratingCalculator_cloudSave_history_failure_generic": "Didn't finish",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "Stopped before it finished",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "Didn't finish: maimai NET was under maintenance",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "Didn't finish: maimai NET sign-in failed",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "Didn't finish: no usable Aime card",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} unknown chart",
+        "countPlural=*": "{countNumber} unknown charts"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} hidden by privacy settings",
+        "countPlural=*": "{countNumber} hidden by privacy settings"
+      }
+    }
+  ],
+  "auth_privacy_cloud_heading": "Cloud save (beta)",
+  "auth_privacy_cloud_p1": "If you turn on cloud save, we store your scores in your account so your devices can share them: for each chart, your result and where it came from (for example an import from maimai DX NET, LXNS or Diving-Fish, a file, or an entry you typed in), with the account ID that provider gives you, such as your friend code. We also keep a log of each import (its source, time, counts and a hash of the data received) and the rating snapshots your devices save after syncing.",
+  "auth_privacy_cloud_p2": "When you import from maimai DX NET, your SEGA ID password is used only to sign in for that import. It is never stored or logged.",
+  "auth_privacy_cloud_p3": "Cloud saves are kept until you delete them or your account. Each chart keeps up to 20 earlier results, and each save up to 100 rating snapshots. Deleted records are remembered for 90 days so your other devices remove them too, and a record of each sync request from your devices is kept for 30 days so that a request sent twice is applied once. A save you delete is erased for good 30 days later.",
+  "ratingCalculator_cloudSave_descriptionInactive": "Keep your scores in your DXRating account and use them on all your devices.",
+  "ratingCalculator_cloudSave_choose_title": "Use a cloud save",
+  "ratingCalculator_cloudSave_choose_sectionDescription": "Backed up on another device? Choose a cloud save to use on this browser.",
+  "ratingCalculator_cloudSave_choose_open": "Use a cloud save",
+  "ratingCalculator_cloudSave_choose_dialogTitle": "Choose a cloud save",
+  "ratingCalculator_cloudSave_choose_dialogDescription": "This browser will show and edit the save you choose. Nothing is uploaded.",
+  "ratingCalculator_cloudSave_choose_empty": "Your account has no cloud saves yet. To make one, add scores on this device, then back them up.",
+  "ratingCalculator_cloudSave_choose_cancel": "Cancel",
+  "ratingCalculator_cloudSave_migration_title": "Back up to cloud",
+  "ratingCalculator_cloudSave_migration_prompt": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Back up the {formatted} record on this device to your account?",
+        "countPlural=*": "Back up the {formatted} records on this device to your account?"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_backUp": "Back up to cloud",
+  "ratingCalculator_cloudSave_migration_notNow": "Not now",
+  "ratingCalculator_cloudSave_migration_sectionDescription": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "This browser has {countNumber} record saved on this device. Back it up to sync it across your devices.",
+        "countPlural=*": "This browser has {countNumber} records saved on this device. Back them up to sync them across your devices."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_saveName": "My scores",
+  "ratingCalculator_cloudSave_migration_freshDescription": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Your {formatted} record will be saved to your account and synced across your devices.",
+        "countPlural=*": "Your {formatted} records will be saved to your account and synced across your devices."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingTitle": "You already have a cloud save",
+  "ratingCalculator_cloudSave_migration_cloudRecords": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{formatted} record",
+        "countPlural=*": "{formatted} records"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingDescription": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input region",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "“{name}” ({region}) has {cloudRecords}. This device has {formatted} record.",
+        "countPlural=*": "“{name}” ({region}) has {cloudRecords}. This device has {formatted} records."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_changed": "This cloud save changed on another device. Check it again before you continue.",
+  "ratingCalculator_cloudSave_migration_merge": "Merge (keep the best of both)",
+  "ratingCalculator_cloudSave_migration_mergeDescription": "Each chart keeps its better score from this device or the cloud.",
+  "ratingCalculator_cloudSave_migration_cloudOnly": "Use cloud only",
+  "ratingCalculator_cloudSave_migration_cloudOnlyDescription": "Switch to the cloud save. This device’s records are kept in a backup, not uploaded.",
+  "ratingCalculator_cloudSave_migration_mergeAction": "Merge",
+  "ratingCalculator_cloudSave_migration_cloudOnlyAction": "Use cloud save",
+  "ratingCalculator_cloudSave_migration_advanced": "Advanced",
+  "ratingCalculator_cloudSave_migration_replaceDescription": "Replace every record in the cloud save with the records on this device.",
+  "ratingCalculator_cloudSave_migration_replace": "Replace cloud with this device",
+  "ratingCalculator_cloudSave_migration_replaceTitle": "Replace the cloud save?",
+  "ratingCalculator_cloudSave_migration_replaceWarning": [
+    {
+      "declarations": [
+        "input count",
+        "input cloudRecords",
+        "input name",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "The {cloudRecords} in “{name}” will be replaced with the {formatted} record from this device. Your other devices will get the change too. This can’t be undone.",
+        "countPlural=*": "The {cloudRecords} in “{name}” will be replaced with the {formatted} records from this device. Your other devices will get the change too. This can’t be undone."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceWarningEmpty": [
+    {
+      "declarations": ["input count", "input name", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "“{name}” has no records. It will get the {formatted} record from this device, and your other devices will get the change too.",
+        "countPlural=*": "“{name}” has no records. It will get the {formatted} records from this device, and your other devices will get the change too."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceConfirm": "Replace cloud save",
+  "ratingCalculator_cloudSave_migration_runningTitle": "Backing up…",
+  "ratingCalculator_cloudSave_migration_running": "Uploading your records. Keep this page open.",
+  "ratingCalculator_cloudSave_migration_switchingTitle": "Switching to your cloud save…",
+  "ratingCalculator_cloudSave_migration_switching": "Keeping a copy of this device’s records in this browser.",
+  "ratingCalculator_cloudSave_migration_doneTitle": "Backed up",
+  "ratingCalculator_cloudSave_migration_switchedTitle": "Now using your cloud save",
+  "ratingCalculator_cloudSave_migration_done": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{formatted} record is now in your cloud save.",
+        "countPlural=*": "{formatted} records are now in your cloud save."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_doneCloudOnly": "This device now uses your cloud save.",
+  "ratingCalculator_cloudSave_migration_close": "Close",
+  "ratingCalculator_cloudSave_migration_errorTitle": "Couldn’t back up",
+  "ratingCalculator_cloudSave_migration_switchErrorTitle": "Couldn’t switch",
+  "ratingCalculator_cloudSave_migration_errorSafe": "Nothing on this device was changed. You can try again at any time.",
+  "ratingCalculator_cloudSave_migration_errorUnchanged": "Nothing on this device was changed.",
+  "ratingCalculator_cloudSave_migration_errors_saveLimit": "You have the most cloud saves allowed, so a new one can’t be made. To back up into one of your saves instead, switch the game region to that save’s region and open this again.",
+  "ratingCalculator_cloudSave_migration_errors_generic": "The upload didn’t finish. Check your connection and try again.",
+  "ratingCalculator_cloudSave_migration_errors_switchGeneric": "Something went wrong. Try again.",
+  "ratingCalculator_cloudSave_migration_unverifiedNote": "Records already on this device are saved as “not verified”. Import from maimai NET, LXNS or Diving-Fish again to get verified records.",
+  "ratingCalculator_cloudSave_migration_backupNote": "A copy of this device’s records stays in this browser for 30 days. When you’re signed out, this device keeps using its own records.",
+  "ratingCalculator_cloudSave_optIn_title": "Cloud save (beta)",
+  "ratingCalculator_cloudSave_optIn_description": "Keep your scores in your account and sync them across your devices.",
+  "ratingCalculator_cloudSave_optIn_consentTitle": "Turn on cloud save (beta)?",
+  "ratingCalculator_cloudSave_optIn_consentIntro": "With cloud save, DXRating stores the following in your account:",
+  "ratingCalculator_cloudSave_optIn_consentStored": "Your scores, the provider account IDs you import from (such as your friend code), a log of each import with a hash of what was imported, and the rating snapshots your devices save after syncing.",
+  "ratingCalculator_cloudSave_optIn_consentRetention": "Kept until you delete them or your account. Each chart keeps up to 20 earlier results, and each save up to 100 rating snapshots. Deleted records are remembered for 90 days so your other devices remove them too, and a record of each sync request from your devices is kept for 30 days. A save you delete is erased for good 30 days later.",
+  "ratingCalculator_cloudSave_optIn_consentPasswords": "Your SEGA ID password is never stored.",
+  "ratingCalculator_cloudSave_optIn_consentLeaving": "You can’t turn the beta off in the app yet. Deleting your DXRating account (in the DXRating app) removes all of this from our systems; the privacy policy explains backups.",
+  "ratingCalculator_cloudSave_optIn_consentPrivacy": "Read more in the {#privacy}privacy policy{/privacy}.",
+  "ratingCalculator_cloudSave_optIn_agree": "Agree and turn on",
+  "ratingCalculator_cloudSave_optIn_sending": "Turning on cloud save…",
+  "ratingCalculator_cloudSave_optIn_success": "Cloud save is on.",
+  "ratingCalculator_cloudSave_optIn_error": "Couldn’t turn on cloud save. Try again.",
+  "ratingCalculator_cloudSave_export_title": "Your data",
+  "ratingCalculator_cloudSave_export_description": "Download every cloud save with its records, where they came from, import history and rating snapshots, as a JSON file.",
+  "ratingCalculator_cloudSave_export_button": "Download my data",
+  "ratingCalculator_cloudSave_export_preparing": "Preparing…",
+  "ratingCalculator_cloudSave_export_success": "Your data is downloading.",
+  "ratingCalculator_cloudSave_export_error": "Couldn’t download your data. Try again.",
+  "ratingCalculator_cloudSave_export_rateLimited": "You’ve downloaded your data several times today. Try again tomorrow.",
+  "ratingCalculator_cloudSave_exportImport_pickTitle": "Choose a save to import",
+  "ratingCalculator_cloudSave_exportImport_pickDescription": "This file has more than one save.",
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Imported as “not verified”: where the records came from is shown as the file claims it."
 }

@@ -1,4 +1,6 @@
 import { useNetImportSettings } from './import/NetImportSettingsContext'
+import { CloudImportConfirmDialog } from '../../cloud-save/CloudImportConfirmDialog'
+import { ExportSavePickerDialog } from '../../cloud-save/ExportSavePickerDialog'
 import { Button, Divider, Menu } from '@mui/material'
 import { type FC, useId, useRef, useState } from 'react'
 import { ImportFromAquaDxButtonListItem } from './import/ImportFromAquaDxButtonListItem.tsx'
@@ -31,6 +33,10 @@ export const ImportMenu: FC<{
 
   return (
     <>
+      {/* Asks how a file import goes into a cloud save; renders nothing otherwise */}
+      <CloudImportConfirmDialog />
+      {/* Asks which save of a "Download my data" file to import, when it has several */}
+      <ExportSavePickerDialog />
       <Button
         ref={triggerRef}
         id={`button-${id}`}
@@ -39,6 +45,8 @@ export const ImportMenu: FC<{
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
         variant="outlined"
+        // Takes the focus when the cloud backup prompt below goes away
+        data-cloud-migration-focus-return=""
       >
         {label ?? m.ratingCalculator_io_import_button({}, { locale })}
       </Button>

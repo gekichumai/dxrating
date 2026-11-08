@@ -505,7 +505,7 @@
   "auth_accountSecurity_featureDevices": "ログイン中のデバイスを確認し、他のデバイスをログアウトする",
   "auth_accountSecurity_featuresLabel": "このページでできること",
   "auth_privacy_title": "プライバシーポリシー",
-  "auth_privacy_updated": "最終更新日：2026年10月30日",
+  "auth_privacy_updated": "最終更新日：2026年11月3日",
   "auth_privacy_intro_heading": "はじめに",
   "auth_privacy_intro_body": "本プライバシーポリシーは、お客様が本サービスを利用する際に、当社がお客様の情報をどのように収集、利用、処理、開示するかを説明するものです。",
   "auth_privacy_collect_heading": "収集する情報",
@@ -537,7 +537,7 @@
   "auth_privacy_retention_heading": "データの保持",
   "auth_privacy_retention_body": "当社は、本プライバシーポリシーに定める目的を達成するために必要な期間に限り、お客様の情報を保持します。また、法的義務の遵守、紛争の解決、当社ポリシーの執行に必要な範囲で、お客様の情報を保持および利用します。",
   "auth_privacy_deletion_heading": "アカウントの削除",
-  "auth_privacy_deletion_p1": "DXRatingアプリのアカウント画面から、アカウントを完全に削除できます。削除すると、プロフィール、コメント、タグとタグの付与、別名、セッション、パスキー、連携したログイン方法、連携したLXNSの認証情報が削除されます。連携したOAuthの許可は、プロバイダーが対応している場合に取り消されます。削除後は、同じメールアドレスまたはログインプロバイダーで新しいアカウントを作成できます。",
+  "auth_privacy_deletion_p1": "DXRatingアプリのアカウント画面から、アカウントを完全に削除できます。削除すると、プロフィール、コメント、タグとタグの付与、別名、セッション、パスキー、連携したログイン方法、連携したLXNSの認証情報、クラウドセーブ（スコアの履歴、インポートの記録、レーティングのスナップショットを含む）が削除されます。連携したOAuthの許可は、プロバイダーが対応している場合に取り消されます。削除後は、同じメールアドレスまたはログインプロバイダーで新しいアカウントを作成できます。",
   "auth_privacy_deletion_p2": "アカウントデータは当社の稼働中のシステムから直ちに削除されます。暗号化されたバックアップには、そのバックアップが自動的に削除されるまで、または法令により保持が求められる場合に、残存するコピーが残ることがあります。",
   "auth_privacy_rights_heading": "お客様の権利",
   "auth_privacy_rights_body": "お客様には次のデータ保護に関する権利があります。",
@@ -1322,5 +1322,397 @@
   "announcement_severity_warning": "注意",
   "announcement_severity_critical": "重要",
   "announcement_learnMore": "詳しく見る",
-  "announcement_dismiss": "お知らせを閉じる"
+  "announcement_dismiss": "お知らせを閉じる",
+  "ratingCalculator_cloudSave_saveMissing": "クラウドセーブが見つからないため、この端末のローカルセーブを使用しています。",
+  "ratingCalculator_cloudSave_title": "クラウドセーブ",
+  "ratingCalculator_cloudSave_description": "スコアは DXRating に保存され、すべての端末で同期されます。",
+  "ratingCalculator_cloudSave_provenance_verified": "検証済み",
+  "ratingCalculator_cloudSave_provenance_friendCode": "フレンドコード {id}",
+  "ratingCalculator_cloudSave_provenance_account": "アカウント {id}",
+  "ratingCalculator_cloudSave_provenance_fetched": "{date} 取得",
+  "ratingCalculator_cloudSave_provenance_edited": "編集済み（元はインポート）",
+  "ratingCalculator_cloudSave_provenance_manual": "手動入力",
+  "ratingCalculator_cloudSave_provenance_notVerified": "未検証",
+  "ratingCalculator_cloudSave_provenance_fromFile": "ファイルから（{source}）",
+  "ratingCalculator_cloudSave_provenance_fromFileClaimed": "ファイルから（自己申告：{source}）",
+  "ratingCalculator_cloudSave_provenance_fromDevice": "この端末から",
+  "ratingCalculator_cloudSave_provenance_fromDeviceClaimed": "この端末から（自己申告：{source}）",
+  "ratingCalculator_cloudSave_status_idle": "最新の状態",
+  "ratingCalculator_cloudSave_status_syncing": "同期中…",
+  "ratingCalculator_cloudSave_status_offline": "オフライン",
+  "ratingCalculator_cloudSave_status_error": "今は同期できません",
+  "ratingCalculator_cloudSave_status_pending": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} 件の変更が同期待ち",
+        "countPlural=*": "{count} 件の変更が同期待ち"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_status_issues": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "同期の問題 {count} 件",
+        "countPlural=*": "同期の問題 {count} 件"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_issues_title": "同期の問題",
+  "ratingCalculator_cloudSave_issues_empty": "同期の問題はありません。",
+  "ratingCalculator_cloudSave_issues_yourValue": "あなたの変更：{value}",
+  "ratingCalculator_cloudSave_issues_valueRemoved": "削除",
+  "ratingCalculator_cloudSave_issues_method_typed": "入力",
+  "ratingCalculator_cloudSave_issues_method_keypad": "キーパッド",
+  "ratingCalculator_cloudSave_issues_method_photo": "写真",
+  "ratingCalculator_cloudSave_issues_superseded": "より新しい検証済みのスコアが優先されました。",
+  "ratingCalculator_cloudSave_issues_rejected": "この変更は受け付けられなかったため、保存済みのスコアがそのまま残っています。",
+  "ratingCalculator_cloudSave_issues_useMine": "それでも自分の値を使う",
+  "ratingCalculator_cloudSave_issues_dismiss": "無視",
+  "ratingCalculator_cloudSave_saves_title": "セーブデータ",
+  "ratingCalculator_cloudSave_saves_description": "このブラウザで表示・編集するセーブデータを選びます。",
+  "ratingCalculator_cloudSave_saves_loading": "セーブデータを読み込み中…",
+  "ratingCalculator_cloudSave_saves_error": "セーブデータを読み込めませんでした。",
+  "ratingCalculator_cloudSave_saves_records": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{formatted} 件",
+        "countPlural=*": "{formatted} 件"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_saves_b50": "B50 {rating}",
+  "ratingCalculator_cloudSave_saves_lastSync": "最終同期 {date}",
+  "ratingCalculator_cloudSave_saves_regionAny": "地域指定なし",
+  "ratingCalculator_cloudSave_history_title": "インポート履歴",
+  "ratingCalculator_cloudSave_history_loading": "インポート履歴を読み込み中…",
+  "ratingCalculator_cloudSave_history_error": "インポート履歴を読み込めませんでした。",
+  "ratingCalculator_cloudSave_history_empty": "まだインポートはありません。",
+  "ratingCalculator_cloudSave_history_running": "実行中…",
+  "ratingCalculator_cloudSave_history_trigger_user": "手動",
+  "ratingCalculator_cloudSave_history_trigger_auto": "自動",
+  "ratingCalculator_cloudSave_history_trigger_migration": "このブラウザから移行",
+  "ratingCalculator_cloudSave_history_counts_inserted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "新規 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_improved": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "更新 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_provenanceUpgraded": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "検証済みに {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_unchanged": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "変更なし {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_keptUserEdit": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "編集を維持 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedDeleted": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "削除済みのためスキップ {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_rejected": [
+    {
+      "declarations": ["input count", "local countNumber = count: number"],
+      "selectors": [],
+      "match": {
+        "*": "拒否 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_none": "変更なし",
+  "ratingCalculator_cloudSave_import_success": "{source} からインポートしました：{summary}",
+  "ratingCalculator_cloudSave_import_errors_abandoned": "インポートが途中で止まりました。もう一度お試しください。",
+  "ratingCalculator_cloudSave_import_errors_generic": "インポートを完了できませんでした。もう一度お試しください。",
+  "ratingCalculator_cloudSave_saves_empty": "クラウドセーブはまだありません。",
+  "ratingCalculator_cloudSave_retry": "再試行",
+  "ratingCalculator_cloudSave_importConfirm_title": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} 件のスコアをクラウドセーブにインポートしますか？",
+        "countPlural=*": "{count} 件のスコアをクラウドセーブにインポートしますか？"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_description": "譜面ごとに良いほうのスコアが残るため、今のスコアが下がることはありません。最初からやり直す場合は、先にセーブデータを消去してください。",
+  "ratingCalculator_cloudSave_importConfirm_cancel": "キャンセル",
+  "ratingCalculator_cloudSave_importConfirm_merge": "インポート",
+  "ratingCalculator_cloudSave_importConfirm_clearFirst": "先に消去…",
+  "ratingCalculator_cloudSave_importConfirm_clearTitle": "セーブデータを消去してからインポートしますか？",
+  "ratingCalculator_cloudSave_importConfirm_clearDescription": "このセーブデータのスコアをすべての端末から削除し、その後ファイルをインポートします。この端末の前回の同期以降に更新された検証済みのスコアは残ります。",
+  "ratingCalculator_cloudSave_importConfirm_back": "戻る",
+  "ratingCalculator_cloudSave_importConfirm_clearConfirm": "消去してインポート",
+  "ratingCalculator_cloudSave_unreachable": "クラウドセーブにまだ接続できません。今行った変更はこのブラウザにだけ保存されます。",
+  "ratingCalculator_cloudSave_import_skipped": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} 件の記録は該当する譜面がないため、インポートされませんでした。",
+        "countPlural=*": "{countNumber} 件の記録は該当する譜面がないため、インポートされませんでした。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_nothingToImport": "インポートできる記録がありません（該当する譜面がないか、範囲外の値を含みます）。クラウドセーブは変更されていません。",
+  "ratingCalculator_cloudSave_import_rejected": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} 件の記録は保存できない値（範囲外の DX スコアなど）を含むため、インポートされませんでした。",
+        "countPlural=*": "{countNumber} 件の記録は保存できない値（範囲外の DX スコアなど）を含むため、インポートされませんでした。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_divingFishMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} 件の記録は Diving-Fish 側のプライバシー設定で非公開のため、インポートできません。",
+        "countPlural=*": "{countNumber} 件の記録は Diving-Fish 側のプライバシー設定で非公開のため、インポートできません。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_importConfirm_leftOut": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} 件の記録は該当する譜面がないか、範囲外の値を含むためインポートできません。これらは除外されます。",
+        "countPlural=*": "{countNumber} 件の記録は該当する譜面がないか、範囲外の値を含むためインポートできません。これらは除外されます。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_import_errors_alreadyRunning": "このソースからの別のインポートがクラウドセーブで実行中です。終わってからもう一度お試しください。",
+  "ratingCalculator_cloudSave_import_errors_tooLarge": "このファイルは大きすぎて一度にインポートできません。クラウドセーブは変更されていません。",
+  "ratingCalculator_cloudSave_history_failure_generic": "完了しませんでした",
+  "ratingCalculator_cloudSave_history_failure_abandoned": "途中で止まりました",
+  "ratingCalculator_cloudSave_history_failure_maintenance": "完了しませんでした：maimai NET がメンテナンス中でした",
+  "ratingCalculator_cloudSave_history_failure_invalidCredentials": "完了しませんでした：maimai NET にログインできませんでした",
+  "ratingCalculator_cloudSave_history_failure_aimeCardUnavailable": "完了しませんでした：使える Aime カードがありません",
+  "ratingCalculator_cloudSave_history_counts_skippedUnknownSheet": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "不明な譜面 {countNumber}",
+        "countPlural=*": "不明な譜面 {countNumber}"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_counts_skippedMasked": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "プライバシー設定で非公開 {countNumber}",
+        "countPlural=*": "プライバシー設定で非公開 {countNumber}"
+      }
+    }
+  ],
+  "auth_privacy_cloud_heading": "クラウドセーブ（ベータ）",
+  "auth_privacy_cloud_p1": "クラウドセーブをオンにすると、端末間で共有できるよう、スコアをアカウントに保存します。譜面ごとの結果とその出どころ（maimai DX NET、LXNS、Diving-Fish からのインポート、ファイル、手入力など）、そのサービスでのアカウント ID（フレンドコードなど）を保存します。また、各インポートの記録（インポート元、日時、件数、受け取ったデータのハッシュ）と、同期後に端末が保存するレーティングのスナップショットも保存します。",
+  "auth_privacy_cloud_p2": "maimai DX NET からインポートするとき、SEGA ID のパスワードはそのインポートのログインにのみ使用し、保存や記録は一切しません。",
+  "auth_privacy_cloud_p3": "クラウドセーブは、削除するかアカウントを削除するまで保存します。譜面ごとに過去の結果を最大 20 件、セーブごとにレーティングのスナップショットを最大 100 件保存します。削除した記録は、ほかの端末からも削除されるよう 90 日間記録し、端末からの同期リクエストの記録は、二重に送られたリクエストを一度だけ反映するため 30 日間保存します。削除したセーブは、30 日後に完全に消去されます。",
+  "ratingCalculator_cloudSave_descriptionInactive": "スコアを DXRating アカウントに保存して、すべての端末で使えます。",
+  "ratingCalculator_cloudSave_choose_title": "クラウドセーブを使う",
+  "ratingCalculator_cloudSave_choose_sectionDescription": "別の端末でバックアップ済みですか？このブラウザで使うクラウドセーブを選んでください。",
+  "ratingCalculator_cloudSave_choose_open": "クラウドセーブを使う",
+  "ratingCalculator_cloudSave_choose_dialogTitle": "クラウドセーブを選択",
+  "ratingCalculator_cloudSave_choose_dialogDescription": "選んだセーブデータをこのブラウザで表示・編集します。アップロードは行いません。",
+  "ratingCalculator_cloudSave_choose_empty": "このアカウントにはまだクラウドセーブがありません。この端末でスコアを追加してからバックアップすると作成できます。",
+  "ratingCalculator_cloudSave_choose_cancel": "キャンセル",
+  "ratingCalculator_cloudSave_migration_title": "クラウドにバックアップ",
+  "ratingCalculator_cloudSave_migration_prompt": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "この端末の {formatted} 件の記録をアカウントにバックアップしますか？",
+        "countPlural=*": "この端末の {formatted} 件の記録をアカウントにバックアップしますか？"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_backUp": "クラウドにバックアップ",
+  "ratingCalculator_cloudSave_migration_notNow": "後で",
+  "ratingCalculator_cloudSave_migration_sectionDescription": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "このブラウザには、この端末に保存された記録が {countNumber} 件あります。バックアップすると、ほかの端末と同期できます。",
+        "countPlural=*": "このブラウザには、この端末に保存された記録が {countNumber} 件あります。バックアップすると、ほかの端末と同期できます。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_saveName": "マイスコア",
+  "ratingCalculator_cloudSave_migration_freshDescription": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{formatted} 件の記録をアカウントに保存し、すべての端末で同期します。",
+        "countPlural=*": "{formatted} 件の記録をアカウントに保存し、すべての端末で同期します。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingTitle": "クラウドセーブがすでにあります",
+  "ratingCalculator_cloudSave_migration_cloudRecords": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{formatted} 件の記録",
+        "countPlural=*": "{formatted} 件の記録"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_existingDescription": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input region",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "「{name}」（{region}）には {cloudRecords}があります。この端末には {formatted} 件あります。",
+        "countPlural=*": "「{name}」（{region}）には {cloudRecords}があります。この端末には {formatted} 件あります。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_changed": "このクラウドセーブは別の端末で変更されました。内容を確認してから続けてください。",
+  "ratingCalculator_cloudSave_migration_merge": "統合（両方の良い方を残す）",
+  "ratingCalculator_cloudSave_migration_mergeDescription": "譜面ごとに、この端末とクラウドのうち良い方のスコアを残します。",
+  "ratingCalculator_cloudSave_migration_cloudOnly": "クラウドのみを使う",
+  "ratingCalculator_cloudSave_migration_cloudOnlyDescription": "クラウドセーブに切り替えます。この端末の記録はアップロードせず、バックアップに残します。",
+  "ratingCalculator_cloudSave_migration_mergeAction": "統合",
+  "ratingCalculator_cloudSave_migration_cloudOnlyAction": "クラウドセーブを使う",
+  "ratingCalculator_cloudSave_migration_advanced": "詳細",
+  "ratingCalculator_cloudSave_migration_replaceDescription": "クラウドセーブのすべての記録を、この端末の記録で置き換えます。",
+  "ratingCalculator_cloudSave_migration_replace": "この端末の記録でクラウドを置き換え",
+  "ratingCalculator_cloudSave_migration_replaceTitle": "クラウドセーブを置き換えますか？",
+  "ratingCalculator_cloudSave_migration_replaceWarning": [
+    {
+      "declarations": [
+        "input count",
+        "input name",
+        "input cloudRecords",
+        "input formatted",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "「{name}」の {cloudRecords}はすべて削除され、この端末の {formatted} 件の記録に置き換わります。すべての端末に反映され、元に戻せません。",
+        "countPlural=*": "「{name}」の {cloudRecords}はすべて削除され、この端末の {formatted} 件の記録に置き換わります。すべての端末に反映され、元に戻せません。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceWarningEmpty": [
+    {
+      "declarations": ["input count", "input name", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "「{name}」には記録がありません。この端末の {formatted} 件の記録が入り、すべての端末に反映されます。",
+        "countPlural=*": "「{name}」には記録がありません。この端末の {formatted} 件の記録が入り、すべての端末に反映されます。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_replaceConfirm": "クラウドセーブを置き換え",
+  "ratingCalculator_cloudSave_migration_runningTitle": "バックアップ中…",
+  "ratingCalculator_cloudSave_migration_running": "記録をアップロードしています。このページを開いたままにしてください。",
+  "ratingCalculator_cloudSave_migration_switchingTitle": "クラウドセーブに切り替え中…",
+  "ratingCalculator_cloudSave_migration_switching": "この端末の記録のコピーをこのブラウザに残しています。",
+  "ratingCalculator_cloudSave_migration_doneTitle": "バックアップしました",
+  "ratingCalculator_cloudSave_migration_switchedTitle": "クラウドセーブを使用しています",
+  "ratingCalculator_cloudSave_migration_done": [
+    {
+      "declarations": ["input count", "input formatted", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{formatted} 件の記録がクラウドセーブに入りました。",
+        "countPlural=*": "{formatted} 件の記録がクラウドセーブに入りました。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_migration_doneCloudOnly": "この端末はクラウドセーブを使うようになりました。",
+  "ratingCalculator_cloudSave_migration_close": "閉じる",
+  "ratingCalculator_cloudSave_migration_errorTitle": "バックアップできませんでした",
+  "ratingCalculator_cloudSave_migration_switchErrorTitle": "切り替えられませんでした",
+  "ratingCalculator_cloudSave_migration_errorSafe": "この端末のデータは変更されていません。いつでも再試行できます。",
+  "ratingCalculator_cloudSave_migration_errorUnchanged": "この端末のデータは変更されていません。",
+  "ratingCalculator_cloudSave_migration_errors_saveLimit": "クラウドセーブの上限に達しているため、新しく作成できません。既存のセーブにバックアップするには、ゲームのリージョンをそのセーブのリージョンに切り替えてから、もう一度開いてください。",
+  "ratingCalculator_cloudSave_migration_errors_generic": "アップロードが完了しませんでした。接続を確認して再試行してください。",
+  "ratingCalculator_cloudSave_migration_errors_switchGeneric": "問題が発生しました。再試行してください。",
+  "ratingCalculator_cloudSave_migration_unverifiedNote": "この端末にある記録は「未検証」として保存されます。検証済みの記録にするには、maimai NET・LXNS・Diving-Fish からもう一度インポートしてください。",
+  "ratingCalculator_cloudSave_migration_backupNote": "この端末の記録のコピーは、このブラウザに 30 日間残ります。ログアウト中は、この端末の記録が引き続き使われます。",
+  "ratingCalculator_cloudSave_optIn_title": "クラウドセーブ（ベータ）",
+  "ratingCalculator_cloudSave_optIn_description": "スコアをアカウントに保存し、端末間で同期します。",
+  "ratingCalculator_cloudSave_optIn_consentTitle": "クラウドセーブ（ベータ）をオンにしますか？",
+  "ratingCalculator_cloudSave_optIn_consentIntro": "クラウドセーブでは、DXRating があなたのアカウントに次のものを保存します。",
+  "ratingCalculator_cloudSave_optIn_consentStored": "スコア、インポート元のアカウント ID（フレンドコードなど）、各インポートの記録とインポート内容のハッシュ、同期後に端末が保存するレーティングのスナップショット。",
+  "ratingCalculator_cloudSave_optIn_consentRetention": "削除するか、アカウントを削除するまで保存します。譜面ごとに過去の結果を最大 20 件、セーブごとにレーティングのスナップショットを最大 100 件保存します。削除した記録は、ほかの端末からも削除されるよう 90 日間記録し、端末からの同期リクエストの記録は 30 日間保存します。削除したセーブは 30 日後に完全に消去されます。",
+  "ratingCalculator_cloudSave_optIn_consentPasswords": "SEGA ID のパスワードは一切保存しません。",
+  "ratingCalculator_cloudSave_optIn_consentLeaving": "ベータはまだアプリからオフにできません。DXRating アカウントを削除すると（DXRating アプリから）、これらはすべて当サービスのシステムから削除されます。バックアップについてはプライバシーポリシーをご覧ください。",
+  "ratingCalculator_cloudSave_optIn_consentPrivacy": "詳しくは{#privacy}プライバシーポリシー{/privacy}をご覧ください。",
+  "ratingCalculator_cloudSave_optIn_agree": "同意してオンにする",
+  "ratingCalculator_cloudSave_optIn_sending": "クラウドセーブをオンにしています…",
+  "ratingCalculator_cloudSave_optIn_success": "クラウドセーブをオンにしました。",
+  "ratingCalculator_cloudSave_optIn_error": "クラウドセーブをオンにできませんでした。再試行してください。",
+  "ratingCalculator_cloudSave_export_title": "あなたのデータ",
+  "ratingCalculator_cloudSave_export_description": "すべてのクラウドセーブを、記録・記録の出どころ・インポート履歴・レーティングのスナップショットとあわせて JSON ファイルでダウンロードします。",
+  "ratingCalculator_cloudSave_export_button": "データをダウンロード",
+  "ratingCalculator_cloudSave_export_preparing": "準備中…",
+  "ratingCalculator_cloudSave_export_success": "データのダウンロードを開始しました。",
+  "ratingCalculator_cloudSave_export_error": "データをダウンロードできませんでした。再試行してください。",
+  "ratingCalculator_cloudSave_export_rateLimited": "今日は何度もダウンロードしています。明日もう一度お試しください。",
+  "ratingCalculator_cloudSave_exportImport_pickTitle": "インポートするセーブを選択",
+  "ratingCalculator_cloudSave_exportImport_pickDescription": "このファイルには複数のセーブがあります。",
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "「未検証」としてインポートしました。記録の出どころはファイルの申告として表示されます。"
 }

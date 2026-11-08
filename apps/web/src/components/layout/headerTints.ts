@@ -11,6 +11,8 @@ export const HEADER_TINTS = {
   theme: ['#9A4507', '#FCD34D'],
   preferences: ['#7C3AED', '#C4B5FD'],
   about: ['#0369A1', '#7DD3FC'],
+  // The cloud save's sync state (cloud saves only)
+  sync: ['#0E7490', '#67E8F9'],
   account: ['var(--accent-strong)', 'var(--accent-strong)'],
 } as const satisfies Record<string, readonly [string, string]>
 

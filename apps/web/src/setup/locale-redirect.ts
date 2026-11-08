@@ -38,20 +38,12 @@ export function localeRedirect(request: Request): Response | null {
 
   if (queryLocale) {
     url.searchParams.delete(LOCALE_QUERY_PARAM)
-    const response = permanentRedirect(localizePath(pathname, queryLocale) + url.search)
-    if (queryLocale === DEFAULT_LOCALE) {
-      // English has no prefix, so the unprefixed URL alone can't say it was chosen: without a record of the choice the
-      // next request would redirect a Japanese browser on to /ja/…. The link chose English as the picker would, so it
-      // sets the picker's cookie; private, so no shared cache keeps one visitor's cookie
-      response.headers.append('Set-Cookie', localeCookie(DEFAULT_LOCALE))
-      response.headers.set('Cache-Control', 'private, no-store')
-    }
-    return response
+    return explicitLocaleRedirect(localizePath(pathname, queryLocale) + url.search, queryLocale)
   }
 
   if (pathLocale !== undefined) {
     // The path named a locale in a non-canonical form (wrong case, or /en)
-    return permanentRedirect(localizePath(pathname, pathLocale) + url.search)
+    return explicitLocaleRedirect(localizePath(pathname, pathLocale) + url.search, pathLocale)
   }
 
   if (splitLocalePath(url.pathname).locale !== DEFAULT_LOCALE || isNegotiationExempt(url.pathname)) return null
@@ -106,8 +98,19 @@ const localeCookie = (locale: SupportedLocale) =>
 // OAuth and import callbacks are registered with their providers as unprefixed URLs: answer them where they land
 const isNegotiationExempt = (pathname: string) => pathname.startsWith('/io/') || pathname.startsWith('/account/')
 
-function permanentRedirect(location: string) {
-  return new Response(null, { status: 301, headers: { Location: sameOriginLocation(location) } })
+/**
+ * A 301 for a URL that names its language (`?locale=`, or a prefix such as `/EN` or `/zh-Hans`). English has no prefix,
+ * so the unprefixed URL alone can't say it was chosen: without a record of the choice the next request would send a
+ * Japanese browser on to /ja/…. The URL chose English as the picker would, so the redirect sets the picker's cookie;
+ * private, so no shared cache keeps one visitor's cookie. Other languages need no record: their prefix says it.
+ */
+function explicitLocaleRedirect(location: string, locale: SupportedLocale) {
+  const response = new Response(null, { status: 301, headers: { Location: sameOriginLocation(location) } })
+  if (locale === DEFAULT_LOCALE) {
+    response.headers.append('Set-Cookie', localeCookie(DEFAULT_LOCALE))
+    response.headers.set('Cache-Control', 'private, no-store')
+  }
+  return response
 }
 
 /**

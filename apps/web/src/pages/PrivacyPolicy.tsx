@@ -9,6 +9,7 @@ const SECTIONS = [
   'collect',
   'use',
   'storage',
+  'cloud',
   'analytics',
   'mcp',
   'cookies',
@@ -23,6 +24,7 @@ const SECTION_HEADINGS = {
   collect: m.auth_privacy_collect_heading,
   use: m.auth_privacy_use_heading,
   storage: m.auth_privacy_storage_heading,
+  cloud: m.auth_privacy_cloud_heading,
   analytics: m.auth_privacy_analytics_heading,
   mcp: m.auth_privacy_mcp_heading,
   cookies: m.auth_privacy_cookies_heading,
@@ -97,6 +99,11 @@ export const PrivacyPolicy = () => {
 
       <h2 id="privacy-storage">{m.auth_privacy_storage_heading({}, { locale })}</h2>
       <p>{m.auth_privacy_storage_body({}, { locale })}</p>
+
+      <h2 id="privacy-cloud">{m.auth_privacy_cloud_heading({}, { locale })}</h2>
+      <p>{m.auth_privacy_cloud_p1({}, { locale })}</p>
+      <p>{m.auth_privacy_cloud_p2({}, { locale })}</p>
+      <p>{m.auth_privacy_cloud_p3({}, { locale })}</p>
 
       <h2 id="privacy-analytics">{m.auth_privacy_analytics_heading({}, { locale })}</h2>
       <p>{m.auth_privacy_analytics_body({}, { locale })}</p>

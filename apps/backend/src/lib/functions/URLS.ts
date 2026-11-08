@@ -5,6 +5,8 @@ export const URLS = {
     LOGIN_ENDPOINT: 'https://lng-tgk-aime-gw.am-all.net/common_auth/login/sid',
     RECORD_RECENT_PAGE: 'https://maimaidx-eng.com/maimai-mobile/record',
     RECORD_MUSICS_PAGE: 'https://maimaidx-eng.com/maimai-mobile/record/musicGenre/search/',
+    // The friend code page (design §6.2); to be confirmed on a real intl account (§16.4)
+    FRIEND_CODE_PAGE: 'https://maimaidx-eng.com/maimai-mobile/friend/userFriendCode/',
   },
   JP: {
     LOGIN_PAGE: 'https://maimaidx.jp/maimai-mobile/',
@@ -14,6 +16,8 @@ export const URLS = {
     HOMEPAGE: 'https://maimaidx.jp/maimai-mobile/home/',
     RECORD_RECENT_PAGE: 'https://maimaidx.jp/maimai-mobile/record',
     RECORD_MUSICS_PAGE: 'https://maimaidx.jp/maimai-mobile/record/musicGenre/search/',
+    // The friend code page (design §6.2); to be confirmed on a real JP account (§16.4)
+    FRIEND_CODE_PAGE: 'https://maimaidx.jp/maimai-mobile/friend/userFriendCode/',
   },
 
   CHECKLIST: {
