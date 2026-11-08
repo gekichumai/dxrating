@@ -15,6 +15,7 @@ import { searchSongs, songProvenance } from './catalog/provenance'
 import { songHistory } from './catalog/song-history'
 import { catalogOverview } from './catalog/overview'
 import { listPublications } from './catalog/publications'
+import { audit } from './audit'
 import { requireAdmin, requireScope } from './require-admin'
 import type { DatabaseError } from './db'
 import type { AdminApiServices } from './runtime'
@@ -51,7 +52,14 @@ export const adminApiRouter = os.router({
       handlerGen(function* ({ context, input }) {
         const principal = yield* requireAdmin(headersOf(context))
         yield* requireScope(principal, 'announcements:write')
-        return yield* createAnnouncement(principal, input.announcement, input.dryRun).pipe(rejections)
+        const result = yield* createAnnouncement(principal, input.announcement, input.dryRun).pipe(rejections)
+        yield* audit(principal, {
+          action: 'announcements.create',
+          target: result.announcement?.id,
+          dryRun: input.dryRun,
+          outcome: 'ok',
+        })
+        return result
       }),
     ),
     update: os.announcements.update.handler(
@@ -61,6 +69,12 @@ export const adminApiRouter = os.router({
         const result = yield* updateAnnouncement(principal, input.announcement, input.dryRun, input.ifUpdatedAt).pipe(
           rejections,
         )
+        yield* audit(principal, {
+          action: 'announcements.update',
+          target: input.announcement.id,
+          dryRun: input.dryRun,
+          outcome: result ? 'ok' : 'not_found',
+        })
         return result ?? (yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'No such announcement' })))
       }),
     ),
@@ -69,6 +83,7 @@ export const adminApiRouter = os.router({
         const principal = yield* requireAdmin(headersOf(context))
         yield* requireScope(principal, 'announcements:write')
         const result = yield* endAnnouncement(principal, input.id).pipe(Effect.orDie)
+        yield* audit(principal, { action: 'announcements.end', target: input.id, outcome: result ? 'ok' : 'not_found' })
         return result ?? (yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'No such announcement' })))
       }),
     ),
