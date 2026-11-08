@@ -4,9 +4,16 @@ import type { SheetDifficulty } from '@gekichumai/maimai-domain'
 import { ImageResponse } from '@takumi-rs/image-response'
 import type { Handler } from 'hono'
 import { createHash } from 'node:crypto'
-import type { CSSProperties, ReactNode } from 'react'
+import type { ReactElement } from 'react'
+import sharp from 'sharp'
+import { Sentry } from '../../../lib/functions/sentry'
 import type { PublishedSong } from '../../mcp/catalog'
-import { fetchAssetEffect, fetchImageAssetEffect } from '../oneshot-renderer/assetFetcher'
+import { fetchAssetEffect } from '../oneshot-renderer/assetFetcher'
+import { ChartOgCard, OG_FONT, OG_HEIGHT, OG_WIDTH, SongOgCard, type OgCardImages, type OgSheetBadge } from './card'
+import { resolveOgLocale, type OgLocale } from './labels'
+
+export { getTitleLayout, layoutFacts } from './card'
+export { OG_LOCALES, resolveOgLocale, type OgLocale } from './labels'
 
 export class ChartOgRenderError extends Data.TaggedError('ChartOgRenderError')<{
   readonly operation: string
@@ -17,14 +24,17 @@ export class ChartOgRenderError extends Data.TaggedError('ChartOgRenderError')<{
   }
 }
 
-export const CHART_OG_IMAGE_WIDTH = 1200
-export const CHART_OG_IMAGE_HEIGHT = 630
+export const CHART_OG_IMAGE_WIDTH = OG_WIDTH
+export const CHART_OG_IMAGE_HEIGHT = OG_HEIGHT
 const ASSET_ORIGIN = 'https://shama.dxrating.net'
 const FRONTEND_ORIGIN = 'https://dxrating.net'
 
 export const CHART_OG_IMAGE_CACHE_CONTROL = 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800'
 const CHART_OG_IMAGE_CONTENT_TYPE = 'image/png'
 const CHART_OG_IMAGE_CONTENT_DISPOSITION = 'inline; filename="chart-og.png"; filename*=utf-8\'\'chart-og.png'
+const SONG_OG_IMAGE_CONTENT_DISPOSITION = 'inline; filename="song-og.png"; filename*=utf-8\'\'song-og.png'
+/** The edge `Cache-Tag` of every OG image, purged at startup so a deploy that changes the card replaces cached ones */
+export const OG_IMAGE_CACHE_TAG = 'og-image'
 
 type DifficultyDisplay = {
   title: string
@@ -74,9 +84,10 @@ export type ChartOgImageData = {
   noteDesigner: string | null
   noteCounts: ChartOgNoteCounts
   version: string
+  bpm: number | null
 }
 
-export type RenderChartOgImage = (data: ChartOgImageData) => Promise<ArrayBuffer | Uint8Array>
+export type RenderChartOgImage = (data: ChartOgImageData, locale: OgLocale) => Promise<ArrayBuffer | Uint8Array>
 
 export type ChartOgImageOutput = {
   headers: Record<string, string>
@@ -143,6 +154,7 @@ export function resolveChartOgImageData(
       total: sheet.noteCounts.total ?? null,
     },
     version: sheet.version,
+    bpm: song.bpm ?? null,
   }
 }
 
@@ -205,7 +217,11 @@ export function createChartOgImageHandler(lookupSong: ChartOgSongLookup, renderI
           const difficulty = c.req.param('difficulty')
           if (!songId || !type || !difficulty) return c.text('Chart not found', 404)
 
-          const output = yield* renderChartOgImageOutputEffect({ songId, type, difficulty }, lookupSong, renderImage)
+          const output = yield* renderChartOgImageOutputEffect(
+            { songId, type, difficulty, locale: c.req.query('locale') },
+            lookupSong,
+            renderImage,
+          )
           if (!output) return c.text('Chart not found', 404)
 
           return new Response(output.body, {
@@ -221,33 +237,55 @@ export function createChartOgImageHandler(lookupSong: ChartOgSongLookup, renderI
 }
 
 export const renderChartOgImageOutputEffect = <E, R>(
-  input: { songId: string; type: string; difficulty: string },
+  input: { songId: string; type: string; difficulty: string; locale?: string | undefined },
   lookupSong: ChartOgSongLookup<E, R>,
   renderImage?: RenderChartOgImage,
 ) =>
   Effect.gen(function* () {
     const data = yield* resolveChartOgImageDataEffect(input, lookupSong)
     if (!data) return null
+    const locale = resolveOgLocale(input.locale)
 
     const image = yield* renderImage
       ? Effect.tryPromise({
-          try: () => renderImage(data),
+          try: () => renderImage(data, locale),
           catch: (cause) => new ChartOgRenderError({ operation: 'render chart OG image', cause }),
         })
-      : renderChartOgImageEffect(data)
-    const body = toArrayBuffer(image)
-
-    return {
-      headers: {
-        'Cache-Control': CHART_OG_IMAGE_CACHE_CONTROL,
-        'Content-Disposition': CHART_OG_IMAGE_CONTENT_DISPOSITION,
-        'Content-Type': CHART_OG_IMAGE_CONTENT_TYPE,
-        ETag: createChartOgImageEtag(body),
-        'X-Content-Type-Options': 'nosniff',
-      },
-      body: new Blob([body], { type: CHART_OG_IMAGE_CONTENT_TYPE }),
-    }
+      : renderChartOgImageEffect(data, locale)
+    return toImageOutput(image, CHART_OG_IMAGE_CONTENT_DISPOSITION)
   })
+
+export const renderSongOgImageOutputEffect = <E, R>(
+  input: { songId: string; locale?: string | undefined },
+  lookupSong: ChartOgSongLookup<E, R>,
+) =>
+  Effect.gen(function* () {
+    const song = yield* lookupSongDecodingOnce(input.songId, lookupSong)
+    const data = song ? resolveSongOgImageData(song) : null
+    if (!song || !data) return null
+    const locale = resolveOgLocale(input.locale)
+
+    // A song with one chart (most Utage songs) shows that chart's card rather than a row of one chip
+    const onlySheet = song.sheets.length === 1 ? song.sheets[0] : undefined
+    const chart = onlySheet ? resolveChartOgImageData(song, onlySheet.type, onlySheet.difficulty) : null
+    const image = yield* chart ? renderChartOgImageEffect(chart, locale) : renderSongOgImageEffect(data, locale)
+    return toImageOutput(image, SONG_OG_IMAGE_CONTENT_DISPOSITION)
+  })
+
+function toImageOutput(image: ArrayBuffer | Uint8Array, contentDisposition: string): ChartOgImageOutput {
+  const body = toArrayBuffer(image)
+  return {
+    headers: {
+      'Cache-Control': CHART_OG_IMAGE_CACHE_CONTROL,
+      'Cache-Tag': OG_IMAGE_CACHE_TAG,
+      'Content-Disposition': contentDisposition,
+      'Content-Type': CHART_OG_IMAGE_CONTENT_TYPE,
+      ETag: createChartOgImageEtag(body),
+      'X-Content-Type-Options': 'nosniff',
+    },
+    body: new Blob([body], { type: CHART_OG_IMAGE_CONTENT_TYPE }),
+  }
+}
 
 function createChartOgImageEtag(image: ArrayBuffer) {
   return `"sha256-${createHash('sha256').update(Buffer.from(image)).digest('hex')}"`
@@ -258,6 +296,77 @@ function toArrayBuffer(image: ArrayBuffer | Uint8Array): ArrayBuffer {
   return image.buffer.slice(image.byteOffset, image.byteOffset + image.byteLength) as ArrayBuffer
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Song page (no chart selected): every chart's internal level
+
+export type SongOgImageData = {
+  songId: string
+  title: string
+  artist: string
+  category: string
+  imageName: string
+  bpm: number | null
+  version: string
+  groups: Array<{ type: TypeEnum; sheets: OgSheetBadge[] }>
+}
+
+const TYPE_ORDER: readonly TypeEnum[] = [TypeEnum.DX, TypeEnum.STD, TypeEnum.UTAGE, TypeEnum.UTAGE2P]
+const DIFFICULTY_ORDER: readonly string[] = [
+  DifficultyEnum.Basic,
+  DifficultyEnum.Advanced,
+  DifficultyEnum.Expert,
+  DifficultyEnum.Master,
+  DifficultyEnum.ReMaster,
+]
+
+export function resolveSongOgImageData(song: PublishedSong): SongOgImageData | null {
+  const groups = TYPE_ORDER.map((type) => ({
+    type,
+    sheets: song.sheets
+      .filter((sheet) => sheet.type === type)
+      .map((sheet) => toSheetBadge(type, sheet.difficulty as SheetDifficulty, sheet.level, sheet.internalLevelValue))
+      .filter((sheet): sheet is OgSheetBadge & { order: number } => sheet !== null)
+      .sort((a, b) => a.order - b.order)
+      .map(({ order: _order, ...sheet }) => sheet),
+  })).filter((group) => group.sheets.length > 0)
+  if (groups.length === 0) return null
+
+  return {
+    songId: song.id,
+    title: song.title,
+    artist: song.artist,
+    category: song.category,
+    imageName: song.imageName,
+    bpm: song.bpm ?? null,
+    version: song.version,
+    groups,
+  }
+}
+
+function toSheetBadge(type: TypeEnum, difficulty: SheetDifficulty, level: string, internalLevelValue: number) {
+  const display = resolveDifficultyDisplay(type, difficulty)
+  if (!display) return null
+  const order = DIFFICULTY_ORDER.indexOf(difficulty)
+  return {
+    type,
+    difficultyLabel: display.title,
+    difficultyColor: display.color,
+    difficultyTextColor: display.textColor,
+    level,
+    internalLevelValue,
+    order: order === -1 ? DIFFICULTY_ORDER.length : order,
+  }
+}
+
+const lookupSongDecodingOnce = <E, R>(songId: string, lookupSong: ChartOgSongLookup<E, R>) =>
+  Effect.gen(function* () {
+    const decodedSongId = decodePathParameterOnce(songId)
+    return (yield* lookupSong(songId)) ?? (decodedSongId === songId ? null : yield* lookupSong(decodedSongId))
+  })
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Rendering
+
 type TakumiFont = {
   name: string
   data: Buffer
@@ -265,9 +374,14 @@ type TakumiFont = {
   style: 'normal'
 }
 
+/**
+ * The region-neutral Source Han Sans files carry every CJK region's glyphs, so Simplified and Traditional Chinese
+ * titles render as well as Japanese ones; the JP subset the player card uses lacks many Simplified characters.
+ */
 const fontConfig = [
-  { name: 'Source Han Sans', file: 'SourceHanSansJP-Regular.otf', weight: 400 },
-  { name: 'Source Han Sans', file: 'SourceHanSansJP-Bold.otf', weight: 700 },
+  { name: OG_FONT.text, file: 'SourceHanSans-Regular.otf', weight: 400 },
+  { name: OG_FONT.text, file: 'SourceHanSans-Bold.otf', weight: 700 },
+  { name: OG_FONT.display, file: 'NewRodinProDB.otf', weight: 400 },
 ] as const
 
 let cachedFonts: TakumiFont[] | null = null
@@ -277,7 +391,7 @@ const loadFonts = Effect.gen(function* () {
   const fonts = yield* Effect.all(
     fontConfig.map((font) =>
       fetchAssetEffect(`/fonts/${font.file}`).pipe(
-        Effect.map((data) => ({ name: font.name, data, weight: font.weight, style: 'normal' as const })),
+        Effect.map((data): TakumiFont => ({ name: font.name, data, weight: font.weight, style: 'normal' })),
       ),
     ),
     { concurrency: 'unbounded' },
@@ -290,331 +404,118 @@ function dataUri(mimeType: 'image/jpeg' | 'image/png', data: Buffer) {
   return `data:${mimeType};base64,${data.toString('base64')}`
 }
 
-const loadCoverDataUri = (imageName: string) =>
-  fetchImageAssetEffect(`/images/cover/v2/${imageName}.jpg`).pipe(Effect.map((cover) => dataUri('image/jpeg', cover)))
+/** The jacket, or null when the asset server has none (new songs can be published before their jacket) */
+const loadCover = (imageName: string) =>
+  fetchAssetEffect(`/images/cover/v2/${imageName}.jpg`).pipe(
+    Effect.map((cover): Buffer | null => cover),
+    Effect.catch((error) =>
+      Effect.sync(() => {
+        Sentry.captureException(error.cause, { level: 'warning', extra: { imageName } })
+        return null
+      }),
+    ),
+  )
 
-const loadTypeBadgeDataUri = (type: TypeEnum) =>
-  type !== TypeEnum.DX
-    ? Effect.succeed(null)
-    : fetchImageAssetEffect('/images/type_dx.png').pipe(Effect.map((image) => dataUri('image/png', image)))
+const loadLogo = fetchAssetEffect('/favicon/pack/v1/apple-touch-icon.png').pipe(
+  Effect.map((logo): string | null => dataUri('image/png', logo)),
+  Effect.catch(() => Effect.succeed(null)),
+)
 
-export const renderChartOgImageEffect = (data: ChartOgImageData) =>
+/**
+ * The jacket as a soft, darkened backdrop. Blurring a small copy is cheap and leaves no detail to compete with the
+ * text; the renderer scales it back up.
+ */
+const createBackdrop = (cover: Buffer) =>
+  Effect.tryPromise({
+    try: () =>
+      sharp(cover)
+        .resize(240, 126, { fit: 'cover' })
+        .blur(9)
+        .modulate({ brightness: 0.62, saturation: 1.35 })
+        .jpeg({ quality: 82 })
+        .toBuffer(),
+    catch: (cause) => new ChartOgRenderError({ operation: 'blur OG backdrop', cause }),
+  })
+
+const loadImages = (imageName: string) =>
   Effect.gen(function* () {
-    const [fonts, coverSrc, typeBadgeSrc] = yield* Effect.all(
-      [loadFonts, loadCoverDataUri(data.imageName), loadTypeBadgeDataUri(data.type)],
-      { concurrency: 'unbounded' },
-    )
+    const [cover, logo] = yield* Effect.all([loadCover(imageName), loadLogo], { concurrency: 'unbounded' })
+    const backdrop = cover ? yield* createBackdrop(cover) : null
+    return {
+      cover: cover ? dataUri('image/jpeg', cover) : null,
+      backdrop: backdrop ? dataUri('image/jpeg', backdrop) : null,
+      logo,
+    } satisfies OgCardImages
+  })
+
+const renderCard = (element: ReactElement, fonts: TakumiFont[]) =>
+  Effect.gen(function* () {
     const response = yield* Effect.try({
       try: () =>
-        new ImageResponse(<ChartOgCard data={data} coverSrc={coverSrc} typeBadgeSrc={typeBadgeSrc} />, {
-          width: CHART_OG_IMAGE_WIDTH,
-          height: CHART_OG_IMAGE_HEIGHT,
+        new ImageResponse(element, {
+          width: OG_WIDTH,
+          height: OG_HEIGHT,
           format: 'png',
           fonts,
           emoji: 'twemoji',
         }),
-      catch: (cause) => new ChartOgRenderError({ operation: 'initialize chart OG renderer', cause }),
+      catch: (cause) => new ChartOgRenderError({ operation: 'initialize OG renderer', cause }),
     })
     // Native rendering has no cancellation API; interruption only stops waiting for its result.
     yield* Effect.tryPromise({
       try: () => response.ready,
-      catch: (cause) => new ChartOgRenderError({ operation: 'render chart OG image', cause }),
+      catch: (cause) => new ChartOgRenderError({ operation: 'render OG image', cause }),
     })
     const image = yield* Effect.tryPromise({
       try: () => response.arrayBuffer(),
-      catch: (cause) => new ChartOgRenderError({ operation: 'read chart OG image', cause }),
+      catch: (cause) => new ChartOgRenderError({ operation: 'read OG image', cause }),
     })
-    return new Uint8Array(image)
+    // A 256-colour palette keeps the image near a quarter of its size (about 250 KB) with no visible change; some
+    // previewers (WhatsApp, LINE) skip images over about 600 KB. The quantizer is deterministic.
+    const compressed = yield* Effect.tryPromise({
+      try: () =>
+        sharp(Buffer.from(image)).png({ palette: true, quality: 95, colors: 256, compressionLevel: 9 }).toBuffer(),
+      catch: (cause) => new ChartOgRenderError({ operation: 'compress OG image', cause }),
+    })
+    return new Uint8Array(compressed)
   })
 
-function ChartOgCard({
-  data,
-  coverSrc,
-  typeBadgeSrc,
-}: {
-  data: ChartOgImageData
-  coverSrc: string
-  typeBadgeSrc: string | null
-}) {
-  const titleLayout = getTitleLayout(data.title)
+export const renderChartOgImageEffect = (data: ChartOgImageData, locale: OgLocale = 'en') =>
+  Effect.gen(function* () {
+    const [fonts, images] = yield* Effect.all([loadFonts, loadImages(data.imageName)], { concurrency: 'unbounded' })
+    const designer = data.noteDesigner && data.noteDesigner !== '-' ? data.noteDesigner : null
+    return yield* renderCard(
+      <ChartOgCard
+        title={data.title}
+        artist={data.artist}
+        sheet={{
+          type: data.type,
+          difficultyLabel: data.difficultyLabel,
+          difficultyColor: data.difficultyColor,
+          difficultyTextColor: data.difficultyTextColor,
+          level: data.level,
+          internalLevelValue: data.internalLevelValue,
+        }}
+        facts={{ notes: data.noteCounts.total, bpm: data.bpm, version: data.version, designer }}
+        locale={locale}
+        images={images}
+      />,
+      fonts,
+    )
+  })
 
-  return (
-    <div style={styles.canvas}>
-      <div style={styles.accentBar} />
-      <div style={styles.coverFrame}>
-        <img alt="" src={coverSrc} width={440} height={440} style={styles.coverImage} />
-      </div>
-
-      <div style={styles.content}>
-        <div style={styles.category}>{data.category}</div>
-        <div style={{ ...styles.title, ...titleLayout }}>{data.title}</div>
-        <div style={styles.artist}>{data.artist}</div>
-
-        <div style={styles.badges}>
-          {typeBadgeSrc ? (
-            <img alt="" src={typeBadgeSrc} height={45} style={styles.typeImage} />
-          ) : (
-            <Badge background="#111827" color="#ffffff">
-              {data.typeLabel}
-            </Badge>
-          )}
-          <DifficultyBadge
-            background={data.difficultyColor}
-            color={data.difficultyTextColor}
-            difficultyLabel={data.difficultyLabel}
-            internalLevelValue={data.internalLevelValue}
-          />
-        </div>
-
-        <div style={styles.statsGrid}>
-          <Stat label="Version" value={data.version} />
-          <Stat label="Designer" value={data.noteDesigner ?? 'Unknown'} />
-        </div>
-
-        <div style={styles.noteCounts}>
-          <NoteCount label="TAP" value={data.noteCounts.tap} />
-          <NoteCount label="HOLD" value={data.noteCounts.hold} />
-          <NoteCount label="SLIDE" value={data.noteCounts.slide} />
-          <NoteCount label="TOUCH" value={data.noteCounts.touch} />
-          <NoteCount label="BREAK" value={data.noteCounts.break} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Badge({ background, color, children }: { background: string; color: string; children: ReactNode }) {
-  return <div style={{ ...styles.badge, backgroundColor: background, color }}>{children}</div>
-}
-
-function DifficultyBadge({
-  background,
-  color,
-  difficultyLabel,
-  internalLevelValue,
-}: {
-  background: string
-  color: string
-  difficultyLabel: string
-  internalLevelValue: number
-}) {
-  const level = formatInternalLevelLabelParts(internalLevelValue)
-
-  return (
-    <div style={{ ...styles.badge, ...styles.difficultyBadge, backgroundColor: background, color }}>
-      <span style={styles.difficultyText}>{difficultyLabel}</span>
-      <hr style={styles.difficultyDivider} />
-      <span style={styles.levelPrefix}>{level.prefix}</span>
-      <span style={styles.levelInteger}>{level.integer}</span>
-      <span style={styles.levelFraction}>{level.fraction}</span>
-    </div>
-  )
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={styles.stat}>
-      <div style={styles.statLabel}>{label}</div>
-      <div style={styles.statValue}>{value}</div>
-    </div>
-  )
-}
-
-function NoteCount({ label, value }: { label: string; value: number | null }) {
-  return (
-    <div style={styles.noteCount}>
-      <span style={styles.noteCountLabel}>{label}</span>
-      <span style={styles.noteCountValue}>{value ?? '-'}</span>
-    </div>
-  )
-}
-
-export function getTitleLayout(title: string): Pick<CSSProperties, 'fontSize' | 'lineHeight' | 'maxHeight'> {
-  if (title.length > 120) return { fontSize: 25, lineHeight: 1.1, maxHeight: 150 }
-  if (title.length > 96) return { fontSize: 28, lineHeight: 1.12, maxHeight: 142 }
-  if (title.length > 64) return { fontSize: 31, lineHeight: 1.14, maxHeight: 136 }
-  if (title.length > 48) return { fontSize: 36, lineHeight: 1.18, maxHeight: 132 }
-  if (title.length > 34) return { fontSize: 42, lineHeight: 1.2, maxHeight: 132 }
-  return { fontSize: 50, lineHeight: 1.22, maxHeight: 132 }
-}
-
-const styles = {
-  canvas: {
-    position: 'relative',
-    display: 'flex',
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#ffffff',
-    color: '#111827',
-    fontFamily: 'Source Han Sans',
-    overflow: 'hidden',
-  },
-  accentBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 14,
-    background: 'linear-gradient(180deg, #8b5cf6 0%, #06b6d4 100%)',
-  },
-  coverFrame: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 534,
-    height: '100%',
-    paddingLeft: 70,
-    paddingRight: 24,
-  },
-  coverImage: {
-    width: 440,
-    height: 440,
-    objectFit: 'cover',
-    borderRadius: 40,
-    boxShadow:
-      '0 1px 1px rgba(17, 24, 39, 0.06), 0 4px 8px rgba(17, 24, 39, 0.08), 0 12px 24px rgba(17, 24, 39, 0.10), 0 28px 56px rgba(17, 24, 39, 0.14), 0 48px 96px rgba(17, 24, 39, 0.10), inset 0 0 0 1px rgba(0, 0, 0, 0.10)',
-  },
-  content: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    width: 610,
-    height: '100%',
-    paddingTop: 95,
-    paddingRight: 62,
-    paddingBottom: 42,
-    paddingLeft: 20,
-  },
-  category: {
-    color: '#6b7280',
-    fontSize: 20,
-    fontWeight: 700,
-    lineHeight: 1,
-    marginBottom: 12,
-  },
-  title: {
-    color: '#111827',
-    fontWeight: 700,
-    marginBottom: 12,
-    overflow: 'hidden',
-    overflowWrap: 'anywhere',
-  },
-  artist: {
-    color: '#4b5563',
-    fontSize: 24,
-    fontWeight: 400,
-    lineHeight: 1.2,
-    marginBottom: 20,
-    maxHeight: 58,
-    overflow: 'hidden',
-  },
-  badges: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 22,
-  },
-  difficultyBadge: {
-    fontSize: 19,
-    padding: '6px 15px 8px',
-    boxShadow: '3px 3px 0 rgba(11, 56, 113, 0.30)',
-    transform: 'translateY(-3px)',
-  },
-  badge: {
-    display: 'flex',
-    alignItems: 'center',
-    borderRadius: 999,
-    fontSize: 20,
-    fontWeight: 700,
-    lineHeight: 1,
-    padding: '8px 16px',
-  },
-  typeImage: {
-    height: 45,
-    width: 102,
-    objectFit: 'contain',
-  },
-  difficultyText: {
-    fontSize: 19,
-    fontWeight: 700,
-    lineHeight: 1,
-  },
-  difficultyDivider: {
-    width: 1,
-    height: 16,
-    border: 0,
-    backgroundColor: '#ffffff',
-    opacity: 0.62,
-    marginTop: 0,
-    marginRight: 11,
-    marginBottom: 0,
-    marginLeft: 11,
-  },
-  levelPrefix: {
-    fontSize: 19,
-    fontWeight: 400,
-    lineHeight: 1,
-  },
-  levelInteger: {
-    fontSize: 19,
-    fontWeight: 400,
-    lineHeight: 1,
-  },
-  levelFraction: {
-    fontSize: 19,
-    fontWeight: 400,
-    lineHeight: 1,
-  },
-  statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 18,
-    marginBottom: 20,
-  },
-  stat: {
-    display: 'flex',
-    flexDirection: 'column',
-    minWidth: 0,
-    padding: 0,
-  },
-  statLabel: {
-    color: '#6b7280',
-    fontSize: 14,
-    fontWeight: 700,
-    lineHeight: 1,
-    marginBottom: 7,
-  },
-  statValue: {
-    color: '#111827',
-    fontSize: 21,
-    fontWeight: 400,
-    lineHeight: 1.16,
-    maxHeight: 50,
-    overflow: 'hidden',
-  },
-  noteCounts: {
-    display: 'flex',
-    gap: 10,
-  },
-  noteCount: {
-    display: 'flex',
-    alignItems: 'center',
-    borderRadius: 12,
-    backgroundColor: '#eef2ff',
-    color: '#312e81',
-    lineHeight: 1,
-    padding: '7px 10px',
-    boxShadow: '3px 3px 0 rgba(49, 46, 129, 0.10)',
-  },
-  noteCountLabel: {
-    fontSize: 14,
-    fontWeight: 700,
-    lineHeight: 1,
-    marginRight: 7,
-  },
-  noteCountValue: {
-    fontSize: 18,
-    fontWeight: 400,
-    lineHeight: 1,
-  },
-} satisfies Record<string, CSSProperties>
+export const renderSongOgImageEffect = (data: SongOgImageData, locale: OgLocale = 'en') =>
+  Effect.gen(function* () {
+    const [fonts, images] = yield* Effect.all([loadFonts, loadImages(data.imageName)], { concurrency: 'unbounded' })
+    return yield* renderCard(
+      <SongOgCard
+        title={data.title}
+        artist={data.artist}
+        groups={data.groups}
+        facts={{ bpm: data.bpm, version: data.version, category: data.category }}
+        locale={locale}
+        images={images}
+      />,
+      fonts,
+    )
+  })

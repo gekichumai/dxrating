@@ -27,7 +27,10 @@ import {
 import { eq, and, desc, asc, exists, gte, ilike, inArray, isNull, lte, notExists, or, sql, type SQL } from 'drizzle-orm'
 import { Authentication, type BackendAuth } from './auth'
 import { AppConfig } from './config'
-import { renderChartOgImageOutputEffect } from './services/functions/chart-og-image/index'
+import {
+  renderChartOgImageOutputEffect,
+  renderSongOgImageOutputEffect,
+} from './services/functions/chart-og-image/index'
 import { CatalogIdentityError } from './services/catalog-identities'
 import { CatalogIdentities, McpCatalogSource } from './services/application'
 import { CloudSaveOptInError, FeatureFlags } from './services/feature-flags'
@@ -866,30 +869,48 @@ const arcadesHandler = {
   ),
 }
 
+/** Looks songs up in the published catalog: public song IDs, and the legacy IDs that pages indexed before still name */
+const ogImageSongLookup = Effect.gen(function* () {
+  const catalogIdentities = yield* CatalogIdentities
+  const catalogSource = yield* McpCatalogSource
+  const catalog = yield* catalogSource.current.pipe(
+    Effect.mapError(
+      (cause) => new ORPCError('SERVICE_UNAVAILABLE', { message: 'The song catalog is still loading', cause }),
+    ),
+  )
+  return (songId: string) =>
+    Effect.gen(function* () {
+      const published = catalog.songsById.get(songId)
+      if (published) return published.song
+      // a public ID the published catalog lacks names no song; only legacy IDs need the identity mapping
+      if (songId.startsWith('dsng_') || songId.startsWith('dsht_')) return null
+      const publicIds = yield* withCatalogIdentityErrors(catalogIdentities.translateSongIdsToPublic([songId]))
+      const publicId = publicIds.get(songId)
+      return (publicId === undefined ? undefined : catalog.songsById.get(publicId)?.song) ?? null
+    })
+})
+
 const chartOgImageHandler = {
   render: os.chartOgImage.render.handler(
     handlerGen(function* ({ input }) {
-      const catalogIdentities = yield* CatalogIdentities
-      const catalogSource = yield* McpCatalogSource
-      const catalog = yield* catalogSource.current.pipe(
-        Effect.mapError(
-          (cause) => new ORPCError('SERVICE_UNAVAILABLE', { message: 'The song catalog is still loading', cause }),
-        ),
-      )
-      // Pages link the public song ID; legacy song IDs stay valid for images that were indexed before.
-      const lookupSong = (songId: string) =>
-        Effect.gen(function* () {
-          const published = catalog.songsById.get(songId)
-          if (published) return published.song
-          // a public ID the published catalog lacks names no song; only legacy IDs need the identity mapping
-          if (songId.startsWith('dsng_') || songId.startsWith('dsht_')) return null
-          const publicIds = yield* withCatalogIdentityErrors(catalogIdentities.translateSongIdsToPublic([songId]))
-          const publicId = publicIds.get(songId)
-          return (publicId === undefined ? undefined : catalog.songsById.get(publicId)?.song) ?? null
-        })
+      const lookupSong = yield* ogImageSongLookup
       const output = yield* renderChartOgImageOutputEffect(input, lookupSong)
       if (!output) {
         return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Chart not found' }))
+      }
+
+      return { ...output, headers: Object.fromEntries(new Headers(output.headers)) }
+    }),
+  ),
+}
+
+const songOgImageHandler = {
+  render: os.songOgImage.render.handler(
+    handlerGen(function* ({ input }) {
+      const lookupSong = yield* ogImageSongLookup
+      const output = yield* renderSongOgImageOutputEffect(input, lookupSong)
+      if (!output) {
+        return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Song not found' }))
       }
 
       return { ...output, headers: Object.fromEntries(new Headers(output.headers)) }
@@ -1149,6 +1170,7 @@ export const appRouter = os.router({
   analytics: analyticsHandler,
   arcades: arcadesHandler,
   chartOgImage: chartOgImageHandler,
+  songOgImage: songOgImageHandler,
   maimai: maimaiHandler,
   maimaiNet: maimaiNetHandler,
   lxns: lxnsHandler,
