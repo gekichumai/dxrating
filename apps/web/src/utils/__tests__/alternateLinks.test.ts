@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { SUPPORTED_LOCALES } from '@/setup/locale'
-import { buildAlternateLinks, buildLocalizedUrl } from '../alternateLinks'
+import { buildAlternateLinks, buildLocalizedUrl, canonicalPagePath } from '../alternateLinks'
 
 describe('buildLocalizedUrl', () => {
   it("puts the path under the language's prefix and keeps the search, minus a leftover locale", () => {
@@ -42,5 +42,23 @@ describe('buildAlternateLinks', () => {
       rel: 'canonical',
       href: hrefIn('zh-Hant'),
     })
+  })
+
+  it("names the song page as a chart page's canonical, in the page's language, with no language cluster", () => {
+    expect(buildAlternateLinks({ pathname: '/songs/dsng_x/dx/master' }, 'ja')).toEqual([
+      { rel: 'canonical', href: 'https://dxrating.net/ja/songs/dsng_x' },
+    ])
+    expect(buildAlternateLinks({ pathname: '/songs/dsng_x/std/re:master' }, 'en')).toEqual([
+      { rel: 'canonical', href: 'https://dxrating.net/songs/dsng_x' },
+    ])
+  })
+})
+
+describe('canonicalPagePath', () => {
+  it('maps chart pages to their song page and leaves every other page alone', () => {
+    expect(canonicalPagePath('/songs/dsng_x/dx/master')).toBe('/songs/dsng_x')
+    for (const path of ['/songs/dsng_x', '/songs/dsng_x/dx/master/tolerance', '/rating', '/']) {
+      expect(canonicalPagePath(path)).toBe(path)
+    }
   })
 })

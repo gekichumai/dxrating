@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { getCatalogDocument } from '@/catalog/catalogSource'
-import { buildSheetPath, songHubPath } from '@/components/sheet/sheetLinks'
+import { songHubPath } from '@/components/sheet/sheetLinks'
 import { CONSTANT_TABLE_LEVELS, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { VERSION_PAGE_VERSIONS, versionPagePath } from '@/components/chartDiscovery/versionPages'
 import { listIndexablePlateIds, platePath } from '@/components/plates/plateData'
@@ -83,36 +83,22 @@ const toolEntries = (locale: SupportedLocale) =>
     )
     .join('')
 
-export function buildSitemap(songs: SitemapSong[], locale: SupportedLocale = DEFAULT_LOCALE) {
-  const sheetEntries = songs
-    .flatMap((song) =>
-      (song.sheets ?? []).map((sheet) => ({
-        songId: song.id,
-        sheet,
-      })),
-    )
-    .sort((a, b) => (b.sheet.releaseDate ?? '').localeCompare(a.sheet.releaseDate ?? ''))
-    .map(({ songId, sheet }) => ({
-      sheet,
-      path: buildSheetPath({ songId, type: sheet.type, difficulty: sheet.difficulty }),
-    }))
-    .map(
-      ({ sheet, path }) => `
-  <url>
-    <loc>${urlLoc(path, locale)}</loc>${alternatesXml(path)}${lastmodXml(sheet.releaseDate)}
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>`,
-    )
-    .join('')
+// A song page changes when a chart is added: its newest chart's release date
+const latestReleaseDate = (song: SitemapSong) =>
+  (song.sheets ?? []).reduce<string | undefined>(
+    (latest, sheet) => (sheet.releaseDate && (!latest || sheet.releaseDate > latest) ? sheet.releaseDate : latest),
+    undefined,
+  )
 
-  // One hub per song (`/songs/<id>`): every chart of the song in one table
+export function buildSitemap(songs: SitemapSong[], locale: SupportedLocale = DEFAULT_LOCALE) {
+  // One page per song (`/songs/<id>`): every chart of the song in one table. Chart pages name the song page as their
+  // canonical (utils/alternateLinks.ts), so they aren't listed
   const songHubEntries = songs
-    .map((song) => songHubPath(song.id))
+    .map((song) => ({ path: songHubPath(song.id), lastmod: latestReleaseDate(song) }))
     .map(
-      (path) => `
+      ({ path, lastmod }) => `
   <url>
-    <loc>${urlLoc(path, locale)}</loc>${alternatesXml(path)}
+    <loc>${urlLoc(path, locale)}</loc>${alternatesXml(path)}${lastmodXml(lastmod)}
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>`,
@@ -150,7 +136,7 @@ export function buildSitemap(songs: SitemapSong[], locale: SupportedLocale = DEF
     <loc>${urlLoc('/random', locale)}</loc>${alternatesXml('/random')}
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
-  </url>${toolEntries(locale)}${constantTableEntries(locale)}${plateEntries(locale)}${songHubEntries}${sheetEntries}
+  </url>${toolEntries(locale)}${constantTableEntries(locale)}${plateEntries(locale)}${songHubEntries}
 </urlset>`
 }
 

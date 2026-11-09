@@ -46,6 +46,19 @@ export const buildLocalizedUrl = ({ pathname, search = {} }: AlternateLinkLocati
   return url.toString()
 }
 
+// A chart page: /songs/<id>/<type>/<difficulty>
+const CHART_PAGE_PATH = /^\/songs\/([^/]+)\/[^/]+\/[^/]+$/
+
+/**
+ * The path a page names as its canonical. A chart page names its song's page (`/songs/<id>/dx/master` → `/songs/<id>`):
+ * a search for the song name matched a dozen chart URLs of one song, which split its ranking between them, so the song
+ * page, which lists every chart, is the one to rank. Every other page is its own canonical.
+ */
+export const canonicalPagePath = (pathname: string) => {
+  const chart = CHART_PAGE_PATH.exec(pathname)
+  return chart ? `/songs/${chart[1]}` : pathname
+}
+
 /**
  * The canonical and hreflang links of a page (`pathname` is the router's, without the language prefix). Each language's
  * URL is its own canonical (meta#52): `/ja/songs/x` → itself, `/songs/x` → itself. The unprefixed (English) URL is also
@@ -57,6 +70,13 @@ export const buildAlternateLinks = (
   pageLocale: SupportedLocale,
 ): AlternateLink[] => {
   const page = { pathname }
+
+  const canonicalPath = canonicalPagePath(pathname)
+  if (canonicalPath !== pathname) {
+    // A page that defers to another names only its canonical, in the same language. The language cluster belongs to
+    // the canonical page; hreflang links here would point at URLs that aren't canonical
+    return [{ rel: 'canonical', href: buildLocalizedUrl({ pathname: canonicalPath }, pageLocale) }]
+  }
 
   return [
     {

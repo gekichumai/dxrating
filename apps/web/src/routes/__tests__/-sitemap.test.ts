@@ -12,24 +12,16 @@ describe('buildSitemap', () => {
     ])
 
     expect(sitemap).toContain(
-      '<loc>https://dxrating.net/songs/1%2F3%E3%81%AE%E7%B4%94%E6%83%85%E3%81%AA%E6%84%9F%E6%83%85%20%26%20%3Ctest%3E/dx/master</loc>',
+      '<loc>https://dxrating.net/songs/1%2F3%E3%81%AE%E7%B4%94%E6%83%85%E3%81%AA%E6%84%9F%E6%83%85%20%26%20%3Ctest%3E</loc>',
     )
     expect(sitemap).toContain('<loc>https://dxrating.net/charts/recent</loc>')
     expect(sitemap).toContain('<loc>https://dxrating.net/charts/trending</loc>')
     expect(sitemap).toContain('<loc>https://dxrating.net/developers</loc>')
-    expect(sitemap).not.toContain('<loc>https://dxrating.net/1/3の純情な感情 & <test>/dx/master</loc>')
+    expect(sitemap).not.toContain('<loc>https://dxrating.net/songs/1/3の純情な感情 & <test></loc>')
   })
 
-  it('sorts sheet URLs by release date descending', () => {
+  it('lists song pages, not chart pages (their canonical is the song page)', () => {
     const sitemap = buildSitemap([
-      {
-        id: 'old',
-        sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Master, releaseDate: '2015-07-16' }],
-      },
-      {
-        id: 'recent',
-        sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Expert, releaseDate: '2026-05-01' }],
-      },
       {
         id: 'mixed',
         sheets: [
@@ -39,15 +31,18 @@ describe('buildSitemap', () => {
       },
     ])
 
-    expect(sitemap.indexOf('/songs/mixed/std/master')).toBeLessThan(sitemap.indexOf('/songs/recent/dx/expert'))
-    expect(sitemap.indexOf('/songs/recent/dx/expert')).toBeLessThan(sitemap.indexOf('/songs/old/dx/master'))
+    expect(sitemap).toContain('<loc>https://dxrating.net/songs/mixed</loc>')
+    expect(sitemap).not.toMatch(/\/songs\/mixed\/(dx|std)\//)
   })
 
-  it('includes lastmod for chart URLs with release dates', () => {
+  it("dates a song page by its newest chart's release", () => {
     const sitemap = buildSitemap([
       {
         id: 'released',
-        sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Master, releaseDate: '2026-05-10' }],
+        sheets: [
+          { type: TypeEnum.DX, difficulty: DifficultyEnum.Master, releaseDate: '2019-01-01' },
+          { type: TypeEnum.DX, difficulty: DifficultyEnum.ReMaster, releaseDate: '2026-05-10' },
+        ],
       },
       {
         id: 'undated',
@@ -55,9 +50,9 @@ describe('buildSitemap', () => {
       },
     ])
 
-    expect(sitemap).toContain('<loc>https://dxrating.net/songs/released/dx/master</loc>')
-    expect(sitemap).toContain('<lastmod>2026-05-10</lastmod>')
-    expect(sitemap).toContain('<loc>https://dxrating.net/songs/undated/dx/basic</loc>')
+    expect(sitemap).toMatch(/<loc>https:\/\/dxrating\.net\/songs\/released<\/loc>[^]*?<lastmod>2026-05-10<\/lastmod>/)
+    expect(sitemap).not.toContain('<lastmod>2019-01-01</lastmod>')
+    expect(sitemap).toContain('<loc>https://dxrating.net/songs/undated</loc>')
     expect(sitemap).not.toContain('<lastmod>undefined</lastmod>')
   })
 })
