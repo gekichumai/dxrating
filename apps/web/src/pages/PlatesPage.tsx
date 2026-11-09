@@ -22,11 +22,10 @@ import {
   plateExistsInRegion,
   plateRegionToFollow,
   platePath,
-  plateRegionSearch,
   plateScript,
   progressPercent,
 } from '@/components/plates/plateData'
-import { buildPlateShareImage } from '@/components/plates/plateShareImage'
+import { buildPlateShareImage, plateShareLink } from '@/components/plates/plateShareImage'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { captureAnalyticsEvent } from '@/lib/analytics'
@@ -34,7 +33,6 @@ import { useAppContext } from '@/models/context/useAppContext'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
 import { coverImageUrl } from '@/utils/shareImage/shareImage'
-import { shareLink } from '@/utils/shareImage/shareFooter'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
@@ -433,7 +431,7 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
                         allDone: m.plates_share_allDone({}, { locale }),
                         footerCaption: m.share_image_footerCaption({}, { locale }),
                       },
-                      link: shareLink(platePath(data.plateId), plateRegionSearch(data.region)),
+                      link: plateShareLink(data.plateId, data.region),
                     })
                   }
                   onExported={(outcome) =>

@@ -1,5 +1,5 @@
 import { DifficultyEnum } from '@gekichumai/dxdata'
-import type { PlateKind, PlateRecord } from '@gekichumai/maimai-domain'
+import type { PlateKind, PlateRecord, PlateRegion } from '@gekichumai/maimai-domain'
 import { DIFFICULTIES } from '@/models/difficulties'
 import {
   coverImageUrl,
@@ -8,7 +8,13 @@ import {
   roundedRectPath,
   type ShareImageSpec,
 } from '@/utils/shareImage/shareImage'
-import { drawShareFooter, loadShareLogo, SHARE_FOOTER_HEIGHT, type ShareLink } from '@/utils/shareImage/shareFooter'
+import {
+  drawShareFooter,
+  loadShareLogo,
+  SHARE_FOOTER_HEIGHT,
+  type ShareLink,
+  shareLink,
+} from '@/utils/shareImage/shareFooter'
 import {
   paintShareBackground,
   paintSharePanel,
@@ -16,7 +22,7 @@ import {
   SHARE_FONT as FONT,
   SHARE_PADDING as PADDING,
 } from '@/components/completion/shareImageTheme'
-import { type PlateChartStatus, type PlateUserProgress, progressPercent } from './plateData'
+import { type PlateChartStatus, type PlateUserProgress, platePath, progressPercent } from './plateData'
 
 const WIDTH = 1080
 const COLUMNS = 2
@@ -60,6 +66,13 @@ const SYNC_LABEL: Record<NonNullable<PlateRecord['syncFlag']>, string> = {
 
 /** The achievement threshold a sheet is measured against when ranking how close a song is */
 const TARGET_RATE: Record<PlateKind, number> = { hasha: 80, sho: 100, kiwami: 101, shin: 101, maimai: 101 }
+
+/**
+ * The footer link of a plate image. The QR always names the region, Japan included: a URL without one follows the
+ * reader's site region, which can change the plate's charts and levels. The printed URL stays the bare path.
+ */
+export const plateShareLink = (plateId: string, region: PlateRegion): ShareLink =>
+  shareLink(platePath(plateId), { region })
 
 /** Two decimals, rounded down like the game so 99.995% never reads 100.00% */
 export const formatAchievement = (rate: number) => `${(Math.floor(rate * 100) / 100).toFixed(2)}%`
