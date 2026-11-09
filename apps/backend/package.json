@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@better-auth/expo": "catalog:",
-    "@better-auth/i18n": "1.7.6",
+    "@better-auth/i18n": "1.7.16",
     "@better-auth/passkey": "catalog:",
     "@effect/opentelemetry": "4.0.0-rc.118",
     "@effect/platform-node": "4.0.0-rc.118",
