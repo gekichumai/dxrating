@@ -1,7 +1,7 @@
 import { DifficultyEnum } from '@gekichumai/dxdata'
 import type { PlateKind, PlateRecord, PlateRegion } from '@gekichumai/maimai-domain'
 import { useRouter } from '@tanstack/react-router'
-import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type FC, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useCompleteCatalogDocument } from '@/catalog/CatalogContext'
 import {
   Breadcrumb,
@@ -312,6 +312,10 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
 
   const [remainingOnly, setRemainingOnly] = useState(false)
   const [difficulty, setDifficulty] = useState<DifficultyEnum | null>(null)
+  // The chips show the new filter at once; the list (every chart of the plate, up to several hundred rows) follows in
+  // a render after that paint (a chip tap took ~200-450ms at 4x CPU)
+  const listRemainingOnly = useDeferredValue(remainingOnly)
+  const listDifficulty = useDeferredValue(difficulty)
 
   // Fire once per plate after mount, when the client overlay is known
   const viewedPlate = useRef<string | null>(null)
@@ -332,16 +336,16 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
       .map((group) => {
         const statuses = group.charts.map((chart) => byChart.get(chart)!)
         const charts = statuses.filter((status) => {
-          const sheets = difficulty
-            ? status.chart.sheets.filter((s) => s.difficulty === difficulty)
+          const sheets = listDifficulty
+            ? status.chart.sheets.filter((s) => s.difficulty === listDifficulty)
             : status.chart.sheets
           if (sheets.length === 0) return false
-          return !remainingOnly || sheets.some((sheet) => !status.met.get(sheet.id))
+          return !listRemainingOnly || sheets.some((sheet) => !status.met.get(sheet.id))
         })
         return { level: group.level, charts, done: statuses.filter((s) => s.complete).length, total: statuses.length }
       })
-      .filter((group) => group.charts.length > 0 || !remainingOnly)
-  }, [data.charts, progress, difficulty, remainingOnly])
+      .filter((group) => group.charts.length > 0 || !listRemainingOnly)
+  }, [data.charts, progress, listDifficulty, listRemainingOnly])
 
   // By chart (sheet), not by finished song: 37 of 264 charts is progress even when no song is fully done
   const percent = progressPercent(progress.completedSheets, progress.totalSheets)
@@ -521,7 +525,9 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
               <ul className="list-none m-0 p-0 divide-y divide-black/5 lg:divide-y-0 lg:grid lg:grid-cols-2 lg:-mb-px">
                 {group.charts.map((status) => {
                   const { chart } = status
-                  const sheets = difficulty ? chart.sheets.filter((s) => s.difficulty === difficulty) : chart.sheets
+                  const sheets = listDifficulty
+                    ? chart.sheets.filter((s) => s.difficulty === listDifficulty)
+                    : chart.sheets
                   const doneHere = hasRecords && sheets.every((sheet) => status.met.get(sheet.id))
                   return (
                     <li
