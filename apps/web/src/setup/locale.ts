@@ -5,7 +5,7 @@ import { parse as parseCookie } from 'cookie'
 // Paraglide's project.inlang/settings.json must list the same tags; a test checks it.
 export { SUPPORTED_LOCALES, type SupportedLocale }
 
-export const DEFAULT_LOCALE: SupportedLocale = 'en'
+export const DEFAULT_LOCALE = 'en' satisfies SupportedLocale
 export const LOCALE_QUERY_PARAM = 'locale'
 export const LOCALE_COOKIE_NAME = 'dxrating.locale'
 export const LOCALE_STORAGE_KEY = 'dxrating-locale'
@@ -42,25 +42,46 @@ export function toSupportedLocale(lng: string | null | undefined): SupportedLoca
 }
 
 /**
- * The `?locale=` of a URL's search, for redirects that must keep the language variant (each variant is its own
- * canonical URL). Empty when the search has no supported locale.
+ * The URL path prefix of each locale (meta#52). English has none: its pages keep the unprefixed URLs they ranked
+ * with. Prefixes are lowercase (paths are case-sensitive); hreflang keeps the BCP-47 tag.
  */
-export function keepLocaleSearch(search: unknown): { search?: { locale: SupportedLocale } } {
-  if (typeof search !== 'object' || search === null) return {}
-  // The router parses search JSON-first, so `?locale=123` arrives as a number: only a string can name a locale
-  const value = (search as Record<string, unknown>)[LOCALE_QUERY_PARAM]
-  const locale = typeof value === 'string' ? toSupportedLocale(value) : null
-  return locale ? { search: { locale } } : {}
+export const LOCALE_PATH_PREFIXES: Record<Exclude<SupportedLocale, 'en'>, string> = {
+  ja: 'ja',
+  ko: 'ko',
+  'zh-Hans': 'zh-hans',
+  'zh-Hant': 'zh-hant',
+  ms: 'ms',
+  id: 'id',
+  fil: 'fil',
+  vi: 'vi',
+  th: 'th',
+  my: 'my',
+}
+
+const LOCALES_BY_PREFIX = new Map<string, SupportedLocale>(
+  Object.entries(LOCALE_PATH_PREFIXES).map(([locale, prefix]) => [prefix, locale as SupportedLocale]),
+)
+
+/**
+ * The locale a pathname's first segment names, and the pathname without it. Only the exact lowercase prefix counts:
+ * `/JA/…`, `/zh-Hans/…` and `/en/…` are not pages; the server redirects them (setup/locale-redirect.ts).
+ */
+export function splitLocalePath(pathname: string): { locale: SupportedLocale; pathname: string } {
+  const match = /^\/([^/]+)(\/.*)?$/.exec(pathname)
+  const locale = match ? LOCALES_BY_PREFIX.get(match[1]) : undefined
+  if (!match || !locale) return { locale: DEFAULT_LOCALE, pathname }
+  return { locale, pathname: match[2] || '/' }
 }
 
 /**
- * `path` with the `?locale=` of a URL's search appended, for plain `href`s between pages of one language variant.
- * Only the URL's own locale is carried (not the resolved one), so the markup depends on the URL alone and stays the
- * same between the server render, the edge HTML cache and hydration.
+ * `path` (a pathname, optionally with its search and hash) as the given locale's URL: `/songs/x` → `/ja/songs/x`, and
+ * `/` → `/ja`. English paths come back unchanged.
  */
-export function withLocaleQuery(path: string, search: unknown): string {
-  const kept = keepLocaleSearch(search).search
-  return kept ? `${path}?${LOCALE_QUERY_PARAM}=${encodeURIComponent(kept.locale)}` : path
+export function localizePath(path: string, locale: SupportedLocale): string {
+  if (locale === DEFAULT_LOCALE) return path
+  const prefix = `/${LOCALE_PATH_PREFIXES[locale]}`
+  if (path === '/' || path.startsWith('/?') || path.startsWith('/#')) return prefix + path.slice(1)
+  return prefix + path
 }
 
 export function normalizeDetectedLanguage(lng: string) {
@@ -78,11 +99,11 @@ export function resolveSupportedLocale(candidates: string | readonly string[] | 
   return null
 }
 
-function detectLocaleFromCookieHeader(cookieHeader: string | null) {
+export function detectLocaleFromCookieHeader(cookieHeader: string | null) {
   return toSupportedLocale(parseCookie(cookieHeader ?? '')[LOCALE_COOKIE_NAME])
 }
 
-function detectLocaleFromAcceptLanguage(acceptLanguage: string | null) {
+export function detectLocaleFromAcceptLanguage(acceptLanguage: string | null) {
   if (!acceptLanguage) return null
 
   const candidates = acceptLanguage
@@ -103,11 +124,18 @@ function detectLocaleFromAcceptLanguage(acceptLanguage: string | null) {
   return resolveSupportedLocale(candidates.map(({ tag }) => tag))
 }
 
+/**
+ * The locale a page renders in: the one its URL path names (`/ja/…`), English without a prefix. The URL alone decides
+ * it, so the server render, the edge HTML cache and hydration always agree. The visitor's preference (the cookie the
+ * picker sets, then Accept-Language) only decides the redirect from an unprefixed URL (setup/locale-redirect.ts).
+ */
 export function detectServerLocale(request: Request): SupportedLocale {
-  const url = new URL(request.url)
+  return splitLocalePath(new URL(request.url).pathname).locale
+}
 
+/** The visitor's preferred locale: the picker's cookie, then Accept-Language, then English */
+export function negotiateLocale(request: Request): SupportedLocale {
   return (
-    toSupportedLocale(url.searchParams.get(LOCALE_QUERY_PARAM)) ??
     detectLocaleFromCookieHeader(request.headers.get('cookie')) ??
     detectLocaleFromAcceptLanguage(request.headers.get('accept-language')) ??
     DEFAULT_LOCALE

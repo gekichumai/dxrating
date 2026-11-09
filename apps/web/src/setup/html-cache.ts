@@ -1,11 +1,11 @@
-import { detectServerLocale } from './locale'
+import { splitLocalePath } from './locale'
 import { createCspNonce } from './security-headers'
 
 /**
  * Edge cache for server-rendered HTML, kept per Cloudflare data center via the Workers Cache API.
  *
- * SSR output depends only on the URL and the resolved locale (query param, `dxrating.locale` cookie, or
- * Accept-Language). Auth and every other user preference are applied on the client, so the HTML of the pages
+ * SSR output depends only on the URL: the locale is its path prefix (`/ja/…`; none for English), and the redirects that
+ * send a visitor to their language's URL run before this cache (setup/locale-redirect.ts). Auth and every other user preference are applied on the client, so the HTML of the pages
  * below is the same for every visitor with the same locale. The key also includes the build commit: hashed
  * assets from an older deploy are gone after a release, so cached HTML must never outlive its build.
  */
@@ -33,8 +33,11 @@ const CACHEABLE_PATHS = new Set([
 ])
 const CACHEABLE_PATH_PREFIXES = ['/songs/', '/constants/', '/versions/', '/plates/']
 
-const isCacheablePath = (pathname: string) =>
-  CACHEABLE_PATHS.has(pathname) || CACHEABLE_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+// Matched without the locale prefix: `/ja/songs/…` follows the rules of `/songs/…`
+const isCacheablePath = (localizedPathname: string) => {
+  const { pathname } = splitLocalePath(localizedPathname)
+  return CACHEABLE_PATHS.has(pathname) || CACHEABLE_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+}
 
 // Defense in depth: SSR never reads the session, but signed-in requests skip the shared cache entirely.
 const hasSessionCookie = (cookieHeader: string | null) => !!cookieHeader && cookieHeader.includes('session_token')
@@ -46,8 +49,8 @@ export function getHtmlCacheKey(request: Request, buildId: string | undefined): 
   const url = new URL(request.url)
   if (!isCacheablePath(url.pathname)) return null
 
-  const locale = detectServerLocale(request)
-  return `${url.origin}${HTML_CACHE_KEY_PREFIX}/${encodeURIComponent(buildId)}/${locale}${url.pathname}${url.search}`
+  // The path carries the locale, so it is the whole key with the build and the query
+  return `${url.origin}${HTML_CACHE_KEY_PREFIX}/${encodeURIComponent(buildId)}${url.pathname}${url.search}`
 }
 
 export function isCacheableHtmlResponse(response: Response): boolean {

@@ -26,6 +26,13 @@ describe('SEO localization', () => {
     ).toBe('ja')
   })
 
+  it("prefers the head's own match over the previous navigation's snapshot", () => {
+    // After switching from /ja to /ko the head gets `match` for /ko and `matches` still holding /ja's contexts
+    const stale = { context: { locale: 'ja' } }
+    expect(resolveSeoLocale([{ context: { locale: 'ko' } }, stale, stale])).toBe('ko')
+    expect(resolveSeoLocale([{ context: {} }, { context: { locale: 'en' } }, { context: { locale: 'th' } }])).toBe('th')
+  })
+
   it('builds localized root metadata for HTML responses', () => {
     const meta = buildRootSeoMeta('zh-Hans')
 

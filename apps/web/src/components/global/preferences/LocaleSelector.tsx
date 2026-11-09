@@ -1,13 +1,29 @@
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem, type MenuItemProps } from '@mui/material'
+import { type RouterHistory, useRouter } from '@tanstack/react-router'
 import { flushSync } from 'react-dom'
 import { type FC, type PropsWithChildren, type ReactElement, useState } from 'react'
 import { useLocale, useSetLocale } from '@/i18n/LocaleProvider'
-import { persistClientLocalePreference, type SupportedLocale } from '@/setup/locale'
+import { localizePath, persistClientLocalePreference, splitLocalePath, type SupportedLocale } from '@/setup/locale'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import MdiCheck from '~icons/mdi/check'
 import MdiTranslate from '~icons/mdi/translate'
 import { startViewTransition, wipeOriginFromClick } from '../../../utils/startViewTransition'
 import { m } from '@/paraglide/messages'
+
+/** The page on screen as the given language's URL: `/ja/rating?x=1` → `/th/rating?x=1` */
+export const localizedCurrentUrl = (
+  locale: SupportedLocale,
+  location: Pick<Location, 'pathname' | 'search' | 'hash'> = window.location,
+) => localizePath(splitLocalePath(location.pathname).pathname, locale) + location.search + location.hash
+
+/**
+ * Moves the page on screen to the given language's URL. Pushed to history directly: the router compares locations
+ * without the prefix, so to it this is the same page. The entry keeps the current history state, which holds the real
+ * route behind a masked URL (a chart dialog opened from search shows `/songs/…` over `/?q=…`), so the dialog and the
+ * search under it stay open; history assigns the new entry its own key and index.
+ */
+export const pushLocalizedLocation = (history: Pick<RouterHistory, 'location' | 'push'>, locale: SupportedLocale) =>
+  history.push(localizedCurrentUrl(locale, history.location), { ...history.location.state })
 
 // MenuList passes autoFocus and tabIndex to its direct children (keyboard focus on open, roving tab stop): they are
 // forwarded to the MenuItem through `rest`
@@ -18,6 +34,7 @@ export const LocaleSelectorItem: FC<
 > = ({ locale, selected, onClose, children, ...rest }) => {
   const currentLocale = useLocale()
   const setLocale = useSetLocale()
+  const router = useRouter({ warn: false })
 
   return (
     <MenuItem
@@ -31,7 +48,10 @@ export const LocaleSelectorItem: FC<
         const previousLocale = currentLocale
         void startViewTransition(() => {
           persistClientLocalePreference(locale)
-          const changed = setLocale(locale)
+          // The new language renders in place, then the URL moves to that language's path for the same page
+          const changed = setLocale(locale).then(() => {
+            if (router) pushLocalizedLocation(router.history, locale)
+          })
           captureAnalyticsEvent('locale_selector_item_clicked', {
             locale,
             previous_locale: previousLocale,

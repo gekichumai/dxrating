@@ -55,21 +55,13 @@ describe('/tools/tolerance?sheet= (legacy links)', () => {
     return { song, sheet, options: (thrown as { options: Record<string, unknown> }).options }
   }
 
-  it('redirects permanently to the chart calculator, keeping a supported locale', async () => {
-    const { song, sheet, options } = await redirectFor({ sheet: 'x', locale: 'ja' })
+  it('redirects permanently to the chart calculator (the router adds the language prefix)', async () => {
+    const { song, sheet, options } = await redirectFor({ sheet: 'x' })
     expect(options).toMatchObject({
       to: '/songs/$songId/$type/$difficulty/tolerance',
       params: { songId: song.id, type: sheet.type, difficulty: sheet.difficulty },
-      search: { locale: 'ja' },
       statusCode: 308,
     })
-  })
-
-  it('ignores a locale the router parsed as a non-string', async () => {
-    for (const locale of [123, true, ['ja'], { ja: 1 }]) {
-      const { options } = await redirectFor({ locale })
-      expect(options.statusCode).toBe(308)
-      expect(options.search).toBeUndefined()
-    }
+    expect(options.search).toBeUndefined()
   })
 })

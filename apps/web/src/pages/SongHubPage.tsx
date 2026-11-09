@@ -15,7 +15,6 @@ const routeApi = getRouteApi('/songs_/$songId')
 /** `/songs/<id>`: the song's facts (artist, BPM, version, aliases) and every chart of it in one table */
 export const SongHubPage: FC = () => {
   const { songId } = routeApi.useParams()
-  const search = routeApi.useSearch()
   const locale = useLocale()
   const { song, searchAcronyms, flattenedSheets } = useSongSheets(songId)
 
@@ -35,7 +34,7 @@ export const SongHubPage: FC = () => {
   return (
     // Desktop (lg+): the song facts become a sticky left column and the charts table takes the rest of the width
     <div className="max-w-2xl mx-auto px-4 pt-6 pb-global flex flex-col gap-4 lg:max-w-6xl lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start">
-      <SongBackLink search={search} className="self-start justify-self-start -ml-2 -mb-2 lg:col-span-2" />
+      <SongBackLink className="self-start justify-self-start -ml-2 -mb-2 lg:col-span-2" />
 
       <MaterialSurface as="header" className="p-3 flex gap-3 items-start lg:flex-col lg:sticky lg:top-4">
         <SheetImage
