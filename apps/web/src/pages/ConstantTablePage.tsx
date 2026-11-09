@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { type FC, useEffect, useMemo, useState } from 'react'
+import { type FC, startTransition, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import MdiCheckCircle from '~icons/mdi/check-circle'
 import MdiViewGrid from '~icons/mdi/view-grid'
 import MdiViewList from '~icons/mdi/view-list'
@@ -27,6 +27,7 @@ import type { SupportedLocale } from '@/setup/locale'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import { InternalLink } from '@/components/global/InternalLink'
+import { afterNextPaint } from '@/utils/afterNextPaint'
 
 export const constantTableRange = (table: ConstantTable) => ({
   max: table.groups[0]?.constant ?? '-',
@@ -329,12 +330,72 @@ const ConstantJumpNav: FC<{ constants: string[] }> = ({ constants }) => {
   )
 }
 
+/** About one screen of tiles: what a client navigation to a level renders inside the tap */
+const FIRST_RENDER_CHARTS = 48
+
+const subscribeNothing = () => () => {}
+
+/**
+ * The type of the latest navigation ('push', 'replace', 'traverse', 'reload'), where the browser has the Navigation
+ * API; the same-document navigations of the router (pushState, Back) fire its navigate event too
+ */
+let lastNavigationType: string | undefined
+type NavigationLike = {
+  addEventListener: (type: 'navigate', listener: (event: { navigationType: string }) => void) => void
+}
+if (typeof window !== 'undefined' && 'navigation' in window) {
+  ;(window as unknown as { navigation: NavigationLike }).navigation.addEventListener('navigate', (event) => {
+    lastNavigationType = event.navigationType
+  })
+}
+/**
+ * Only after a link (push/replace): Back and Forward restore the scroll position right after the render, which needs
+ * the whole page. With no Navigation API, or before its first event, everything renders at once, as before.
+ */
+const linkNavigation = () => lastNavigationType === 'push' || lastNavigationType === 'replace'
+
+/**
+ * How many of a level's groups to render. A level has up to ~600 charts, and a client navigation (the level links,
+ * Back) rendered all of them inside the tap (~500-650ms at 4x CPU): after a link it now renders the groups up to
+ * about one screen of charts, and the rest in the task after that paint. A server render and its hydration render
+ * every group, so the HTML (edge-cached) and the first client render match.
+ */
+function useProgressiveGroupCount(table: ConstantTable): number {
+  // false while hydrating (React uses the server snapshot), true when the page mounts on a client navigation
+  const clientMount = useSyncExternalStore(
+    subscribeNothing,
+    () => true,
+    () => false,
+  )
+  const firstCount = () => {
+    let charts = 0
+    const index = table.groups.findIndex((group) => (charts += group.charts.length) >= FIRST_RENDER_CHARTS)
+    return index === -1 ? table.groups.length : index + 1
+  }
+  const startCount = () => (linkNavigation() ? firstCount() : table.groups.length)
+  const [shown, setShown] = useState(() => ({ table, count: clientMount ? startCount() : table.groups.length }))
+  // Another level in the same page (the level links, Back): start again
+  let count = shown.count
+  if (shown.table !== table) {
+    count = startCount()
+    setShown({ table, count })
+  }
+
+  useEffect(() => {
+    if (count >= table.groups.length) return undefined
+    return afterNextPaint(() => startTransition(() => setShown({ table, count: table.groups.length })))
+  }, [count, table])
+
+  return count
+}
+
 export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
   const locale = useLocale()
   const range = constantTableRange(table)
   // Client-only: the server HTML (edge-cached) never contains the visitor's records
   const overlay = useCompletionOverlay(table)
   const [view, setView] = useConstantTableView()
+  const groupCount = useProgressiveGroupCount(table)
 
   return (
     <div className="flex-container w-full max-w-7xl px-4 pb-global">
@@ -362,7 +423,7 @@ export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
           <ViewToggle view={view} onChange={setView} />
         </div>
 
-        {table.groups.map((group) => {
+        {table.groups.slice(0, groupCount).map((group) => {
           const charts = group.charts.filter((chart) => overlay.isVisible(chart.sheetId))
           if (charts.length === 0) return null
           const Group = view === 'grid' ? ConstantGroupGrid : ConstantGroupTable
