@@ -1,5 +1,5 @@
 import { DifficultyEnum } from '@gekichumai/dxdata'
-import type { PlateKind, PlateRecord } from '@gekichumai/maimai-domain'
+import type { PlateKind, PlateRecord, PlateRegion } from '@gekichumai/maimai-domain'
 import { DIFFICULTIES } from '@/models/difficulties'
 import {
   coverImageUrl,
@@ -9,13 +9,20 @@ import {
   type ShareImageSpec,
 } from '@/utils/shareImage/shareImage'
 import {
+  drawShareFooter,
+  loadShareLogo,
+  SHARE_FOOTER_HEIGHT,
+  type ShareLink,
+  shareLink,
+} from '@/utils/shareImage/shareFooter'
+import {
   paintShareBackground,
   paintSharePanel,
   readAccent,
   SHARE_FONT as FONT,
   SHARE_PADDING as PADDING,
 } from '@/components/completion/shareImageTheme'
-import { type PlateChartStatus, type PlateUserProgress, progressPercent } from './plateData'
+import { type PlateChartStatus, type PlateUserProgress, platePath, progressPercent } from './plateData'
 
 const WIDTH = 1080
 const COLUMNS = 2
@@ -59,6 +66,13 @@ const SYNC_LABEL: Record<NonNullable<PlateRecord['syncFlag']>, string> = {
 
 /** The achievement threshold a sheet is measured against when ranking how close a song is */
 const TARGET_RATE: Record<PlateKind, number> = { hasha: 80, sho: 100, kiwami: 101, shin: 101, maimai: 101 }
+
+/**
+ * The footer link of a plate image. The QR always names the region, Japan included: a URL without one follows the
+ * reader's site region, which can change the plate's charts and levels. The printed URL stays the bare path.
+ */
+export const plateShareLink = (plateId: string, region: PlateRegion): ShareLink =>
+  shareLink(platePath(plateId), { region })
 
 /** Two decimals, rounded down like the game so 99.995% never reads 100.00% */
 export const formatAchievement = (rate: number) => `${(Math.floor(rate * 100) / 100).toFixed(2)}%`
@@ -137,6 +151,8 @@ export interface PlateShareImageLabels {
   /** e.g. "ほか 120 曲" */
   more: (count: number) => string
   allDone: string
+  /** The line under the footer URL, e.g. "Scan to open on DXRating" */
+  footerCaption: string
 }
 
 export interface PlateShareImageInput {
@@ -145,6 +161,8 @@ export interface PlateShareImageInput {
   progress: PlateUserProgress
   records: ReadonlyMap<string, PlateRecord>
   labels: PlateShareImageLabels
+  /** Where a scan of the footer QR goes, and the short URL printed beside it */
+  link: ShareLink
 }
 
 const truncate = (context: CanvasRenderingContext2D, text: string, maxWidth: number) => {
@@ -165,6 +183,7 @@ export function buildPlateShareImage({
   progress,
   records,
   labels,
+  link,
 }: PlateShareImageInput): ShareImageSpec {
   const entries = rankRemainingSongs(progress, kind, records)
   const shown = entries.slice(0, PLATE_SHARE_MAX_SONGS)
@@ -174,13 +193,14 @@ export function buildPlateShareImage({
   const sectionTop = 262
   const listTop = sectionTop + 112
   const rows = Math.ceil(shown.length / COLUMNS)
-  const height =
-    entries.length === 0 ? sectionTop + 120 : listTop + rows * ROW_HEIGHT + (hidden > 0 ? 44 : 0) + PADDING + 40
+  const contentBottom = entries.length === 0 ? sectionTop + 56 : listTop + rows * ROW_HEIGHT + (hidden > 0 ? 44 : 0)
+  const height = contentBottom + SHARE_FOOTER_HEIGHT + PADDING
 
   return {
     width: WIDTH,
     height,
     draw: async (context) => {
+      const logoPromise = loadShareLogo()
       const accent = readAccent()
       paintShareBackground(context, WIDTH, height, accent)
       paintSharePanel(context, WIDTH, height)
@@ -307,10 +327,11 @@ export function buildPlateShareImage({
         context.fillStyle = 'rgba(255, 255, 255, 0.72)'
         context.fillText(labels.more(hidden), PADDING, listTop + rows * ROW_HEIGHT + 8)
       }
-      context.fillStyle = 'rgba(255, 255, 255, 0.5)'
-      context.textAlign = 'right'
-      context.fillText('dxrating.net', WIDTH - PADDING, height - PADDING - 30)
-      context.textAlign = 'left'
+      drawShareFooter(
+        context,
+        { top: contentBottom, width: WIDTH, inset: PADDING },
+        { link, caption: labels.footerCaption, logo: await logoPromise, font: FONT },
+      )
     },
   }
 }

@@ -1696,5 +1696,6 @@
   "ratingCalculator_cloudSave_export_rateLimited": "Anda telah memuat turun data anda beberapa kali hari ini. Cuba lagi esok.",
   "ratingCalculator_cloudSave_exportImport_pickTitle": "Pilih simpanan untuk diimport",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "Fail ini mempunyai lebih daripada satu simpanan.",
-  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Diimport sebagai “tidak disahkan”: asal rekod ditunjukkan seperti yang didakwa oleh fail."
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Diimport sebagai “tidak disahkan”: asal rekod ditunjukkan seperti yang didakwa oleh fail.",
+  "share_image_footerCaption": "Imbas untuk buka di DXRating"
 }

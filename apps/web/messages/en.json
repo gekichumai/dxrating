@@ -1714,5 +1714,6 @@
   "ratingCalculator_cloudSave_export_rateLimited": "You’ve downloaded your data several times today. Try again tomorrow.",
   "ratingCalculator_cloudSave_exportImport_pickTitle": "Choose a save to import",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "This file has more than one save.",
-  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Imported as “not verified”: where the records came from is shown as the file claims it."
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Imported as “not verified”: where the records came from is shown as the file claims it.",
+  "share_image_footerCaption": "Scan to open on DXRating"
 }

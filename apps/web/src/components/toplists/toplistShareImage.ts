@@ -5,6 +5,7 @@ import {
   roundedRectPath,
   type ShareImageSpec,
 } from '@/utils/shareImage/shareImage'
+import { drawShareFooter, loadShareLogo, SHARE_FOOTER_HEIGHT, type ShareLink } from '@/utils/shareImage/shareFooter'
 import type { ToplistRow } from './toplistData'
 
 /** The share image shows at most a top 50, like the B50 */
@@ -38,17 +39,30 @@ export function toplistCardDetail(row: Pick<ToplistRow, 'sheet' | 'entry'>): str
 
 export function drawToplistShareImage(
   rows: readonly ToplistRow[],
-  { title, subtitle }: { title: string; subtitle?: string },
+  {
+    title,
+    subtitle,
+    link,
+    footerCaption,
+  }: {
+    title: string
+    subtitle?: string
+    /** Where a scan of the footer QR goes, and the short URL printed beside it */
+    link: ShareLink
+    footerCaption: string
+  },
 ): ShareImageSpec {
   const shown = rows.slice(0, SHARE_IMAGE_LIMIT)
   const lineCount = Math.max(1, Math.ceil(shown.length / COLUMNS))
   const width = PADDING * 2 + COLUMNS * CELL_WIDTH + (COLUMNS - 1) * GAP
-  const height = PADDING * 2 + HEADER + lineCount * CELL_HEIGHT + (lineCount - 1) * GAP
+  const contentBottom = PADDING + HEADER + lineCount * CELL_HEIGHT + (lineCount - 1) * GAP
+  const height = contentBottom + SHARE_FOOTER_HEIGHT + PADDING
 
   return {
     width,
     height,
     draw: async (context) => {
+      const logoPromise = loadShareLogo()
       const covers = await Promise.all(shown.map((row) => loadCanvasImage(coverImageUrl(row.sheet.imageName))))
 
       const background = context.createLinearGradient(0, 0, width, height)
@@ -63,7 +77,7 @@ export function drawToplistShareImage(
       context.fillText(title, PADDING, PADDING)
       context.font = '14px Torus, system-ui, sans-serif'
       context.fillStyle = 'rgba(255, 255, 255, 0.7)'
-      context.fillText([subtitle, `${rows.length}`, 'dxrating.net'].filter(Boolean).join(' · '), PADDING, PADDING + 38)
+      context.fillText([subtitle, `${rows.length}`].filter(Boolean).join(' · '), PADDING, PADDING + 38)
 
       shown.forEach((row, index) => {
         const x = PADDING + (index % COLUMNS) * (CELL_WIDTH + GAP)
@@ -90,6 +104,12 @@ export function drawToplistShareImage(
         context.font = 'bold 13px Torus, system-ui, sans-serif'
         context.fillText(`${row.entry.achievementRate.toFixed(4)}%`, textX, y + 48)
       })
+
+      drawShareFooter(
+        context,
+        { top: contentBottom, width, inset: PADDING },
+        { link, caption: footerCaption, logo: await logoPromise, font: 'Torus, system-ui, sans-serif' },
+      )
     },
   }
 }

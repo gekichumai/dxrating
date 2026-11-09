@@ -25,7 +25,7 @@ import {
   plateScript,
   progressPercent,
 } from '@/components/plates/plateData'
-import { buildPlateShareImage } from '@/components/plates/plateShareImage'
+import { buildPlateShareImage, plateShareLink } from '@/components/plates/plateShareImage'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { captureAnalyticsEvent } from '@/lib/analytics'
@@ -429,7 +429,9 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
                         unplayed: m.plates_share_unplayed({}, { locale }),
                         more: (count) => m.plates_share_more({ count }, { locale }),
                         allDone: m.plates_share_allDone({}, { locale }),
+                        footerCaption: m.share_image_footerCaption({}, { locale }),
                       },
+                      link: plateShareLink(data.plateId, data.region),
                     })
                   }
                   onExported={(outcome) =>

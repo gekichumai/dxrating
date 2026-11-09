@@ -588,6 +588,9 @@ importers:
       type-fest:
         specifier: ^4.41.0
         version: 4.41.0
+      uqr:
+        specifier: 0.1.3
+        version: 0.1.3
       use-long-press:
         specifier: ^3.3.0
         version: 3.3.0(react@19.2.6)
@@ -673,6 +676,9 @@ importers:
       fake-indexeddb:
         specifier: ^6.2.6
         version: 6.2.7
+      jsqr:
+        specifier: 1.4.0
+        version: 1.4.0
       react-grab:
         specifier: ^0.1.32
         version: 0.1.37(react@19.2.6)
@@ -5736,6 +5742,9 @@ packages:
   jsonc-parser@3.3.1:
     resolution: {integrity: sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==}
 
+  jsqr@1.4.0:
+    resolution: {integrity: sha512-dxLob7q65Xg2DvstYkRpkYtmKm2sPJ9oFhrhmudT1dZvNFFTlroai3AWSpLey/w5vMcLBXRgOJsbXpdN9HzU/A==}
+
   kleur@3.0.3:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
     engines: {node: '>=6'}
@@ -7038,6 +7047,9 @@ packages:
     hasBin: true
     peerDependencies:
       browserslist: '>= 4.21.0'
+
+  uqr@0.1.3:
+    resolution: {integrity: sha512-0rjE8iEJe4YmT9TOhwsZtqCMRLc5DXZUI2UEYUUg63ikBkqqE5EYWaI0etFe/5KUcmcYwLih2RND1kq+hrUJXA==}
 
   urlpattern-polyfill@10.1.0:
     resolution: {integrity: sha512-IGjKp/o0NL3Bso1PymYURCJxMPNAf/ILOpendP9f5B6e1rTJgdgiOvgfoT8VxCAdY+Wisb9uhGaJJf3yZ2V9nw==}
@@ -11857,6 +11869,8 @@ snapshots:
 
   jsonc-parser@3.3.1: {}
 
+  jsqr@1.4.0: {}
+
   kleur@3.0.3: {}
 
   kleur@4.1.5: {}
@@ -13317,6 +13331,8 @@ snapshots:
       browserslist: 4.28.4
       escalade: 3.2.0
       picocolors: 1.1.1
+
+  uqr@0.1.3: {}
 
   urlpattern-polyfill@10.1.0: {}
 

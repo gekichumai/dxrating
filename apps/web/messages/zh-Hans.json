@@ -1714,5 +1714,6 @@
   "ratingCalculator_cloudSave_export_rateLimited": "你今天已多次下载数据，请明天再试。",
   "ratingCalculator_cloudSave_exportImport_pickTitle": "选择要导入的存档",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "这个文件中有多个存档。",
-  "ratingCalculator_cloudSave_exportImport_claimedOnly": "已作为“未验证”导入：记录来源仅按文件中的声明显示。"
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "已作为“未验证”导入：记录来源仅按文件中的声明显示。",
+  "share_image_footerCaption": "扫码在 DXRating 打开"
 }

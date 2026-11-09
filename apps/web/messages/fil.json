@@ -1706,5 +1706,6 @@
   "ratingCalculator_cloudSave_export_rateLimited": "Ilang beses mo nang na-download ang iyong data ngayong araw. Subukang muli bukas.",
   "ratingCalculator_cloudSave_exportImport_pickTitle": "Pumili ng save na i-import",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "May higit sa isang save ang file na ito.",
-  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Na-import bilang “hindi verified”: ipinapakita ang pinagmulan ng mga record ayon sa sinasabi ng file."
+  "ratingCalculator_cloudSave_exportImport_claimedOnly": "Na-import bilang “hindi verified”: ipinapakita ang pinagmulan ng mga record ayon sa sinasabi ng file.",
+  "share_image_footerCaption": "I-scan para buksan sa DXRating"
 }
