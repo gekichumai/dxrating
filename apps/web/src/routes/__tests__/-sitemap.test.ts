@@ -35,25 +35,13 @@ describe('buildSitemap', () => {
     expect(sitemap).not.toMatch(/\/songs\/mixed\/(dx|std)\//)
   })
 
-  it("dates a song page by its newest chart's release", () => {
+  it('gives song pages no lastmod: a chart release date is not when the page last changed', () => {
     const sitemap = buildSitemap([
-      {
-        id: 'released',
-        sheets: [
-          { type: TypeEnum.DX, difficulty: DifficultyEnum.Master, releaseDate: '2019-01-01' },
-          { type: TypeEnum.DX, difficulty: DifficultyEnum.ReMaster, releaseDate: '2026-05-10' },
-        ],
-      },
-      {
-        id: 'undated',
-        sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Basic }],
-      },
+      { id: 'released', sheets: [{ type: TypeEnum.DX, difficulty: DifficultyEnum.Master, releaseDate: '2026-05-10' }] },
     ])
 
-    expect(sitemap).toMatch(/<loc>https:\/\/dxrating\.net\/songs\/released<\/loc>[^]*?<lastmod>2026-05-10<\/lastmod>/)
-    expect(sitemap).not.toContain('<lastmod>2019-01-01</lastmod>')
-    expect(sitemap).toContain('<loc>https://dxrating.net/songs/undated</loc>')
-    expect(sitemap).not.toContain('<lastmod>undefined</lastmod>')
+    expect(sitemap).toContain('<loc>https://dxrating.net/songs/released</loc>')
+    expect(sitemap).not.toContain('<lastmod>')
   })
 })
 describe('buildSitemap plates', () => {

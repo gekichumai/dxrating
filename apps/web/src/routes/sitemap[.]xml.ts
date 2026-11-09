@@ -40,8 +40,6 @@ const alternatesXml = (path: string) =>
     ),
   ].join('')
 
-const lastmodXml = (releaseDate?: string) => (releaseDate ? `\n    <lastmod>${escapeXml(releaseDate)}</lastmod>` : '')
-
 const constantTableEntries = (locale: SupportedLocale) =>
   [
     '/constants',
@@ -83,22 +81,16 @@ const toolEntries = (locale: SupportedLocale) =>
     )
     .join('')
 
-// A song page changes when a chart is added: its newest chart's release date
-const latestReleaseDate = (song: SitemapSong) =>
-  (song.sheets ?? []).reduce<string | undefined>(
-    (latest, sheet) => (sheet.releaseDate && (!latest || sheet.releaseDate > latest) ? sheet.releaseDate : latest),
-    undefined,
-  )
-
 export function buildSitemap(songs: SitemapSong[], locale: SupportedLocale = DEFAULT_LOCALE) {
   // One page per song (`/songs/<id>`): every chart of the song in one table. Chart pages name the song page as their
-  // canonical (utils/alternateLinks.ts), so they aren't listed
+  // canonical (utils/alternateLinks.ts), so they aren't listed. No lastmod: no date tracks when a song page's content
+  // last changed (a chart's release date doesn't move when its level or internal level is corrected)
   const songHubEntries = songs
-    .map((song) => ({ path: songHubPath(song.id), lastmod: latestReleaseDate(song) }))
+    .map((song) => songHubPath(song.id))
     .map(
-      ({ path, lastmod }) => `
+      (path) => `
   <url>
-    <loc>${urlLoc(path, locale)}</loc>${alternatesXml(path)}${lastmodXml(lastmod)}
+    <loc>${urlLoc(path, locale)}</loc>${alternatesXml(path)}
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>`,
