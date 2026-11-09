@@ -1,5 +1,6 @@
 import jsQR from 'jsqr'
 import { describe, expect, it } from 'vitest'
+import { localeRedirect } from '@/setup/locale-redirect'
 import { QR_QUIET_ZONE, shareLink, shareQrModules, shareQrModuleSize } from './shareFooter'
 
 /** Device pixel scale of the exported PNG (renderShareImage's default) */
@@ -63,5 +64,27 @@ describe('share footer QR', () => {
       }
       expect(shareQrModuleSize(modules.length) * EXPORT_SCALE).toBeGreaterThanOrEqual(3)
     }
+  })
+})
+
+describe('share links and the language in the path', () => {
+  const scan = (url: string, headers: Record<string, string> = {}) => localeRedirect(new Request(url, { headers }))
+
+  it('stay unprefixed, so the printed URL is the short one in every language', () => {
+    expect(shareLink('/plates/kagami-shin', { region: 'jp' }).url).toBe(
+      'https://dxrating.net/plates/kagami-shin?region=jp',
+    )
+    expect(shareLink('/me/records', { tab: 'fc', sort: undefined }).url).toBe('https://dxrating.net/me/records?tab=fc')
+  })
+
+  it("open in the scanner's language with the view state kept", () => {
+    const { url } = shareLink('/constants/14p', { target: 'ap' })
+    const ko = scan(url, { 'Accept-Language': 'ko-KR,ko;q=0.9' })
+    expect(ko?.status).toBe(302)
+    expect(ko?.headers.get('Location')).toBe('/ko/constants/14p?target=ap')
+    expect(scan(url, { 'Accept-Language': 'zh-CN' })?.headers.get('Location')).toBe('/zh-hans/constants/14p?target=ap')
+    // No preference (a crawler, an English phone): the English page, no redirect
+    expect(scan(url)).toBeNull()
+    expect(scan(url, { 'Accept-Language': 'en-US' })).toBeNull()
   })
 })

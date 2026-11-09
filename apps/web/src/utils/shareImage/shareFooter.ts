@@ -4,9 +4,9 @@
  * the logo comes from the cover host already allowed by the CSP and drawn CORS-clean by `loadCanvasImage`.
  */
 import { encode } from 'uqr'
+import { buildLocalizedUrl } from '@/utils/alternateLinks'
 import { COVER_ORIGIN, loadCanvasImage, roundedRectPath } from './shareImage'
 
-export const SHARE_SITE_ORIGIN = 'https://dxrating.net'
 /** The OG card's logo */
 export const SHARE_LOGO_URL = `${COVER_ORIGIN}/favicon/pack/v1/apple-touch-icon.png`
 
@@ -30,12 +30,15 @@ export interface ShareLink {
 }
 
 /**
- * Builds the link of a share image from a site path and optional view state. The QR carries the state (e.g.
- * `?target=ap`) so a scan reopens the same view; the printed text stays the short, typable path.
+ * Builds the link of a share image from a router path (no language prefix) and optional view state. The QR carries
+ * the state (e.g. `?target=ap`) so a scan reopens the same view; the printed text stays the short, typable path.
+ *
+ * Both are the unprefixed URL, whatever language the image was exported in: an image travels, and the server sends
+ * each visitor from an unprefixed URL to the language they read (cookie or Accept-Language, setup/locale-redirect.ts),
+ * keeping the query. A Japanese export scanned on a Korean phone opens the Korean page.
  */
 export function shareLink(path: string, search: Record<string, string | undefined> = {}): ShareLink {
-  const url = new URL(path, SHARE_SITE_ORIGIN)
-  for (const [key, value] of Object.entries(search)) if (value) url.searchParams.set(key, value)
+  const url = new URL(buildLocalizedUrl({ pathname: path, search }))
   return { url: url.toString(), display: `${url.host}${url.pathname}` }
 }
 
