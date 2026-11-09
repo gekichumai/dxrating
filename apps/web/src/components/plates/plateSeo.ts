@@ -1,6 +1,6 @@
 import type { SupportedLocale } from '@/setup/locale'
 import { m } from '@/paraglide/messages'
-import { formatSeoTitle } from '@/utils/seo'
+import { formatSeoTitle, siteUrl } from '@/utils/seo'
 import { platePath } from './plateData'
 
 const OG_LOCALES: Record<SupportedLocale, string> = {
@@ -19,7 +19,7 @@ const OG_LOCALES: Record<SupportedLocale, string> = {
 
 function collectionSeo(locale: SupportedLocale, path: string, rawTitle: string, description: string) {
   const title = formatSeoTitle(rawTitle)
-  const url = `https://dxrating.net${path}`
+  const url = siteUrl(path, locale)
   return {
     title,
     description,
@@ -43,12 +43,12 @@ const breadcrumb = (locale: SupportedLocale, url: string, leaf?: string) => ({
   '@type': 'BreadcrumbList',
   '@id': `${url}#breadcrumb`,
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'DXRating', item: 'https://dxrating.net/' },
+    { '@type': 'ListItem', position: 1, name: 'DXRating', item: siteUrl('/', locale) },
     {
       '@type': 'ListItem',
       position: 2,
       name: m.plates_breadcrumb({}, { locale }),
-      item: 'https://dxrating.net/plates',
+      item: siteUrl('/plates', locale),
     },
     ...(leaf ? [{ '@type': 'ListItem', position: 3, name: leaf, item: url }] : []),
   ],

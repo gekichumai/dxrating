@@ -95,6 +95,7 @@ export const Route = createRootRoute({
       links: buildRootHeadLinks({
         pathname: matches[matches.length - 1]?.pathname ?? '/',
         search: matches[matches.length - 1]?.search,
+        locale,
       }),
       // The theme script first: it sets <html data-theme> before the body paints (setup/theme-script.ts)
       scripts: [{ children: THEME_INLINE_SCRIPT }, { children: ZOD_JITLESS_INLINE_SCRIPT }],

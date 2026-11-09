@@ -1,9 +1,9 @@
 import { ServerEnum, TypeEnum, type DifficultyEnum, type NoteCounts, type Sheet, type Song } from '@gekichumai/dxdata'
 import type { SupportedLocale } from '@/setup/locale'
-import { DEFAULT_LOCALE, toSupportedLocale } from '@/setup/locale'
+import { DEFAULT_LOCALE, localizePath, toSupportedLocale } from '@/setup/locale'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
-import { buildSheetLink, buildSheetTolerancePath, songHubPath } from '@/components/sheet/sheetLinks'
+import { buildSheetPath, buildSheetTolerancePath, songHubPath } from '@/components/sheet/sheetLinks'
 import { getSheetPageTitle, getSheetTitleLabel, getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { buildChartOgImageAlt, buildChartOgImageUrl } from '@/routes/-chart-og-meta'
 
@@ -35,6 +35,12 @@ type StructuredDataSheet = Pick<
   | 'type'
   | 'version'
 >
+
+/**
+ * A page's absolute URL in a language: `/rating` → `https://dxrating.net/ja/rating` (English has no prefix). Canonical,
+ * og:url and structured data name the language variant the page is, never the unprefixed URL of another language.
+ */
+export const siteUrl = (path: string, locale: SupportedLocale) => `https://dxrating.net${localizePath(path, locale)}`
 
 const OG_LOCALES: Record<SupportedLocale, string> = {
   en: 'en_US',
@@ -126,7 +132,7 @@ export function buildRootSeoMeta(locale: SupportedLocale, options: { includeTitl
       property: 'og:image',
       content: 'https://shama.dxrating.net/favicon/pack/v1/apple-touch-icon.png',
     },
-    { property: 'og:url', content: 'https://dxrating.net' },
+    { property: 'og:url', content: siteUrl('/', locale) },
     { name: 'twitter:card', content: 'summary' },
     { name: 'twitter:title', content: title },
     { name: 'twitter:description', content: description },
@@ -145,7 +151,7 @@ export function buildSearchSeo(locale: SupportedLocale) {
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:url', content: 'https://dxrating.net/' },
+      { property: 'og:url', content: siteUrl('/', locale) },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
       { name: 'twitter:card', content: 'summary' },
@@ -167,7 +173,7 @@ export function buildDevelopersSeo(locale: SupportedLocale) {
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:url', content: 'https://dxrating.net/developers' },
+      { property: 'og:url', content: siteUrl('/developers', locale) },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
       { name: 'twitter:card', content: 'summary' },
@@ -189,7 +195,7 @@ export function buildRecentChartsSeo(locale: SupportedLocale) {
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:url', content: 'https://dxrating.net/charts/recent' },
+      { property: 'og:url', content: siteUrl('/charts/recent', locale) },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
       { name: 'twitter:card', content: 'summary' },
@@ -211,7 +217,7 @@ export function buildTrendingChartsSeo(locale: SupportedLocale) {
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:url', content: 'https://dxrating.net/charts/trending' },
+      { property: 'og:url', content: siteUrl('/charts/trending', locale) },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
       { name: 'twitter:card', content: 'summary' },
@@ -231,7 +237,7 @@ const RATING_FAQ: { question: PlainMessage; answer: PlainMessage }[] = [
 export function buildRatingSeo(locale: SupportedLocale) {
   const title = formatSeoTitle(m.root_pages_rating_seoTitle({}, { locale }))
   const description = m.root_pages_rating_seoDescription({}, { locale })
-  const url = 'https://dxrating.net/rating'
+  const url = siteUrl('/rating', locale)
 
   const structuredData = {
     '@context': 'https://schema.org',
@@ -367,14 +373,7 @@ export function buildSongSheetSeo(
     type: sheet.type,
     difficulty: sheet.difficulty,
   })
-  const url = buildSheetLink(
-    {
-      songId: song.id,
-      type: sheet.type,
-      difficulty: sheet.difficulty,
-    },
-    'https://dxrating.net',
-  )
+  const url = siteUrl(buildSheetPath({ songId: song.id, type: sheet.type, difficulty: sheet.difficulty }), locale)
 
   return {
     title,
@@ -407,7 +406,7 @@ export function buildSongSheetSeo(
   }
 }
 
-const songHubUrl = (songId: string) => `https://dxrating.net${songHubPath(songId)}`
+const songHubUrl = (songId: string, locale: SupportedLocale) => siteUrl(songHubPath(songId), locale)
 
 type SongHubSeoSong = Pick<Song, 'artist' | 'category' | 'id' | 'imageName' | 'title'> & {
   bpm?: number | null
@@ -432,7 +431,7 @@ export function buildSongHubSeo(song: SongHubSeoSong, locale: SupportedLocale) {
     { locale },
   )
   const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
-  const url = songHubUrl(song.id)
+  const url = songHubUrl(song.id, locale)
   const websiteId = 'https://dxrating.net/#website'
   const pageId = `${url}#webpage`
   const breadcrumbId = `${url}#breadcrumb`
@@ -458,7 +457,7 @@ export function buildSongHubSeo(song: SongHubSeoSong, locale: SupportedLocale) {
         '@type': 'BreadcrumbList',
         '@id': breadcrumbId,
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'DXRating', item: 'https://dxrating.net/' },
+          { '@type': 'ListItem', position: 1, name: 'DXRating', item: siteUrl('/', locale) },
           { '@type': 'ListItem', position: 2, name: song.title, item: url },
         ],
       },
@@ -563,7 +562,7 @@ export function buildSongSheetStructuredData(
       inLanguage: locale,
       potentialAction: {
         '@type': 'SearchAction',
-        target: 'https://dxrating.net/?q={search_term_string}',
+        target: `${siteUrl('/', locale)}?q={search_term_string}`,
         'query-input': 'required name=search_term_string',
       },
     },
@@ -575,13 +574,13 @@ export function buildSongSheetStructuredData(
           '@type': 'ListItem',
           position: 1,
           name: 'DXRating',
-          item: 'https://dxrating.net/',
+          item: siteUrl('/', locale),
         },
         {
           '@type': 'ListItem',
           position: 2,
           name: song.title,
-          item: songHubUrl(song.id),
+          item: songHubUrl(song.id, locale),
         },
         {
           '@type': 'ListItem',
@@ -645,7 +644,7 @@ export function buildSongSheetStructuredData(
 }
 const buildCollectionSeo = (locale: SupportedLocale, path: string, rawTitle: string, description: string) => {
   const title = formatSeoTitle(rawTitle)
-  const url = `https://dxrating.net${path}`
+  const url = siteUrl(path, locale)
 
   return {
     title,
@@ -704,12 +703,12 @@ export function buildConstantTableSeo(
         '@type': 'BreadcrumbList',
         '@id': `${seo.url}#breadcrumb`,
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'DXRating', item: 'https://dxrating.net/' },
+          { '@type': 'ListItem', position: 1, name: 'DXRating', item: siteUrl('/', locale) },
           {
             '@type': 'ListItem',
             position: 2,
             name: m.constants_breadcrumb({}, { locale }),
-            item: 'https://dxrating.net/constants',
+            item: siteUrl('/constants', locale),
           },
           { '@type': 'ListItem', position: 3, name: `Lv.${table.level}`, item: seo.url },
         ],
@@ -757,12 +756,12 @@ export function buildVersionPageSeo(
         '@type': 'BreadcrumbList',
         '@id': `${seo.url}#breadcrumb`,
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'DXRating', item: 'https://dxrating.net/' },
+          { '@type': 'ListItem', position: 1, name: 'DXRating', item: siteUrl('/', locale) },
           {
             '@type': 'ListItem',
             position: 2,
             name: m.versions_breadcrumb({}, { locale }),
-            item: 'https://dxrating.net/versions',
+            item: siteUrl('/versions', locale),
           },
           { '@type': 'ListItem', position: 3, name: page.version, item: seo.url },
         ],
