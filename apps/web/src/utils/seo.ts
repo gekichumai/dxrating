@@ -1,4 +1,4 @@
-import { ServerEnum, TypeEnum, type DifficultyEnum, type NoteCounts, type Sheet, type Song } from '@gekichumai/dxdata'
+import { DifficultyEnum, ServerEnum, TypeEnum, type NoteCounts, type Sheet, type Song } from '@gekichumai/dxdata'
 import type { SupportedLocale } from '@/setup/locale'
 import { DEFAULT_LOCALE, localizePath, toSupportedLocale } from '@/setup/locale'
 import type { PlainMessage } from '@/i18n/message'
@@ -408,28 +408,55 @@ export function buildSongSheetSeo(
 
 const songHubUrl = (songId: string, locale: SupportedLocale) => siteUrl(songHubPath(songId), locale)
 
+type SongHubSeoSheet = Pick<SongSheetSeoSheet, 'type' | 'difficulty' | 'level' | 'internalLevelValue'>
+
 type SongHubSeoSong = Pick<Song, 'artist' | 'category' | 'id' | 'imageName' | 'title'> & {
   bpm?: number | null
   aliases?: readonly string[]
+  sheets?: readonly SongHubSeoSheet[]
 }
 
-/** Song hub titles carry the BPM, since "<song> bpm" is a common search; without a BPM they fall back to the song alone */
-export function buildSongHubTitle(song: { title: string; bpm?: number | null }, locale: SupportedLocale) {
-  return song.bpm
-    ? m.song_seo_hubTitle({ title: song.title, bpm: song.bpm }, { locale })
-    : m.song_seo_hubTitleNoBpm({ title: song.title }, { locale })
+// The charts a song page's description names: the hardest ones, which players look up, in each chart type
+const SONG_HUB_SUMMARY_TYPES = [TypeEnum.DX, TypeEnum.STD] as const
+const SONG_HUB_SUMMARY_DIFFICULTIES: readonly string[] = [DifficultyEnum.Master, DifficultyEnum.ReMaster]
+
+/** `DX MASTER 13+ (13.7)` for each MASTER and Re:MASTER chart, DX first */
+const songHubLevelFacts = (sheets: readonly SongHubSeoSheet[], locale: SupportedLocale) =>
+  SONG_HUB_SUMMARY_TYPES.flatMap((type) =>
+    SONG_HUB_SUMMARY_DIFFICULTIES.flatMap((difficulty) => {
+      const sheet = sheets.find((s) => s.type === type && s.difficulty === difficulty)
+      if (!sheet?.level) return []
+      const constant = formatConstant(sheet)
+      return [`${getSheetTitleLabel(sheet, locale)} ${sheet.level}${constant ? ` (${constant})` : ''}`]
+    }),
+  )
+
+/**
+ * Song page titles lead with what people search for: the song name and "maimai" (meta: GSC, 11/01–11/07). The artist
+ * tells songs of the same name apart. The BPM is a smaller share of searches and goes in the description.
+ */
+export function buildSongHubTitle(song: { title: string; artist: string }, locale: SupportedLocale) {
+  return m.song_seo_hubTitle({ title: song.title, artist: song.artist }, { locale })
+}
+
+/** The levels (with internal levels) of the hardest charts, then the BPM */
+export function buildSongHubDescription(
+  song: { title: string; artist: string; bpm?: number | null; sheets?: readonly SongHubSeoSheet[] },
+  locale: SupportedLocale,
+) {
+  const facts = [
+    ...songHubLevelFacts(song.sheets ?? [], locale),
+    ...(song.bpm ? [m.song_seo_fact_bpm({ value: song.bpm }, { locale })] : []),
+  ]
+  const values = { title: song.title, artist: song.artist }
+  return facts.length
+    ? m.song_seo_hubDescription({ ...values, facts: facts.join(m.song_seo_factSeparator({}, { locale })) }, { locale })
+    : m.song_seo_hubDescriptionBasic(values, { locale })
 }
 
 export function buildSongHubSeo(song: SongHubSeoSong, locale: SupportedLocale) {
   const title = buildSongHubTitle(song, locale)
-  const description = m.song_seo_hubDescription(
-    {
-      title: song.title,
-      artist: song.artist,
-      bpmFact: song.bpm ? m.song_seo_hubBpmFact({ bpm: song.bpm }, { locale }) : '',
-    },
-    { locale },
-  )
+  const description = buildSongHubDescription(song, locale)
   const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
   const url = songHubUrl(song.id, locale)
   const websiteId = 'https://dxrating.net/#website'
