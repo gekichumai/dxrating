@@ -3,7 +3,8 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch'
 import { handlerGen } from '@orpc/experimental-effect'
 import { openapi } from '@orpc/openapi'
 import { onError, os } from '@orpc/server'
-import { Effect } from 'effect'
+import { EffectDrizzleQueryError } from 'drizzle-orm/effect-core'
+import { Cause, Effect } from 'effect'
 import { ConnectionError, SqlError } from 'effect/sql/SqlError'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DatabaseError } from '../db/index'
@@ -14,10 +15,15 @@ import { ClientClosedRequestError } from '../request-runner'
 const connectionTimeout = () =>
   new DatabaseError({
     operation: 'Announcements.listPublic',
-    cause: Object.assign(new Error('Failed query: select ...'), {
-      cause: new SqlError({
-        reason: new ConnectionError({ cause: new Error('Connection timed out'), operation: 'connect' }),
-      }),
+    // The shape drizzle-orm/effect-postgres fails with: the SqlError inside an Effect Cause
+    cause: new EffectDrizzleQueryError({
+      query: 'select "id" from "announcements"',
+      params: [],
+      cause: Cause.fail(
+        new SqlError({
+          reason: new ConnectionError({ cause: new Error('Connection timed out'), operation: 'connect' }),
+        }),
+      ),
     }),
   })
 

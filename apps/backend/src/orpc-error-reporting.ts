@@ -1,3 +1,4 @@
+import { Cause } from 'effect'
 import { isSqlError } from 'effect/sql/SqlError'
 import { DatabaseError } from './db/index'
 import { netErrorTags, Sentry, shouldCaptureSentryError } from './lib/functions/sentry'
@@ -19,7 +20,8 @@ export const isClientAbort = (error: unknown, signal: AbortSignal | undefined): 
 
 /**
  * Sentry tags of a database failure: which operation failed and the SQL error reason (`ConnectionError`,
- * `StatementTimeoutError`, ...) found down its cause chain. Neither carries query text or parameters.
+ * `StatementTimeoutError`, ...) found down its cause chain. Neither carries query text or parameters. Drizzle's
+ * `EffectDrizzleQueryError` holds the `SqlError` inside an Effect `Cause`, which the chain unwraps.
  */
 export const databaseErrorTags = (error: unknown): Record<string, string> => {
   if (!(error instanceof DatabaseError)) return {}
@@ -27,10 +29,10 @@ export const databaseErrorTags = (error: unknown): Record<string, string> => {
   let cause: unknown = error.cause
   for (let depth = 0; depth < 5 && cause !== null && typeof cause === 'object'; depth++) {
     if (isSqlError(cause)) {
-      tags['db.error'] = cause.reason._tag
+      tags['db.error'] = cause.reason['_tag']
       break
     }
-    cause = (cause as { cause?: unknown }).cause
+    cause = Cause.isCause(cause) ? Cause.squash(cause) : (cause as { cause?: unknown }).cause
   }
   return tags
 }
