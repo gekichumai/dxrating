@@ -30,7 +30,8 @@ import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc/server/plugins'
 import { onError, ORPCError } from '@orpc/server'
-import { netErrorTags, Sentry, shouldCaptureSentryError } from './lib/functions/sentry'
+import { Sentry } from './lib/functions/sentry'
+import { reportProcedureError } from './orpc-error-reporting'
 import { Database } from './db/index'
 import {
   compressCatalogBody,
@@ -720,17 +721,7 @@ const openAPIHandler = new OpenAPIHandler(appRouter, {
     status: COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500,
   }),
   plugins: [new RequestHeadersHandlerPlugin<ApiContext>(), new ResponseHeadersHandlerPlugin<ApiContext>()],
-  clientInterceptors: [
-    onError((error, { path }) => {
-      if (!shouldCaptureSentryError(error)) return
-
-      const procedureName = path.join('.')
-      console.error(`[oRPC] ${procedureName} failed:`, error)
-      Sentry.captureException(error, {
-        tags: { 'orpc.procedure': procedureName, ...netErrorTags(error) },
-      })
-    }),
-  ],
+  clientInterceptors: [onError((error, { path, signal }) => reportProcedureError(error, { path, signal }))],
 })
 
 // oRPC OpenAPI generator for spec
