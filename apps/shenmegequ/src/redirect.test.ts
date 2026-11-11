@@ -16,9 +16,7 @@ function get(url: string) {
 
 describe('targetUrl', () => {
   it('builds the final search URL: the Chinese locale in the path, then the ref tag', () => {
-    expect(targetUrl('一号店')).toBe(
-      'https://dxrating.net/zh-hans?q=%E4%B8%80%E5%8F%B7%E5%BA%97&ref=shenmegequ',
-    )
+    expect(targetUrl('一号店')).toBe('https://dxrating.net/zh-hans?q=%E4%B8%80%E5%8F%B7%E5%BA%97&ref=shenmegequ')
   })
   it('encodes spaces as %20 and escapes & and =', () => {
     expect(targetUrl('a b&c=d')).toBe('https://dxrating.net/zh-hans?q=a%20b%26c%3Dd&ref=shenmegequ')
