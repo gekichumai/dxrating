@@ -288,6 +288,7 @@ export interface VersionElement {
   /** Version launch date (YYYY-MM-DD), when the catalog knows it */
   releaseDate?: string
 }
+
 /** The host that serves song covers and other game artwork */
 export const COVER_ORIGIN = 'https://shama.dxrating.net'
 
