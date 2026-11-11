@@ -4,10 +4,10 @@ The Worker behind 是什么歌.com (`xn--6iq3kq43dxve.com`). It turns an alias i
 
 | Request | Redirect (302, cached 5 minutes) |
 | --- | --- |
-| `https://一号店.是什么歌.com` | `https://dxrating.net/zh-hans?q=一号店&ref=shenmegequ` |
+| `https://一号店.是什么歌.com` | `https://dxrating.net/zh-hans?q=一号店&utm_source=shishenmege&utm_medium=redirect` |
 | `https://是什么歌.com/Big%20Daddy` | `…/zh-hans?q=Big Daddy&…` (the path wins over the subdomain and keeps case and spaces) |
 | `https://big-daddy.是什么歌.com` | `…/zh-hans?q=big daddy&…` (`-` becomes a space again) |
-| `https://是什么歌.com/`, `www.`, anything undecodable | `https://dxrating.net/zh-hans?ref=shenmegequ` |
+| `https://是什么歌.com/`, `www.`, anything undecodable | `https://dxrating.net/zh-hans?utm_source=shishenmege&utm_medium=redirect` |
 
 The target URL is built in one place, `targetUrl` in `src/redirect.ts`. It is the final URL dxrating.net serves
 (locale in the path), so a visit is one hop.
@@ -17,9 +17,9 @@ TLS handshake over HTTPS; over plain HTTP the Worker joins the labels with space
 they turn dots into `-`.
 
 ```bash
-pnpm --filter @gekichumai/shenmegequ test
-pnpm --filter @gekichumai/shenmegequ build   # type-check + wrangler dry run
+pnpm --filter @gekichumai/shishenmege test
+pnpm --filter @gekichumai/shishenmege build   # type-check + wrangler dry run
 ```
 
-Deployed by `.github/workflows/shenmegequ.yml` on pushes to `main`. The deploy checks a live subdomain redirect and
+Deployed by `.github/workflows/shishenmege.yml` on pushes to `main`. The deploy checks a live subdomain redirect and
 runs `wrangler rollback` if it does not match.

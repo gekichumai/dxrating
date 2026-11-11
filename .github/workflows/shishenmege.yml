@@ -1,6 +1,6 @@
 name: 是什么歌.com CI
 
-# The 是什么歌.com redirect Worker (apps/shenmegequ). Pull requests run lint, tests and a dry-run build; pushes to main
+# The 是什么歌.com redirect Worker (apps/shishenmege). Pull requests run lint, tests and a dry-run build; pushes to main
 # also deploy it, check the live redirect and roll back to the previous version if the check fails.
 
 on:
@@ -8,20 +8,20 @@ on:
     branches:
       - main
     paths:
-      - 'apps/shenmegequ/**'
+      - 'apps/shishenmege/**'
       - 'pnpm-lock.yaml'
-      - '.github/workflows/shenmegequ.yml'
+      - '.github/workflows/shishenmege.yml'
   pull_request:
     branches:
       - main
     paths:
-      - 'apps/shenmegequ/**'
+      - 'apps/shishenmege/**'
       - 'pnpm-lock.yaml'
-      - '.github/workflows/shenmegequ.yml'
+      - '.github/workflows/shishenmege.yml'
   workflow_dispatch:
 
 concurrency:
-  group: shenmegequ-${{ github.ref }}
+  group: shishenmege-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -49,13 +49,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: pnpm --filter @gekichumai/shenmegequ lint
+        run: pnpm --filter @gekichumai/shishenmege lint
 
       - name: Test
-        run: pnpm --filter @gekichumai/shenmegequ test
+        run: pnpm --filter @gekichumai/shishenmege test
 
       - name: Build
-        run: pnpm --filter @gekichumai/shenmegequ build
+        run: pnpm --filter @gekichumai/shishenmege build
 
   deploy:
     name: Deploy
@@ -84,12 +84,12 @@ jobs:
 
       - name: Deploy to Cloudflare Workers
         id: deploy
-        run: pnpm --filter @gekichumai/shenmegequ exec wrangler deploy --message "${GITHUB_SHA}"
+        run: pnpm --filter @gekichumai/shishenmege exec wrangler deploy --message "${GITHUB_SHA}"
 
       # The subdomain form is what existing links use; it must keep working
       - name: Check the live redirect
         run: |
-          expected='https://dxrating.net/zh-hans?q=%E4%B8%80%E5%8F%B7%E5%BA%97&ref=shenmegequ'
+          expected='https://dxrating.net/zh-hans?q=%E4%B8%80%E5%8F%B7%E5%BA%97&utm_source=shishenmege&utm_medium=redirect'
           for attempt in 1 2 3 4 5 6; do
             location=$(curl --silent --output /dev/null --max-time 10 --write-out '%{redirect_url}' \
               "https://xn--4gq48lf9j.xn--6iq3kq43dxve.com/?ci=${GITHUB_RUN_ID}-${attempt}")
@@ -102,4 +102,4 @@ jobs:
 
       - name: Roll back to the previous version
         if: failure() && steps.deploy.outcome == 'success'
-        run: pnpm --filter @gekichumai/shenmegequ exec wrangler rollback --yes --message "Live check failed for ${GITHUB_SHA}"
+        run: pnpm --filter @gekichumai/shishenmege exec wrangler rollback --yes --message "Live check failed for ${GITHUB_SHA}"
