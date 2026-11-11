@@ -13,7 +13,12 @@ import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
 import { buildSheetPath, buildSheetTolerancePath, songHubPath } from '@/components/sheet/sheetLinks'
 import { getSheetPageTitle, getSheetTitleLabel, getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
-import { buildChartOgImageAlt, buildChartOgImageUrl } from '@/routes/-chart-og-meta'
+import {
+  buildChartOgImageAlt,
+  buildChartOgImageUrl,
+  buildSongOgImageAlt,
+  buildSongOgImageUrl,
+} from '@/routes/-chart-og-meta'
 
 type SeoMeta =
   | { title: string }
@@ -374,6 +379,7 @@ export function buildSongSheetSeo(
     songId: song.id,
     type: sheet.type,
     difficulty: sheet.difficulty,
+    locale,
   })
   const socialImageAlt = buildChartOgImageAlt({
     title: song.title,
@@ -466,6 +472,8 @@ export function buildSongHubSeo(song: SongHubSeoSong, locale: SupportedLocale) {
   const title = buildSongHubTitle(song, locale)
   const description = buildSongHubDescription(song, locale)
   const image = coverUrl(song.id)
+  const socialImage = buildSongOgImageUrl({ songId: song.id, locale })
+  const socialImageAlt = buildSongOgImageAlt({ title: song.title, artist: song.artist })
   const url = songHubUrl(song.id, locale)
   const websiteId = 'https://dxrating.net/#website'
   const pageId = `${url}#webpage`
@@ -515,20 +523,28 @@ export function buildSongHubSeo(song: SongHubSeoSong, locale: SupportedLocale) {
     description,
     url,
     image,
+    socialImage,
+    socialImageAlt,
     structuredData,
     meta: [
       { title },
       { name: 'description', content: description },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },
-      { property: 'og:image', content: image },
+      { property: 'og:image', content: socialImage },
+      { property: 'og:image:secure_url', content: socialImage },
+      { property: 'og:image:type', content: 'image/png' },
+      { property: 'og:image:width', content: '1200' },
+      { property: 'og:image:height', content: '630' },
+      { property: 'og:image:alt', content: socialImageAlt },
       { property: 'og:url', content: url },
       { property: 'og:type', content: 'music.song' },
       { property: 'og:locale', content: OG_LOCALES[locale] },
-      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
-      { name: 'twitter:image', content: image },
+      { name: 'twitter:image', content: socialImage },
+      { name: 'twitter:image:alt', content: socialImageAlt },
     ] satisfies SeoMeta[],
   }
 }
