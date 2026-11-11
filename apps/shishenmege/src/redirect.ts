@@ -7,14 +7,19 @@ const ZONE_UNICODE = '是什么歌.com'
 /**
  * Every redirect goes to this one URL builder. It sends the final URL dxrating.net serves for a Chinese search, with
  * the locale in the path (`/zh-hans`), so a visit takes one hop rather than bouncing through `/?locale=zh-Hans`.
+ * The `q` parameter comes first, then the UTM tags.
  */
 const TARGET_BASE = 'https://dxrating.net/zh-hans'
-const TARGET_REF = 'shenmegequ'
+/** Standard UTM tags, which PostHog records on its own: the source is the domain, 是什么歌 (shì shénme gē) */
+const TARGET_UTM: [string, string][] = [
+  ['utm_source', 'shishenmege'],
+  ['utm_medium', 'redirect'],
+]
 
 export function targetUrl(query: string | null): string {
   const params: [string, string][] = []
   if (query) params.push(['q', query])
-  params.push(['ref', TARGET_REF])
+  params.push(...TARGET_UTM)
   // encodeURIComponent, not URLSearchParams: spaces stay %20 rather than `+`, as the old Worker sent them
   return `${TARGET_BASE}?${params.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&')}`
 }

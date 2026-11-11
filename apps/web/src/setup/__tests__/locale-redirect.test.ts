@@ -13,9 +13,9 @@ const expectRedirect = (response: Response | null, status: number, location: str
 describe('?locale= (the old scheme) moves to the path permanently', () => {
   it('keeps every other query parameter, in order: the 是什么歌 link', () => {
     expectRedirect(
-      get('/?q=%E3%83%86%E3%82%B9%E3%83%88&locale=zh-Hans&ref=shenmegequ'),
+      get('/?q=%E3%83%86%E3%82%B9%E3%83%88&locale=zh-Hans&utm_source=shishenmege&utm_medium=redirect'),
       301,
-      '/zh-hans?q=%E3%83%86%E3%82%B9%E3%83%88&ref=shenmegequ',
+      '/zh-hans?q=%E3%83%86%E3%82%B9%E3%83%88&utm_source=shishenmege&utm_medium=redirect',
     )
   })
 
