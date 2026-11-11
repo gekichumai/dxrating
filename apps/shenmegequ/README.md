@@ -4,12 +4,13 @@ The Worker behind 是什么歌.com (`xn--6iq3kq43dxve.com`). It turns an alias i
 
 | Request | Redirect (302, cached 5 minutes) |
 | --- | --- |
-| `https://一号店.是什么歌.com` | `https://dxrating.net/?q=一号店&locale=zh-Hans&ref=shenmegequ` |
-| `https://是什么歌.com/Big%20Daddy` | `…/?q=Big Daddy&…` (the path wins over the subdomain and keeps case and spaces) |
-| `https://big-daddy.是什么歌.com` | `…/?q=big daddy&…` (`-` becomes a space again) |
-| `https://是什么歌.com/`, `www.`, anything undecodable | `https://dxrating.net/?locale=zh-Hans&ref=shenmegequ` |
+| `https://一号店.是什么歌.com` | `https://dxrating.net/zh-hans?q=一号店&ref=shenmegequ` |
+| `https://是什么歌.com/Big%20Daddy` | `…/zh-hans?q=Big Daddy&…` (the path wins over the subdomain and keeps case and spaces) |
+| `https://big-daddy.是什么歌.com` | `…/zh-hans?q=big daddy&…` (`-` becomes a space again) |
+| `https://是什么歌.com/`, `www.`, anything undecodable | `https://dxrating.net/zh-hans?ref=shenmegequ` |
 
-The target URL is built in one place, `targetUrl` in `src/redirect.ts`.
+The target URL is built in one place, `targetUrl` in `src/redirect.ts`. It is the final URL dxrating.net serves
+(locale in the path), so a visit is one hop.
 
 The certificate covers the apex and one level of subdomain (`*.xn--6iq3kq43dxve.com`), so `a.b.是什么歌.com` fails the
 TLS handshake over HTTPS; over plain HTTP the Worker joins the labels with spaces. Web and iOS never build such hosts:

@@ -3,8 +3,8 @@ import worker from './index'
 import { queryFromHost, queryFromPath, targetUrl } from './redirect'
 
 const ZONE = 'xn--6iq3kq43dxve.com'
-const HOME = 'https://dxrating.net/?locale=zh-Hans&ref=shenmegequ'
-const search = (q: string) => `https://dxrating.net/?q=${encodeURIComponent(q)}&locale=zh-Hans&ref=shenmegequ`
+const HOME = 'https://dxrating.net/zh-hans?ref=shenmegequ'
+const search = (q: string) => `https://dxrating.net/zh-hans?q=${encodeURIComponent(q)}&ref=shenmegequ`
 
 /** The label as a browser sends it in the Host header */
 const punycodeLabel = (label: string) => new URL(`https://${label}.example`).hostname.split('.')[0]
@@ -15,13 +15,11 @@ function get(url: string) {
 }
 
 describe('targetUrl', () => {
-  it('builds the search URL with the Chinese locale and the ref tag', () => {
-    expect(targetUrl('一号店')).toBe(
-      'https://dxrating.net/?q=%E4%B8%80%E5%8F%B7%E5%BA%97&locale=zh-Hans&ref=shenmegequ',
-    )
+  it('builds the final search URL: the Chinese locale in the path, then the ref tag', () => {
+    expect(targetUrl('一号店')).toBe('https://dxrating.net/zh-hans?q=%E4%B8%80%E5%8F%B7%E5%BA%97&ref=shenmegequ')
   })
   it('encodes spaces as %20 and escapes & and =', () => {
-    expect(targetUrl('a b&c=d')).toBe('https://dxrating.net/?q=a%20b%26c%3Dd&locale=zh-Hans&ref=shenmegequ')
+    expect(targetUrl('a b&c=d')).toBe('https://dxrating.net/zh-hans?q=a%20b%26c%3Dd&ref=shenmegequ')
   })
   it('drops q for home', () => {
     expect(targetUrl(null)).toBe(HOME)
