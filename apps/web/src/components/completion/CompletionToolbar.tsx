@@ -1,6 +1,5 @@
 import { MenuItem, TextField } from '@mui/material'
 import { type FC, useMemo } from 'react'
-import { useSongCatalog } from '@/catalog/CatalogContext'
 import { type ConstantTable, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { FilterChip } from '@/components/completion/TableChrome'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
@@ -42,7 +41,6 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
   table,
   overlay,
 }) => {
-  const catalog = useSongCatalog()
   const locale = useLocale()
   const number = useMemo(
     () => new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
@@ -121,7 +119,6 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
                 }),
                 footerCaption: m.share_image_footerCaption({}, { locale }),
                 recordOf: (sheetId) => overlay.records.get(sheetId)?.best,
-                imageNameOf: (sheetId) => catalog.getById(sheetId)?.imageName,
               })
             }
           />

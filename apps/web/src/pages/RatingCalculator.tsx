@@ -1,3 +1,4 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import { DifficultyLevelBadge, SheetTypeBadge } from '@/components/scores/ScoreBadges'
 import {
   Alert,
@@ -400,14 +401,7 @@ const RatingChartCell: FC<{ row: Row<Entry> }> = ({ row }) => {
       analytics={{ source: 'rating_calculator' }}
       SheetDialogContentProps={{ currentAchievementRate: achievementRate }}
     >
-      <img
-        className="rating-chart-cover"
-        src={`https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`}
-        alt=""
-        loading="lazy"
-        width={40}
-        height={40}
-      />
+      <img className="rating-chart-cover" src={coverUrl(sheet.songId)} alt="" loading="lazy" width={40} height={40} />
       <span className="rating-chart-copy">
         <span className="rating-chart-title" title={sheet.title} lang="ja" translate="no">
           {sheet.title}

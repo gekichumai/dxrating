@@ -1,3 +1,4 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import { FormControl, InputLabel, MenuItem, Select, Tab, Tabs, type TabsActions } from '@mui/material'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import clsx from 'clsx'
@@ -292,7 +293,7 @@ const ToplistItem: FC<{ row: ToplistRow; sheet: FlattenedSheet; position: number
   showDxScore,
 }) => {
   const locale = useLocale()
-  const cover = `https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`
+  const cover = coverUrl(sheet.songId)
   const level = sheet.internalLevelValue.toFixed(1)
   const achievement = `${row.entry.achievementRate.toFixed(4)}%`
   const chart = (

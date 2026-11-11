@@ -172,7 +172,7 @@ describe('chart OG image handler', () => {
     expect(renderImage).toHaveBeenCalledWith(
       expect.objectContaining({
         artist: song.artist,
-        coverUrl: `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`,
+        coverUrl: `https://shama.dxrating.net/images/cover/v3/${song.id}.jpg`,
         detailUrl: `https://dxrating.net/songs/${song.id}/${sheet.type}/${sheet.difficulty}`,
         difficulty: sheet.difficulty,
         levelLabel: `Lv ${sheet.internalLevelValue.toFixed(1)}`,

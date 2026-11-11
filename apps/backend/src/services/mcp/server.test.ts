@@ -130,7 +130,7 @@ describe('MCP server', () => {
         songId: UMIYURI,
         title: 'ウミユリ海底譚',
         aliases: ['海底谭'],
-        coverUrl: 'https://shama.dxrating.net/images/cover/v2/e05e2a6f.jpg',
+        coverUrl: `https://shama.dxrating.net/images/cover/v3/${UMIYURI}.jpg`,
       })
       expect(content.sheets).toHaveLength(2)
       expect(content.sheets[0]).toMatchObject({

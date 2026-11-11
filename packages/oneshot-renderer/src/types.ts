@@ -7,6 +7,8 @@ export type PlayerCollection = { name: string; icon: number }
 export interface RenderEntry {
   sheet: {
     id: string
+    /** Public song ID (`dsng_…`); keys the cover */
+    songId: string
     title: string
     imageName: string
     type: typeof TypeEnum.STD | typeof TypeEnum.DX

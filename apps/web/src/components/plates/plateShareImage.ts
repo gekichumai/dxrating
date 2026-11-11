@@ -1,13 +1,7 @@
-import { DifficultyEnum } from '@gekichumai/dxdata'
+import { coverUrl, DifficultyEnum } from '@gekichumai/dxdata'
 import type { PlateKind, PlateRecord, PlateRegion } from '@gekichumai/maimai-domain'
 import { DIFFICULTIES } from '@/models/difficulties'
-import {
-  coverImageUrl,
-  drawRoundedImage,
-  loadCanvasImage,
-  roundedRectPath,
-  type ShareImageSpec,
-} from '@/utils/shareImage/shareImage'
+import { drawRoundedImage, loadCanvasImage, roundedRectPath, type ShareImageSpec } from '@/utils/shareImage/shareImage'
 import {
   drawShareFooter,
   loadShareLogo,
@@ -273,9 +267,7 @@ export function buildPlateShareImage({
         }
       }
 
-      const images = await Promise.all(
-        shown.map((entry) => loadCanvasImage(coverImageUrl(entry.status.chart.imageName))),
-      )
+      const images = await Promise.all(shown.map((entry) => loadCanvasImage(coverUrl(entry.status.chart.songId))))
       shown.forEach((entry, index) => {
         const x = PADDING + (index % COLUMNS) * (COLUMN_WIDTH + COLUMN_GAP)
         const y = listTop + Math.floor(index / COLUMNS) * ROW_HEIGHT

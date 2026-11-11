@@ -288,3 +288,14 @@ export interface VersionElement {
   /** Version launch date (YYYY-MM-DD), when the catalog knows it */
   releaseDate?: string
 }
+/** The host that serves song covers and other game artwork */
+export const COVER_ORIGIN = 'https://shama.dxrating.net'
+
+/**
+ * Path of a song's cover (the 400×400 game jacket) on the asset host, keyed by the public song ID (`dsng_…`,
+ * `Song.id`). The catalog's `imageName` names the retired v2 covers and is not used to build cover URLs.
+ */
+export const coverPath = (songId: string) => `/images/cover/v3/${songId}.jpg`
+
+/** Absolute URL of a song's cover; see {@link coverPath} */
+export const coverUrl = (songId: string) => `${COVER_ORIGIN}${coverPath(songId)}`

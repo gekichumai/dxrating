@@ -1,3 +1,4 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import {
   calculateBest50,
   recommendRatingRaises,
@@ -168,7 +169,7 @@ const RecommendSection: FC<{
                     className="flex items-center gap-3 rounded-[var(--radius-md)] px-2 py-2 text-fg-1 no-underline outline-offset-[-2px] transition-colors duration-[var(--duration-fast)] hover:bg-black/4"
                   >
                     <img
-                      src={`https://shama.dxrating.net/images/cover/v2/${item.sheet.imageName}.jpg`}
+                      src={coverUrl(item.sheet.songId)}
                       alt=""
                       loading="lazy"
                       width={44}

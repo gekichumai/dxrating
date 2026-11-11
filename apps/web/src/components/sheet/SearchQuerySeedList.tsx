@@ -23,7 +23,7 @@ export const SearchQuerySeedList: FC<{ sheets: readonly SearchQuerySeedSheet[] }
               level={sheet.level}
               internalLevelValue={sheet.internalLevelValue}
               isTypeUtage={sheet.isTypeUtage}
-              imageName={sheet.imageName}
+              songId={sheet.songId}
               imageAlt={m.sheet_coverArtAlt({ title: sheet.title }, { locale })}
             >
               <SheetListItemSummary

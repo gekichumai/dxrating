@@ -1,11 +1,6 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import type { ConstantTable } from '@/components/chartDiscovery/constantTables'
-import {
-  coverImageUrl,
-  drawRoundedImage,
-  loadCanvasImage,
-  roundedRectPath,
-  type ShareImageSpec,
-} from '@/utils/shareImage/shareImage'
+import { drawRoundedImage, loadCanvasImage, roundedRectPath, type ShareImageSpec } from '@/utils/shareImage/shareImage'
 import { drawShareFooter, loadShareLogo, SHARE_FOOTER_HEIGHT, type ShareLink } from '@/utils/shareImage/shareFooter'
 import {
   achievementRankLabel,
@@ -40,7 +35,6 @@ export interface CompletionShareImageInput {
   link: ShareLink
   footerCaption: string
   recordOf: (sheetId: string) => CompletionRecord | undefined
-  imageNameOf: (sheetId: string) => string | undefined
 }
 
 /** A cover grid of the level's charts, grouped by internal level; charts not meeting the target are dimmed */
@@ -61,8 +55,7 @@ export function buildCompletionShareImage(input: CompletionShareImageInput): Sha
       await Promise.all(
         table.groups.flatMap((group) =>
           group.charts.map(async (chart) => {
-            const imageName = input.imageNameOf(chart.sheetId)
-            images.set(chart.sheetId, imageName ? await loadCanvasImage(coverImageUrl(imageName)) : null)
+            images.set(chart.sheetId, await loadCanvasImage(coverUrl(chart.songId)))
           }),
         ),
       )

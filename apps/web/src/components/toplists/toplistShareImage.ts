@@ -1,10 +1,5 @@
-import {
-  coverImageUrl,
-  drawRoundedImage,
-  loadCanvasImage,
-  roundedRectPath,
-  type ShareImageSpec,
-} from '@/utils/shareImage/shareImage'
+import { coverUrl } from '@gekichumai/dxdata'
+import { drawRoundedImage, loadCanvasImage, roundedRectPath, type ShareImageSpec } from '@/utils/shareImage/shareImage'
 import { drawShareFooter, loadShareLogo, SHARE_FOOTER_HEIGHT, type ShareLink } from '@/utils/shareImage/shareFooter'
 import type { ToplistRow } from './toplistData'
 
@@ -63,7 +58,7 @@ export function drawToplistShareImage(
     height,
     draw: async (context) => {
       const logoPromise = loadShareLogo()
-      const covers = await Promise.all(shown.map((row) => loadCanvasImage(coverImageUrl(row.sheet.imageName))))
+      const covers = await Promise.all(shown.map((row) => loadCanvasImage(coverUrl(row.sheet.songId))))
 
       const background = context.createLinearGradient(0, 0, width, height)
       background.addColorStop(0, '#1e1b4b')
