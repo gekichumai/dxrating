@@ -5,19 +5,18 @@ export const ZONE_ASCII = 'xn--6iq3kq43dxve.com'
 const ZONE_UNICODE = '是什么歌.com'
 
 /**
- * Every redirect goes to this one URL builder. The locale is a query parameter today; when the web app moves the
- * locale into the path (`/zh-Hans/...`, planned for 2026-11-10), only this function changes.
+ * Every redirect goes to this one URL builder. It sends the final URL dxrating.net serves for a Chinese search, with
+ * the locale in the path (`/zh-hans`), so a visit takes one hop rather than bouncing through `/?locale=zh-Hans`.
  */
-const TARGET_ORIGIN = 'https://dxrating.net'
-const TARGET_LOCALE = 'zh-Hans'
+const TARGET_BASE = 'https://dxrating.net/zh-hans'
 const TARGET_REF = 'shenmegequ'
 
 export function targetUrl(query: string | null): string {
   const params: [string, string][] = []
   if (query) params.push(['q', query])
-  params.push(['locale', TARGET_LOCALE], ['ref', TARGET_REF])
+  params.push(['ref', TARGET_REF])
   // encodeURIComponent, not URLSearchParams: spaces stay %20 rather than `+`, as the old Worker sent them
-  return `${TARGET_ORIGIN}/?${params.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&')}`
+  return `${TARGET_BASE}?${params.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&')}`
 }
 
 /**

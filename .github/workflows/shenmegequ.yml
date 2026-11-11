@@ -89,7 +89,7 @@ jobs:
       # The subdomain form is what existing links use; it must keep working
       - name: Check the live redirect
         run: |
-          expected='https://dxrating.net/?q=%E4%B8%80%E5%8F%B7%E5%BA%97&locale=zh-Hans&ref=shenmegequ'
+          expected='https://dxrating.net/zh-hans?q=%E4%B8%80%E5%8F%B7%E5%BA%97&ref=shenmegequ'
           for attempt in 1 2 3 4 5 6; do
             location=$(curl --silent --output /dev/null --max-time 10 --write-out '%{redirect_url}' \
               "https://xn--4gq48lf9j.xn--6iq3kq43dxve.com/?ci=${GITHUB_RUN_ID}-${attempt}")
