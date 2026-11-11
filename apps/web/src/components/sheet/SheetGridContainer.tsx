@@ -1,3 +1,4 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import { type FC, memo, useCallback } from 'react'
 import { type GridComputeItemKey, type GridItemContent, VirtuosoGrid } from 'react-virtuoso'
@@ -15,7 +16,7 @@ import { FadedImage } from '../global/FadedImage'
 import { InternalLink, isPlainNavigationClick } from '../global/InternalLink'
 import { MaterialSurface } from '../global/MaterialSurface'
 import { SHEET_LIST_FIRST_SCREEN_ROWS } from './SheetListContainer'
-import { captureSheetContentViewed, type SheetListItemAnalyticsProps, SheetType, sheetCoverSrc } from './SheetListItem'
+import { captureSheetContentViewed, type SheetListItemAnalyticsProps, SheetType } from './SheetListItem'
 import { buildSheetPath } from './sheetLinks'
 
 /**
@@ -111,7 +112,7 @@ export const SheetGridItem: FC<{
         )}
       >
         <FadedImage
-          src={sheetCoverSrc(sheet.imageName)}
+          src={coverUrl(sheet.songId)}
           alt=""
           width={190}
           height={190}

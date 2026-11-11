@@ -1,3 +1,4 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import { Button, ButtonGroup, IconButton, Tooltip } from '@mui/material'
 import { motion, useReducedMotion } from 'motion/react'
 import { type FC, type ReactNode, useState } from 'react'
@@ -61,7 +62,7 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const reduceMotion = useReducedMotion()
   const song = sheet
 
-  const coverUrl = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
+  const coverSrc = coverUrl(song.songId)
   const coverSize = imgExpanded ? COVER_SIZE.expanded : COVER_SIZE.collapsed
   const newTab = m.sheet_searchLinks_newTab({}, { locale })
 
@@ -90,7 +91,7 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             <MdiImageRemove aria-hidden className="text-fg-2 text-2xl" />
           ) : (
             <img
-              src={coverUrl}
+              src={coverSrc}
               alt=""
               className="block h-full w-full object-cover"
               draggable={false}

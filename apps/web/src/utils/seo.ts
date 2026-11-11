@@ -1,4 +1,12 @@
-import { DifficultyEnum, ServerEnum, TypeEnum, type NoteCounts, type Sheet, type Song } from '@gekichumai/dxdata'
+import {
+  coverUrl,
+  DifficultyEnum,
+  ServerEnum,
+  TypeEnum,
+  type NoteCounts,
+  type Sheet,
+  type Song,
+} from '@gekichumai/dxdata'
 import type { SupportedLocale } from '@/setup/locale'
 import { DEFAULT_LOCALE, localizePath, toSupportedLocale } from '@/setup/locale'
 import type { PlainMessage } from '@/i18n/message'
@@ -361,7 +369,7 @@ export function buildSongSheetSeo(
   const sheetLabel = getSheetTitleLabel(sheet, locale)
   const title = buildSongSheetTitle(song, sheet, locale)
   const description = buildSongSheetDescription(song, sheet, sheetLabel, locale)
-  const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
+  const image = coverUrl(song.id)
   const socialImage = buildChartOgImageUrl({
     songId: song.id,
     type: sheet.type,
@@ -457,7 +465,7 @@ export function buildSongHubDescription(
 export function buildSongHubSeo(song: SongHubSeoSong, locale: SupportedLocale) {
   const title = buildSongHubTitle(song, locale)
   const description = buildSongHubDescription(song, locale)
-  const image = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
+  const image = coverUrl(song.id)
   const url = songHubUrl(song.id, locale)
   const websiteId = 'https://dxrating.net/#website'
   const pageId = `${url}#webpage`
@@ -638,7 +646,7 @@ export function buildSongSheetStructuredData(
         '@type': 'MusicGroup',
         name: song.artist,
       },
-      image: `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`,
+      image: coverUrl(song.id),
       url: chartUrl,
       genre: song.category,
       inLanguage: locale,

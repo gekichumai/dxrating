@@ -1,4 +1,4 @@
-import { type DifficultyEnum, type ServerEnum, TypeEnum } from '@gekichumai/dxdata'
+import { coverUrl, type DifficultyEnum, type ServerEnum, TypeEnum } from '@gekichumai/dxdata'
 import { IconButton, ListItemButton, ListItemText, type ListItemTextProps } from '@mui/material'
 import clsx from 'clsx'
 import {
@@ -154,7 +154,8 @@ export interface SheetListItemContentViewProps extends HTMLAttributes<HTMLDivEle
   isTypeUtage?: boolean
   size?: 'small' | 'medium'
   enableSheetImage?: boolean
-  imageName?: string
+  /** Public song ID (`dsng_…`) whose cover the row shows */
+  songId?: string
   imageAlt?: string
   ListItemTextProps?: ListItemTextProps
 }
@@ -168,7 +169,7 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
     size = 'medium',
     className,
     enableSheetImage = true,
-    imageName,
+    songId,
     imageAlt,
     ListItemTextProps,
     ...rest
@@ -186,9 +187,9 @@ export const SheetListItemContentView: FC<SheetListItemContentViewProps> = memo(
         )}
         {...rest}
       >
-        {enableSheetImage && imageName && imageAlt && (
+        {enableSheetImage && songId && imageAlt && (
           <SheetImage
-            name={imageName}
+            songId={songId}
             size={size}
             alt={imageAlt}
             className={clsx(isTable && 'lg:col-start-1 lg:row-start-1 lg:!h-10 lg:!w-10 lg:!min-h-10 lg:!min-w-10')}
@@ -238,7 +239,7 @@ export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
         size={size}
         className={className}
         enableSheetImage={enableSheetImage}
-        imageName={sheet.imageName}
+        songId={sheet.songId}
         imageAlt={m.sheet_coverArtAlt({ title: sheet.title }, { locale })}
         ListItemTextProps={ListItemTextProps}
         {...rest}
@@ -519,21 +520,19 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
 )
 SheetListItemSummary.displayName = 'SheetListItemSummary'
 
-/** A song's cover art by its image name */
-export const sheetCoverSrc = (imageName: string) => `https://shama.dxrating.net/images/cover/v2/${imageName}.jpg`
-
 export const SheetImage: FC<
   Omit<ImgHTMLAttributes<HTMLImageElement>, 'alt'> & {
-    name: string
+    /** Public song ID (`dsng_…`) */
+    songId: string
     size?: 'small' | 'medium' | 'large'
     alt: string
   }
 > = memo(
-  ({ name, size = 'medium', alt, className, ...props }) => {
+  ({ songId, size = 'medium', alt, className, ...props }) => {
     return (
       <FadedImage
-        key={name}
-        src={sheetCoverSrc(name)}
+        key={songId}
+        src={coverUrl(songId)}
         className={clsx(
           'overflow-hidden outline outline-1 -outline-offset-1 outline-black/10',
           match(size)
@@ -551,7 +550,10 @@ export const SheetImage: FC<
     )
   },
   (prev, next) =>
-    prev.name === next.name && prev.size === next.size && prev.alt === next.alt && prev.className === next.className,
+    prev.songId === next.songId &&
+    prev.size === next.size &&
+    prev.alt === next.alt &&
+    prev.className === next.className,
 )
 
 export interface SheetTitleProps {

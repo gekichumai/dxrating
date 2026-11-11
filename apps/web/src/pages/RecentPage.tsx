@@ -168,7 +168,7 @@ const RecentChartRow: FC<{ chart: RecentChartLink; position: number; locale: Sup
             level={chart.level}
             internalLevelValue={chart.internalLevelValue}
             isTypeUtage={chart.isTypeUtage}
-            imageName={chart.imageName}
+            songId={chart.songId}
             imageAlt={m.sheet_coverArtAlt({ title: chart.title }, { locale })}
           >
             <SheetListItemSummary

@@ -1,12 +1,6 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import { describe, expect, it, vi } from 'vitest'
-import {
-  coverImageUrl,
-  isCanvasSafeImageUrl,
-  canShareImageFile,
-  copyImage,
-  downloadImage,
-  shareImageFile,
-} from './shareImage'
+import { isCanvasSafeImageUrl, canShareImageFile, copyImage, downloadImage, shareImageFile } from './shareImage'
 
 describe('isCanvasSafeImageUrl', () => {
   const page = 'https://dxrating.net'
@@ -14,7 +8,10 @@ describe('isCanvasSafeImageUrl', () => {
     expect(isCanvasSafeImageUrl('/logo.png', page)).toBe(true)
     expect(isCanvasSafeImageUrl('data:image/png;base64,AA', page)).toBe(true)
     expect(isCanvasSafeImageUrl('blob:https://dxrating.net/x', page)).toBe(true)
-    expect(isCanvasSafeImageUrl(coverImageUrl('abc'), page)).toBe(true)
+    expect(isCanvasSafeImageUrl(coverUrl('dsng_abcdefghij'), page)).toBe(true)
+  })
+  it('builds v3 cover URLs from the public song ID', () => {
+    expect(coverUrl('dsng_abcdefghij')).toBe('https://shama.dxrating.net/images/cover/v3/dsng_abcdefghij.jpg')
   })
   it('rejects other origins', () => {
     expect(isCanvasSafeImageUrl('https://example.com/a.png', page)).toBe(false)

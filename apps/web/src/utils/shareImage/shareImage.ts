@@ -8,9 +8,9 @@
  * query, and an image that still fails is skipped (the caller draws a placeholder) instead of tainting the canvas.
  */
 
-export const COVER_ORIGIN = 'https://shama.dxrating.net'
+import { COVER_ORIGIN } from '@gekichumai/dxdata'
 
-export const coverImageUrl = (imageName: string) => `${COVER_ORIGIN}/images/cover/v2/${imageName}.jpg`
+export { COVER_ORIGIN }
 
 /** Same-origin URLs, data/blob URLs and the CORS-enabled cover host are safe to draw */
 export function isCanvasSafeImageUrl(url: string, pageOrigin: string): boolean {

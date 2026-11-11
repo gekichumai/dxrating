@@ -1,3 +1,4 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import { IconButton } from '@mui/material'
 import { motion } from 'motion/react'
 import { type FC, memo, useState } from 'react'
@@ -134,7 +135,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet; onClose?: () 
             ) : (
               <motion.img
                 layout
-                src={`https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`}
+                src={coverUrl(sheet.songId)}
                 alt={m.sheet_coverArtAlt({ title: sheet.title }, { locale })}
                 className="block overflow-hidden bg-black/6 outline outline-1 -outline-offset-1 outline-black/10"
                 variants={variants}

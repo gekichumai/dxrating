@@ -1,3 +1,4 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import { z } from 'zod'
 import type { McpCatalog, PublishedSheet } from './catalog'
 import {
@@ -12,8 +13,6 @@ import {
   type Language,
 } from './output'
 import { resolveSheets, sheetOnServer } from './sheets'
-
-const COVER_URL = 'https://shama.dxrating.net/images/cover/v2'
 
 export const getSheetInput = {
   song: z
@@ -132,7 +131,7 @@ export function runGetSheet(
       isLocked: song.isLocked,
       aliases,
       searchAcronyms: song.searchAcronyms,
-      coverUrl: `${COVER_URL}/${song.imageName}.jpg`,
+      coverUrl: coverUrl(song.id),
     },
     server: server ?? null,
     sheets: sheets.map((sheet) => sheetDetail(catalog, sheet, server, input.lang)),

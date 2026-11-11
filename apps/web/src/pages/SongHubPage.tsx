@@ -38,7 +38,7 @@ export const SongHubPage: FC = () => {
 
       <MaterialSurface as="header" className="p-3 flex gap-3 items-start lg:flex-col lg:sticky lg:top-4">
         <SheetImage
-          name={song.imageName}
+          songId={song.id}
           size="large"
           alt={m.sheet_coverArtAlt({ title: song.title }, { locale })}
           className="h-20 w-20 shrink-0 rounded-lg overflow-hidden outline outline-1 -outline-offset-1 outline-black/10 lg:w-full lg:h-auto lg:aspect-square"

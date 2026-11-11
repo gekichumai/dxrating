@@ -1,4 +1,4 @@
-import { DifficultyEnum } from '@gekichumai/dxdata'
+import { coverUrl, DifficultyEnum } from '@gekichumai/dxdata'
 import type { PlateKind, PlateRecord, PlateRegion } from '@gekichumai/maimai-domain'
 import { useRouter } from '@tanstack/react-router'
 import { type FC, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
@@ -32,7 +32,6 @@ import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useAppContext } from '@/models/context/useAppContext'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
-import { coverImageUrl } from '@/utils/shareImage/shareImage'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
@@ -535,7 +534,7 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
                       className="flex flex-wrap xs:flex-nowrap items-center gap-x-3 gap-y-1.5 px-4 py-2 lg:border-b lg:border-solid lg:border-black/5 lg:odd:border-e"
                     >
                       <img
-                        src={coverImageUrl(chart.imageName)}
+                        src={coverUrl(chart.songId)}
                         alt=""
                         loading="lazy"
                         decoding="async"

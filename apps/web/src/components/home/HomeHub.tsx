@@ -204,7 +204,7 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
                       className="flex flex-col gap-1 rounded-[var(--radius-md)] text-inherit no-underline"
                     >
                       <SheetImage
-                        name={song.imageName}
+                        songId={song.songId}
                         size="large"
                         alt={m.sheet_coverArtAlt({ title: song.title }, { locale })}
                         className="h-20 w-20 rounded-[var(--radius-md)] overflow-hidden outline outline-1 -outline-offset-1 outline-black/10"

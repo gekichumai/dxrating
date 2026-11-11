@@ -1,3 +1,4 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import { type FC, startTransition, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import MdiCheckCircle from '~icons/mdi/check-circle'
@@ -185,8 +186,6 @@ function useConstantTableView() {
 
 const TYPE_SHORT: Partial<Record<ConstantChart['type'], string>> = { dx: 'DX', std: 'STD' }
 
-const coverSrc = (imageName: string) => `https://shama.dxrating.net/images/cover/v2/${imageName}.jpg`
-
 const ConstantTile: FC<{
   chart: ConstantChart
   overlay: ReturnType<typeof useCompletionOverlay>
@@ -212,7 +211,7 @@ const ConstantTile: FC<{
           )}
         >
           <img
-            src={coverSrc(chart.imageName)}
+            src={coverUrl(chart.songId)}
             width={190}
             height={190}
             alt=""
