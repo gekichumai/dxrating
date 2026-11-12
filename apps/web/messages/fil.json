@@ -353,6 +353,8 @@
   "global_gestureHint_tapHold": "I-hold",
   "global_beta": "Beta",
   "global_dialog_close": "Isara",
+  "global_catalogUnverified_title": "Baka hindi updated ang data ng mga kanta",
+  "global_catalogUnverified_description": "Hindi sumagot ang server ng data ng mga kanta, kaya ang nakikita mo ay ang kopyang kasama ng site. Baka wala pa ang pinakabagong mga kanta.",
   "global_toast_dismiss": "Isara ang notification",
   "global_submit": "Isumite",
   "global_back": "Bumalik",

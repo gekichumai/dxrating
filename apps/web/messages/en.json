@@ -353,6 +353,8 @@
   "global_gestureHint_tapHold": "Hold",
   "global_beta": "Beta",
   "global_dialog_close": "Close",
+  "global_catalogUnverified_title": "Song data may be out of date",
+  "global_catalogUnverified_description": "The song data server didn't respond, so this is the copy built into the site. The newest songs may be missing.",
   "global_toast_dismiss": "Dismiss notification",
   "global_submit": "Submit",
   "global_back": "Back",

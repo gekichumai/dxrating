@@ -353,6 +353,8 @@
   "global_gestureHint_tapHold": "ဖိထား",
   "global_beta": "Beta",
   "global_dialog_close": "ပိတ်ရန်",
+  "global_catalogUnverified_title": "သီချင်းဒေတာ နောက်ဆုံးအခြေအနေ မဟုတ်နိုင်ပါ",
+  "global_catalogUnverified_description": "သီချင်းဒေတာ ဆာဗာက တုံ့ပြန်မှု မရှိသဖြင့် ဆိုက်နှင့်အတူ ပါလာသော ဒေတာကို ပြသနေပါသည်။ နောက်ဆုံးထွက် သီချင်းများ မပါနိုင်ပါ။",
   "global_toast_dismiss": "အသိပေးချက် ပိတ်ရန်",
   "global_submit": "တင်သွင်းရန်",
   "global_back": "နောက်သို့",

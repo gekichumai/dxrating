@@ -17,6 +17,8 @@ export const CATALOG_CACHE_NAME = 'dxrating-catalog-v1'
 /** Where earlier builds kept the v1 document in the same cache; deleted when found */
 const V1_CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v1/dxdata`
 const ETAG_HEADER = 'x-dxrating-catalog-etag'
+// Marks a cached copy that is the build snapshot, kept because the API could not be reached
+const SOURCE_HEADER = 'x-dxrating-catalog-source'
 
 const BUILD_CATALOG_UPDATED_AT = import.meta.env.VITE_CATALOG_SNAPSHOT_UPDATED_AT ?? ''
 
@@ -31,7 +33,13 @@ export const CATALOG_REQUEST_URL = BUILD_CATALOG_UPDATED_AT
   ? `${CATALOG_URL}?build=${encodeURIComponent(BUILD_CATALOG_UPDATED_AT)}`
   : CATALOG_URL
 
-type CatalogResponse = { document: SongCatalogDocument; text: string; etag: string | null }
+type CatalogResponse = {
+  document: SongCatalogDocument
+  text: string
+  etag: string | null
+  /** Loaded without reaching the API (the snapshot after an outage): newer songs may be missing */
+  unverified?: boolean
+}
 
 // A cold load waits this long for the API to respond, then this long for the body, before it falls back to the
 // snapshot: an unresponsive API must not hold up search, the calculator and imports
@@ -51,11 +59,18 @@ export const isOlderThanBuildCatalog = (document: SongCatalogDocument) => {
 }
 
 let loadedDocument: SongCatalogDocument | null = null
+let loadedUnverified = false
 let pendingLoad: Promise<SongCatalogDocument> | undefined
 const listeners = new Set<() => void>()
 
 /** The complete catalog, once loaded */
 export const getLoadedCatalogDocument = (): SongCatalogDocument | null => loadedDocument
+
+/**
+ * Whether the loaded catalog came from somewhere other than the API because the API could not be reached: the
+ * snapshot bundled with the build, or an older copy. Songs added since may be missing. False once the API answers.
+ */
+export const isLoadedCatalogUnverified = (): boolean => loadedUnverified
 
 export const subscribeToCatalog = (listener: () => void) => {
   listeners.add(listener)
@@ -64,8 +79,9 @@ export const subscribeToCatalog = (listener: () => void) => {
   }
 }
 
-const publish = (document: SongCatalogDocument) => {
-  if (loadedDocument?.updatedAt === document.updatedAt) return
+const publish = (document: SongCatalogDocument, unverified = false) => {
+  if (loadedDocument?.updatedAt === document.updatedAt && loadedUnverified === unverified) return
+  loadedUnverified = unverified
   // For performance measurements: when pages could first render from the complete catalog
   if (!loadedDocument) performance.mark?.('dxrating:catalog-loaded')
   loadedDocument = document
@@ -86,7 +102,7 @@ async function loadCatalog(): Promise<SongCatalogDocument> {
   const cache = await openCatalogCache()
   const cached = cache ? await readCachedCatalog(cache) : null
   if (cached && !isOlderThanBuildCatalog(cached.document)) {
-    publish(cached.document)
+    publish(cached.document, cached.unverified)
     void revalidateCatalog(cache!, cached.etag)
     return cached.document
   }
@@ -98,10 +114,10 @@ async function loadCatalog(): Promise<SongCatalogDocument> {
   } catch (error) {
     // Neither the API nor the snapshot: an older copy still beats no catalog
     if (!cached) throw error
-    publish(cached.document)
+    publish(cached.document, true)
     return cached.document
   }
-  publish(fresh.document)
+  publish(fresh.document, fresh.unverified)
   if (cache) void storeCatalog(cache, fresh)
   return fresh.document
 }
@@ -177,9 +193,15 @@ async function fetchApiCatalog(): Promise<CatalogResponse> {
     API_BODY_DEADLINE_MS,
     'The catalog API response stalled',
   )
-  if (isOlderThanBuildCatalog(catalog.document))
-    throw new Error('The catalog API served a catalog older than this build')
+  if (isOlderThanBuildCatalog(catalog.document)) throw new CatalogBehindBuildError()
   return catalog
+}
+
+/** The API answered, with a catalog older than the build's snapshot: the snapshot is the newest there is */
+class CatalogBehindBuildError extends Error {
+  constructor() {
+    super('The catalog API served a catalog older than this build')
+  }
 }
 
 async function fetchCatalog(): Promise<CatalogResponse> {
@@ -190,7 +212,7 @@ async function fetchCatalog(): Promise<CatalogResponse> {
     Sentry.logger?.warn?.('Catalog API unavailable, loading the bundled snapshot', { error: String(error) })
     const snapshot = await readCatalogResponse(await fetch(snapshotAssetUrl))
     // Not the API's ETag: the next revalidation fetches the API document in full
-    return { ...snapshot, etag: null }
+    return { ...snapshot, etag: null, unverified: !(error instanceof CatalogBehindBuildError) }
   }
 }
 
@@ -200,9 +222,17 @@ async function revalidateCatalog(cache: Cache, etag: string | null) {
       cache: 'no-store',
       headers: etag ? { 'If-None-Match': etag } : {},
     })
-    if (response.status === 304) return
+    if (response.status === 304) {
+      // The API vouches for the cached copy
+      if (loadedDocument) publish(loadedDocument)
+      return
+    }
     const fresh = await readCatalogResponse(response)
-    if (isOlderThanBuildCatalog(fresh.document)) return
+    if (isOlderThanBuildCatalog(fresh.document)) {
+      // The API is reachable but behind: the cached snapshot is the newest there is
+      if (loadedDocument) publish(loadedDocument)
+      return
+    }
     await storeCatalog(cache, fresh)
     publish(fresh.document)
   } catch {
@@ -222,7 +252,9 @@ async function openCatalogCache(): Promise<Cache | null> {
   }
 }
 
-async function readCachedCatalog(cache: Cache): Promise<{ document: SongCatalogDocument; etag: string | null } | null> {
+async function readCachedCatalog(
+  cache: Cache,
+): Promise<{ document: SongCatalogDocument; etag: string | null; unverified: boolean } | null> {
   try {
     const response = await cache.match(CATALOG_URL)
     if (!response) return null
@@ -231,17 +263,27 @@ async function readCachedCatalog(cache: Cache): Promise<{ document: SongCatalogD
       await cache.delete(CATALOG_URL)
       return null
     }
-    return { document, etag: response.headers.get(ETAG_HEADER) || null }
+    return {
+      document,
+      etag: response.headers.get(ETAG_HEADER) || null,
+      unverified: response.headers.get(SOURCE_HEADER) === 'unverified',
+    }
   } catch {
     return null
   }
 }
 
-async function storeCatalog(cache: Cache, { text, etag }: CatalogResponse) {
+async function storeCatalog(cache: Cache, { text, etag, unverified }: CatalogResponse) {
   try {
     await cache.put(
       CATALOG_URL,
-      new Response(text, { headers: { 'content-type': 'application/json', [ETAG_HEADER]: etag ?? '' } }),
+      new Response(text, {
+        headers: {
+          'content-type': 'application/json',
+          [ETAG_HEADER]: etag ?? '',
+          ...(unverified ? { [SOURCE_HEADER]: 'unverified' } : {}),
+        },
+      }),
     )
   } catch {
     // A full quota only costs the next visit a download
@@ -251,6 +293,7 @@ async function storeCatalog(cache: Cache, { text, etag }: CatalogResponse) {
 /** Tests only: sets the complete catalog, or clears it with `null` */
 export function setLoadedCatalogDocumentForTests(document: SongCatalogDocument | null) {
   pendingLoad = undefined
+  loadedUnverified = false
   if (document) {
     publish(document)
   } else {

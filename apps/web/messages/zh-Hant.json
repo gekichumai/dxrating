@@ -353,6 +353,8 @@
   "global_gestureHint_tapHold": "長按",
   "global_beta": "測試版",
   "global_dialog_close": "關閉",
+  "global_catalogUnverified_title": "曲目資料可能不是最新",
+  "global_catalogUnverified_description": "暫時無法連線到曲目資料伺服器，正在顯示網站內建的資料。最新的曲目可能尚未收錄。",
   "global_toast_dismiss": "關閉通知",
   "global_submit": "提交",
   "global_back": "返回",
