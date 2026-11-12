@@ -220,6 +220,7 @@
   ],
   "sheet_aliases_showLess": "แสดงน้อยลง",
   "sheet_aliases_copy": "คัดลอกชื่อเรียก",
+  "sheet_aliases_none": "ยังไม่มีชื่อเรียกอื่น",
   "sheet_aliases_dialogTitle": "เพิ่มชื่อเรียก",
   "sheet_aliases_inputLabel": "ชื่อเรียก",
   "sheet_aliases_adding": "กำลังเพิ่ม…",
