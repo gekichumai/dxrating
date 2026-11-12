@@ -7,6 +7,7 @@ import {
   CATALOG_REQUEST_URL,
   CATALOG_URL,
   getLoadedCatalogDocument,
+  isLoadedCatalogUnverified,
   loadClientCatalogDocument,
   setLoadedCatalogDocumentForTests,
   subscribeToCatalog,
@@ -194,6 +195,106 @@ describe('client catalog loading', () => {
     // not an API ETag: the next visit fetches the API document in full
     await vi.waitFor(() => expect(cacheStorage.entries.has(CATALOG_URL)).toBe(true))
     expect(cacheStorage.entries.get(CATALOG_URL)!.headers.get('x-dxrating-catalog-etag')).toBe('')
+  })
+
+  describe('whether the API vouched for the catalog', () => {
+    const apiDown = (snapshot: SongCatalogDocument) =>
+      fetchMock.mockImplementation(async (input) => {
+        if (String(input) === CATALOG_REQUEST_URL) throw new TypeError('Failed to fetch')
+        if (String(input) === snapshotAssetUrl) return jsonResponse(snapshot)
+        throw new Error(`unexpected request ${String(input)}`)
+      })
+    const cacheUnverified = (document: SongCatalogDocument) =>
+      cacheStorage.entries.set(
+        CATALOG_URL,
+        jsonResponse(document, {
+          headers: { 'x-dxrating-catalog-etag': '', 'x-dxrating-catalog-source': 'unverified' },
+        }),
+      )
+
+    it('is vouched for when the API serves it', async () => {
+      fetchMock.mockResolvedValueOnce(jsonResponse(NEW, { headers: { etag: 'W/"new"' } }))
+      await loadClientCatalogDocument()
+      expect(isLoadedCatalogUnverified()).toBe(false)
+    })
+
+    it('is unverified on the snapshot after an outage, and the cached copy says so', async () => {
+      apiDown(BUILD)
+      await loadClientCatalogDocument()
+      expect(isLoadedCatalogUnverified()).toBe(true)
+      await vi.waitFor(() =>
+        expect(cacheStorage.entries.get(CATALOG_URL)?.headers.get('x-dxrating-catalog-source')).toBe('unverified'),
+      )
+    })
+
+    it('is vouched for on the snapshot when the API answers with an older catalog', async () => {
+      fetchMock.mockImplementation(async (input) => {
+        if (String(input) === CATALOG_REQUEST_URL) return jsonResponse(PRE_BUILD)
+        if (String(input) === snapshotAssetUrl) return jsonResponse(BUILD)
+        throw new Error(`unexpected request ${String(input)}`)
+      })
+      await loadClientCatalogDocument()
+      expect(isLoadedCatalogUnverified()).toBe(false)
+    })
+
+    it('is unverified on an older copy when neither the API nor the snapshot loads', async () => {
+      cacheCatalog(cacheStorage.entries, PRE_BUILD, 'W/"pre-build"')
+      fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
+      await loadClientCatalogDocument()
+      expect(isLoadedCatalogUnverified()).toBe(true)
+    })
+
+    it('stays unverified on a cached outage copy while the API is still down', async () => {
+      cacheUnverified(BUILD)
+      fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
+      await loadClientCatalogDocument()
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+      expect(isLoadedCatalogUnverified()).toBe(true)
+    })
+
+    it('treats a snapshot cached before the source header (no API ETag) as unverified', async () => {
+      cacheStorage.entries.set(CATALOG_URL, jsonResponse(BUILD, { headers: { 'x-dxrating-catalog-etag': '' } }))
+      fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
+      await loadClientCatalogDocument()
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+      expect(isLoadedCatalogUnverified()).toBe(true)
+    })
+
+    it('keeps an API copy cached before the source header verified', async () => {
+      cacheCatalog(cacheStorage.entries, OLD, 'W/"old"')
+      fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
+      await loadClientCatalogDocument()
+      expect(isLoadedCatalogUnverified()).toBe(false)
+    })
+
+    it('clears the cached mark when an API behind the build answers, keeping the snapshot', async () => {
+      cacheUnverified(BUILD)
+      fetchMock.mockResolvedValueOnce(jsonResponse(PRE_BUILD, { headers: { etag: 'W/"pre-build"' } }))
+      await loadClientCatalogDocument()
+      await vi.waitFor(() => expect(isLoadedCatalogUnverified()).toBe(false))
+      await vi.waitFor(() =>
+        expect(cacheStorage.entries.get(CATALOG_URL)!.headers.get('x-dxrating-catalog-source')).toBe('api'),
+      )
+      expect(getLoadedCatalogDocument()).toEqual(BUILD)
+
+      // A fresh tab renders the cached snapshot as verified
+      setLoadedCatalogDocumentForTests(null)
+      fetchMock.mockResolvedValueOnce(jsonResponse(PRE_BUILD))
+      await loadClientCatalogDocument()
+      expect(isLoadedCatalogUnverified()).toBe(false)
+    })
+
+    it('clears once revalidation reaches the API, and tells subscribers', async () => {
+      cacheUnverified(BUILD)
+      fetchMock.mockResolvedValueOnce(jsonResponse(BUILD, { headers: { etag: 'W/"build"' } }))
+      const listener = vi.fn()
+      const unsubscribe = subscribeToCatalog(listener)
+      await loadClientCatalogDocument()
+      expect(isLoadedCatalogUnverified()).toBe(true)
+      await vi.waitFor(() => expect(isLoadedCatalogUnverified()).toBe(false))
+      expect(listener).toHaveBeenCalledTimes(2)
+      unsubscribe()
+    })
   })
 
   it('drops a cached copy of another schema and loads the API document', async () => {

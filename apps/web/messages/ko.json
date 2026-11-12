@@ -354,6 +354,8 @@
   "global_gestureHint_tapHold": "길게 누르기",
   "global_beta": "베타",
   "global_dialog_close": "닫기",
+  "global_catalogUnverified_title": "곡 데이터가 최신이 아닐 수 있습니다",
+  "global_catalogUnverified_description": "곡 데이터 서버가 응답하지 않아 사이트에 포함된 데이터를 표시하고 있습니다. 최신 곡이 빠져 있을 수 있습니다.",
   "global_toast_dismiss": "알림 닫기",
   "global_submit": "제출",
   "global_back": "뒤로",

@@ -354,6 +354,8 @@
   "global_gestureHint_tapHold": "ホールド",
   "global_beta": "ベータ",
   "global_dialog_close": "閉じる",
+  "global_catalogUnverified_title": "楽曲データが最新でない可能性があります",
+  "global_catalogUnverified_description": "楽曲データのサーバーに接続できなかったため、サイトに同梱されたデータを表示しています。最新の楽曲が含まれていない場合があります。",
   "global_toast_dismiss": "通知を閉じる",
   "global_submit": "送信",
   "global_back": "戻る",

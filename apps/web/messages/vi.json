@@ -354,6 +354,8 @@
   "global_gestureHint_tapHold": "Giữ",
   "global_beta": "Beta",
   "global_dialog_close": "Đóng",
+  "global_catalogUnverified_title": "Dữ liệu bài hát có thể chưa mới nhất",
+  "global_catalogUnverified_description": "Máy chủ dữ liệu bài hát không phản hồi nên đang hiển thị bản dữ liệu đi kèm trang web. Có thể thiếu các bài hát mới nhất.",
   "global_toast_dismiss": "Đóng thông báo",
   "global_submit": "Gửi",
   "global_back": "Quay lại",

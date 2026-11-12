@@ -354,6 +354,8 @@
   "global_gestureHint_tapHold": "กดค้าง",
   "global_beta": "เบต้า",
   "global_dialog_close": "ปิด",
+  "global_catalogUnverified_title": "ข้อมูลเพลงอาจไม่เป็นปัจจุบัน",
+  "global_catalogUnverified_description": "เซิร์ฟเวอร์ข้อมูลเพลงไม่ตอบสนอง จึงแสดงข้อมูลที่มาพร้อมกับเว็บไซต์ เพลงใหม่ล่าสุดอาจยังไม่มี",
   "global_toast_dismiss": "ปิดการแจ้งเตือน",
   "global_submit": "ส่ง",
   "global_back": "กลับ",

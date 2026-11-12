@@ -354,6 +354,8 @@
   "global_gestureHint_tapHold": "长按",
   "global_beta": "测试版",
   "global_dialog_close": "关闭",
+  "global_catalogUnverified_title": "曲目数据可能不是最新",
+  "global_catalogUnverified_description": "暂时无法连接曲目数据服务器，正在显示网站内置的数据。最新的曲目可能尚未收录。",
   "global_toast_dismiss": "关闭通知",
   "global_submit": "提交",
   "global_back": "返回",

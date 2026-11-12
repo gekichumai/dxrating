@@ -354,6 +354,8 @@
   "global_gestureHint_tapHold": "Tahan",
   "global_beta": "Beta",
   "global_dialog_close": "Tutup",
+  "global_catalogUnverified_title": "Data lagu mungkin tidak terkini",
+  "global_catalogUnverified_description": "Pelayan data lagu tidak memberi respons, jadi ini salinan yang disertakan bersama laman. Lagu terbaharu mungkin tiada.",
   "global_toast_dismiss": "Tutup pemberitahuan",
   "global_submit": "Hantar",
   "global_back": "Kembali",
