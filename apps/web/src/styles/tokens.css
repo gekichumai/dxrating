@@ -18,7 +18,8 @@
  * Panels whose content sits at a 12px+ padding are separate surfaces and keep their own token.
  *
  * Numbers (uno.config.ts rules; the faces are in index.css):
- *   --font-sans       the locale's text stack, Torus first. Set on :root and on every [lang] rule below
+ *   --font-sans       the locale's text stack: Torus, then its metric-matched stand-ins (index.css), then the
+ *                     locale's own faces. Set on :root and on every [lang] rule below
  *   --font-numeric    'DXR Numeric' (Nunito digits, tabular by default) in front of --font-sans
  *   `num`             numbers below 20px (text-xs … text-lg): table cells, achievements, ratings in rows,
  *                     constants, note counts, DX scores, deltas, counts. Sets --font-numeric and tabular-nums, so
@@ -234,22 +235,24 @@
 html[lang|='ja'],
 [lang|='ja'] {
   --font-sans:
-    Torus, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Noto Sans JP', 'Noto Sans CJK JP', Meiryo,
-    system-ui, sans-serif;
+    Torus, 'Torus Fallback', 'Torus Fallback Roboto', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI',
+    'Noto Sans JP', 'Noto Sans CJK JP', Meiryo, system-ui, sans-serif;
   font-family: var(--font-sans);
 }
 
 html[lang='zh-Hans'],
 [lang='zh-Hans'] {
   --font-sans:
-    Torus, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC', system-ui,
-    sans-serif;
+    Torus, 'Torus Fallback', 'Torus Fallback Roboto', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    'Noto Sans SC', 'Noto Sans CJK SC', system-ui, sans-serif;
   font-family: var(--font-sans);
 }
 
 html[lang='zh-Hant'],
 [lang='zh-Hant'] {
-  --font-sans: Torus, 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', system-ui, sans-serif;
+  --font-sans:
+    Torus, 'Torus Fallback', 'Torus Fallback Roboto', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC',
+    'Noto Sans CJK TC', system-ui, sans-serif;
   font-family: var(--font-sans);
 }
 
@@ -267,8 +270,8 @@ html[lang|='vi'],
 html[lang|='th'],
 [lang|='th'] {
   --font-sans:
-    Torus, Thonburi, 'Sukhumvit Set', 'Leelawadee UI', Leelawadee, 'Noto Sans Thai', 'Noto Sans Thai UI', Tahoma,
-    system-ui, sans-serif;
+    Torus, 'Torus Fallback', 'Torus Fallback Roboto', Thonburi, 'Sukhumvit Set', 'Leelawadee UI', Leelawadee,
+    'Noto Sans Thai', 'Noto Sans Thai UI', Tahoma, system-ui, sans-serif;
   font-family: var(--font-sans);
 }
 
@@ -279,8 +282,8 @@ html[lang|='th'] {
 html[lang|='my'],
 [lang|='my'] {
   --font-sans:
-    Torus, 'Myanmar Sangam MN', 'Myanmar MN', 'Myanmar Text', 'Noto Sans Myanmar', 'Noto Sans Myanmar UI', Padauk,
-    system-ui, sans-serif;
+    Torus, 'Torus Fallback', 'Torus Fallback Roboto', 'Myanmar Sangam MN', 'Myanmar MN', 'Myanmar Text',
+    'Noto Sans Myanmar', 'Noto Sans Myanmar UI', Padauk, system-ui, sans-serif;
   font-family: var(--font-sans);
 }
 
