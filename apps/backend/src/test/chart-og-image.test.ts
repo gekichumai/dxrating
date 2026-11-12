@@ -20,6 +20,51 @@ import { getHeroSuffixOffsets } from '../services/functions/chart-og-image/card'
 import { baselineInsets, hasMeasuredInk, layoutInk } from '../services/functions/chart-og-image/optical-text'
 import { setupTestServer, teardownTestServer } from './setup'
 
+// The endpoint tests cover routing, catalog lookup and response headers without the network. The real renderer needs
+// the fonts from the asset server, whose cold downloads made these tests time out in CI; chart-og-image-render.test.ts
+// renders for real when ASSETS_BASE_DIR points at a local copy of the assets.
+vi.mock('../services/functions/oneshot-renderer/assetFetcher', async (original) => {
+  const { Effect } = await import('effect')
+  const { default: sharp } = await import('sharp')
+  const actual = await original<typeof import('../services/functions/oneshot-renderer/assetFetcher')>()
+  const image = (format: 'jpeg' | 'png') =>
+    sharp({ create: { width: 8, height: 8, channels: 3, background: { r: 40, g: 120, b: 200 } } })
+      .toFormat(format)
+      .toBuffer()
+  return {
+    ...actual,
+    fetchAssetEffect: (relativePath: string) =>
+      relativePath.startsWith('/fonts/')
+        ? Effect.succeed(Buffer.from(`stub font ${relativePath}`))
+        : Effect.promise(() => image(relativePath.endsWith('.png') ? 'png' : 'jpeg')),
+  }
+})
+
+// Stands in for the native renderer, which cannot load the stub fonts: a solid PNG whose colour follows the card's
+// props, so the same inputs give the same image and another language gives another one.
+vi.mock('@takumi-rs/image-response', async () => {
+  const { createHash } = await import('node:crypto')
+  const { default: sharp } = await import('sharp')
+  return {
+    ImageResponse: class {
+      readonly ready = Promise.resolve()
+      constructor(
+        private readonly element: { props: unknown },
+        private readonly options: { width: number; height: number },
+      ) {}
+      async arrayBuffer() {
+        const [r, g, b] = createHash('sha256').update(JSON.stringify(this.element.props)).digest()
+        const png = await sharp({
+          create: { width: this.options.width, height: this.options.height, channels: 3, background: { r, g, b } },
+        })
+          .png()
+          .toBuffer()
+        return png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength)
+      }
+    },
+  }
+})
+
 const song = publishedCatalog.songs.find((candidate) => candidate.id === UMIYURI)!
 const sheet = song.sheets.find((candidate) => candidate.type === 'std' && candidate.difficulty === 'master')!
 const utageSong = publishedCatalog.songs.find((candidate) => candidate.id === UMIYURI_UTAGE)!
