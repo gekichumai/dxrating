@@ -18,6 +18,11 @@ import { computeSongHubRaises } from './songHubRaise'
 
 const formatAchievement = (value: number) => `${value.toFixed(4)}%`
 
+// Numeric column headers wrap on phones: "Internal level" or "My score" on one line is wider than the values under
+// them, and pushed the table past a 375px screen. Wrapped headers sit on the baseline of the bottom line
+const NUMERIC_HEADER_CLASS_NAME =
+  'px-1 py-1 font-normal text-right align-bottom leading-tight whitespace-normal sm:whitespace-nowrap'
+
 // Per-type note counts get their own columns on wide screens (xl+), where the table has room for them
 const NOTE_TYPES = ['tap', 'hold', 'slide', 'touch', 'break'] as const
 
@@ -92,27 +97,26 @@ export const SongChartsTable: FC<{
         <table className="w-full border-collapse text-sm num text-fg-1">
           <thead>
             <tr className="text-left text-xs text-fg-2">
-              <th className="px-1 py-1 font-normal whitespace-nowrap">{m.song_hub_column_chart({}, { locale })}</th>
-              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">
-                {m.song_hub_column_level({}, { locale })}
+              <th className="px-1 py-1 font-normal whitespace-nowrap align-bottom">
+                {m.song_hub_column_chart({}, { locale })}
               </th>
-              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">
-                {m.song_hub_column_constant({}, { locale })}
-              </th>
-              <th className="hidden sm:table-cell px-1 py-1 font-normal whitespace-nowrap text-right">
+              <th className={NUMERIC_HEADER_CLASS_NAME}>{m.song_hub_column_level({}, { locale })}</th>
+              <th className={NUMERIC_HEADER_CLASS_NAME}>{m.song_hub_column_constant({}, { locale })}</th>
+              <th className="hidden sm:table-cell px-1 py-1 font-normal whitespace-nowrap text-right align-bottom">
                 {m.song_hub_column_notes({}, { locale })}
               </th>
               {NOTE_TYPES.map((noteType) => (
-                <th key={noteType} className="hidden xl:table-cell px-1 py-1 font-normal whitespace-nowrap text-right">
+                <th
+                  key={noteType}
+                  className="hidden xl:table-cell px-1 py-1 font-normal whitespace-nowrap text-right align-bottom"
+                >
                   {NOTE_TYPE_LABELS[noteType]({}, { locale })}
                 </th>
               ))}
-              <th className="hidden sm:table-cell pl-3 pr-1 py-1 font-normal whitespace-nowrap">
+              <th className="hidden sm:table-cell pl-3 pr-1 py-1 font-normal whitespace-nowrap align-bottom">
                 {m.song_hub_column_designer({}, { locale })}
               </th>
-              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">
-                {m.song_hub_column_myScore({}, { locale })}
-              </th>
+              <th className={NUMERIC_HEADER_CLASS_NAME}>{m.song_hub_column_myScore({}, { locale })}</th>
             </tr>
           </thead>
           <tbody>
