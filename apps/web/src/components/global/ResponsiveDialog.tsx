@@ -135,8 +135,8 @@ export const ResponsiveDialog: FC<{
         >
           <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-black/15 my-3" aria-hidden="true" />
           <div className="overflow-auto overscroll-contain h-full p-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-            {/* The drawer closes by swiping down or tapping outside; a titled one also gets a close button */}
-            {header(!!title && !hideCloseButton)}
+            {/* Swiping down and tapping outside close it too, but not everyone knows that: keep a visible close button */}
+            {header(!hideCloseButton)}
             {children?.()}
           </div>
         </SwipeableDrawer>
