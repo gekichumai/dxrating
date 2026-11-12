@@ -17,7 +17,8 @@ export const CATALOG_CACHE_NAME = 'dxrating-catalog-v1'
 /** Where earlier builds kept the v1 document in the same cache; deleted when found */
 const V1_CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v1/dxdata`
 const ETAG_HEADER = 'x-dxrating-catalog-etag'
-// Marks a cached copy that is the build snapshot, kept because the API could not be reached
+// Where a cached copy came from: 'api', or 'unverified' for the build snapshot kept because the API could not be
+// reached. Copies cached before this header existed have none (see readCachedCatalog)
 const SOURCE_HEADER = 'x-dxrating-catalog-source'
 
 const BUILD_CATALOG_UPDATED_AT = import.meta.env.VITE_CATALOG_SNAPSHOT_UPDATED_AT ?? ''
@@ -224,13 +225,13 @@ async function revalidateCatalog(cache: Cache, etag: string | null) {
     })
     if (response.status === 304) {
       // The API vouches for the cached copy
-      if (loadedDocument) publish(loadedDocument)
+      await markCachedCatalogVerified(cache)
       return
     }
     const fresh = await readCatalogResponse(response)
     if (isOlderThanBuildCatalog(fresh.document)) {
       // The API is reachable but behind: the cached snapshot is the newest there is
-      if (loadedDocument) publish(loadedDocument)
+      await markCachedCatalogVerified(cache)
       return
     }
     await storeCatalog(cache, fresh)
@@ -266,10 +267,34 @@ async function readCachedCatalog(
     return {
       document,
       etag: response.headers.get(ETAG_HEADER) || null,
-      unverified: response.headers.get(SOURCE_HEADER) === 'unverified',
+      unverified: isUnverifiedSource(response.headers),
     }
   } catch {
     return null
+  }
+}
+
+/**
+ * Whether a cached copy is the outage snapshot. A copy cached before the source header existed has no API ETag when it
+ * is a snapshot (the API always sends one), so it counts as unverified until a revalidation reaches the API.
+ */
+const isUnverifiedSource = (headers: Headers) => {
+  const source = headers.get(SOURCE_HEADER)
+  return source === null ? !headers.get(ETAG_HEADER) : source === 'unverified'
+}
+
+/** The API answered for the cached copy: clear its outage mark in memory and in Cache Storage, keeping the copy */
+async function markCachedCatalogVerified(cache: Cache) {
+  if (!loadedUnverified || !loadedDocument) return
+  publish(loadedDocument)
+  try {
+    const response = await cache.match(CATALOG_URL)
+    if (!response || !isUnverifiedSource(response.headers)) return
+    const headers = new Headers(response.headers)
+    headers.set(SOURCE_HEADER, 'api')
+    await cache.put(CATALOG_URL, new Response(await response.text(), { headers }))
+  } catch {
+    // The next visit shows the hint again only if the API is down then too
   }
 }
 
@@ -281,7 +306,7 @@ async function storeCatalog(cache: Cache, { text, etag, unverified }: CatalogRes
         headers: {
           'content-type': 'application/json',
           [ETAG_HEADER]: etag ?? '',
-          ...(unverified ? { [SOURCE_HEADER]: 'unverified' } : {}),
+          [SOURCE_HEADER]: unverified ? 'unverified' : 'api',
         },
       }),
     )
