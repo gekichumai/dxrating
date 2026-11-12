@@ -1,5 +1,6 @@
 import { IconButton } from '@mui/material'
 import { useCanGoBack, useRouter } from '@tanstack/react-router'
+import clsx from 'clsx'
 import type { FC, MouseEvent } from 'react'
 import MdiArrowLeft from '~icons/mdi/arrow-left'
 import { localizePath } from '@/setup/locale'
@@ -64,7 +65,7 @@ export const SongBackLink: FC<{ className?: string }> = ({ className }) => {
         if (returnWithinSite) router.history.back()
         else void router.navigate({ href: homeHref })
       }}
-      className={className}
+      className={clsx('touch-hit', className)}
     >
       <MdiArrowLeft aria-hidden />
     </IconButton>

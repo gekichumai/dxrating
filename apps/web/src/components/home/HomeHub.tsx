@@ -175,7 +175,7 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
             <Link
               to="/charts/recent"
               onClick={() => trackClick('recent', 'see_all')}
-              className="inline-flex min-h-6 items-center rounded-[var(--radius-sm)] px-2 text-sm font-semibold text-accent-strong no-underline hover:underline"
+              className="touch-hit inline-flex min-h-6 items-center rounded-[var(--radius-sm)] px-2 text-sm font-semibold text-accent-strong no-underline hover:underline"
             >
               {m.home_recent_seeAll({}, { locale })}
             </Link>
