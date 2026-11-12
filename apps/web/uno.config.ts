@@ -150,6 +150,10 @@ export default defineConfig({
     // Section heading inside a page or glass panel
     'section-title': 'text-base font-semibold leading-snug text-fg-1',
     'chunks-horizontal-2': 'flex flex-col md:flex-row items-center justify-center gap-2 w-full',
+    // A control drawn smaller than 44px still takes a 44px tap: an invisible pseudo-element, centred on it, extends the
+    // hit area without changing the layout. Keep 44px clear around it so neighbours do not overlap
+    'touch-hit':
+      "relative after:absolute after:left-1/2 after:top-1/2 after:h-full after:min-h-11 after:w-full after:min-w-11 after:-translate-x-1/2 after:-translate-y-1/2 after:content-['']",
   },
   presets: [
     presetWind({
