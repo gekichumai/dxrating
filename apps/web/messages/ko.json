@@ -220,6 +220,7 @@
   ],
   "sheet_aliases_showLess": "접기",
   "sheet_aliases_copy": "별칭 복사",
+  "sheet_aliases_none": "아직 별칭이 없습니다",
   "sheet_aliases_dialogTitle": "별칭 추가",
   "sheet_aliases_inputLabel": "별칭",
   "sheet_aliases_adding": "추가 중…",
