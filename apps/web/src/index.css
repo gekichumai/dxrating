@@ -5,7 +5,7 @@
 
 :root {
   /* Hiragino Maru Gothic Pro, */
-  --font-sans: Torus, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-sans: Torus, 'Torus Fallback', 'Torus Fallback Roboto', system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-family: var(--font-sans);
   color: var(--fg-1);
   line-height: 1.5;
@@ -27,6 +27,62 @@
   font-weight: 100 500;
   font-style: normal;
   font-display: swap;
+}
+
+/* Metric-matched stand-ins for Torus while it downloads (font-display: swap paints the next face first). A local
+   Arial-metric face (Arial, Helvetica, Liberation Sans, Arimo) or Roboto, scaled so Latin text is as wide as Torus
+   (English letter-weighted average advance) and given Torus's line box (ascent 1.0em, descent 0.2em, no gap): the
+   header title and other one-line labels then take the same room before and after the swap. Torus ships 400 and 600
+   only and font-synthesis is off, so each stand-in has a regular and a bold face. Latin only: other scripts keep the
+   locale stack. A device without the local font skips that family. */
+@font-face {
+  font-family: 'Torus Fallback';
+  src: local('Arial'), local('ArialMT'), local('Helvetica'), local('Liberation Sans'), local('Arimo');
+  font-weight: 100 500;
+  font-style: normal;
+  unicode-range: U+0000-024F, U+2000-206F, U+20AC, U+2122;
+  size-adjust: 107.26%;
+  ascent-override: 93.23%;
+  descent-override: 18.66%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Torus Fallback';
+  src:
+    local('Arial Bold'), local('Arial-BoldMT'), local('Helvetica Bold'), local('Helvetica-Bold'),
+    local('Liberation Sans Bold'), local('LiberationSans-Bold'), local('Arimo Bold'), local('Arimo-Bold');
+  font-weight: 600 900;
+  font-style: normal;
+  unicode-range: U+0000-024F, U+2000-206F, U+20AC, U+2122;
+  size-adjust: 99.02%;
+  ascent-override: 100.99%;
+  descent-override: 20.22%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Torus Fallback Roboto';
+  src: local('Roboto'), local('Roboto-Regular'), local('Roboto Regular');
+  font-weight: 100 500;
+  font-style: normal;
+  unicode-range: U+0000-024F, U+2000-206F, U+20AC, U+2122;
+  size-adjust: 106.69%;
+  ascent-override: 93.73%;
+  descent-override: 18.76%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Torus Fallback Roboto';
+  src: local('Roboto Bold'), local('Roboto-Bold');
+  font-weight: 600 900;
+  font-style: normal;
+  unicode-range: U+0000-024F, U+2000-206F, U+20AC, U+2122;
+  size-adjust: 105.24%;
+  ascent-override: 95.02%;
+  descent-override: 19.02%;
+  line-gap-override: 0%;
 }
 
 /* Digits for `num` (tokens.css, Numbers). Torus has no tnum feature and its digits are proportional, so small numbers
