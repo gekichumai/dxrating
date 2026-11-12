@@ -1,7 +1,8 @@
 import * as PgClient from '@effect/sql-pg/PgClient'
 import * as PgDrizzle from 'drizzle-orm/effect-postgres'
 import { drizzle } from 'drizzle-orm/node-postgres'
-import { Context, Data, Effect, Layer, Redacted } from 'effect'
+import { Context, Effect, Layer, Redacted } from 'effect'
+import { DatabaseError } from './errors'
 import { isSqlError } from 'effect/sql/SqlError'
 import { Pool } from 'pg'
 import { config } from '../config'
@@ -12,10 +13,7 @@ export type AppDatabase = Effect.Success<ReturnType<typeof PgDrizzle.makeWithDef
 type AuthDatabase = ReturnType<typeof makeAuthDatabase>
 const makeAuthDatabase = (connection: Pool) => drizzle({ client: connection })
 
-export class DatabaseError extends Data.TaggedError('DatabaseError')<{
-  readonly operation: string
-  readonly cause: unknown
-}> {}
+export { DatabaseError } from './errors'
 
 export class Database extends Context.Service<
   Database,

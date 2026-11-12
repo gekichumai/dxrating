@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/node'
 import type { Scope } from '@sentry/node'
 import { COMMON_ERROR_STATUS_MAP, ORPCError } from '@orpc/server'
+import { databaseErrorTags } from '../../db/errors'
 import { NetImportError } from './client'
 import {
   isCredentialPath,
@@ -171,8 +172,12 @@ export function buildSentryOptions(
     tracesSampler: ({ name, inheritOrSampleWith }) =>
       /\/mcp(?:\?|$|\s)/.test(name) ? 1.0 : inheritOrSampleWith(environment === 'production' ? 0.1 : 1.0),
     // Configure which errors to capture; whatever is sent is scrubbed of credentials
+    // A database failure also names its operation and SQL error reason, whichever path captured it
     beforeSend(event, hint) {
-      return shouldCaptureSentryError(hint.originalException) ? scrubCredentialBodies(scrubSentryEvent(event)) : null
+      if (!shouldCaptureSentryError(hint.originalException)) return null
+      const tags = databaseErrorTags(hint.originalException)
+      if (Object.keys(tags).length > 0) event.tags = { ...event.tags, ...tags }
+      return scrubCredentialBodies(scrubSentryEvent(event))
     },
     beforeBreadcrumb(breadcrumb) {
       return scrubSentryBreadcrumb(breadcrumb)
