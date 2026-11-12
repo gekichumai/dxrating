@@ -139,7 +139,8 @@ export const SongChartsTable: FC<{
                     <Link
                       to="/songs/$songId/$type/$difficulty"
                       params={{ songId, type: sheet.type, difficulty: sheet.difficulty }}
-                      className="inline-flex items-center gap-1 no-underline text-inherit rounded-[var(--radius-sm)] after:absolute after:inset-0 after:content-['']"
+                      // Below 360px the type name stacks over the pill: side by side they took 142px of a 270px table
+                      className="inline-flex items-center gap-1 no-underline text-inherit rounded-[var(--radius-sm)] after:absolute after:inset-0 after:content-[''] [@media(max-width:359.98px)]:flex-col [@media(max-width:359.98px)]:items-start [@media(max-width:359.98px)]:gap-0.5"
                     >
                       {/* As wide as the longest type name in this table, so every difficulty pill starts at the same x */}
                       <FixedWidthText
