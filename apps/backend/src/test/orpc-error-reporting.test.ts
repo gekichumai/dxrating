@@ -7,9 +7,9 @@ import { EffectDrizzleQueryError } from 'drizzle-orm/effect-core'
 import { Cause, Effect } from 'effect'
 import { ConnectionError, SqlError } from 'effect/sql/SqlError'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { DatabaseError } from '../db/index'
-import { Sentry } from '../lib/functions/sentry'
-import { databaseErrorTags, isClientAbort, reportProcedureError } from '../orpc-error-reporting'
+import { databaseErrorTags, DatabaseError } from '../db/errors'
+import { buildSentryOptions, Sentry } from '../lib/functions/sentry'
+import { isClientAbort, reportProcedureError } from '../orpc-error-reporting'
 import { ClientClosedRequestError } from '../request-runner'
 
 const connectionTimeout = () =>
@@ -63,16 +63,23 @@ const captured = async () => {
 }
 
 beforeAll(() => {
-  Sentry.init({
+  // The production options, with their beforeSend (filtering and database tags) kept and its result recorded
+  const options = buildSentryOptions('test', {
     dsn: 'https://public@o0.ingest.sentry.io/0',
     defaultIntegrations: false,
-    beforeSend: (event) => {
-      events.push(event)
-      return null
-    },
+    integrations: [],
     beforeBreadcrumb: (breadcrumb) => {
       breadcrumbs.push(breadcrumb)
       return breadcrumb
+    },
+  })
+  const beforeSend = options.beforeSend!
+  Sentry.init({
+    ...options,
+    beforeSend: async (event, hint) => {
+      const sent = await beforeSend(event, hint)
+      if (sent) events.push(sent)
+      return null
     },
   })
 })
@@ -143,6 +150,25 @@ describe('oRPC error reporting', () => {
     expect(isClientAbort(new ClientClosedRequestError(), controller.signal)).toBe(true)
     expect(isClientAbort('aborted', controller.signal)).toBe(false)
     expect(isClientAbort(new Error('Error: aborted'), controller.signal)).toBe(false)
+  })
+
+  it('tags a database error captured outside oRPC, as the Hono routes and the global error handler capture it', async () => {
+    // app.onError and the dxdata routes call captureException with only a requestId (DXRATING-BACKEND-2K)
+    const raw = new DatabaseError({
+      operation: 'Read published catalog',
+      cause: new SqlError({
+        reason: new ConnectionError({ cause: new Error('Connection timed out'), operation: 'connect' }),
+      }),
+    })
+    Sentry.captureException(raw, { tags: { requestId: 'synthetic' } })
+
+    const sent = await captured()
+    expect(sent).toHaveLength(1)
+    expect(sent[0]?.tags).toMatchObject({
+      requestId: 'synthetic',
+      'db.operation': 'Read published catalog',
+      'db.error': 'ConnectionError',
+    })
   })
 
   it('tags only database errors', () => {
