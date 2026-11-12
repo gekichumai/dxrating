@@ -43,8 +43,9 @@ describe('appearance menus with the keyboard', () => {
     render(<DisplayPreferencesMenu />, { wrapper: Providers })
     fireEvent.click(screen.getByRole('button', { name: 'Language and appearance' }))
 
-    // Focus lands on an item, not on the popover paper
+    // Focus lands on an item, not on the popover paper: the first language, so the menu opens scrolled to its top
     expect(focused().getAttribute('role')).toMatch(/^menuitem/)
+    expect(focused().textContent).toContain('English')
 
     const reached = new Set<string>()
     // Every language plus the three appearance choices, and a few more presses
