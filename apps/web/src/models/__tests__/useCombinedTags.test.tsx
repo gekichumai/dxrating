@@ -97,7 +97,9 @@ describe('useCombinedTags', () => {
     }
     rememberAttachedTag(attached)
     await act(() =>
-      firstMount.result.current.mutate((current) => withAttachedTag(current, attached), { revalidate: false }),
+      firstMount.result.current.mutate((current) => withAttachedTag(current, { ...attached, score: 1 }), {
+        revalidate: false,
+      }),
     )
     respond(Response.json(overlay))
 

@@ -45,3 +45,33 @@ export const withAttachedTag = (current: CombinedTags | undefined, tagSong: TagS
   )
   return exists ? current : { ...current, tagSongs: [...current.tagSongs, tagSong] }
 }
+type SheetRef = { song_id: string; sheet_type: string; sheet_difficulty: string }
+
+/**
+ * The list with one sheet's associations replaced by a fresh per-sheet read, shown at once. Votes and removals change
+ * which associations the shared list shows (it leaves out buried ones), and the shared list comes through the edge
+ * cache, which can take a few minutes to catch up; `rememberSheetTagSongs` (catalog/communityOverlay) keeps the result in later loads too.
+ */
+export const withSheetTagSongs = (
+  current: CombinedTags | undefined,
+  sheet: SheetRef,
+  associations: readonly TagSong[],
+  hiddenScoreThreshold: number,
+): CombinedTags | undefined => {
+  if (!current) return current
+  const onSheet = (tagSong: SheetRef) =>
+    tagSong.song_id === sheet.song_id &&
+    tagSong.sheet_type === sheet.sheet_type &&
+    tagSong.sheet_difficulty === sheet.sheet_difficulty
+  const visible = associations
+    .filter((tagSong) => tagSong.score > hiddenScoreThreshold)
+    .map(({ song_id, sheet_id, sheet_type, sheet_difficulty, tag_id, score }) => ({
+      song_id,
+      ...(sheet_id === undefined ? {} : { sheet_id }),
+      sheet_type,
+      sheet_difficulty,
+      tag_id,
+      score,
+    }))
+  return { ...current, tagSongs: [...current.tagSongs.filter((tagSong) => !onSheet(tagSong)), ...visible] }
+}

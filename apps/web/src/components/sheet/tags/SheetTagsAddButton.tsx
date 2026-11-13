@@ -14,9 +14,8 @@ import { chipPresenceTransitions } from '../sheetMotion'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import { Markdown } from '../../global/Markdown'
 import { SheetListItemContent } from '../SheetListItem'
-import { withAttachedTag } from '../../../models/useCombinedTags'
 import { rememberAttachedTag } from '../../../catalog/communityOverlay'
-import { useSheetTags } from './useSheetTags'
+import { useSheetTagsDetailed } from './useSheetTagsDetailed'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 
@@ -41,9 +40,9 @@ const SheetTagsAddDialog: FC<{
         })),
     }))
   })
-  const { data: existingTags, isLoading: loadingExistingTags, mutate: mutateExistingTags } = useSheetTags(sheet)
+  const { data: existingTags, isLoading: loadingExistingTags, mutate: mutateExistingTags } = useSheetTagsDetailed(sheet)
 
-  const existingTagsIDList = existingTags?.map(({ id }) => id) ?? []
+  const existingTagsIDList = existingTags.map((entry) => entry.tag.id)
 
   const addTag = async (tagId: number) => {
     setPending(true)
@@ -67,7 +66,8 @@ const SheetTagsAddDialog: FC<{
         tag_id: tagId,
       }
       rememberAttachedTag(attached)
-      void mutateExistingTags((current) => withAttachedTag(current, attached), { revalidate: false })
+      // Refetches this sheet's associations and puts them into the shared tag list too
+      void mutateExistingTags()
     } catch (error) {
       console.error('Failed to add tag', error)
 
