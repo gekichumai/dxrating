@@ -25,7 +25,7 @@ permissions:
 jobs:
   search-eval:
     name: Search recall
-    runs-on: ubuntu-latest
+    runs-on: boat
     timeout-minutes: 20
     steps:
       - name: Checkout

@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   pullfrog:
-    runs-on: ubuntu-latest
+    runs-on: boat
     permissions:
       id-token: write
       contents: read

@@ -29,7 +29,7 @@ permissions:
 jobs:
   test:
     name: Web tests
-    runs-on: ubuntu-latest
+    runs-on: boat
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -53,7 +53,7 @@ jobs:
 
   e2e:
     name: Web e2e (production build)
-    runs-on: ubuntu-latest
+    runs-on: boat
     timeout-minutes: 25
     steps:
       - name: Checkout
