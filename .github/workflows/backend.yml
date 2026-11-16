@@ -214,7 +214,7 @@ jobs:
           push-to-registry: true
 
   deploy:
-    runs-on: boat
+    runs-on: boat-small
     needs: [lint-and-build, integration-test, docker-build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     name: Deploy to Coolify

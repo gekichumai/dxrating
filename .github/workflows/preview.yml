@@ -120,7 +120,7 @@ jobs:
 
   delete-preview:
     if: github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: boat
+    runs-on: boat-small
     permissions:
       contents: read
     name: Delete Preview

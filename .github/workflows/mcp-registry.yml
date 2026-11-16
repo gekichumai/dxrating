@@ -41,7 +41,7 @@ jobs:
   # the registry would take server.json as it is, under a version it does not have yet
   validate:
     if: github.event_name == 'pull_request'
-    runs-on: boat
+    runs-on: boat-small
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -74,7 +74,7 @@ jobs:
   # checked before anything is published
   publish:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (vars.MCP_REGISTRY_PUBLISH == 'true' || inputs.login_only)
-    runs-on: boat
+    runs-on: boat-small
     # holds MCP_REGISTRY_PRIVATE_KEY (the Ed25519 seed in hex, whose public key is in the TXT record of dxrating.net),
     # for main only: every workflow could read a repository secret
     environment: mcp-registry

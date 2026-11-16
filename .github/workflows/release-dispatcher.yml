@@ -17,7 +17,7 @@ jobs:
   tagger:
     # if the push commit message contains [skip ci], skip ci
     if: contains(github.event.commits[0].message, '[skip ci]') == false
-    runs-on: boat
+    runs-on: boat-small
     steps:
       - uses: actions/checkout@v3
         with:
