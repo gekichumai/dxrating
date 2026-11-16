@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: boat
     permissions:
       contents: read
       deployments: write
