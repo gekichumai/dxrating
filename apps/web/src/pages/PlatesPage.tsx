@@ -213,20 +213,20 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
 
   return (
     <div className="flex-container w-full max-w-7xl px-4 pb-global">
-      <div className="w-full flex flex-col gap-4">
-        <header className="flex flex-col gap-2">
+      <div className="page-stack">
+        <header className="page-header">
           <PlateBreadcrumb region={region} />
           <h1 className="page-title m-0 [word-break:auto-phrase]">{m.plates_index_title({}, { locale })}</h1>
           <p className="page-description m-0">{m.plates_index_intro({}, { locale })}</p>
           <RegionSwitch path="/plates" region={region} />
         </header>
 
-        <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 list-none p-0 m-0">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-[var(--rhythm-1)] list-none p-0 m-0">
           {groups.map((group) => (
             <li key={group.id}>
-              <MaterialSurface className="p-3 xl:p-2.5 flex flex-col gap-2 h-full">
+              <MaterialSurface className="p-3 xl:p-2.5 section-stack h-full">
                 <div className="flex items-baseline gap-2">
-                  <h2 className="m-0 text-2xl font-semibold text-fg-1">{group[script]}</h2>
+                  <h2 className="section-title m-0">{group[script]}</h2>
                   <span className="text-xs text-fg-2 truncate">
                     {group.versions.length > 2
                       ? `${group.versions[0]} – ${group.versions.at(-1)}`
@@ -352,8 +352,8 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
 
   return (
     <div className="flex-container w-full max-w-7xl px-4 pb-global">
-      <div className="w-full flex flex-col gap-4">
-        <header className="flex flex-col gap-2">
+      <div className="page-stack">
+        <header className="page-header">
           <PlateBreadcrumb leaf={name} region={data.region} />
           <h1 className="page-title m-0 [word-break:auto-phrase]">{m.plates_title(values, { locale })}</h1>
           <p className="page-description m-0">{m.plates_intro(values, { locale })}</p>
@@ -361,8 +361,8 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
         </header>
 
         {/* Side by side on desktop: two short cards, each with a readable line length */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-          <MaterialSurface as="section" aria-labelledby="plate-condition" className="p-4 flex flex-col gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-[var(--rhythm-1)] items-start">
+          <MaterialSurface as="section" aria-labelledby="plate-condition" className="p-4 section-stack">
             <h2 id="plate-condition" className="section-title m-0">
               {m.plates_condition_title({}, { locale })}
             </h2>
@@ -382,7 +382,7 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
             )}
           </MaterialSurface>
 
-          <MaterialSurface as="section" aria-labelledby="plate-progress" className="p-4 flex flex-col gap-3">
+          <MaterialSurface as="section" aria-labelledby="plate-progress" className="p-4 section-stack">
             <div className="flex items-center gap-3 flex-wrap">
               <h2 id="plate-progress" className="section-title m-0">
                 {m.plates_progress_title({}, { locale })}
@@ -505,7 +505,7 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
             className="overflow-hidden"
           >
             <div className="flex items-baseline justify-between gap-2 px-4 py-2 border-b border-b-solid border-[var(--glass-border)]">
-              <h2 id={`plate-level-${group.level}`} className="m-0 text-lg font-semibold text-fg-1">
+              <h2 id={`plate-level-${group.level}`} className="section-title m-0">
                 Lv.{group.level}
               </h2>
               {hasRecords && (
@@ -594,7 +594,7 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
           </MaterialSurface>
         ))}
 
-        <footer className="flex flex-col gap-2">
+        <footer className="section-stack">
           <InternalLink href={regionHref('/plates', data.region)} className="link self-start text-sm">
             {m.plates_otherPlates({}, { locale })}
             <span aria-hidden> →</span>

@@ -153,8 +153,8 @@ const RecommendSection: FC<{
 }> = ({ title, items }) => {
   const locale = useLocale()
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="section-title m-0 text-lg">{title}</h2>
+    <section className="section-stack">
+      <h2 className="section-title m-0">{title}</h2>
       <MaterialSurface>
         {items.length === 0 ? (
           <p className="m-0 p-4 text-sm text-fg-2">{m.recommend_none({}, { locale })}</p>

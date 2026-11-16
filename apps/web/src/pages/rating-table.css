@@ -604,14 +604,15 @@
 .rating-onboarding {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px;
+  /* T1 headline → the steps: the page rhythm (tokens.css), not a card-local value */
+  gap: var(--rhythm-3);
+  padding: 24px;
   container-type: inline-size;
 }
 .rating-onboarding-steps {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
+  gap: var(--rhythm-1);
   margin: 0;
   padding: 0;
   list-style: none;

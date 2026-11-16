@@ -157,8 +157,8 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
 
   if (!sheet) {
     return (
-      <div className="w-full max-w-2xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
-        <header className="flex flex-col gap-2">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 pb-global page-stack">
+        <header className="page-header">
           <h1 className="page-title m-0">{m.tools_tolerance_title({}, { locale })}</h1>
           <p className="page-description m-0">{m.tools_tolerance_intro({}, { locale })}</p>
           <Link to="/tools/rating" className="link self-start text-sm">
@@ -172,8 +172,8 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
-      <header className="flex flex-col gap-2">
+    <div className="w-full max-w-5xl mx-auto px-4 py-6 pb-global page-stack">
+      <header className="page-header">
         <Breadcrumb
           items={[
             { href: songHubPath(sheet.songId), label: <span lang="ja">{sheet.title}</span> },

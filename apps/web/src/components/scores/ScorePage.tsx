@@ -27,7 +27,7 @@ export const ScorePageFrame: FC<{ width?: keyof typeof FRAME_WIDTHS; children: R
 }) => (
   <div
     className={clsx(
-      'mx-auto w-full flex flex-col gap-4 pt-2 lg:pt-4 pb-global',
+      'mx-auto page-stack pt-2 lg:pt-4 pb-global',
       'pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
       FRAME_WIDTHS[width],
     )}
@@ -46,7 +46,7 @@ export const ScorePageHeader: FC<{
   children?: ReactNode
   breadcrumb?: { href?: string; label: ReactNode }[]
 }> = ({ title, description, children, breadcrumb }) => (
-  <header className="flex flex-col gap-1">
+  <header className="page-header">
     <Breadcrumb items={breadcrumb ?? [{ label: title }]} />
     <h1 className="page-title m-0">{title}</h1>
     {description && <p className="page-description m-0">{description}</p>}
@@ -76,7 +76,7 @@ export const NoScoresState: FC<{
   action?: ReactNode
   className?: string
 }> = ({ title, description, action, className }) => (
-  <section className={clsx('glass flex flex-col items-start gap-1 p-4 text-start', className)}>
+  <section className={clsx('glass section-stack items-start p-4 text-start', className)}>
     <h2 className="section-title m-0">{title}</h2>
     <p className="m-0 text-sm leading-normal text-fg-2 text-pretty max-w-[60ch]">{description}</p>
     {action && <div className="mt-2 text-sm">{action}</div>}

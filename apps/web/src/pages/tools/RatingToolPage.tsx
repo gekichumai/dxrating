@@ -75,14 +75,14 @@ const ToolSection: FC<{
 }> = ({ id, title, description, headerAction, className, children }) => {
   const heading = (
     <div className="flex flex-col gap-1 min-w-0">
-      <h2 id={id} className="m-0 text-lg font-bold">
+      <h2 id={id} className="section-title m-0">
         {title}
       </h2>
       <p className="m-0 text-sm text-secondary">{description}</p>
     </div>
   )
   return (
-    <MaterialSurface as="section" className={`flex flex-col gap-3 p-4 ${className ?? ''}`} aria-labelledby={id}>
+    <MaterialSurface as="section" className={`section-stack p-4 ${className ?? ''}`} aria-labelledby={id}>
       {headerAction ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           {heading}
@@ -313,8 +313,8 @@ export const RatingToolPage: FC = () => {
   const locale = useLocale()
 
   return (
-    <div className="w-full max-w-2xl lg:max-w-6xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
-      <header className="flex flex-col gap-2">
+    <div className="w-full max-w-2xl lg:max-w-6xl mx-auto px-4 py-6 pb-global page-stack">
+      <header className="page-header">
         {/* The tools are not tabs of the main navigation: the breadcrumb is the way back */}
         <Breadcrumb items={[{ label: m.tools_rating_title({}, { locale }) }]} />
         <h1 className="page-title m-0">{m.tools_rating_title({}, { locale })}</h1>
@@ -324,8 +324,8 @@ export const RatingToolPage: FC = () => {
         </Link>
       </header>
       {/* Stacked on mobile; at lg the calculators sit left of the table so the whole tool fits above the fold */}
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start">
-        <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-[var(--rhythm-3)] lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start">
+        <div className="page-stack">
           <RatingForAchievement />
           <AchievementForRating />
         </div>

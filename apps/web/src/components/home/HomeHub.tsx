@@ -86,7 +86,7 @@ const QuickStats: FC = () => {
   const floor = floors.length > 0 ? Math.min(...floors) : null
 
   return (
-    <section className="flex flex-col gap-2" aria-labelledby="home-quick-stats">
+    <section className="section-stack" aria-labelledby="home-quick-stats">
       <div className="flex items-baseline gap-2">
         <SectionTitle id="home-quick-stats">{m.home_stats_title({}, { locale })}</SectionTitle>
         {stats.isDemo && <span className="text-xs text-fg-2">{m.home_stats_demo({}, { locale })}</span>}
@@ -142,11 +142,11 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
   const recentTitle = m.home_recent_title({}, { locale })
 
   return (
-    <div className="flex w-full flex-col gap-4" data-testid="home-hub">
+    <div className="page-stack" data-testid="home-hub">
       {mounted && <QuickStats />}
 
       {recentSongs.length > 0 && (
-        <section className="flex flex-col gap-2" aria-labelledby="home-recent">
+        <section className="section-stack" aria-labelledby="home-recent">
           <div className="flex items-center justify-between gap-2">
             <SectionTitle id="home-recent">
               {/* The heading holds a disclosure button below sm and plain text from sm. The hidden one is display:
@@ -219,7 +219,7 @@ export const HomeHub: FC<{ recentSongs: readonly HomeRecentSong[] }> = ({ recent
         </section>
       )}
 
-      <nav className="flex flex-col gap-2" aria-labelledby="home-features">
+      <nav className="section-stack" aria-labelledby="home-features">
         <SectionTitle id="home-features">{m.home_features_title({}, { locale })}</SectionTitle>
         {/*
           Every destination is on screen at every width: phones get a compact two-column grid of names (the hub is

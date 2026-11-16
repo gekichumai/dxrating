@@ -71,11 +71,7 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
   ]
 
   return (
-    <MaterialSurface
-      as="section"
-      className="w-full p-4 flex flex-col gap-3"
-      aria-label={m.completion_title({}, { locale })}
-    >
+    <MaterialSurface as="section" className="p-4 section-stack" aria-label={m.completion_title({}, { locale })}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col">
           <h2 className="section-title m-0">{m.completion_title({}, { locale })}</h2>

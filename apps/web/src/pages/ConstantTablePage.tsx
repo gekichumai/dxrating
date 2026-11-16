@@ -78,7 +78,7 @@ const ConstantGroupTable: FC<{
       className="glass w-full overflow-hidden scroll-mt-2"
     >
       <div className="flex items-baseline justify-between gap-2 px-4 py-2 border-b border-b-solid border-[var(--glass-border)]">
-        <h2 id={headingId} className="m-0 text-lg font-semibold text-fg-1">
+        <h2 id={headingId} className="section-title m-0 num">
           {m.constants_group({ constant }, { locale })}
         </h2>
         <span className="text-xs text-fg-2 num">{m.constants_groupCount({ count: total }, { locale })}</span>
@@ -267,13 +267,9 @@ const ConstantGroupGrid: FC<{
   const headingId = `constant-${constant}`
 
   return (
-    <section
-      aria-labelledby={headingId}
-      className="flex w-full flex-col gap-2 scroll-mt-2"
-      id={constantAnchor(constant)}
-    >
+    <section aria-labelledby={headingId} className="section-stack scroll-mt-2" id={constantAnchor(constant)}>
       <div className="glass-thin sticky top-1 z-2 mx-[var(--sticky-inline-inset)] flex items-baseline justify-between gap-2 px-3 py-1.5">
-        <h2 id={headingId} className="m-0 text-base font-semibold text-fg-1 num">
+        <h2 id={headingId} className="section-title m-0 num">
           {m.constants_group({ constant }, { locale })}
         </h2>
         <span className="text-xs text-fg-2 num">{m.constants_groupCount({ count: total }, { locale })}</span>
@@ -398,8 +394,8 @@ export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
 
   return (
     <div className="flex-container w-full max-w-7xl px-4 pb-global">
-      <div className="w-full flex flex-col gap-4">
-        <header className="w-full flex flex-col gap-2">
+      <div className="page-stack">
+        <header className="w-full page-header">
           <Breadcrumb
             items={[
               { href: '/constants', label: m.constants_breadcrumb({}, { locale }) },
@@ -415,11 +411,13 @@ export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
           <LevelNav current={table.level} />
         </header>
 
-        <CompletionToolbar table={table} overlay={overlay} />
-
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <ConstantJumpNav constants={table.groups.map((group) => group.constant)} />
-          <ViewToggle view={view} onChange={setView} />
+        {/* The controls for the table are one group (12px apart), then a full pause before the first level */}
+        <div className="section-stack">
+          <CompletionToolbar table={table} overlay={overlay} />
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <ConstantJumpNav constants={table.groups.map((group) => group.constant)} />
+            <ViewToggle view={view} onChange={setView} />
+          </div>
         </div>
 
         {table.groups.slice(0, groupCount).map((group) => {
@@ -454,8 +452,8 @@ export const ConstantTableIndexPage: FC<{ tables: ConstantTableSummary[] }> = ({
 
   return (
     <div className="flex-container w-full max-w-5xl px-4 pb-global">
-      <div className="w-full flex flex-col gap-4">
-        <header className="flex flex-col gap-2">
+      <div className="page-stack">
+        <header className="page-header">
           <Breadcrumb items={[{ label: m.constants_breadcrumb({}, { locale }) }]} />
           <h1 className="page-title m-0 [word-break:auto-phrase]">{m.constants_index_title({}, { locale })}</h1>
           <p className="page-description m-0">{m.constants_index_intro({}, { locale })}</p>

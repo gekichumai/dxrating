@@ -117,7 +117,8 @@ export const VersionEraSections: FC<{
   const locale = useLocale()
 
   return (
-    <div className={clsx('flex flex-col gap-5', className)}>
+    // Era sections are T2 (36px apart) on the index; nested under "Other versions" they are T3 (12px apart)
+    <div className={clsx(Heading === 'h2' ? 'page-stack' : 'section-stack', className)}>
       {jumpNav && (
         <nav aria-label={m.versions_era_label({}, { locale })} className={`${segmentedTrack} self-start`}>
           {VERSION_ERAS.map((era) => (
@@ -133,9 +134,12 @@ export const VersionEraSections: FC<{
           key={era}
           id={`${idPrefix}-${era}`}
           aria-labelledby={`${idPrefix}-${era}-heading`}
-          className="flex flex-col gap-2 scroll-mt-2"
+          className="section-stack scroll-mt-2"
         >
-          <Heading id={`${idPrefix}-${era}-heading`} className="m-0 flex items-baseline gap-2 section-title">
+          <Heading
+            id={`${idPrefix}-${era}-heading`}
+            className={clsx('m-0 flex items-baseline gap-2', Heading === 'h2' ? 'section-title' : 'item-title')}
+          >
             <span>{ERA_LABELS[era]({}, { locale })}</span>
             <span className="text-sm font-normal text-fg-2 num">{ERA_RANGES[era]({}, { locale })}</span>
           </Heading>
