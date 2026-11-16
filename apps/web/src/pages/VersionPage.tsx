@@ -33,7 +33,7 @@ const tileClassName = (current: boolean) =>
 const VersionNav: FC<{ current: VersionEnum; labelledBy: string }> = ({ current, labelledBy }) => {
   return (
     <nav aria-labelledby={labelledBy}>
-      <VersionEraSections idPrefix="other-versions-era" headingLevel="h3" className="gap-4">
+      <VersionEraSections idPrefix="other-versions-era" headingLevel="h3">
         {(era) => (
           <VersionPairGrid
             className="gap-x-4 sm:grid-cols-2 lg:grid-cols-4"
@@ -62,8 +62,8 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
 
   return (
     <div className="flex-container w-full max-w-5xl px-4 pb-global">
-      <div className="w-full flex flex-col gap-4">
-        <header className="w-full flex flex-col gap-2">
+      <div className="page-stack">
+        <header className="w-full page-header">
           <Breadcrumb
             items={[{ href: '/versions', label: m.versions_breadcrumb({}, { locale }) }, { label: page.version }]}
           />
@@ -80,7 +80,7 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
             <section key={id} id={id} aria-labelledby={`${id}-heading`} className="glass w-full overflow-hidden">
               <h2
                 id={`${id}-heading`}
-                className="px-4 py-2 m-0 text-lg font-semibold text-fg-1 num border-b border-b-solid border-[var(--glass-border)]"
+                className="section-title px-4 py-2 m-0 num border-b border-b-solid border-[var(--glass-border)]"
               >
                 {group.releaseDate ? (
                   <time dateTime={group.releaseDate}>{group.releaseDate}</time>
@@ -98,7 +98,7 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
                       <InternalLink
                         href={row.href}
                         lang="ja"
-                        className="text-fg-1 font-semibold no-underline hover:underline underline-offset-2 [overflow-wrap:anywhere]"
+                        className="item-title no-underline hover:underline underline-offset-2 [overflow-wrap:anywhere]"
                       >
                         {row.title}
                       </InternalLink>
@@ -131,7 +131,7 @@ export const VersionPage: FC<{ page: VersionPageData }> = ({ page }) => {
           )
         })}
 
-        <footer className="flex flex-col gap-2">
+        <footer className="section-stack">
           <h2 id="other-versions" className="section-title m-0">
             {m.versions_otherVersions({}, { locale })}
           </h2>
@@ -151,8 +151,8 @@ export const VersionIndexPage: FC<{ versions: VersionSummary[] }> = ({ versions 
 
   return (
     <div className="flex-container w-full max-w-6xl px-4 pb-global">
-      <div className="w-full flex flex-col gap-4">
-        <header className="flex flex-col gap-2">
+      <div className="page-stack">
+        <header className="page-header">
           <Breadcrumb items={[{ label: m.versions_breadcrumb({}, { locale }) }]} />
           <h1 className="page-title m-0 [word-break:auto-phrase]">{m.versions_index_title({}, { locale })}</h1>
           <p className="page-description m-0">{m.versions_index_intro({}, { locale })}</p>

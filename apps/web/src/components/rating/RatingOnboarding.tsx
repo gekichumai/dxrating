@@ -24,7 +24,7 @@ const OnboardingStep: FC<{
       {icon}
     </span>
     <div className="flex flex-col gap-1 min-w-0">
-      <h3 className="m-0 text-sm font-semibold leading-snug text-fg-1">{title}</h3>
+      <h3 className="item-title m-0">{title}</h3>
       <p className="m-0 text-sm leading-normal text-fg-2 text-pretty">{description}</p>
     </div>
     <div className="rating-onboarding-step-action">{action}</div>
@@ -49,7 +49,8 @@ export const RatingOnboarding: FC = () => {
   return (
     <section className="glass rating-onboarding" aria-labelledby="rating-onboarding-title">
       <div className="flex flex-col gap-2">
-        <h2 id="rating-onboarding-title" className="m-0 text-xl font-semibold leading-snug text-fg-1 text-balance">
+        {/* The page's visible headline (its h1 is for screen readers), so it takes T1 */}
+        <h2 id="rating-onboarding-title" className="page-title m-0">
           {m.ratingCalculator_empty_title({}, { locale })}
         </h2>
         <p className="m-0 text-sm sm:text-base leading-relaxed text-fg-2 text-pretty max-w-[65ch]">

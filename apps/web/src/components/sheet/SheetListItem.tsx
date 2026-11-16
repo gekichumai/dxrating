@@ -262,7 +262,7 @@ export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
           <SheetTitle
             {...SheetTitleProps}
             sheet={sheet}
-            className={clsx('font-semibold', size === 'small' ? 'text-sm' : 'text-lg', SheetTitleProps?.className)}
+            className={clsx(size === 'small' ? 'item-title !text-sm' : 'item-title', SheetTitleProps?.className)}
           />
         )}
       </SheetListItemContentView>
@@ -463,7 +463,7 @@ export const SheetListItemSummary: FC<SheetListItemSummaryProps> = memo(
           {...titleProps}
           className={clsx(
             SHEET_HEADING_CLASS,
-            'font-semibold text-lg',
+            'item-title',
             // In a table row the heading dissolves, so its title and its badges become separate cells
             isTable && 'lg:contents',
             titleProps?.className,

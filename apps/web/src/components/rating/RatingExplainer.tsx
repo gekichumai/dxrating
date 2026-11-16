@@ -10,10 +10,10 @@ import { InternalLink } from '@/components/global/InternalLink'
 const EXAMPLE_CONSTANT = 14.7
 
 // A glass panel of prose, up to a reading width under 1024px; the grid column sets its width on desktop
-const EXPLAINER_CARD_CLASS_NAME = 'glass flex flex-col gap-4 w-full max-w-3xl lg:max-w-none p-4 sm:p-6'
+const EXPLAINER_CARD_CLASS_NAME = 'glass section-stack w-full max-w-3xl lg:max-w-none p-4 sm:p-6'
 const PROSE_CLASS_NAME = 'm-0 text-base leading-relaxed max-w-[65ch] text-pretty'
-// More room above than below, so a heading groups with the text it introduces
-const SUBHEADING_CLASS_NAME = 'mt-2 mb-0 first:mt-0 text-lg font-semibold leading-snug'
+// T3. Twice the rhythm above (12 + 12) and once below, so a heading groups with the text it introduces
+const SUBHEADING_CLASS_NAME = 'item-title mt-[var(--rhythm-1)] mb-0 first:mt-0'
 
 /** Display labels for the rank ids of the score coefficient table */
 export const RANK_LABELS: Record<string, string> = {
@@ -61,10 +61,10 @@ export const RatingExplainer: FC = () => {
     // cards run on the left and the rank table stays in view on the right, out to the calculator's right edge. The
     // page's last content, so it carries the bottom padding
     <section
-      className="page-gutter pt-4 pb-global flex flex-col gap-4 text-fg-1 lg:grid lg:grid-cols-[minmax(0,65ch)_minmax(340px,1fr)] lg:items-start"
+      className="page-gutter pt-[var(--rhythm-3)] pb-global flex flex-col gap-[var(--rhythm-1)] lg:gap-x-[var(--rhythm-3)] text-fg-1 lg:grid lg:grid-cols-[minmax(0,65ch)_minmax(340px,1fr)] lg:items-start"
       aria-labelledby="rating-explainer"
     >
-      <h2 id="rating-explainer" className="text-xl sm:text-2xl font-semibold leading-tight m-0 lg:col-span-2">
+      <h2 id="rating-explainer" className="section-title m-0 lg:col-span-2">
         {m.ratingExplainer_title({}, { locale })}
       </h2>
 
@@ -97,7 +97,7 @@ export const RatingExplainer: FC = () => {
         </InternalLink>
       </div>
 
-      <div className="flex flex-col gap-3 w-full max-w-3xl lg:max-w-none lg:col-start-2 lg:row-start-2 lg:row-span-2 lg:sticky lg:top-4">
+      <div className="section-stack max-w-3xl lg:max-w-none lg:col-start-2 lg:row-start-2 lg:row-span-2 lg:sticky lg:top-4">
         <h3 className={SUBHEADING_CLASS_NAME}>{m.ratingExplainer_table_title({}, { locale })}</h3>
         <div className="glass overflow-hidden">
           <table className="w-full text-sm border-collapse">
@@ -131,11 +131,11 @@ export const RatingExplainer: FC = () => {
 
       <div className={clsx(EXPLAINER_CARD_CLASS_NAME, 'lg:col-start-1')}>
         <h3 className={SUBHEADING_CLASS_NAME}>{m.ratingExplainer_faq_title({}, { locale })}</h3>
-        <dl className="m-0 flex flex-col gap-4">
+        <dl className="m-0 section-stack">
           {RATING_FAQ_KEYS.map((key) => (
             <div key={key}>
-              <dt className="font-semibold text-base">{FAQ_MESSAGES[key].question({}, { locale })}</dt>
-              <dd className={clsx(PROSE_CLASS_NAME, 'mt-1')}>{FAQ_MESSAGES[key].answer({}, { locale })}</dd>
+              <dt className="text-base text-fg-1">{FAQ_MESSAGES[key].question({}, { locale })}</dt>
+              <dd className={clsx(PROSE_CLASS_NAME, 'mt-1 text-fg-2')}>{FAQ_MESSAGES[key].answer({}, { locale })}</dd>
             </div>
           ))}
         </dl>

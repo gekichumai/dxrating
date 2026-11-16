@@ -65,7 +65,7 @@ const BucketStatistics: FC<{
     // Its columns come from BUCKET_STATISTICS_GRID, so the B15 and B35 figures line up whatever their digit counts
     <div className="col-span-full grid [grid-template-columns:subgrid] items-end gap-y-2 min-w-0">
       <h3 className="col-span-full m-0 flex flex-wrap items-baseline gap-x-1 leading-tight">
-        <span className="text-lg font-semibold">{title}</span>
+        <span className="item-title">{title}</span>
         <span className="text-sm font-normal text-secondary num">{count}</span>
       </h3>
 
