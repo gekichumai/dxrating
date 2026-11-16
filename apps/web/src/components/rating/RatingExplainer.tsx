@@ -135,7 +135,7 @@ export const RatingExplainer: FC = () => {
           {RATING_FAQ_KEYS.map((key) => (
             <div key={key}>
               <dt className="text-base text-fg-1">{FAQ_MESSAGES[key].question({}, { locale })}</dt>
-              <dd className={clsx(PROSE_CLASS_NAME, 'mt-1')}>{FAQ_MESSAGES[key].answer({}, { locale })}</dd>
+              <dd className={clsx(PROSE_CLASS_NAME, 'mt-1 text-fg-2')}>{FAQ_MESSAGES[key].answer({}, { locale })}</dd>
             </div>
           ))}
         </dl>

@@ -128,7 +128,7 @@ export const RecommendPage: FC = () => {
             <Stat label={m.recommend_stats_b35Floor({}, { locale })} value={result.b35Floor} />
           </MaterialSurface>
           {/* B15 and B35 side by side on desktop, so both lists start above the fold */}
-          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start">
+          <div className="flex flex-col gap-[var(--rhythm-3)] lg:grid lg:grid-cols-2 lg:gap-x-[var(--rhythm-1)] lg:items-start">
             <RecommendSection title={m.recommend_new({}, { locale })} items={result.b15} />
             <RecommendSection title={m.recommend_old({}, { locale })} items={result.b35} />
           </div>

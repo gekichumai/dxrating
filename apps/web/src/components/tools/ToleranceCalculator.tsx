@@ -69,10 +69,10 @@ export const ToleranceCalculator: FC<{
   }
 
   return (
-    <MaterialSurface as="section" className="flex flex-col gap-3 p-4" aria-labelledby="tolerance-heading">
+    <MaterialSurface as="section" className="section-stack p-4" aria-labelledby="tolerance-heading">
       <div className="flex flex-col gap-1">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <Heading id="tolerance-heading" className="m-0 text-lg font-bold">
+          <Heading id="tolerance-heading" className="section-title m-0">
             {m.tools_tolerance_sectionTitle({}, { locale })}
           </Heading>
           {source === 'chart_page' && (

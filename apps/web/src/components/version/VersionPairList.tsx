@@ -117,8 +117,14 @@ export const VersionEraSections: FC<{
   const locale = useLocale()
 
   return (
-    // Era sections are T2 (36px apart) on the index; nested under "Other versions" they are T3 (12px apart)
-    <div className={clsx(Heading === 'h2' ? 'page-stack' : 'section-stack', className)}>
+    // Era sections are T2 (36px apart) on the index. Nested under "Other versions" they are T3: twice the rhythm
+    // above each (as in RatingExplainer), once below, so each heading groups with its own grid
+    <div
+      className={clsx(
+        Heading === 'h2' ? 'page-stack' : 'flex w-full flex-col gap-[calc(var(--rhythm-1)*2)]',
+        className,
+      )}
+    >
       {jumpNav && (
         <nav aria-label={m.versions_era_label({}, { locale })} className={`${segmentedTrack} self-start`}>
           {VERSION_ERAS.map((era) => (

@@ -262,7 +262,7 @@ export const SheetListItemContent: FC<SheetListItemContentProps> = memo(
           <SheetTitle
             {...SheetTitleProps}
             sheet={sheet}
-            className={clsx(size === 'small' ? 'text-sm font-semibold' : 'item-title', SheetTitleProps?.className)}
+            className={clsx(size === 'small' ? 'item-title !text-sm' : 'item-title', SheetTitleProps?.className)}
           />
         )}
       </SheetListItemContentView>

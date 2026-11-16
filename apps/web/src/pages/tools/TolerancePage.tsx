@@ -185,7 +185,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
       </header>
 
       {/* Mobile: chart, calculator, then the picker. Desktop: chart and picker beside the calculator. */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:items-start">
+      <div className="grid gap-[var(--rhythm-1)] lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:items-start">
         <MaterialSurface variant="thin" className="flex items-center gap-3 p-3 lg:col-start-1 lg:row-start-1">
           <SheetImage songId={sheet.songId} size="large" alt="" />
           <div className="flex flex-col min-w-0">
