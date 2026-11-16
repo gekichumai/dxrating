@@ -89,6 +89,10 @@ jobs:
           scripts/seed-ipadic-cache.sh vendor/ipadic/mecab-ipadic-2.7.0-20250920.tar.gz \
             "$sha256" "$cache" "$format"
           echo "LINDERA_BUILD_DICTIONARY_CACHE_DIR=$cache" >> "$GITHUB_ENV"
+          # The seed is the raw archive; lindera-ipadic's build script compiles
+          # it into the cache dir. A restored rust-cache marks that build script
+          # fresh, so it would skip and leave the dictionary missing. Force it.
+          cargo clean -p lindera-ipadic
           # Fail instead of quietly downloading if the seeded cache is missed.
           echo "0.0.0.0 lindera.dev" | sudo tee -a /etc/hosts
 
