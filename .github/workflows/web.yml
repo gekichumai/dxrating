@@ -29,7 +29,7 @@ permissions:
 jobs:
   test:
     name: Web tests
-    runs-on: boat
+    runs-on: boat-large
     timeout-minutes: 20
     steps:
       - name: Checkout

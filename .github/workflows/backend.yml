@@ -75,7 +75,7 @@ jobs:
         run: pnpm --filter @gekichumai/oneshot-renderer lint
 
   integration-test:
-    runs-on: boat
+    runs-on: boat-large
     name: Integration Tests
 
     services:
@@ -128,7 +128,7 @@ jobs:
           pnpm --filter @gekichumai/backend test
 
   docker-build:
-    runs-on: boat
+    runs-on: boat-large
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     name: Build Docker Image
     permissions:
@@ -214,7 +214,7 @@ jobs:
           push-to-registry: true
 
   deploy:
-    runs-on: boat
+    runs-on: boat-small
     needs: [lint-and-build, integration-test, docker-build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     name: Deploy to Coolify

@@ -19,7 +19,7 @@ permissions:
 jobs:
   contract:
     name: Published Catalog Contract
-    runs-on: boat
+    runs-on: boat-large
 
     services:
       postgres:

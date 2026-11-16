@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   cleanup-preview-workers:
-    runs-on: boat
+    runs-on: boat-small
     permissions:
       contents: read
     name: Cleanup Preview Workers
