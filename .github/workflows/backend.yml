@@ -75,7 +75,7 @@ jobs:
         run: pnpm --filter @gekichumai/oneshot-renderer lint
 
   integration-test:
-    runs-on: boat-large
+    runs-on: boat
     name: Integration Tests
 
     services:
@@ -128,7 +128,7 @@ jobs:
           pnpm --filter @gekichumai/backend test
 
   docker-build:
-    runs-on: boat-large
+    runs-on: boat
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     name: Build Docker Image
     permissions:

@@ -150,7 +150,7 @@ jobs:
     name: Deploy admin API
     needs: [admin-app, admin-api]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.ADMIN_DEPLOY_ENABLED == 'true'
-    runs-on: boat-large
+    runs-on: boat
     timeout-minutes: 20
     permissions:
       contents: read
