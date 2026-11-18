@@ -11,7 +11,7 @@ import {
   useMemo,
   useSyncExternalStore,
 } from 'react'
-import { useAppContextDXDataVersion } from '@/models/context/useAppContext'
+import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { buildCatalogSlice, type CatalogMeta, EMPTY_CATALOG_DOCUMENT, getCatalogDocument } from './catalogSource'
 import { getLoadedCatalogDocument, loadClientCatalogDocument, subscribeToCatalog } from './clientCatalog'
 
@@ -93,7 +93,8 @@ export const useIsCatalogComplete = (): boolean => useCatalogView().complete
 /** The song catalog under the selected game version, from `useCatalogDocument` */
 export const useSongCatalog = (): SongCatalog => {
   const version = useAppContextDXDataVersion()
-  return getSongCatalog(useCatalogDocument(), version)
+  const { region } = useAppContext()
+  return getSongCatalog(useCatalogDocument(), version, region)
 }
 
 /** The complete catalog document, or null until it has loaded */
@@ -105,12 +106,14 @@ export const useCompleteCatalogDocument = (): SongCatalogDocument | null => {
 /** The complete song catalog under the selected game version, or null until it has loaded */
 export const useCompleteSongCatalog = (): SongCatalog | null => {
   const version = useAppContextDXDataVersion()
+  const { region } = useAppContext()
   const document = useCompleteCatalogDocument()
-  return document ? getSongCatalog(document, version) : null
+  return document ? getSongCatalog(document, version, region) : null
 }
 
 /** For event handlers (imports and the like): resolves to the complete song catalog, waiting for it if needed */
 export const useSongCatalogLoader = (): (() => Promise<SongCatalog>) => {
   const version = useAppContextDXDataVersion()
-  return useCallback(async () => getSongCatalog(await getCatalogDocument(), version), [version])
+  const { region } = useAppContext()
+  return useCallback(async () => getSongCatalog(await getCatalogDocument(), version, region), [version, region])
 }

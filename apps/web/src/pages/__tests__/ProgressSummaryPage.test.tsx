@@ -16,6 +16,7 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 
 vi.mock('@/models/context/useAppContext', () => ({
+  useAppContext: () => ({ region: 'jp' }),
   useAppContextDXDataVersion: () => 'MAGiCAL',
 }))
 
