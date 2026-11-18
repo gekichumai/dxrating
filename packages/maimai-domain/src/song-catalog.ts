@@ -1,6 +1,8 @@
 import { TypeEnum, type Song, type SongCatalogDocument, type VersionEnum } from '@gekichumai/dxdata'
+import { LATEST_REGION_VERSIONS } from './region-versions.ts'
 import { isUtageType } from './sheet-identity.ts'
 import type {
+  Region,
   LegacySheetIdentity,
   LegacySongIdMap,
   ProviderSheetReference,
@@ -24,31 +26,46 @@ export interface SongCatalog {
   resolveReference: (reference: ProviderSheetReference) => VersionedSheet | null
 }
 
-export function buildSongCatalog(source: SongCatalogSource, version: VersionEnum): SongCatalog {
+/**
+ * The server whose `serverOverrides` replace the sheets' level and internal level in a catalog, or null. Only CN's
+ * current version: CN mixes the internal levels of several game versions, so the catalog carries CN's own values
+ * (from LXNS) where no version's value is right. An older CN version keeps the multiver values.
+ */
+export function overrideServerOf(version: VersionEnum, region: Region | undefined): 'cn' | null {
+  return region === 'cn' && version === LATEST_REGION_VERSIONS.cn ? 'cn' : null
+}
+
+export function buildSongCatalog(source: SongCatalogSource, version: VersionEnum, region?: Region): SongCatalog {
   const latestReleaseDateByVersion = buildLatestReleaseDateByVersion(source)
+  const server = overrideServerOf(version, region)
   // Catalogs are cached and shared by every caller, so their sheets are frozen. Shallowly: the nested values are the
   // document's own, and deep-freezing every sheet was a measurable share of the SSR worker's cold start.
   const sheets = Object.freeze(
     source.songs.flatMap((song) =>
-      projectSong(song, version, latestReleaseDateByVersion).map((sheet) => Object.freeze(sheet)),
+      projectSong(song, version, latestReleaseDateByVersion, server).map((sheet) => Object.freeze(sheet)),
     ),
   )
   return createSongCatalog(version, source.songs, sheets)
 }
 
-const catalogCache = new WeakMap<SongCatalogSource, Map<VersionEnum, SongCatalog>>()
+const catalogCache = new WeakMap<SongCatalogSource, Map<string, SongCatalog>>()
 
-/** The song catalog of a document under a version, built once per document and version */
-export function getSongCatalog(source: SongCatalogSource, version: VersionEnum): SongCatalog {
+/**
+ * The song catalog of a document under a version, built once per document, version and override server. Pass the
+ * region where it decides the internal levels (ratings, sheet lists): CN's current version uses CN's own values.
+ */
+export function getSongCatalog(source: SongCatalogSource, version: VersionEnum, region?: Region): SongCatalog {
   let byVersion = catalogCache.get(source)
   if (!byVersion) {
     byVersion = new Map()
     catalogCache.set(source, byVersion)
   }
-  let catalog = byVersion.get(version)
+  const server = overrideServerOf(version, region)
+  const key = server ? `${version}\u0000${server}` : version
+  let catalog = byVersion.get(key)
   if (!catalog) {
-    catalog = buildSongCatalog(source, version)
-    byVersion.set(version, catalog)
+    catalog = buildSongCatalog(source, version, region)
+    byVersion.set(key, catalog)
   }
   return catalog
 }
@@ -179,6 +196,7 @@ function projectSong(
   song: Song,
   version: VersionEnum,
   latestReleaseDateByVersion: ReadonlyMap<string, string>,
+  server: 'cn' | null,
 ): VersionedSheet[] {
   // Copy the song's own fields once; each sheet adds its own, without the song's `sheets` (a sheet listing every
   // sibling made the catalog quadratic in size).
@@ -186,6 +204,7 @@ function projectSong(
   return song.sheets.map((sheet) => {
     const identity = { songId, type: sheet.type, difficulty: sheet.difficulty as SheetDifficulty } as SheetIdentity
     const isTypeUtage = isUtageType(sheet.type)
+    const override = server ? sheet.serverOverrides?.[server] : undefined
 
     return {
       ...songFields,
@@ -195,7 +214,9 @@ function projectSong(
       isTypeUtage,
       isRatingEligible: !isTypeUtage,
       releaseDateTimestamp: resolveReleaseDateTimestamp(sheet.releaseDate, sheet.version, latestReleaseDateByVersion),
-      internalLevelValue: sheet.multiverInternalLevelValue?.[version] ?? sheet.internalLevelValue,
+      level: override?.level ?? sheet.level,
+      internalLevelValue:
+        override?.levelValue ?? sheet.multiverInternalLevelValue?.[version] ?? sheet.internalLevelValue,
     }
   })
 }

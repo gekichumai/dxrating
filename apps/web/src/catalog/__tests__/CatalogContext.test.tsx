@@ -13,6 +13,7 @@ import {
 import { setLoadedCatalogDocumentForTests } from '../clientCatalog'
 
 vi.mock('@/models/context/useAppContext', () => ({
+  useAppContext: () => ({ region: 'jp' }),
   useAppContextDXDataVersion: () => 'MAGiCAL',
 }))
 
