@@ -8,7 +8,9 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # postgres:18+ stores data in a major-version subdirectory and rejects a
+      # volume mounted directly at the legacy /var/lib/postgresql/data path.
+      - pgdata:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 2s

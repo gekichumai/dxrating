@@ -68,6 +68,10 @@ src/
 - `GET /announcements` — Current and upcoming global announcements (every language and target; clients filter)
 - `GET /tags` — List tags, groups, and song associations
 - `POST /tags/attach` — Attach tag to song sheet (auth required)
+- `GET /tags/sheet` — List one sheet's tag associations with vote breakdowns, including buried ones
+- `POST /tags/vote` — Cast or change a vote on a tag-sheet association (auth required)
+- `GET /tags/user-votes` — Get the caller's own votes for a set of associations (auth required)
+- `POST /tags/detach` — Remove an association within an hour of creating it (auth required)
 - `POST /comments` — Create comment (auth required)
 - `GET /comments` — List comments for song sheet
 - `GET /aliases` — List song aliases
@@ -188,7 +192,7 @@ node dist/flag-set.js cloud_save owner@example.com off   # in the production ima
 
 ### Backup gate and rollback
 
-The cloud save migrations (`*_feature_flags`, `*_cloud_save`) only add tables
+The cloud save migrations (`*_feature_flags`, `*_cloud_save`) and `*_tag_song_votes` only add tables
 and indexes, and each folder carries a hand-written `down.sql` that the
 Drizzle migrator never reads. CI runs up -> every `down.sql` newest first ->
 up (`pnpm test:migration-roundtrip`).

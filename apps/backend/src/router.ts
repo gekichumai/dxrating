@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/node'
 import { ORPCError, implement } from '@orpc/server'
+import { TAG_SONG_HIDDEN_SCORE_THRESHOLD } from '@gekichumai/api-contract'
 import { appContract } from './contract'
 import { Database } from './db/index'
 import { Clock, Data, Duration, Effect, Schema, Semaphore } from 'effect'
@@ -13,6 +14,7 @@ import {
   tags,
   tagGroups,
   tagSongs,
+  tagSongVotes,
   comments,
   commentReports,
   userBlocks,
@@ -83,6 +85,7 @@ type TagsListResult = {
     sheet_type: string
     sheet_difficulty: string
     tag_id: number
+    score: number
   }>
 }
 
@@ -104,6 +107,119 @@ type TrendingCacheResult = {
 }
 
 const os = implement(appContract).$context<ApiContext>()
+
+/** Window during which the creator of a tag-sheet association may remove it. */
+const TAG_SONG_DETACH_WINDOW_MS = 60 * 60 * 1000
+
+const tagSongScore = sql<number>`coalesce(sum(${tagSongVotes.value}), 0)::int`
+const tagSongUpvotes = sql<number>`count(*) filter (where ${tagSongVotes.value} = 1)::int`
+const tagSongDownvotes = sql<number>`count(*) filter (where ${tagSongVotes.value} = -1)::int`
+
+type TagSongRow = typeof tagSongs.$inferSelect
+
+/**
+ * A legacy song ID rename can split one tag-sheet association across several
+ * tag_songs rows. Every row for the same tag on the same sheet is treated as
+ * one association, identified by its oldest (canonical) row.
+ */
+type TagSongGroup = { canonical: TagSongRow; rows: TagSongRow[]; ids: number[] }
+
+const findTagSongGroups = Effect.fn('Tags.findGroups')(function* (tagSongIds: readonly number[]) {
+  const database = yield* Database
+  const catalogIdentities = yield* CatalogIdentities
+  const groups = new Map<number, TagSongGroup>()
+  if (tagSongIds.length === 0) return groups
+
+  const requested = yield* database.query('Tags.findRequested', (db) =>
+    db
+      .select()
+      .from(tagSongs)
+      .where(inArray(tagSongs.id, [...tagSongIds])),
+  )
+  const bySheet = new Map<string, TagSongRow[]>()
+  for (const row of requested) {
+    const key = JSON.stringify([row.song_id, row.sheet_type, row.sheet_difficulty])
+    bySheet.set(key, [...(bySheet.get(key) ?? []), row])
+  }
+
+  for (const rows of bySheet.values()) {
+    const identity = yield* withCatalogIdentityErrors(
+      catalogIdentities.resolveSheetInput({
+        songId: rows[0].song_id,
+        sheetType: rows[0].sheet_type,
+        sheetDifficulty: rows[0].sheet_difficulty,
+      }),
+    )
+    const siblings = yield* database.query('Tags.findSiblings', (db) =>
+      db
+        .select()
+        .from(tagSongs)
+        .where(
+          and(
+            inArray(tagSongs.song_id, identity.legacySongIds),
+            eq(tagSongs.sheet_type, identity.sheetType),
+            eq(tagSongs.sheet_difficulty, identity.sheetDifficulty),
+            inArray(
+              tagSongs.tag_id,
+              rows.map((row) => row.tag_id),
+            ),
+          ),
+        )
+        .orderBy(tagSongs.id),
+    )
+
+    for (const row of rows) {
+      const members = siblings.filter((sibling) => sibling.tag_id === row.tag_id)
+      const groupRows = members.length > 0 ? members : [row]
+      groups.set(row.id, { canonical: groupRows[0], rows: groupRows, ids: groupRows.map((member) => member.id) })
+    }
+  }
+  return groups
+})
+
+const findTagSongGroup = (tagSongId: number) =>
+  findTagSongGroups([tagSongId]).pipe(Effect.map((groups) => groups.get(tagSongId)))
+
+const readTagSongVoteBreakdown = Effect.fn('Tags.readVoteBreakdown')(function* (group: TagSongGroup, userId: string) {
+  const database = yield* Database
+  const [breakdown] = yield* database.query('Tags.voteBreakdown', (db) =>
+    db
+      .select({
+        upvotes: tagSongUpvotes,
+        downvotes: tagSongDownvotes,
+        score: tagSongScore,
+      })
+      .from(tagSongVotes)
+      .where(inArray(tagSongVotes.tag_song_id, group.ids)),
+  )
+
+  const [userVote] = yield* database.query('Tags.userVote', (db) =>
+    db
+      .select({ value: tagSongVotes.value })
+      .from(tagSongVotes)
+      .where(and(inArray(tagSongVotes.tag_song_id, group.ids), eq(tagSongVotes.user_id, userId))),
+  )
+
+  return {
+    tagSongId: group.canonical.id,
+    upvotes: breakdown?.upvotes ?? 0,
+    downvotes: breakdown?.downvotes ?? 0,
+    score: breakdown?.score ?? 0,
+    userVote: userVote?.value ?? null,
+  }
+})
+
+// Scores of rows collapsed into one association add up: votes are kept to one
+// per user per association (see tags.vote), so no voter is counted twice.
+const sumTagSongScores = <T extends { score: number }>(kept: T, duplicate: T): T => ({
+  ...kept,
+  score: kept.score + duplicate.score,
+})
+
+// Quality gate: associations the community has buried never reach the global
+// list, so filters and chips derived from it stay clean. It is applied only
+// after collapsing, so a buried row cannot hide a live sibling or vice versa.
+const isTagSongVisible = (tagSong: { score: number }) => tagSong.score > TAG_SONG_HIDDEN_SCORE_THRESHOLD
 
 const tagsHandler = {
   list: os.tags.list.handler(
@@ -147,8 +263,12 @@ const tagsHandler = {
                   sheet_type: tagSongs.sheet_type,
                   sheet_difficulty: tagSongs.sheet_difficulty,
                   tag_id: tagSongs.tag_id,
+                  score: tagSongScore,
                 })
-                .from(tagSongs),
+                .from(tagSongs)
+                .leftJoin(tagSongVotes, eq(tagSongVotes.tag_song_id, tagSongs.id))
+                .groupBy(tagSongs.id)
+                .orderBy(tagSongs.id),
             ),
           ],
           { concurrency: 'unbounded' },
@@ -162,11 +282,19 @@ const tagsHandler = {
         yield* cache.set('tags:list', result)
       }
 
+      // The cache holds raw per-row scores; collapsing and gating happen per
+      // request so they always use the current catalog snapshot.
+      const collapsed = yield* withCatalogIdentityErrors(
+        catalogIdentities.collapseLegacyTagSongs(result.tagSongs, sumTagSongScores),
+      )
+
       if (input?.idScheme === 'public') {
-        const tagSongs = yield* withCatalogIdentityErrors(catalogIdentities.translateTagSongsToPublic(result.tagSongs))
-        return { ...result, tagSongs }
+        const tagSongs = yield* withCatalogIdentityErrors(
+          catalogIdentities.translateTagSongsToPublic(collapsed, sumTagSongScores),
+        )
+        return { ...result, tagSongs: tagSongs.filter(isTagSongVisible) }
       }
-      return result
+      return { ...result, tagSongs: collapsed.filter(isTagSongVisible) }
     }),
   ),
   attach: os.tags.attach.handler(
@@ -179,41 +307,221 @@ const tagsHandler = {
 
       const identity = yield* withCatalogIdentityErrors(catalogIdentities.resolveSheetInput(input))
 
-      const existing = yield* database.query('Tags.findAttachment', (db) =>
+      // tag_songs has no unique key over an association (legacy renames can split
+      // one across rows), so concurrent attaches are serialised per sheet and tag
+      // with a transaction-scoped advisory lock. The existence check runs under
+      // that lock, so a race can never create a second row and a second creator +1.
+      const lockKey = JSON.stringify([
+        'tags.attach',
+        identity.legacySongId,
+        identity.sheetType,
+        identity.sheetDifficulty,
+        input.tagId,
+      ])
+      const result = yield* database
+        .transaction((tx) =>
+          Effect.gen(function* () {
+            yield* database.query('Tags.attachLock', () =>
+              tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`),
+            )
+            const existing = yield* database.query('Tags.findAttachment', () =>
+              tx
+                .select({ id: tagSongs.id })
+                .from(tagSongs)
+                .where(
+                  and(
+                    inArray(tagSongs.song_id, identity.legacySongIds),
+                    eq(tagSongs.sheet_type, identity.sheetType),
+                    eq(tagSongs.sheet_difficulty, identity.sheetDifficulty),
+                    eq(tagSongs.tag_id, input.tagId),
+                  ),
+                )
+                .orderBy(tagSongs.id)
+                .limit(1),
+            )
+            if (existing.length > 0) return { id: existing[0].id, created: false }
+
+            const [inserted] = yield* database.query('Tags.attach', () =>
+              tx
+                .insert(tagSongs)
+                .values({
+                  song_id: identity.legacySongId,
+                  sheet_type: identity.sheetType,
+                  sheet_difficulty: identity.sheetDifficulty,
+                  tag_id: input.tagId,
+                  created_by: user.id,
+                })
+                .returning({ id: tagSongs.id }),
+            )
+            // Attaching a tag is itself an endorsement, so the creator starts it at +1.
+            yield* database.query('Tags.attachCreatorVote', () =>
+              tx
+                .insert(tagSongVotes)
+                .values({ tag_song_id: inserted.id, user_id: user.id, value: 1 })
+                .onConflictDoNothing(),
+            )
+            return { id: inserted.id, created: true }
+          }),
+        )
+        .pipe(
+          Effect.tap(({ created }) => (created ? cache.delete('tags:list') : Effect.void)),
+          Effect.uninterruptible,
+        )
+
+      return { id: result.id }
+    }),
+  ),
+  sheetTags: os.tags.sheetTags.handler(
+    handlerGen(function* ({ input }) {
+      const database = yield* Database
+      const catalogIdentities = yield* CatalogIdentities
+      const identity = yield* withCatalogIdentityErrors(catalogIdentities.resolveSheetInput(input))
+
+      // Grouped by tag rather than by row, so an association split across legacy
+      // IDs by a rename surfaces once, under its canonical (oldest) row.
+      const rows = yield* database.query('Tags.sheetTags', (db) =>
         db
-          .select()
+          .select({
+            id: sql<number>`min(${tagSongs.id})`.mapWith(tagSongs.id),
+            tag_id: tagSongs.tag_id,
+            created_at: sql<Date>`(array_agg(${tagSongs.created_at} order by ${tagSongs.id}))[1]`.mapWith(
+              tagSongs.created_at,
+            ),
+            created_by: sql<string>`(array_agg(${tagSongs.created_by} order by ${tagSongs.id}))[1]`,
+            upvotes: tagSongUpvotes,
+            downvotes: tagSongDownvotes,
+            score: tagSongScore,
+          })
           .from(tagSongs)
+          .leftJoin(tagSongVotes, eq(tagSongVotes.tag_song_id, tagSongs.id))
           .where(
             and(
               inArray(tagSongs.song_id, identity.legacySongIds),
               eq(tagSongs.sheet_type, identity.sheetType),
               eq(tagSongs.sheet_difficulty, identity.sheetDifficulty),
-              eq(tagSongs.tag_id, input.tagId),
             ),
-          ),
+          )
+          .groupBy(tagSongs.tag_id)
+          .orderBy(sql`min(${tagSongs.id})`),
       )
 
-      if (existing.length > 0) return { id: existing[0].id }
+      // Unlike tags.list this endpoint returns buried associations too, so the
+      // sheet view can offer them behind a "hidden tags" disclosure.
+      return rows.map((row) => ({
+        ...row,
+        song_id: input.songId,
+        sheet_id: input.sheetId,
+        sheet_type: input.sheetType,
+        sheet_difficulty: input.sheetDifficulty,
+      }))
+    }),
+  ),
+  vote: os.tags.vote.handler(
+    handlerGen(function* ({ input, context }) {
+      const database = yield* Database
+      const cache = yield* ApplicationCache
+      const user = context.user
+      if (!user) return yield* new UnauthorizedError()
 
-      const res = yield* database
-        .query('Tags.attach', (db) =>
-          db
-            .insert(tagSongs)
-            .values({
-              song_id: identity.legacySongId,
-              sheet_type: identity.sheetType,
-              sheet_difficulty: identity.sheetDifficulty,
-              tag_id: input.tagId,
-              created_by: user.id,
-            })
-            .returning({ id: tagSongs.id }),
+      const group = yield* findTagSongGroup(input.tagSongId)
+      if (!group) return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Tag association not found' }))
+
+      // Votes always land on the canonical row, and any the user left on sibling
+      // rows are dropped, keeping one vote per user per association.
+      const siblingIds = group.ids.filter((id) => id !== group.canonical.id)
+      yield* database
+        .transaction((tx) =>
+          Effect.gen(function* () {
+            if (siblingIds.length > 0) {
+              yield* database.query('Tags.dropSiblingVotes', () =>
+                tx
+                  .delete(tagSongVotes)
+                  .where(and(eq(tagSongVotes.user_id, user.id), inArray(tagSongVotes.tag_song_id, siblingIds))),
+              )
+            }
+            yield* database.query('Tags.vote', () =>
+              tx
+                .insert(tagSongVotes)
+                .values({ tag_song_id: group.canonical.id, user_id: user.id, value: input.value })
+                .onConflictDoUpdate({
+                  target: [tagSongVotes.tag_song_id, tagSongVotes.user_id],
+                  set: { value: input.value, updated_at: sql`now()` },
+                }),
+            )
+          }),
         )
+        .pipe(
+          // A vote can push an association across the visibility threshold.
+          Effect.tap(() => cache.delete('tags:list')),
+          Effect.uninterruptible,
+        )
+
+      return yield* readTagSongVoteBreakdown(group, user.id)
+    }),
+  ),
+  userVotes: os.tags.userVotes.handler(
+    handlerGen(function* ({ input, context }) {
+      const database = yield* Database
+      const user = context.user
+      if (!user) return yield* new UnauthorizedError()
+
+      const groups = yield* findTagSongGroups(input.tagSongIds)
+      const groupIds = [...groups.values()].flatMap((group) => group.ids)
+      if (groupIds.length === 0) return {}
+
+      const votes = yield* database.query('Tags.userVotes', (db) =>
+        db
+          .select({ tag_song_id: tagSongVotes.tag_song_id, value: tagSongVotes.value })
+          .from(tagSongVotes)
+          .where(and(eq(tagSongVotes.user_id, user.id), inArray(tagSongVotes.tag_song_id, groupIds)))
+          .orderBy(desc(tagSongVotes.id)),
+      )
+
+      // Keyed by the id the caller asked about; a vote on any row of that
+      // association counts, with the most recent winning.
+      const result: Record<string, number> = {}
+      for (const [requestedId, group] of groups) {
+        const vote = votes.find((candidate) => group.ids.includes(candidate.tag_song_id))
+        if (vote) result[String(requestedId)] = vote.value
+      }
+      return result
+    }),
+  ),
+  detach: os.tags.detach.handler(
+    handlerGen(function* ({ input, context }) {
+      const database = yield* Database
+      const cache = yield* ApplicationCache
+      const user = context.user
+      if (!user) return yield* new UnauthorizedError()
+
+      const group = yield* findTagSongGroup(input.tagSongId)
+      if (!group) return yield* Effect.fail(new ORPCError('NOT_FOUND', { message: 'Tag association not found' }))
+      // Removing an association removes every row it spans, so the caller must
+      // have created all of them; nobody can take down someone else's row.
+      if (group.rows.some((row) => row.created_by !== user.id)) {
+        return yield* Effect.fail(
+          new ORPCError('FORBIDDEN', { message: 'Only the creator of a tag association may remove it' }),
+        )
+      }
+      // Rows are ordered oldest first, so the canonical row bounds the window.
+      const now = yield* Clock.currentTimeMillis
+      if (now - group.canonical.created_at.getTime() > TAG_SONG_DETACH_WINDOW_MS) {
+        return yield* Effect.fail(
+          new ORPCError('FORBIDDEN', {
+            message: 'Tag associations can only be removed within an hour of being created',
+          }),
+        )
+      }
+
+      // Votes are removed by the tag_song_votes foreign key cascade.
+      yield* database
+        .query('Tags.detach', (db) => db.delete(tagSongs).where(inArray(tagSongs.id, group.ids)))
         .pipe(
           Effect.tap(() => cache.delete('tags:list')),
           Effect.uninterruptible,
         )
 
-      return res[0]
+      return { success: true }
     }),
   ),
 }

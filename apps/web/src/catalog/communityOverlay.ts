@@ -44,6 +44,9 @@ type Alias = CommunityLists['aliases'][number]
 // What the viewer added in this page session. The shared overlay comes through the edge cache, which can take a few
 // minutes to include a new write, so every load adds these: a reload never takes away what the viewer just added
 const attachedTags: TagSong[] = []
+// This page session's fresh per-sheet reads after a vote, removal or attachment, keyed by sheet. Every load takes a
+// sheet's associations from here, so a reload never brings back one the viewer removed or buried
+const sheetTagSongs = new Map<string, TagSong[]>()
 const createdAliases: Alias[] = []
 
 const sameTagSong = (a: TagSong, b: TagSong) =>
@@ -62,6 +65,19 @@ const withAdded = <T>(list: T[], added: readonly T[], same: (a: T, b: T) => bool
 export const rememberAttachedTag = (tagSong: TagSong) => {
   if (!attachedTags.some((existing) => sameTagSong(existing, tagSong))) attachedTags.push(tagSong)
 }
+
+type SheetRef = Pick<TagSong, 'song_id' | 'sheet_type' | 'sheet_difficulty'>
+const sheetKey = (sheet: SheetRef) => JSON.stringify([sheet.song_id, sheet.sheet_type, sheet.sheet_difficulty])
+
+/** Replaces a sheet's tag associations, in every later load of the lists, with the visible ones of a fresh read */
+export const rememberSheetTagSongs = (sheet: SheetRef, tagSongs: readonly TagSong[]) => {
+  sheetTagSongs.set(sheetKey(sheet), [...tagSongs])
+}
+
+const withSheetTagSongs = (list: TagSong[]) =>
+  sheetTagSongs.size === 0
+    ? list
+    : [...list.filter((tagSong) => !sheetTagSongs.has(sheetKey(tagSong))), ...[...sheetTagSongs.values()].flat()]
 
 /** Adds an alias the viewer created to every later load of the lists */
 export const rememberCreatedAlias = (alias: Alias) => {
@@ -90,7 +106,7 @@ export async function loadCommunityLists(): Promise<CommunityLists & { catalogUp
   const lists = fromV2Community(community, catalog)
   return {
     ...lists,
-    tagSongs: withAdded(lists.tagSongs, attachedTags, sameTagSong),
+    tagSongs: withSheetTagSongs(withAdded(lists.tagSongs, attachedTags, sameTagSong)),
     aliases: withAdded(lists.aliases, createdAliases, sameAlias),
     catalogUpdatedAt: catalog.updatedAt,
   }
@@ -137,5 +153,6 @@ export const useRefreshOnCatalogChange = (data: object | undefined, revalidate: 
 export function resetCommunityListsForTests() {
   shared = undefined
   attachedTags.length = 0
+  sheetTagSongs.clear()
   createdAliases.length = 0
 }
