@@ -59,6 +59,12 @@ export const ISSUER_FETCH_MAX_BYTES = 64 * 1024
 /** At most this many keys in an issuer's JWKS are looked at */
 const MAX_JWKS_KEYS = 20
 const MAX_CACHED_ISSUERS = 100
+/**
+ * A domain whose TXT lookup failed, or an issuer whose metadata or keys couldn't be loaded, isn't tried again for this
+ * long: anyone can mint a token naming their own domain, so a slow or broken one must not cost a lookup per request.
+ */
+export const FAILED_LOOKUP_TTL_MS = 60 * 1000
+const MAX_FAILED_LOOKUPS = 1000
 /** The whole token, as the form posts it; Gmail's are about 1 KB */
 export const MAX_TOKEN_LENGTH = 8 * 1024
 
@@ -141,10 +147,11 @@ export interface EvpVerified {
  */
 export interface EvpTransport {
   /** TXT records at a name: each record's strings, as `dns.promises.resolveTxt` gives them */
-  readonly resolveTxt: (name: string) => Promise<string[][]>
+  readonly resolveTxt: (name: string, signal?: AbortSignal) => Promise<string[][]>
   /** Every address a host name resolves to (for refusing to fetch from private networks) */
-  readonly lookup: (hostname: string) => Promise<readonly string[]>
-  readonly fetch: (url: string, init: RequestInit) => Promise<Response>
+  readonly lookup: (hostname: string, signal?: AbortSignal) => Promise<readonly string[]>
+  /** GETs `url` from one of `addresses`, the host's addresses the verifier checked, and no other */
+  readonly fetch: (url: string, init: RequestInit, addresses: readonly string[]) => Promise<Response>
 }
 
 class TransportFailure extends Data.TaggedError('TransportFailure')<{ readonly cause: unknown }> {}
@@ -320,6 +327,24 @@ export interface EvpVerifier {
 
 export const makeEvpVerifier = (transport: EvpTransport): EvpVerifier => {
   const cache = new Map<string, IssuerKeys>()
+  /** `txt:<domain>` or `issuer:<issuer>` → when the failure was seen, and why */
+  const failures = new Map<string, { readonly at: number; readonly reason: EvpRejectionReason }>()
+
+  const recentFailure = (key: string, now: number) => {
+    const failure = failures.get(key)
+    if (!failure) return undefined
+    if (now - failure.at < FAILED_LOOKUP_TTL_MS) return failure.reason
+    failures.delete(key)
+    return undefined
+  }
+
+  const rememberFailure = (key: string, reason: EvpRejectionReason) =>
+    Effect.gen(function* () {
+      const at = yield* Clock.currentTimeMillis
+      failures.delete(key)
+      failures.set(key, { at, reason })
+      if (failures.size > MAX_FAILED_LOOKUPS) failures.delete(failures.keys().next().value!)
+    })
 
   /** GET an issuer's JSON: https on the default port only, public addresses only, no redirects, size and time limits */
   const fetchJson = (url: string) =>
@@ -332,16 +357,16 @@ export const makeEvpVerifier = (transport: EvpTransport): EvpVerifier => {
       if (isIP(hostname.replace(/^\[|\]$/g, '')) !== 0) return yield* reject('issuer_metadata_invalid')
       const body = yield* Effect.tryPromise({
         try: async (signal) => {
-          const addresses = await transport.lookup(hostname)
+          const deadline = AbortSignal.any([signal, AbortSignal.timeout(ISSUER_FETCH_TIMEOUT_MS)])
+          const addresses = await transport.lookup(hostname, deadline)
           if (addresses.length === 0 || !addresses.every(isPublicAddress)) {
             throw new Error('Issuer host does not resolve to public addresses only')
           }
-          const response = await transport.fetch(parsed.toString(), {
-            method: 'GET',
-            redirect: 'manual',
-            headers: { Accept: 'application/json' },
-            signal: AbortSignal.any([signal, AbortSignal.timeout(ISSUER_FETCH_TIMEOUT_MS)]),
-          })
+          const response = await transport.fetch(
+            parsed.toString(),
+            { method: 'GET', redirect: 'manual', headers: { Accept: 'application/json' }, signal: deadline },
+            addresses,
+          )
           // A redirect (`manual` answers 3xx, or an opaque redirect with status 0) is not followed
           if (response.status !== 200) throw new Error(`Issuer answered ${response.status}`)
           const declared = Number(response.headers.get('content-length') ?? '0')
@@ -405,7 +430,11 @@ export const makeEvpVerifier = (transport: EvpTransport): EvpVerifier => {
       if (cached && now - cached.fetchedAt < ISSUER_CACHE_TTL_MS) {
         if (!refresh || now - cached.fetchedAt < JWKS_REFRESH_COOLDOWN_MS) return cached
       }
-      return yield* loadIssuerKeys(issuer)
+      const failed = recentFailure(`issuer:${issuer}`, now)
+      if (failed) return yield* reject(failed)
+      return yield* loadIssuerKeys(issuer).pipe(
+        Effect.tapError(({ reason }) => rememberFailure(`issuer:${issuer}`, reason)),
+      )
     })
 
   /**
@@ -468,7 +497,11 @@ export const makeEvpVerifier = (transport: EvpTransport): EvpVerifier => {
       const nowMs = yield* Clock.currentTimeMillis
       const nowSeconds = Math.floor(nowMs / 1000)
 
-      // Everything that needs no network first: a forged or replayed token costs us nothing
+      // Everything that needs no network first. This turns away replayed and stale tokens, tokens for another site or
+      // form, and broken ones before any lookup. It is no defence against a deliberate forgery: the KB-JWT is checked
+      // against `cnf.jwk` from the EVT, which isn't verified yet, so anyone can mint a token that passes all of it and
+      // names their own domain. What bounds the lookups that follow is the rate limit, the resolver's timeouts, the
+      // public-addresses-only fetch, and the failed-lookup cache (FAILED_LOOKUP_TTL_MS).
 
       // WICG §4: the verified address must equal the submitted one, case aside
       if (evtClaims.email.toLowerCase() !== input.email.trim().toLowerCase()) return yield* reject('email_mismatch')
@@ -494,10 +527,15 @@ export const makeEvpVerifier = (transport: EvpTransport): EvpVerifier => {
       yield* checkTimes(evtClaims, nowSeconds)
       const domain = emailDomain(evtClaims.email)
       if (!domain) return yield* reject('malformed')
+      const txtFailure = recentFailure(`txt:${domain}`, nowMs)
+      if (txtFailure) return yield* reject(txtFailure)
       const records = yield* Effect.tryPromise({
-        try: () => transport.resolveTxt(`_email-verification.${domain}`),
+        try: (signal) => transport.resolveTxt(`_email-verification.${domain}`, signal),
         catch: (cause) => new TransportFailure({ cause }),
-      }).pipe(Effect.mapError(() => new EvpRejected({ reason: 'issuer_not_found' })))
+      }).pipe(
+        Effect.mapError(() => new EvpRejected({ reason: 'issuer_not_found' })),
+        Effect.tapError(({ reason }) => rememberFailure(`txt:${domain}`, reason)),
+      )
       const issuer = issuerFromTxtRecords(records)
       if (!issuer) return yield* reject('issuer_not_found')
       if (evtClaims.iss !== issuer) return yield* reject('issuer_mismatch')

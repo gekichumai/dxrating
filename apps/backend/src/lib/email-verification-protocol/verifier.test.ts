@@ -140,8 +140,55 @@ describe('Email Verification Protocol verifier', () => {
   it('rejects an address whose domain names no issuer, or more than one', async () => {
     issuer.dns.clear()
     expect(await mintAndVerify()).toEqual({ ok: false, reason: 'issuer_not_found' })
+    verifier = makeEvpVerifier(issuer.transport)
     issuer.dns.set(`_email-verification.${FIXTURE_EMAIL_DOMAIN}`, [['iss=issuer.example'], ['iss=issuer.example']])
     expect(await mintAndVerify()).toEqual({ ok: false, reason: 'issuer_not_found' })
+  })
+
+  it('does not look a failed domain or issuer up again for a while', async () => {
+    let txtLookups = 0
+    verifier = makeEvpVerifier({
+      ...issuer.transport,
+      resolveTxt: (name, signal) => {
+        txtLookups += 1
+        return issuer.transport.resolveTxt(name, signal)
+      },
+    })
+    issuer.dns.clear()
+    expect(await mintAndVerify()).toEqual({ ok: false, reason: 'issuer_not_found' })
+    issuer.reset()
+    expect(await mintAndVerify()).toEqual({ ok: false, reason: 'issuer_not_found' })
+    expect(txtLookups).toBe(1)
+
+    verifier = makeEvpVerifier(issuer.transport)
+    issuer.routes.set(FIXTURE_METADATA_URL, () => new Response('down', { status: 503 }))
+    expect(await mintAndVerify()).toEqual({ ok: false, reason: 'issuer_unreachable' })
+    issuer.reset()
+    expect(await mintAndVerify()).toEqual({ ok: false, reason: 'issuer_unreachable' })
+    expect(issuer.fetched).toEqual([])
+  })
+
+  it('passes the checked addresses on to the fetch, and lets an abort reach the lookups', async () => {
+    const seen: { readonly url: string; readonly addresses: readonly string[] }[] = []
+    const signals: (AbortSignal | undefined)[] = []
+    verifier = makeEvpVerifier({
+      resolveTxt: (name, signal) => {
+        signals.push(signal)
+        return issuer.transport.resolveTxt(name, signal)
+      },
+      lookup: (hostname, signal) => {
+        signals.push(signal)
+        return issuer.transport.lookup(hostname, signal)
+      },
+      fetch: (url, init, addresses) => {
+        seen.push({ url, addresses })
+        return issuer.transport.fetch(url, init, addresses)
+      },
+    })
+    issuer.addresses.set(FIXTURE_ISSUER_HOST, ['93.184.216.34', '2607:f8b0:4005:80b::200e'])
+    expect(await mintAndVerify()).toMatchObject({ ok: true })
+    expect(seen[0]).toEqual({ url: FIXTURE_METADATA_URL, addresses: ['93.184.216.34', '2607:f8b0:4005:80b::200e'] })
+    expect(signals.every((signal) => signal instanceof AbortSignal)).toBe(true)
   })
 
   it('rejects metadata that names another issuer', async () => {

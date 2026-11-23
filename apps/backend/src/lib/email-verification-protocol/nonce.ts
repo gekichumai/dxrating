@@ -1,6 +1,7 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 import { and, eq, lt } from 'drizzle-orm'
 import { Clock, Effect } from 'effect'
+import { databaseErrorTags } from '../../db/errors'
 import type { Database } from '../../db/index'
 import { verification } from '../../db/auth-schema'
 
@@ -72,6 +73,6 @@ export const consumeNonce = Effect.fn('EmailVerificationProtocol.consumeNonce')(
         .delete(verification)
         .where(and(eq(verification.identifier, USED_NONCE_IDENTIFIER), lt(verification.expiresAt, now))),
     )
-    .pipe(Effect.catch((error) => Effect.logWarning('Could not forget expired nonces', error)))
+    .pipe(Effect.catch((error) => Effect.logWarning('Could not forget expired nonces', databaseErrorTags(error))))
   return inserted.length > 0
 })
