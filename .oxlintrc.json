@@ -153,6 +153,28 @@
           }
         ]
       }
+    },
+    {
+      "files": ["apps/**/*.ts", "apps/**/*.tsx"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/backend/src/services/dxdata-openapi.test.ts", "apps/backend/src/services/mcp/server.test.ts"],
+      "rules": {
+        "no-restricted-properties": "off"
+      }
     }
   ],
   "jsPlugins": [

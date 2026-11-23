@@ -13,6 +13,7 @@ export {
   getSongCatalog,
   releaseDateToTimestamp,
   resolveReleaseDateTimestamp,
+  sheetLevelOn,
 } from './src/song-catalog.ts'
 export type { SongCatalog, SongCatalogSource } from './src/song-catalog.ts'
 export * from './src/types.ts'

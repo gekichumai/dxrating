@@ -1,4 +1,5 @@
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
+import { getSongCatalog, LATEST_REGION_VERSIONS, listPlates } from '@gekichumai/maimai-domain'
 import { describe, expect, it } from 'vitest'
 import {
   buildPlateIndex,
@@ -74,12 +75,24 @@ describe('regional plate projection', () => {
   }
 
   it('uses the server level override for the Master grouping and every sheet', () => {
-    // 回レ！雪月花 DX Master: 12+ / 12.7, International override 12 / 12.0
+    // 回レ！雪月花 DX Master: 12+ / 12.7, International override 12 / 12.0, 12.5 on CiRCLE PLUS (International's version)
     const intl = chartSheet('intl', 'kuma-sho', 'dsht_j7kvr7fcz6')
-    expect([intl.chart.level, intl.chart.levelValue]).toEqual(['12', 12])
-    expect([intl.sheet.level, intl.sheet.internalLevelValue]).toEqual(['12', 12])
+    expect([intl.chart.level, intl.chart.levelValue]).toEqual(['12', 12.5])
+    expect([intl.sheet.level, intl.sheet.internalLevelValue]).toEqual(['12', 12.5])
     const jp = chartSheet('jp', 'kuma-sho', 'dsht_j7kvr7fcz6')
     expect([jp.chart.level, jp.chart.levelValue]).toEqual(['12+', 12.7])
+  })
+
+  it.each(['jp', 'intl', 'cn'] as const)("shows every %s sheet at the level of that server's catalog", (region) => {
+    const catalog = getSongCatalog(catalogSnapshot, LATEST_REGION_VERSIONS[region], region)
+    for (const plate of listPlates(region)) {
+      for (const chart of buildPlatePageData(catalogSnapshot, region, plate.id)!.charts) {
+        for (const sheet of chart.sheets) {
+          const { level, internalLevelValue } = catalog.getById(sheet.id)!
+          expect([sheet.id, sheet.level, sheet.internalLevelValue]).toEqual([sheet.id, level, internalLevelValue])
+        }
+      }
+    }
   })
 
   it('overrides non-Master sheets too', () => {
