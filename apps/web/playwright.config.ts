@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 // Runs against a production build served by `vite preview` (build first: `pnpm build`), or against a deployed site
 // with E2E_BASE_URL=https://dxrating.net. Browsing only: no test signs in or writes data.
-const PREVIEW_PORT = 4318
+const PREVIEW_PORT = Number(process.env.E2E_PREVIEW_PORT) || 4318
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${PREVIEW_PORT}`
 
 export default defineConfig({

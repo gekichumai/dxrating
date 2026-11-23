@@ -1,26 +1,7 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
+import { collectPageErrors, expectHydrated } from './hydration'
 
 // Ad-block lists such as EasyPrivacy block every URL containing "sentry". The page must hydrate without the SDK.
-
-/** React's hydration errors (#418, #423, #425 and their development messages) and any uncaught error */
-function collectPageErrors(page: Page) {
-  const errors: string[] = []
-  page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`))
-  page.on('console', (message) => {
-    if (message.type() !== 'error') return
-    const text = message.text()
-    if (/Minified React error #(418|419|421|422|423|425)|hydrat/i.test(text)) errors.push(`console: ${text}`)
-  })
-  return errors
-}
-
-async function expectHydrated(page: Page) {
-  // The version picker opens only once React has attached its handlers (its label is localized)
-  const versionButton = page.locator('button.version-switcher')
-  await expect(versionButton).toHaveAttribute('aria-expanded', 'false')
-  await versionButton.click()
-  await expect(versionButton).toHaveAttribute('aria-expanded', 'true', { timeout: 15_000 })
-}
 
 for (const locale of ['en', 'ja']) {
   test(`hydrates with every *sentry* URL blocked (${locale})`, async ({ page }) => {

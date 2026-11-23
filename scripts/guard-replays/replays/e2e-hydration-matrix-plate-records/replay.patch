@@ -1,0 +1,34 @@
+diff --git a/apps/web/src/models/useUserRecords.ts b/apps/web/src/models/useUserRecords.ts
+index 85a1f587..de4519a4 100644
+--- a/apps/web/src/models/useUserRecords.ts
++++ b/apps/web/src/models/useUserRecords.ts
+@@ -40,7 +40,7 @@ export function useUserRecords(): UserRecords {
+   }, [])
+ 
+   const entries = useMemo(
+-    () => (!mounted ? EMPTY : isDemo ? buildDemoScores(catalog) : storedEntries),
++    () => (isDemo ? buildDemoScores(catalog) : storedEntries),
+     [mounted, isDemo, catalog, storedEntries],
+   )
+ 
+diff --git a/apps/web/src/pages/PlatesPage.tsx b/apps/web/src/pages/PlatesPage.tsx
+index 1435fd9c..e1ed10b0 100644
+--- a/apps/web/src/pages/PlatesPage.tsx
++++ b/apps/web/src/pages/PlatesPage.tsx
+@@ -114,7 +114,6 @@ const usePlateRecords = () => {
+   useEffect(() => setMounted(true), [])
+   const records = useMemo(() => {
+     const map = new Map<string, PlateRecord>()
+-    if (!mounted) return map
+     for (const entry of entries) {
+       const existing = map.get(entry.sheetId)
+       map.set(entry.sheetId, {
+@@ -131,7 +130,7 @@ const usePlateRecords = () => {
+     }
+     return map
+   }, [entries, mounted])
+-  return { records, ready: mounted, hasRecords: mounted && entries.length > 0, isDemo: mounted && isDemo }
++  return { records, ready: mounted, hasRecords: entries.length > 0, isDemo }
+ }
+ 
+ const PlateBreadcrumb: FC<{ leaf?: string; region: PlateRegion }> = ({ leaf, region }) => {

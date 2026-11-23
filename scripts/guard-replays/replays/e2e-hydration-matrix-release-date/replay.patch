@@ -1,0 +1,25 @@
+diff --git a/apps/web/src/components/song/SongSheetContent.tsx b/apps/web/src/components/song/SongSheetContent.tsx
+index 4fe2b153..48a3753b 100644
+--- a/apps/web/src/components/song/SongSheetContent.tsx
++++ b/apps/web/src/components/song/SongSheetContent.tsx
+@@ -326,10 +326,16 @@ const UtageKindBadge: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+ export const SongSheetSummary: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+   const locale = useLocale()
+   const renderedAt = useRenderedAt()
+-  const releaseDateParts = useMemo(
+-    () => (sheet.releaseDate ? formatSheetReleaseDateParts(sheet.releaseDate, locale, renderedAt) : null),
+-    [sheet.releaseDate, locale, renderedAt],
+-  )
++  const releaseDate = new Date(sheet.releaseDateTimestamp)
++  const releaseDateParts = sheet.releaseDate
++    ? {
++        absoluteDate: releaseDate.toLocaleString(locale, { dateStyle: 'medium' }),
++        relativeDate: new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(
++          Math.floor((releaseDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
++          'day',
++        ),
++      }
++    : null
+ 
+   return (
+     <div className="flex flex-col gap-2">
