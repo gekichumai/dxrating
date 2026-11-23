@@ -8,7 +8,8 @@
     "jsx-a11y/click-events-have-key-events": "off",
     "import/no-named-as-default": "off",
     "import/no-named-as-default-member": "off",
-    "import/no-unassigned-import": "off"
+    "import/no-unassigned-import": "off",
+    "workspace/declared-dependency": "error"
   },
   "categories": {
     "correctness": "warn",
@@ -156,6 +157,7 @@
     }
   ],
   "jsPlugins": [
+    "./oxlint-plugins/workspace-deps.mts",
     {
       "name": "gdp-ts",
       "specifier": "@gdp-ts/core/lint/plugin"
