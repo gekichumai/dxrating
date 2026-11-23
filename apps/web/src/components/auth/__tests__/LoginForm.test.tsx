@@ -5,7 +5,8 @@ import { LocaleProvider, useSetLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import { LoginForm } from '../LoginForm'
 
-const { passkeySignIn, emailSignIn, socialSignIn, emailSignUp, addPasskey } = vi.hoisted(() => ({
+const { passkeySignIn, emailSignIn, socialSignIn, emailSignUp, addPasskey, requestPasswordReset } = vi.hoisted(() => ({
+  requestPasswordReset: vi.fn(),
   passkeySignIn: vi.fn(),
   emailSignIn: vi.fn(),
   socialSignIn: vi.fn(),
@@ -16,6 +17,7 @@ const { passkeySignIn, emailSignIn, socialSignIn, emailSignUp, addPasskey } = vi
 vi.mock('@/lib/auth-client', () => ({
   authClient: {
     getLastUsedLoginMethod: () => null,
+    requestPasswordReset,
     signIn: {
       email: emailSignIn,
       passkey: passkeySignIn,
@@ -86,6 +88,38 @@ describe('LoginForm', () => {
     expect(screen.queryByLabelText(/^Password/)).toBeNull()
     // A passkey is the way in a new visitor is offered first
     expect(screen.getByRole('button', { name: 'Sign in with passkey' }).className).toContain('contained')
+  })
+
+  it('mails a password reset link for the address of the second step', async () => {
+    requestPasswordReset.mockResolvedValue({ data: { status: true }, error: null })
+    render(<LoginForm />)
+    await continueWithEmail(' demo@example.com ')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
+    await waitFor(() =>
+      expect(requestPasswordReset).toHaveBeenCalledWith(expect.objectContaining({ email: 'demo@example.com' })),
+    )
+    expect(
+      await screen.findByText("If an account uses demo@example.com, we've emailed it a link to choose a new password."),
+    ).toBeTruthy()
+  })
+
+  it('says when password reset is off', async () => {
+    requestPasswordReset.mockResolvedValue({
+      data: null,
+      error: { code: 'RESET_PASSWORD_DISABLED', message: "Reset password isn't enabled", status: 400 },
+    })
+    render(<LoginForm />)
+    await continueWithEmail()
+    fireEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
+    expect((await screen.findByRole('alert')).textContent).toBe("Password reset by email isn't available right now.")
+  })
+
+  it('offers no password reset while creating an account', async () => {
+    render(<LoginForm />)
+    fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+    await continueWithEmail()
+    expect(screen.queryByRole('button', { name: 'Forgot password?' })).toBeNull()
   })
 
   it('asks for the password on the second step, with the address kept for password managers', async () => {

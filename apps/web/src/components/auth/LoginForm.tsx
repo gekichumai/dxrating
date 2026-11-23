@@ -13,6 +13,7 @@ import IconPasskey from '~icons/material-symbols/passkey'
 import IconArrowLeft from '~icons/mdi/arrow-left'
 import { authClient } from '../../lib/auth-client'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
+import { hasErrorCode } from './authLinks'
 import { PasswordVisibilityAdornment } from './PasswordVisibilityAdornment'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { ParaglideMessage } from '@inlang/paraglide-js-react'
@@ -111,6 +112,9 @@ export const LoginForm = ({
   const [canUsePasskeys, setCanUsePasskeys] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // After "Forgot password?": the address a reset link was asked for
+  const [resetRequestedFor, setResetRequestedFor] = useState<string | null>(null)
+  const [resetPending, setResetPending] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
   const resolvedTheme = useResolvedTheme()
@@ -155,6 +159,40 @@ export const LoginForm = ({
     onSuccess?.()
   }
 
+  /**
+   * Mails a password reset link to the address of the second step. The answer is the same whether or not an account
+   * uses it, so the notice says "if". The reset page (routes/account/reset-password.tsx) takes it from there.
+   */
+  const requestPasswordReset = async () => {
+    if (waitingForTurnstile) {
+      setError(m.auth_form_captchaPending({}, { locale }))
+      return
+    }
+    const address = getValues('email').trim()
+    setResetPending(true)
+    setError(null)
+    setResetRequestedFor(null)
+    try {
+      const { error } = await authClient.requestPasswordReset({
+        email: address,
+        fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
+      })
+      if (error) {
+        if (hasErrorCode(error, 'RESET_PASSWORD_DISABLED')) {
+          setError(m.auth_form_resetUnavailable({}, { locale }))
+          return
+        }
+        throw error
+      }
+      setResetRequestedFor(address)
+    } catch (e: unknown) {
+      fail(e, m.auth_form_errorGeneric({}, { locale }))
+    } finally {
+      setResetPending(false)
+      resetTurnstile()
+    }
+  }
+
   const fail = (e: unknown, fallback: string) => {
     haptic.trigger('error')
     setError(formatErrorMessage(e, fallback))
@@ -166,6 +204,7 @@ export const LoginForm = ({
     if (!supported) setSignUpWith('password')
     setStep('credentials')
     setError(null)
+    setResetRequestedFor(null)
     // Signing in always asks for the password; a new account asks for one only when the visitor chose it
     if (!isSignUp || !supported || signUpWith === 'password') {
       // The field mounts with this render; focus it once it's there
@@ -280,6 +319,7 @@ export const LoginForm = ({
     setIsSignUp(!isSignUp)
     setShowPassword(false)
     setError(null)
+    setResetRequestedFor(null)
     resetTurnstile()
   }
 
@@ -362,6 +402,9 @@ export const LoginForm = ({
         {!isSignUp && <ConditionalPasskey onSuccess={onSuccess} />}
 
         {error && <Alert severity="error">{error}</Alert>}
+        {resetRequestedFor && (
+          <Alert severity="success">{m.auth_form_resetSent({ email: resetRequestedFor }, { locale })}</Alert>
+        )}
 
         {step === 'start' && (
           <>
@@ -467,6 +510,20 @@ export const LoginForm = ({
                   ),
                 }}
               />
+            )}
+
+            {!isSignUp && (
+              <Button
+                type="button"
+                variant="text"
+                size="small"
+                onClick={() => void requestPasswordReset()}
+                disabled={loading || resetPending}
+                aria-busy={resetPending || undefined}
+                className="!-mt-1 !self-end"
+              >
+                {m.auth_form_forgotPassword({}, { locale })}
+              </Button>
             )}
 
             {TURNSTILE_SITE_KEY && (
