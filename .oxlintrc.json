@@ -153,6 +153,85 @@
           }
         ]
       }
+    },
+    {
+      "files": ["packages/api-contract/src/private/**"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "z",
+            "property": "string",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "number",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "int",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "int32",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "uint32",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "int64",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "uint64",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "float32",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "float64",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "bigint",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "coerce",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "iso",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "date",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/api-contract/src/private/storable.ts"],
+      "rules": {
+        "no-restricted-properties": "off"
+      }
     }
   ],
   "jsPlugins": [

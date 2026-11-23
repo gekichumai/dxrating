@@ -1,0 +1,17 @@
+diff --git a/packages/api-contract/src/private/storable.ts b/packages/api-contract/src/private/storable.ts
+index 0775630a..a9c8ab80 100644
+--- a/packages/api-contract/src/private/storable.ts
++++ b/packages/api-contract/src/private/storable.ts
+@@ -20,10 +20,7 @@ export const PgInteger = z.int32()
+ export const PgBigint = z.int()
+ 
+ /** An ISO 8601 timestamp with an offset whose UTC year is 1 to 9999, as `timestamptz` stores it */
+-export const PgTimestamp = z.iso.datetime({ offset: true }).refine((value) => {
+-  const year = new Date(value).getUTCFullYear()
+-  return year >= 1 && year <= 9999
+-}, 'Out of the storable range')
++export const PgTimestamp = z.iso.datetime({ offset: true })
+ 
+ /** `schema`, read from a query string */
+ export const fromQuery = <T extends z.ZodType<number, number>>(schema: T) => z.coerce.number().pipe(schema)
+\ No newline at end of file
