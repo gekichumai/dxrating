@@ -1,14 +1,16 @@
 diff --git a/apps/backend/src/lib/credential-hygiene.ts b/apps/backend/src/lib/credential-hygiene.ts
-index 4dd998ad..99535de9 100644
+index 93d77788..70538e2d 100644
 --- a/apps/backend/src/lib/credential-hygiene.ts
 +++ b/apps/backend/src/lib/credential-hygiene.ts
-@@ -87,10 +87,8 @@ export interface CredentialRoute {
- 
- /** Routes outside the contract whose requests carry credentials; `/*` also matches every path below */
- const DIRECT_CREDENTIAL_ROUTES: ReadonlyArray<CredentialRoute> = [
+@@ -91,12 +91,10 @@ export interface CredentialRoute {
+  * credentials (`src/test/credential-routes.test.ts`).
+  */
+ export const DIRECT_CREDENTIAL_ROUTES: ReadonlyArray<CredentialRoute> = [
 -  { template: '/functions/fetch-net-records/*', kind: 'sega' },
    { template: CLOUD_SAVE_NET_IMPORT_ROUTE.path, kind: 'sega' },
-   { template: '/api/v1/io/import/lxns/oauth_callback', kind: 'secret' },
+   // LXNS: OAuth code and state, and the stored OAuth tokens its handlers use; the whole family, including routes
+   // added later without a `credentials` mark (the OAuth callback is a direct route)
+   { template: '/api/v1/io/import/lxns/*', kind: 'secret' },
 -  { template: '/api/auth/*', kind: 'secret' },
  ]
  

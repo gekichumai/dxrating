@@ -31,6 +31,9 @@ describe('credential hygiene', () => {
       '/api/v1/io/import/lxns/start',
       '/api/v1/io/import/lxns/complete',
       '/api/v1/io/import/lxns/oauth_callback',
+      // the whole LXNS family, as before the routes were derived: a new LXNS route is one without a mark
+      '/api/v1/io/import/lxns',
+      '/api/v1/io/import/lxns/personal',
       '/api/v1/saves/dsav_x/imports/lxns',
       '/api/auth/sign-in/email',
     ]) {
@@ -48,10 +51,20 @@ describe('credential hygiene', () => {
         .input(z.object({ account: z.object({ apiToken: z.string() }).optional() })),
       search: oc.meta(openapi({ method: 'GET', path: '/search' })).input(z.object({ query: z.string() })),
       stored: oc.meta(openapi({ method: 'POST', path: '/stored' }), credentials('sega')),
+      personal: oc.meta(openapi({ method: 'POST', path: '/personal' })).input(z.object({ apiKey: z.string() })),
+      // #501: an OAuth completion outside the LXNS routes, taking the code and state
+      complete: oc
+        .meta(openapi({ method: 'POST', path: '/oauth/complete' }))
+        .input(z.object({ code: z.string(), state: z.string() })),
+      upload: oc
+        .meta(openapi({ method: 'POST', path: '/upload' }))
+        .input(z.object({ idempotencyKey: z.string(), clientProfileKey: z.string() })),
     }
     expect(credentialRoutesOf(contract)).toEqual([
       { template: '/api/v1/login', kind: 'secret' },
       { template: '/api/v1/stored', kind: 'sega' },
+      { template: '/api/v1/personal', kind: 'secret' },
+      { template: '/api/v1/oauth/complete', kind: 'secret' },
     ])
   })
 

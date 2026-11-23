@@ -85,11 +85,17 @@ export interface CredentialRoute {
   readonly kind: CredentialKind
 }
 
-/** Routes outside the contract whose requests carry credentials; `/*` also matches every path below */
-const DIRECT_CREDENTIAL_ROUTES: ReadonlyArray<CredentialRoute> = [
+/**
+ * Routes whose requests carry credentials beyond what the contract derivation finds; `/*` also matches every path
+ * below. Every direct Hono route that takes a body is either here or in the test's list of routes without
+ * credentials (`src/test/credential-routes.test.ts`).
+ */
+export const DIRECT_CREDENTIAL_ROUTES: ReadonlyArray<CredentialRoute> = [
   { template: '/functions/fetch-net-records/*', kind: 'sega' },
   { template: CLOUD_SAVE_NET_IMPORT_ROUTE.path, kind: 'sega' },
-  { template: '/api/v1/io/import/lxns/oauth_callback', kind: 'secret' },
+  // LXNS: OAuth code and state, and the stored OAuth tokens its handlers use; the whole family, including routes
+  // added later without a `credentials` mark (the OAuth callback is a direct route)
+  { template: '/api/v1/io/import/lxns/*', kind: 'secret' },
   { template: '/api/auth/*', kind: 'secret' },
 ]
 
@@ -99,7 +105,9 @@ const isCredentialInputKey = (key: string) => {
     CREDENTIAL_KEYS.has(normalized) ||
     normalized === 'code' ||
     normalized === 'state' ||
-    /(?:token|secret|password)$/.test(normalized)
+    /(?:token|secret|password|passwd|credentials?|(?:api|access|private|secret|signing|session|auth)key)$/.test(
+      normalized,
+    )
   )
 }
 
