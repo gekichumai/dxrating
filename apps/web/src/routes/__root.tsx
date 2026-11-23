@@ -29,6 +29,8 @@ import { NoticeStack } from '@/components/global/NoticeStack'
 import { AppContextProvider } from '@/models/context/AppContext'
 import { RatingCalculatorContextProvider } from '@/models/context/RatingCalculatorContext'
 import { CatalogProvider } from '@/catalog/CatalogContext'
+import { authClient } from '@/lib/auth-client'
+import { resetQueriesOnAccountChange } from '@/lib/query'
 import { loadCatalogMeta } from '@/catalog/catalogSource'
 import { LocaleProvider, LocaleUrlSync, useLocale } from '@/i18n/LocaleProvider'
 import { buildNotFoundSeoMeta, buildRootSeoMeta, resolveRootHeadState, resolveSeoLocale } from '@/utils/seo'
@@ -52,7 +54,7 @@ import '@/pages/legal.css'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: import.meta.env.SSR ? 0 : undefined } } })
 
 const fallbackElement = (
   <div className="flex items-center justify-center h-50% w-full p-6">
@@ -219,6 +221,9 @@ function OAuthErrorHandler() {
 
 function RootComponent() {
   const { locale, renderedAt } = Route.useRouteContext()
+  // After hydration: subscribing starts the session fetch, and the first client render must still see the session
+  // pending, as the server rendered it
+  useEffect(() => resetQueriesOnAccountChange(queryClient, authClient.$store.atoms.session), [])
 
   return (
     <RenderEnvironmentProvider renderedAt={renderedAt}>

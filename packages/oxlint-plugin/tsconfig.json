@@ -5,11 +5,12 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "isolatedModules": true,
+    "allowImportingTsExtensions": true,
     "noEmit": true,
     "declaration": false,
     "declarationMap": false,
     "strict": true,
     "types": ["node"]
   },
-  "include": ["index.ts", "__tests__/**/*.ts"]
+  "include": ["index.ts", "derived-query-keys.ts", "__tests__/**/*.ts"]
 }

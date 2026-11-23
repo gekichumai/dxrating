@@ -6,10 +6,15 @@ import * as path from 'node:path'
 import { serve } from '@hono/node-server'
 import type { ServerType } from '@hono/node-server'
 import { app } from '../app'
-import { pool as appPool } from '../db/index'
-import { shutdownApp } from '../runtime'
+import { Database, pool as appPool } from '../db/index'
+import * as authSchema from '../db/auth-schema'
+import * as schema from '../db/schema'
+import { appRuntime, shutdownApp } from '../runtime'
 import pg from 'pg'
+import { is } from 'drizzle-orm'
 import { readMigrationFiles } from 'drizzle-orm/migrator'
+import { PgTable } from 'drizzle-orm/pg-core'
+import { Effect } from 'effect'
 
 const TEST_PORT = Number(process.env.PORT || 3001)
 const BASE_URL = `http://localhost:${TEST_PORT}`
@@ -170,4 +175,6 @@ export async function cleanDatabase() {
   await pool.query('DELETE FROM verification')
   await pool.query('DELETE FROM "user"')
   await pool.end()
+  const tables = [...Object.values(schema), ...Object.values(authSchema)].filter((value) => is(value, PgTable))
+  await appRuntime.runPromise(Effect.flatMap(Database, (database) => database.wroteOutside(tables)))
 }

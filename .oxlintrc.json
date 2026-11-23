@@ -123,6 +123,27 @@
       }
     },
     {
+      "files": ["apps/web/**/*.ts", "apps/web/**/*.tsx"],
+      "rules": {
+        "dxrating/derived-query-keys": "error",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "^swr(/|$)",
+                "message": "Use useQuery(orpc.<route>.queryOptions({ input })) or requestQuery from @/lib/query: the key is derived from the request."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["apps/web/src/**/*.ts", "apps/web/src/**/*.tsx"],
       "rules": {
         "no-restricted-globals": [
@@ -185,6 +206,10 @@
               {
                 "regex": "^\\.{1,2}/.*\\.js$",
                 "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "^swr(/|$)",
+                "message": "Use useQuery(orpc.<route>.queryOptions({ input })) or requestQuery from @/lib/query: the key is derived from the request."
               }
             ]
           }
@@ -798,6 +823,12 @@
             "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
           }
         ]
+      }
+    },
+    {
+      "files": ["apps/web/src/lib/query.ts"],
+      "rules": {
+        "dxrating/derived-query-keys": "off"
       }
     }
   ],

@@ -1,6 +1,7 @@
 import { SERVER_BADGE_ORDER } from '@/models/constants'
 import { CommentActions } from '../comments/CommentActions'
 import { filterComments, useCommentVisibility } from '../comments/commentVisibility'
+import { useSheetComments } from '../comments/useSheetComments'
 import { MULTIVER_AVAILABLE_VERSIONS, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
 import {
   Button,
@@ -19,7 +20,6 @@ import { RecordProvenanceBadge } from '../cloud-save/ProvenanceBadge'
 import { MotionConfig } from 'motion/react'
 import { type FC, type PropsWithChildren, type ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useAsyncFn } from 'react-use'
-import useSWR from 'swr'
 import { match } from 'ts-pattern'
 import IconMdiCheck from '~icons/mdi/check'
 import IconMdiLock from '~icons/mdi/lock'
@@ -118,31 +118,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const { session, user, ensureAuthenticated, openLoginDialog, loginDialog } = useAuth()
   const visibility = useCommentVisibility(user?.id)
   const [content, setContent] = useState<string>('')
-  const {
-    data: comments,
-    isLoading: isLoadingComments,
-    mutate,
-  } = useSWR(
-    // Key
-    ['comments.list', user?.id ?? null, sheet.songId, sheet.type, sheet.difficulty],
-    // Fetcher
-    async () => {
-      const data = await client.comments.list({
-        songId: sheet.songId,
-        sheetId: sheet.id,
-        sheetType: sheet.type,
-        sheetDifficulty: sheet.difficulty,
-      })
-      // Map to UI expected format if needed
-      // Backend returns: CommentWithProfileSchema (id, parent_id, created_at, content, display_name)
-      // UI expects: { id, parent_id, content, created_at, display_name }
-      // Dates: created_at: Date | string. UI: new Date(comment.created_at).
-      return data.map((c) => ({
-        ...c,
-        created_at: c.created_at.toString(),
-      }))
-    },
-  )
+  const { data: comments, isLoading: isLoadingComments, refetch } = useSheetComments(sheet)
 
   const [{ loading: submitting }, handleSubmit] = useAsyncFn(async () => {
     const isAuthenticated = await ensureAuthenticated()
@@ -155,11 +131,11 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
       sheetDifficulty: sheet.difficulty,
       content,
     }
-    await client.comments.create(payload) // Logic handles auth and parentId
+    await client.comments.create(payload)
 
-    mutate()
+    void refetch()
     setContent('')
-  }, [sheet, content, ensureAuthenticated, mutate])
+  }, [sheet, content, ensureAuthenticated, refetch])
 
   return (
     <div className="flex flex-col gap-2">

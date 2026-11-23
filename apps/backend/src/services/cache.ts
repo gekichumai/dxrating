@@ -1,18 +1,23 @@
 import { Clock, Context, Effect, Layer } from 'effect'
 
+/**
+ * Responses of services outside our database, kept for a TTL. A select of our own tables is cached with Drizzle's
+ * `.$withCache()` instead (db/query-cache.ts), whose writes invalidate it.
+ */
+export type ApplicationCacheKey = 'analytics:trending' | `net-status:${'intl' | 'jp'}`
+
 export class ApplicationCache extends Context.Service<
   ApplicationCache,
   {
-    readonly get: <A>(key: string) => Effect.Effect<A | undefined>
-    readonly set: (key: string, value: unknown, ttlMs?: number) => Effect.Effect<void>
-    readonly delete: (key: string) => Effect.Effect<void>
+    readonly get: <A>(key: ApplicationCacheKey) => Effect.Effect<A | undefined>
+    readonly set: (key: ApplicationCacheKey, value: unknown, ttlMs?: number) => Effect.Effect<void>
   }
 >()('dxrating/ApplicationCache') {}
 
 export const ApplicationCacheLive = Layer.sync(ApplicationCache, () => {
-  const entries = new Map<string, { value: unknown; expiresAt: number }>()
+  const entries = new Map<ApplicationCacheKey, { value: unknown; expiresAt: number }>()
   return {
-    get: <A>(key: string) =>
+    get: <A>(key: ApplicationCacheKey) =>
       Effect.gen(function* () {
         const now = yield* Clock.currentTimeMillis
         const entry = entries.get(key)
@@ -27,10 +32,6 @@ export const ApplicationCacheLive = Layer.sync(ApplicationCache, () => {
       Effect.gen(function* () {
         const now = yield* Clock.currentTimeMillis
         entries.set(key, { value, expiresAt: now + ttlMs })
-      }),
-    delete: (key) =>
-      Effect.sync(() => {
-        entries.delete(key)
       }),
   }
 })

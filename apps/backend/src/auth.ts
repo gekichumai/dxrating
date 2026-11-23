@@ -170,7 +170,14 @@ export const createAuth = (
       },
     },
     databaseHooks: {
-      user: emailVerificationHooks(database),
+      user: {
+        ...emailVerificationHooks(database),
+        delete: {
+          after: () =>
+            // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
+            Effect.runPromise(database.wroteOutside([authSchema.user])),
+        },
+      },
     },
     advanced: {
       cookiePrefix: 'dxrating',
