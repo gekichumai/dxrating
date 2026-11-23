@@ -26,7 +26,6 @@ export interface SongCatalog {
   resolveReference: (reference: ProviderSheetReference) => VersionedSheet | null
 }
 
-/** The fields a sheet's level and internal level on a server are resolved from */
 export interface RegionalSheetLevels {
   level: string
   internalLevelValue: number
@@ -34,8 +33,8 @@ export interface RegionalSheetLevels {
   serverOverrides?: Partial<Record<string, { level?: string; levelValue?: number }>>
 }
 
-function overrideRegionOf(version: VersionEnum, region: Region | undefined): Exclude<Region, '_generic'> | null {
-  return region !== undefined && region !== '_generic' && version === LATEST_REGION_VERSIONS[region] ? region : null
+function overrideRegionOf(version: VersionEnum, region: Region | undefined): 'intl' | 'cn' | null {
+  return (region === 'intl' || region === 'cn') && version === LATEST_REGION_VERSIONS[region] ? region : null
 }
 
 /**

@@ -171,13 +171,7 @@
       }
     },
     {
-      "files": [
-        "apps/backend/src/services/dxdata-openapi.test.ts",
-        "apps/backend/src/services/mcp/server.test.ts",
-        "apps/backend/src/services/mcp/tool-get-sheet.ts",
-        "apps/web/src/components/sheet/SheetDialogContent.tsx",
-        "apps/web/src/components/song/SongSheetContent.tsx"
-      ],
+      "files": ["apps/backend/src/services/dxdata-openapi.test.ts", "apps/backend/src/services/mcp/server.test.ts"],
       "rules": {
         "no-restricted-properties": "off"
       }

@@ -385,6 +385,7 @@ describe('CN server overrides', () => {
     expect(getSongCatalog(source, VersionEnum.PRiSMPLUS, 'jp')).toBe(
       getSongCatalog(source, VersionEnum.PRiSMPLUS, 'intl'),
     )
+    expect(getSongCatalog(source, VersionEnum.MAGiCAL, 'jp')).toBe(getSongCatalog(source, VersionEnum.MAGiCAL))
   })
 })
 
