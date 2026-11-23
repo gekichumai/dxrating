@@ -4,25 +4,16 @@ import IconMdiCloudOffOutline from '~icons/mdi/cloud-off-outline'
 import { isLoadedCatalogUnverified, subscribeToCatalog } from '@/catalog/clientCatalog'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { persisted } from '@/utils/persisted'
+import { z } from 'zod'
 
 /** Once per tab: after the first time, a page that loads the snapshot again stays quiet */
 export const CATALOG_UNVERIFIED_HINT_SHOWN_KEY = 'catalog-unverified-hint-shown'
 
-const wasShown = () => {
-  try {
-    return sessionStorage.getItem(CATALOG_UNVERIFIED_HINT_SHOWN_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-
-const markShown = () => {
-  try {
-    sessionStorage.setItem(CATALOG_UNVERIFIED_HINT_SHOWN_KEY, '1')
-  } catch {
-    // Without sessionStorage the hint can come back on the next load; it still shows once per page
-  }
-}
+const hintShown = persisted(CATALOG_UNVERIFIED_HINT_SHOWN_KEY, z.literal('1'), null, {
+  area: 'session',
+  format: 'text',
+})
 
 /**
  * A quiet note when the song catalog came from the copy bundled with the build because the API could not be reached:
@@ -36,8 +27,8 @@ export const CatalogUnverifiedHint: FC = () => {
   const unverified = useSyncExternalStore(subscribeToCatalog, isLoadedCatalogUnverified, () => false)
 
   useEffect(() => {
-    if (!unverified || wasShown()) return
-    markShown()
+    if (!unverified || hintShown.get() === '1') return
+    hintShown.set('1')
     const locale = localeRef.current
     toast(
       <div className="flex flex-col">

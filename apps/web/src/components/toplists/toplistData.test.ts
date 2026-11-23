@@ -1,8 +1,8 @@
-import type { VersionedSheet } from '@gekichumai/maimai-domain'
+import { collapsePlays, type ChartPlay, type VersionedSheet } from '@gekichumai/maimai-domain'
 import { describe, expect, it } from 'vitest'
-import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
+import { groupUserRecords } from '@/models/userRecords'
 import { validateToplistSearch } from '@/routes/me/records'
-import { buildToplist, HIGHEST_LIMIT, isAllPerfect, levelsOf, readDxScore, toToplistRow } from './toplistData'
+import { buildToplist, HIGHEST_LIMIT, isAllPerfect, levelsOf, toToplistRow } from './toplistData'
 
 const sheet = (id: string, level: string, internalLevelValue: number) =>
   ({
@@ -13,9 +13,9 @@ const sheet = (id: string, level: string, internalLevelValue: number) =>
     noteCounts: { total: 500 },
   }) as unknown as VersionedSheet
 
-const row = (id: string, achievementRate: number, extra: Partial<PlayEntry> = {}, level = '13', value = 13.2) =>
+const row = (id: string, achievementRate: number, extra: Partial<ChartPlay> = {}, level = '13', value = 13.2) =>
   toToplistRow({
-    entry: { sheetId: id, achievementRate, ...extra } as PlayEntry,
+    best: collapsePlays([{ achievementRate, best50Bucket: null, ...extra }], null),
     sheet: sheet(id, level, value),
   })!
 
@@ -52,12 +52,20 @@ describe('toplist data', () => {
     expect(top.some((r) => r.sheet.id === 's0')).toBe(false)
   })
 
+  it('lists an AP earned in a lower play of a chart', () => {
+    const record = groupUserRecords(
+      [
+        { sheetId: 'f', achievementRate: 100.6, comboFlag: 'fc' },
+        { sheetId: 'f', achievementRate: 100.3, comboFlag: 'ap' },
+      ],
+      () => sheet('f', '13', 13),
+    ).get('f')!
+    const [listed] = buildToplist([toToplistRow(record)!], { kind: 'ap', sort: 'achievement' })
+    expect(listed?.best).toMatchObject({ achievementRate: 100.6, comboFlag: 'ap' })
+  })
+
   it('reads DX scores only when a record carries one', () => {
-    expect(readDxScore({ sheetId: 'x', achievementRate: 100 } as PlayEntry)).toBeNull()
-    const scored = toToplistRow({
-      entry: { sheetId: 'x', achievementRate: 100, dxScore: 1460 } as PlayEntry,
-      sheet: sheet('x', '13', 13),
-    })!
+    const scored = row('x', 100, { dxScore: 1460 }, '13', 13)
     expect(scored.dxScoreMax).toBe(1500)
     expect(scored.dxStars).toBe(5)
     expect(buildToplist(rows, { kind: 'dx_score', sort: 'dx_score' })).toHaveLength(0)

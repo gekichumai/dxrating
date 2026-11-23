@@ -17,7 +17,7 @@ A reusable authentication hook that provides a simple way to manage authenticati
 import { useAuth } from '../../hooks/useAuth'
 
 const MyComponent = () => {
-  const { session, isAuthenticated, ensureAuthenticated, LoginDialog } = useAuth()
+  const { session, isAuthenticated, ensureAuthenticated, loginDialog } = useAuth()
 
   const handleProtectedAction = async () => {
     // This will show login dialog if not authenticated
@@ -30,7 +30,7 @@ const MyComponent = () => {
 
   return (
     <div>
-      <LoginDialog />
+      {loginDialog}
       <button onClick={handleProtectedAction}>Protected Action</button>
       {isAuthenticated && <p>Welcome, {session.user.name}!</p>}
     </div>
@@ -64,7 +64,7 @@ const handleAction = async () => {
   - Returns: `Promise<boolean>` - true if authenticated, false otherwise
 - `openLoginDialog()`: Manually open the login dialog
 - `closeLoginDialog()`: Manually close the login dialog
-- `LoginDialog`: Component to render the login dialog
+- `loginDialog`: The login dialog element; render it once in the component that calls `useAuth`
 
 ## Examples
 
@@ -72,7 +72,7 @@ const handleAction = async () => {
 
 ```tsx
 const SheetComments = ({ sheet }) => {
-  const { session, ensureAuthenticated, LoginDialog } = useAuth()
+  const { session, ensureAuthenticated, loginDialog } = useAuth()
   const [content, setContent] = useState('')
 
   const handleSubmit = async () => {
@@ -84,7 +84,7 @@ const SheetComments = ({ sheet }) => {
 
   return (
     <div>
-      <LoginDialog />
+      {loginDialog}
       <TextField value={content} onChange={(e) => setContent(e.target.value)} disabled={!session} />
       <Button onClick={handleSubmit}>Submit</Button>
     </div>
@@ -96,11 +96,11 @@ const SheetComments = ({ sheet }) => {
 
 ```tsx
 const MyComponent = () => {
-  const { openLoginDialog, closeLoginDialog, LoginDialog } = useAuth()
+  const { openLoginDialog, closeLoginDialog, loginDialog } = useAuth()
 
   return (
     <div>
-      <LoginDialog />
+      {loginDialog}
       <button onClick={openLoginDialog}>Sign In</button>
     </div>
   )
