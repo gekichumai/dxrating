@@ -1,4 +1,5 @@
 import type { UserFeatures } from '@gekichumai/api-contract'
+import { browserStorage } from '@/utils/persisted'
 
 /**
  * The features the server enables for the signed-in user (`GET /api/v1/me/features`, design §12.1). The web never
@@ -25,14 +26,6 @@ const memoryCache = new Map<string, Promise<UserFeatures>>()
  */
 export type FetchUserFeatures = (userId: string) => Promise<UserFeatures | null>
 
-function sessionStorageOrNull(): Storage | null {
-  try {
-    return typeof window === 'undefined' ? null : window.sessionStorage
-  } catch {
-    return null
-  }
-}
-
 function readCached(storage: Storage | null, userId: string): UserFeatures | null {
   try {
     const stored = storage?.getItem(SESSION_KEY_PREFIX + userId)
@@ -51,7 +44,7 @@ function readCached(storage: Storage | null, userId: string): UserFeatures | nul
 export function getUserFeatures(
   userId: string,
   fetchFeatures: FetchUserFeatures,
-  storage: Storage | null = sessionStorageOrNull(),
+  storage: Storage | null = browserStorage('session'),
 ): Promise<UserFeatures> {
   const cached = readCached(storage, userId)
   if (cached) return Promise.resolve(cached)
@@ -78,7 +71,7 @@ export function getUserFeatures(
 }
 
 /** Forgets the cached features (tests; a later opt-in flow re-reads them after opting in) */
-export function clearUserFeaturesCache(storage: Storage | null = sessionStorageOrNull()) {
+export function clearUserFeaturesCache(storage: Storage | null = browserStorage('session')) {
   memoryCache.clear()
   try {
     if (!storage) return

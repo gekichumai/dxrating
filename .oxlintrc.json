@@ -54,6 +54,121 @@
       }
     },
     {
+      "files": ["apps/**/*.ts", "apps/**/*.tsx"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/web/src/**/*.ts", "apps/web/src/**/*.tsx"],
+      "rules": {
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "localStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "name": "sessionStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          }
+        ],
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "window",
+            "property": "localStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "object": "window",
+            "property": "sessionStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "object": "globalThis",
+            "property": "localStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "object": "globalThis",
+            "property": "sessionStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "react-use",
+                "importNames": ["useLocalStorage", "useSessionStorage"],
+                "message": "Use usePersisted(persisted(key, schema, fallback)) from @/utils/persisted: react-use casts the stored JSON without checking it."
+              }
+            ],
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/web/src/utils/persisted.ts",
+        "apps/web/src/**/__tests__/**",
+        "apps/web/src/**/*.test.ts",
+        "apps/web/src/**/*.test.tsx"
+      ],
+      "rules": {
+        "no-restricted-globals": "off",
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ]
+      }
+    },
+    {
       "files": ["apps/backend/src/**/*.ts", "apps/backend/src/**/*.tsx"],
       "rules": {
         "gdp-ts/no-define-proof": "error",
@@ -161,26 +276,6 @@
                 "message": "admin-api may import only @gekichumai/backend/db-schema, /edge-cache and /http-client (gekichumai/meta#50 R2.2)."
               }
             ]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["apps/**/*.ts", "apps/**/*.tsx"],
-      "rules": {
-        "no-restricted-properties": [
-          "error",
-          {
-            "property": "ratingEligibility",
-            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
-          },
-          {
-            "property": "multiverInternalLevelValue",
-            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
-          },
-          {
-            "property": "serverOverrides",
-            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
           }
         ]
       }

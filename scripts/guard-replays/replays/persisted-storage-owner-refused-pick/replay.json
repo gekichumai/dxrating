@@ -1,0 +1,9 @@
+{
+  "mistake": "A value storage refuses to save (full quota, blocked site data) loses to the value storage still holds, so the user's new choice is silently ignored.",
+  "history": [
+    "#532 534656bd (the list/grid layout pick lost to the stored one when setItem threw; fixed in the PR by 9663a740)"
+  ],
+  "guard": "apps/web/src/utils/__tests__/persisted.test.ts: a refused write wins until storage changes",
+  "check": "pnpm --filter @gekichumai/dxrating-web exec vitest run src/utils/__tests__/persisted.test.ts",
+  "expect": "keeps a write storage refuses over the value storage still holds"
+}
