@@ -1,0 +1,14 @@
+diff --git a/packages/api-contract/src/http-surface.ts b/packages/api-contract/src/http-surface.ts
+index ee0c5a5f..8a369b0a 100644
+--- a/packages/api-contract/src/http-surface.ts
++++ b/packages/api-contract/src/http-surface.ts
+@@ -37,7 +37,8 @@ export interface CorsPolicy {
+ const LOCAL_DEV_ORIGIN = /^https?:\/\/(?:(?:[a-z0-9-]+\.)*localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/
+ 
+ const isFirstPartyWebOrigin = (origin: string) =>
+-  LOCAL_DEV_ORIGIN.test(origin) ||
++  origin.includes('localhost') ||
++  origin.includes('127.0.0.1') ||
+   origin === 'https://dxrating.net' ||
+   origin.endsWith('.dxrating.pages.dev') ||
+   origin.endsWith('.galvin.workers.dev')
