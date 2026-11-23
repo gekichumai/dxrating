@@ -177,6 +177,12 @@ const OAUTH_ERRORS: Partial<Record<string, PlainMessage>> = {
   access_denied: m.auth_userProfile_oauthError_access_denied,
 }
 
+const PAGES_WITH_OWN_ERRORS = new Set([
+  '/io/import/lxns/oauth_callback',
+  '/account/verify-email',
+  '/account/reset-password',
+])
+
 function OAuthErrorHandler() {
   const locale = useLocale()
 
@@ -184,8 +190,9 @@ function OAuthErrorHandler() {
     const params = new URLSearchParams(window.location.search)
     const error = params.get('error')
     if (!error) return
-    // The LXNS import callback carries its own ?status=error&error=… and explains it on the page
-    if (window.location.pathname === '/io/import/lxns/oauth_callback') return
+    // These pages carry their own ?error= and explain it themselves: the LXNS import callback
+    // (?status=error&error=…) and the landing pages of mailed verification and reset links
+    if (PAGES_WITH_OWN_ERRORS.has(splitLocalePath(window.location.pathname).pathname)) return
 
     // The raw provider code means nothing to people: keep it in the console for debugging, show plain copy
     console.warn('[oauth] sign-in returned an error', error, params.get('error_description') ?? '')
