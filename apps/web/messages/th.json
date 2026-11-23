@@ -411,7 +411,7 @@
   "auth_form_continueWithEmail": "ดำเนินการต่อด้วยอีเมล",
   "auth_form_back": "กลับไปเลือกวิธีเข้าสู่ระบบ",
   "auth_signUp_passkey_create": "สร้างพาสคีย์",
-  "auth_signUp_passkey_description": "เข้าสู่ระบบด้วยลายนิ้วมือ ใบหน้า หรือการล็อกหน้าจอ ไม่ต้องจำรหัสผ่าน และไม่มีรหัสผ่านให้รั่วไหล",
+  "auth_signUp_passkey_description": "ใช้ลายนิ้วมือ ใบหน้า หรือการล็อกหน้าจอ ไม่ต้องใช้รหัสผ่าน",
   "auth_signUp_passkey_usePassword": "ใช้รหัสผ่านแทน",
   "auth_signUp_passkey_usePasskey": "ใช้พาสคีย์แทน",
   "auth_signUp_passkey_error": "สร้างพาสคีย์ไม่ได้ ลองอีกครั้ง หรือใช้รหัสผ่านแทน",

@@ -411,7 +411,7 @@
   "auth_form_continueWithEmail": "Magpatuloy gamit ang email",
   "auth_form_back": "Bumalik sa lahat ng paraan ng pag-sign in",
   "auth_signUp_passkey_create": "Gumawa ng passkey",
-  "auth_signUp_passkey_description": "Mag-sign in gamit ang fingerprint, mukha o screen lock. Walang password na kailangang tandaan o puwedeng ma-leak.",
+  "auth_signUp_passkey_description": "Gamitin ang fingerprint, mukha o screen lock. Hindi kailangan ng password.",
   "auth_signUp_passkey_usePassword": "Gumamit na lang ng password",
   "auth_signUp_passkey_usePasskey": "Gumamit na lang ng passkey",
   "auth_signUp_passkey_error": "Hindi makagawa ng passkey. Subukang muli, o gumamit na lang ng password.",

@@ -411,7 +411,7 @@
   "auth_form_continueWithEmail": "Continue with email",
   "auth_form_back": "Back to all sign-in options",
   "auth_signUp_passkey_create": "Create a passkey",
-  "auth_signUp_passkey_description": "Sign in with your fingerprint, face or screen lock. There's no password to remember, and nothing to leak.",
+  "auth_signUp_passkey_description": "Use your fingerprint, face or screen lock. No password needed.",
   "auth_signUp_passkey_usePassword": "Use a password instead",
   "auth_signUp_passkey_usePasskey": "Use a passkey instead",
   "auth_signUp_passkey_error": "Unable to create a passkey. Try again, or use a password instead.",
