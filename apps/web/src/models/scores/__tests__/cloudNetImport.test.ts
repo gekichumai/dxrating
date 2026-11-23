@@ -27,6 +27,7 @@ const RESULT: ImportResultDTO = {
     fetchedAt: '2026-11-03T00:00:01.000Z',
     finishedAt: '2026-11-03T00:00:02.000Z',
     rawPayloadSha256: null,
+    rejections: [],
     counts: {
       fetched: 1,
       inserted: 1,

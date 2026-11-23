@@ -71,6 +71,7 @@ const job = (fields: Partial<ImportJobDTO> = {}): ImportJobDTO => ({
   fetchedAt: null,
   finishedAt: '2026-11-03T00:00:01.000Z',
   rawPayloadSha256: null,
+  rejections: [],
   counts: {
     fetched: 2,
     inserted: 2,

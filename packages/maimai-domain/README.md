@@ -11,6 +11,7 @@ calculation, import normalizers and the cloud-save score rules (meta#17).
 | `src/score-provenance.ts` | zod enums and types: `ScoreSource` (+ `SERVER_IMPORT_SOURCES` / `CLIENT_IMPORT_SOURCES`), `FetchedBy`, `Verification`, `EntryMethod`, `ManualEntryMethod`, `SourceAccountKind`, `ImportTrigger`, `ProvenanceSchema` |
 | `src/score-merge.ts` | `compareScore`, `decideImportMerge` (§5.3), `manualVerification` and `decideManualMutation` (§5.4) |
 | `src/import-normalizers.ts` | `withAchievementInt` / `ratingEntryAchievementInt` add integer achievements to normalizer results |
+| `src/score-validation.ts` | `validateScore` (meta#82): the hard rules R1–R8 an imported record must pass, `scoreValidationChartOf` (3 × `noteCounts.total`, skipped on ambiguous internal IDs) |
 
 The decision functions are pure: they take the stored record (or `null`) and return what to write, whether the
 row gets a new revision and which event to log. The server applies them inside its write transaction; the clients

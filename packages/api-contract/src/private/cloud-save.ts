@@ -7,6 +7,7 @@ import {
   ManualEntryMethodSchema,
   ProvenanceShapeSchema,
   PUBLIC_SHEET_ID_PATTERN,
+  SCORE_VALIDATION_RULES,
   SourceAccountKindSchema,
   EntryMethodSchema,
   FetchedBySchema,
@@ -79,6 +80,11 @@ export const CLOUD_SAVE_MAX_IMPORT_RECORDS = 5000
 export const CLOUD_SAVE_MAX_REPLACE_RECORDS = 10000
 /** Maximum chunks of one client import (5000 × 10 covers every chart of the catalog) */
 export const CLOUD_SAVE_MAX_IMPORT_CHUNKS = 10
+/**
+ * Maximum rejected records a job lists in `rejections`; its `counts.rejected` keeps counting past it (a whole file of
+ * bad records must not grow the job row without bound)
+ */
+export const CLOUD_SAVE_MAX_LISTED_REJECTIONS = 100
 /** Maximum records per `changes` page */
 export const CLOUD_SAVE_MAX_CHANGES_LIMIT = 1000
 /** Maximum nesting depth of a snapshot's opaque `detail` (the object itself is depth 1) */
@@ -199,6 +205,19 @@ export type ImportCountsDTO = z.output<typeof ImportCountsDTOSchema>
 
 export const ImportJobStatusSchema = z.enum(['running', 'succeeded', 'failed'])
 
+/** A hard consistency rule of `@gekichumai/maimai-domain`'s `validateScore` (gekichumai/meta#82) */
+export const ScoreValidationRuleSchema = z.enum(SCORE_VALIDATION_RULES)
+
+/**
+ * A record an import rejected as impossible (gekichumai/meta#82): it broke `rules` and was not stored, nor clamped.
+ * `sheetId` is null when the record was rejected before it resolved to a chart (an achievement above 101%).
+ */
+export const ImportRejectionDTOSchema = z.object({
+  sheetId: CloudSaveSheetIdSchema.nullable(),
+  rules: z.array(ScoreValidationRuleSchema).min(1),
+})
+export type ImportRejectionDTO = z.output<typeof ImportRejectionDTOSchema>
+
 export const ImportJobDTOSchema = z.object({
   id: ImportJobIdSchema,
   saveId: SaveIdSchema,
@@ -217,6 +236,12 @@ export const ImportJobDTOSchema = z.object({
   rawPayloadSha256: PayloadSha256Schema.nullable(),
   counts: ImportCountsDTOSchema,
   errorCode: PgText.nullable(),
+  /**
+   * The impossible records the job rejected (counted in `counts.rejected`), the first
+   * {@link CLOUD_SAVE_MAX_LISTED_REJECTIONS} of them. A record that is only malformed (a bad sheet ID, a value of the
+   * wrong type) breaks no rule and is counted only. Defaults to none, so a backend without the list reads as before.
+   */
+  rejections: z.array(ImportRejectionDTOSchema).max(CLOUD_SAVE_MAX_LISTED_REJECTIONS).default([]),
 })
 export type ImportJobDTO = z.output<typeof ImportJobDTOSchema>
 

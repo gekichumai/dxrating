@@ -2,9 +2,10 @@ import {
   ImportRecordSchema,
   type ImportCountsDTO,
   type ImportRecordInput,
+  type ImportRejectionDTO,
   type ImportResultDTO,
 } from '@gekichumai/api-contract'
-import type { ClientImportSource, ImportTrigger } from '@gekichumai/maimai-domain'
+import type { ClientImportSource, ImportTrigger, SongCatalog } from '@gekichumai/maimai-domain'
 import { Effect } from 'effect'
 import type { Database } from '../../db/index'
 import { CloudSaveBadRequest } from './errors'
@@ -19,6 +20,7 @@ import {
 } from './jobs'
 import { applyImportRecords, hasDeletionSince, shouldShortCircuit, type MergeRecord } from './merge'
 import { lockSave, saveTransaction } from './saves'
+import { appendRejections, storedRejections, uploadRejection, validateUploadedRecord } from './validation'
 
 type DatabaseService = typeof Database.Service
 
@@ -75,12 +77,16 @@ export interface ClientImportChunkResult {
  * - The content short-circuit (§5.5) applies to single-chunk automatic and migration uploads.
  * - Records failing {@link ImportRecordSchema} (a bad sheet ID, an out-of-range value, a `demo` claim) count as
  *   `rejected`; the claimed provider of each record is stored as `claimed_source`.
+ * - Records that break a hard score rule (meta#82, checked against `catalog`'s chart for the sheet ID) are rejected
+ *   too, never clamped, and listed with their rules in the job's `rejections` (over all chunks). Without a catalog,
+ *   only the rules that need no chart data run.
  */
 export const applyClientImportChunk = (
   database: DatabaseService,
   userId: string,
   saveId: string,
   input: ClientImportChunkInput,
+  catalog: SongCatalog | null,
 ) =>
   saveTransaction(database, () =>
     Effect.gen(function* () {
@@ -89,8 +95,15 @@ export const applyClientImportChunk = (
       // nested past the canonical depth guard) is rejected alone instead of failing the chunk, and every replay of
       // the chunk hashes the same records
       const records: MergeRecord[] = []
+      const rejections: ImportRejectionDTO[] = []
       let rejected = 0
       for (const item of input.records) {
+        const rules = validateUploadedRecord(catalog, item)
+        if (rules.length > 0) {
+          rejected += 1
+          rejections.push(uploadRejection(item.sheetId, rules))
+          continue
+        }
         const parsed = ImportRecordSchema.safeParse(item)
         if (parsed.success) records.push(parsed.data)
         else rejected += 1
@@ -177,6 +190,7 @@ export const applyClientImportChunk = (
             ...counts,
             chunks: { count: chunks.count, received, ...(timeBound ? { timeBound } : {}) },
             ...(complete && !timeBound ? { saveRevision: save.revision } : {}),
+            rejections: appendRejections(storedRejections(job.counts), rejections),
           }),
           complete,
           finalSha,

@@ -9,6 +9,7 @@ export * from './src/legacy-migration.ts'
 export { best50HintOf, toRatingEntries, toRatingEntry } from './src/rating-entries.ts'
 export * from './src/score-merge.ts'
 export * from './src/score-provenance.ts'
+export * from './src/score-validation.ts'
 export * from './src/sheet-identity.ts'
 export {
   buildLatestReleaseDateByVersion,

@@ -169,6 +169,7 @@ const job = (overrides: Partial<ImportJobDTO>): ImportJobDTO => ({
   rawPayloadSha256: DEMO_HASH,
   counts: counts({}),
   errorCode: null,
+  rejections: [],
   ...overrides,
 })
 

@@ -7,8 +7,21 @@ vi.hoisted(() => {
   process.env.SERVER_IMPORTS = 'off'
 })
 
+// The published catalog is not in the test database: uploads are validated against the bundled snapshot (meta#82)
+vi.mock('../services/cloud-save/import-catalog', async () => {
+  const { Effect } = await import('effect')
+  const { getSongCatalog } = await import('@gekichumai/maimai-domain')
+  const { catalogSnapshot } = await import('@gekichumai/dxdata/snapshot')
+  const { VersionEnum } = await import('@gekichumai/dxdata')
+  return {
+    importCatalog: Effect.sync(() => getSongCatalog(catalogSnapshot, VersionEnum.MAGiCAL)),
+    ImportCatalogUnavailable: class ImportCatalogUnavailable extends Error {},
+  }
+})
+
 import { canonicalSha256, startImportJob } from '../services/cloud-save/jobs'
 import { api, deleteMutation, runDatabase, session, sheetId } from './cloud-save-helpers'
+import { CHARTS } from './server-import-fixtures'
 import { cleanDatabase, setupTestServer, teardownTestServer } from './setup'
 
 let pool: pg.Pool
@@ -321,6 +334,81 @@ describe('client imports', () => {
     expect((await api(user.cookie, 'GET', '/me/features')).body).toMatchObject({
       cloudSave: true,
       serverImports: false,
+    })
+  })
+
+  describe('impossible scores (meta#82)', () => {
+    // 372 notes in the catalog snapshot: the maximum DX score is 1116, an AP needs at least 744
+    const kimino = CHARTS.kiminoDxMaster.sheetId
+    const chartRecord = (sheetId: string, achievement: number, extra: Record<string, unknown> = {}) => ({
+      sheetId,
+      achievement,
+      comboFlag: null,
+      syncFlag: null,
+      ...extra,
+    })
+
+    it('rejects them with their rules, never clamped, and keeps the rest of the upload', async () => {
+      const user = await newUser()
+      const response = await upload(user.cookie, user.saveId, {
+        idempotencyKey: `impossible-${randomUUID()}`,
+        chunkIndex: 0,
+        chunkCount: 1,
+        records: [
+          // possible: AP+ at 101% without the maximum DX score (a non-critical PERFECT)
+          chartRecord(kimino, 1010000, { comboFlag: 'app', dxScore: 1100 }),
+          chartRecord(CHARTS.kiminoDxExpert.sheetId, 1009000, { comboFlag: 'app' }),
+          chartRecord(CHARTS.kiminoStdMaster.sheetId, 1004000, { comboFlag: 'ap' }),
+          chartRecord(CHARTS.ourFightingStdBasic.sheetId, 1000000, { dxScore: 700 }),
+          // the schema refuses these too; the rule says why
+          chartRecord(sheetId(9), 1020000),
+          chartRecord(sheetId(10), 1000000, { syncFlag: 'fdx' }),
+        ],
+      })
+      expect(response.status).toBe(200)
+      expect(response.body.job).toMatchObject({
+        status: 'succeeded',
+        counts: { fetched: 6, inserted: 1, rejected: 5 },
+        rejections: [
+          { sheetId: CHARTS.kiminoDxExpert.sheetId, rules: ['R5'] },
+          { sheetId: CHARTS.kiminoStdMaster.sheetId, rules: ['R6'] },
+          { sheetId: CHARTS.ourFightingStdBasic.sheetId, rules: ['R3'] },
+          { sheetId: sheetId(9), rules: ['R1'] },
+          { sheetId: sheetId(10), rules: ['R2'] },
+        ],
+      })
+      expect((await stored(user.saveId)).map((row) => row.sheet_id)).toEqual([kimino])
+      // the job keeps them: reading it later lists the same rejections
+      const job = await api(user.cookie, 'GET', `/imports/${response.body.job.id}`)
+      expect(job.body.rejections).toEqual(response.body.job.rejections)
+    })
+
+    it('lists the rejections of every chunk on the job', async () => {
+      const user = await newUser()
+      const idempotencyKey = `impossible-chunks-${randomUUID()}`
+      const chunk = (chunkIndex: number, records: unknown[]) =>
+        upload(user.cookie, user.saveId, { idempotencyKey, chunkIndex, chunkCount: 2, records })
+      await chunk(0, [chartRecord(kimino, 1000000, { comboFlag: 'ap' }), record(1)])
+      const last = await chunk(1, [chartRecord(kimino, 1000000, { dxScore: 1116 }), record(2)])
+      expect(last.body.job).toMatchObject({
+        status: 'succeeded',
+        counts: { fetched: 4, inserted: 2, rejected: 2 },
+        rejections: [
+          { sheetId: kimino, rules: ['R6'] },
+          { sheetId: kimino, rules: ['R4'] },
+        ],
+      })
+    })
+
+    it('skips the DX rules on a sheet the catalog does not know', async () => {
+      const user = await newUser()
+      const response = await upload(user.cookie, user.saveId, {
+        idempotencyKey: `impossible-unknown-${randomUUID()}`,
+        chunkIndex: 0,
+        chunkCount: 1,
+        records: [record(1, 1007000, { comboFlag: 'ap', dxScore: 1 })],
+      })
+      expect(response.body.job).toMatchObject({ counts: { inserted: 1, rejected: 0 }, rejections: [] })
     })
   })
 })

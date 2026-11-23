@@ -15,6 +15,8 @@ export const CHARTS = {
     type: 'dx',
     difficulty: 'master',
     sheetId: 'dsht_e5nsvt8k2a',
+    /** `noteCounts.total` in the catalog snapshot: the maximum DX score is 3 × this */
+    notes: 372,
     internalId: 10181,
   },
   kiminoDxExpert: {
@@ -22,6 +24,8 @@ export const CHARTS = {
     type: 'dx',
     difficulty: 'expert',
     sheetId: 'dsht_rc6qf899yy',
+    /** `noteCounts.total` in the catalog snapshot: the maximum DX score is 3 × this */
+    notes: 258,
     internalId: 10181,
   },
   kiminoStdMaster: {
@@ -29,6 +33,8 @@ export const CHARTS = {
     type: 'std',
     difficulty: 'master',
     sheetId: 'dsht_36ncrs5g4j',
+    /** `noteCounts.total` in the catalog snapshot: the maximum DX score is 3 × this */
+    notes: 275,
     internalId: 181,
   },
   ourFightingStdBasic: {
@@ -36,11 +42,19 @@ export const CHARTS = {
     type: 'std',
     difficulty: 'basic',
     sheetId: 'dsht_jj8s52dvfn',
+    /** `noteCounts.total` in the catalog snapshot: the maximum DX score is 3 × this */
+    notes: 203,
     internalId: 293,
   },
 } as const
 
 export type Chart = (typeof CHARTS)[keyof typeof CHARTS]
+
+/**
+ * The DX score the LXNS and Diving-Fish fixtures report: 2.5 per note, a possible score for any lamp (an AP needs 2
+ * per note, and the maximum, 3 per note, would need AP+ at 101%; meta#82)
+ */
+export const fixtureDxScore = (chart: Chart) => Math.floor(chart.notes * 2.5)
 
 export interface NetRecord {
   /** Title as maimai NET shows it; a title the catalog does not know is skipped */
@@ -69,7 +83,7 @@ export function musicPageHtml(records: NetRecord[]): string {
   <img class="music_kind_icon" src="https://maimaidx.jp/maimai-mobile/img/music_${record.type === 'dx' ? 'dx' : 'standard'}.png" />
   <div class="music_name_block">${escapeHtml(record.title)}</div>
   <div class="music_score_block w_112">${record.rate}</div>
-  <div class="music_score_block w_190">${record.dxScore ?? '1,234 / 2,000'}</div>
+  <div class="music_score_block w_190">${record.dxScore ?? '1,234 / 1,500'}</div>
   <form>${(record.flags ?? []).map((flag) => `<img class="f_r" src="https://maimaidx.jp/maimai-mobile/img/music_icon_${flag}.png" />`).join('')}</form>
 </div>`,
   )
@@ -223,7 +237,7 @@ export function lxnsScore(chart: Chart, achievements: number, extra: Record<stri
     fc: null,
     fs: null,
     type: chart.type === 'dx' ? 'dx' : 'standard',
-    dx_score: 1500,
+    dx_score: fixtureDxScore(chart),
     ...extra,
   }
 }
@@ -232,7 +246,7 @@ export function divingFishChart(chart: Chart, achievements: number) {
   return {
     achievements,
     ds: 12.5,
-    dxScore: 1500,
+    dxScore: fixtureDxScore(chart),
     fc: '',
     fs: '',
     level: '12',

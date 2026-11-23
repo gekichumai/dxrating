@@ -38,7 +38,7 @@ const data: SongCatalogSource = {
           difficulty: DifficultyEnum.Master,
           level: '13',
           internalLevelValue: 13,
-          noteCounts: { tap: 1, hold: 1, slide: 1, touch: 1, break: 1, total: 5 },
+          noteCounts: { tap: 600, hold: 100, slide: 100, touch: 100, break: 100, total: 1000 },
           serverIds: [ServerEnum.JP, ServerEnum.INTL, ServerEnum.USA, ServerEnum.CN],
           isSpecial: false,
           version: VersionEnum.CiRCLEPLUS,
@@ -62,7 +62,7 @@ describe('Rating Import normalizers', () => {
         fc: 'ap',
         fs: 'fsdp',
         type: 'dx',
-        dxScore: 1000,
+        dxScore: 2500,
       },
       {
         id: 2,
@@ -88,11 +88,11 @@ describe('Rating Import normalizers', () => {
     const result = normalizeMaimaiNetRecords(catalog, [
       {
         sheet: { songId: 'Song A', type: 'dx', difficulty: 'master' },
-        achievement: { rate: 990000, dxScore: { achieved: 1, total: 2 }, flags: [] },
+        achievement: { rate: 990000, dxScore: { achieved: 2400, total: 3000 }, flags: [] },
       },
       {
         sheet: { songId: 'Song A', type: 'dx', difficulty: 'master' },
-        achievement: { rate: 1005000, dxScore: { achieved: 1, total: 2 }, flags: ['allPerfect'] },
+        achievement: { rate: 1005000, dxScore: { achieved: 2400, total: 3000 }, flags: ['allPerfect'] },
       },
     ])
 
@@ -105,7 +105,7 @@ describe('Rating Import normalizers', () => {
     const result = normalizeMaimaiNetRecords(catalog, [
       {
         sheet: { songId: 'Song A', type: 'dx', difficulty: 'master' },
-        achievement: { rate: 1008427, dxScore: { achieved: 1, total: 2 }, flags: ['allPerfect'] },
+        achievement: { rate: 1008427, dxScore: { achieved: 2400, total: 3000 }, flags: ['allPerfect'] },
       },
     ])
 
@@ -132,7 +132,7 @@ describe('Rating Import normalizers', () => {
     const result = normalizeMaimaiNetRecords(titleCatalog, [
       {
         sheet: { songId: 'Visible Song A', type: 'dx', difficulty: 'master' },
-        achievement: { rate: 1005000, dxScore: { achieved: 1, total: 2 }, flags: [] },
+        achievement: { rate: 1005000, dxScore: { achieved: 2400, total: 3000 }, flags: [] },
       },
     ])
 
@@ -164,7 +164,7 @@ describe('Rating Import normalizers', () => {
     const result = normalizeMaimaiNetRecords(ambiguousCatalog, [
       {
         sheet: { songId: 'Shared Visible Title', type: 'dx', difficulty: 'master' },
-        achievement: { rate: 1005000, dxScore: { achieved: 1, total: 2 }, flags: [] },
+        achievement: { rate: 1005000, dxScore: { achieved: 2400, total: 3000 }, flags: [] },
       },
     ])
 
@@ -273,7 +273,7 @@ describe('Rating Import normalizers', () => {
     const maimaiNet = normalizeMaimaiNetRecords(catalog, [
       {
         sheet: { songId: 'Song A', type: 'dx', difficulty: 'master' },
-        achievement: { rate: 1011000, dxScore: { achieved: 1, total: 2 }, flags: [] },
+        achievement: { rate: 1011000, dxScore: { achieved: 2400, total: 3000 }, flags: [] },
       },
     ])
     const divingFish = normalizeDivingFishRows(catalog, [
@@ -295,8 +295,10 @@ describe('Rating Import normalizers', () => {
     for (const result of [lxns, maimaiNet, divingFish, aquaDx]) {
       expect(result.entries).toHaveLength(0)
       expect(result.warnings).toHaveLength(1)
-      expect(result.warnings[0]!.code).toBe('invalid-achievement')
     }
+    // 101.1% is a number, but not a possible one: rejected as R1 (meta#82)
+    expect(maimaiNet.warnings[0]).toMatchObject({ code: 'impossible-score', rules: ['R1'] })
+    for (const result of [lxns, divingFish, aquaDx]) expect(result.warnings[0]!.code).toBe('invalid-achievement')
   })
 
   it('keeps Diving Fish Best 50 Bucket hints', () => {
@@ -462,7 +464,7 @@ describe('Rating Import normalizers', () => {
           id: 1,
           music_id: 10001,
           level: DifficultyEnum.Master,
-          achievement: 1005000,
+          achievement: 1010000,
           user_id: 10,
           type: TypeEnum.DX,
           combo_status: 4,
@@ -490,7 +492,7 @@ describe('Rating Import normalizers', () => {
     const net = normalizeMaimaiNetRecords(catalog, [
       {
         sheet: { songId: 'Song A', type: 'dx', difficulty: 'master' },
-        achievement: { rate: 1008427, dxScore: { achieved: 1, total: 2 }, flags: [] },
+        achievement: { rate: 1008427, dxScore: { achieved: 2400, total: 3000 }, flags: [] },
       },
     ])
     expect(withAchievementInt(net).entries[0]!.achievementInt).toBe(1008427)
@@ -670,7 +672,8 @@ describe('Aqua level and lamp mappings (gekichumai/meta#54, gekichumai/meta#55)'
   it.each(COMBO_STATUSES)('maps AquaDX comboStatus %i to %s', (comboStatus, flag) => {
     const result = normalizeAquaDxRows(
       allDifficultiesCatalog,
-      [{ musicId: 10001, level: 3, achievement: 1005000, comboStatus }],
+      // 101%: AP+ below it is impossible (R5)
+      [{ musicId: 10001, level: 3, achievement: 1010000, comboStatus }],
       musicIdMap,
     )
 
@@ -706,7 +709,8 @@ describe('Aqua level and lamp mappings (gekichumai/meta#54, gekichumai/meta#55)'
           id: 1,
           music_id: 10001,
           level: DifficultyEnum.Master,
-          achievement: 1005000,
+          // 101%: AP+ below it is impossible (R5)
+          achievement: 1010000,
           user_id: 10,
           type: TypeEnum.DX,
           ...overrides,
@@ -722,10 +726,24 @@ describe('Aqua level and lamp mappings (gekichumai/meta#54, gekichumai/meta#55)'
     expect(aquaSqliteRow({ sync_status }).syncFlag).toBe(flag)
   })
 
-  it.each([-1, 6, 7])('maps an unknown status %i to no lamp', (status) => {
-    const entry = aquaSqliteRow({ combo_status: status, sync_status: status })
-    expect(entry.comboFlag).toBeNull()
-    expect(entry.syncFlag).toBeNull()
+  it.each([-1, 6, 7])('rejects an unknown status %i (R2) rather than reading it as no lamp', (status) => {
+    const result = normalizeAquaSqliteRows(allDifficultiesCatalog, {
+      selectedUserId: 10,
+      gameplays: [
+        {
+          id: 1,
+          music_id: 10001,
+          level: DifficultyEnum.Master,
+          achievement: 1010000,
+          user_id: 10,
+          type: TypeEnum.DX,
+          combo_status: status,
+          sync_status: status,
+        },
+      ],
+    })
+    expect(result.entries).toEqual([])
+    expect(result.warnings).toMatchObject([{ code: 'impossible-score', rules: ['R2'] }])
   })
 
   it('keeps a SYNC PLAY record below FDX+ when merging duplicates', () => {

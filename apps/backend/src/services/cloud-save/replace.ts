@@ -3,6 +3,7 @@ import {
   type ImportCountsDTO,
   type ImportRecord,
   type ImportRecordInput,
+  type ImportRejectionDTO,
   type ImportResultDTO,
 } from '@gekichumai/api-contract'
 import {
@@ -11,6 +12,7 @@ import {
   isPublicSheetId,
   type ClientImportSource,
   type NextScoreRecord,
+  type SongCatalog,
 } from '@gekichumai/maimai-domain'
 import { Effect } from 'effect'
 import type { Database } from '../../db/index'
@@ -19,6 +21,7 @@ import { CLOUD_SAVE_MAX_RECORDS_PER_SAVE } from './limits'
 import { canonicalSha256, EMPTY_COUNTS, finishImportJob, startImportJob, toImportJobDTO, toMergeJob } from './jobs'
 import { RecordWriter, type RecordState } from './records'
 import { lockSave, saveTransaction } from './saves'
+import { appendRejections, uploadRejection, validateUploadedRecord } from './validation'
 
 type DatabaseService = typeof Database.Service
 
@@ -42,13 +45,20 @@ export interface ReplaceInput {
  *    (better, worse or verified); a sheet listed twice keeps its best entry. A live record with the same values and
  *    the same client source and claim stays as it is (`unchanged`).
  * 5. Every live record not in the payload becomes a tombstone (`delete` event), except records of a sheet the payload
- *    listed with invalid values (`rejected`): those are left alone rather than deleted because of a typo.
+ *    listed with invalid values (`rejected`): those are left alone rather than deleted because of a typo. A record
+ *    that breaks a hard score rule (meta#82, against `catalog`) is rejected the same way and listed in `rejections`.
  *
  * Counts (replace semantics, not merge outcomes): `inserted` (new or revived), `improved` (any live record rewritten,
  * with a better, worse or the same value), `unchanged`, `rejected`; never `provenanceUpgraded`, as a replace never
  * raises the verification. Every rewrite logs `import_applied`. Deletions are not counted; the revision shows them.
  */
-export const replaceRecords = (database: DatabaseService, userId: string, saveId: string, input: ReplaceInput) =>
+export const replaceRecords = (
+  database: DatabaseService,
+  userId: string,
+  saveId: string,
+  input: ReplaceInput,
+  catalog: SongCatalog | null,
+) =>
   saveTransaction(database, () =>
     Effect.gen(function* () {
       const save = yield* lockSave(database, userId, saveId)
@@ -57,8 +67,16 @@ export const replaceRecords = (database: DatabaseService, userId: string, saveId
       // Only validated, normalized records are hashed: a rejected item may be anything the body limit allows
       const accepted: ImportRecord[] = []
       const rejectedSheets = new Set<string>()
+      const rejections: ImportRejectionDTO[] = []
       let rejected = 0
       for (const item of input.records) {
+        const rules = validateUploadedRecord(catalog, item)
+        if (rules.length > 0) {
+          rejected += 1
+          rejections.push(uploadRejection(item.sheetId, rules))
+          if (typeof item.sheetId === 'string') rejectedSheets.add(item.sheetId)
+          continue
+        }
         const parsed = ImportRecordSchema.safeParse(item)
         if (!parsed.success || !isPublicSheetId(parsed.data.sheetId)) {
           rejected += 1
@@ -149,6 +167,7 @@ export const replaceRecords = (database: DatabaseService, userId: string, saveId
       const finished = yield* finishImportJob(database, started.job.id, {
         status: 'succeeded',
         counts,
+        rejections: appendRejections([], rejections),
       })
       return { job: toImportJobDTO(finished!), revision: save.revision } satisfies ImportResultDTO
     }),

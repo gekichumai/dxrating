@@ -2,6 +2,7 @@ import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { match } from 'ts-pattern'
 import { toAchievementInt } from './achievement.ts'
 import { mintRatingEntry } from './rating-entries.ts'
+import { scoreValidationChartOf, validateScore, type ScoreValidationRule } from './score-validation.ts'
 import type { SongCatalog } from './song-catalog'
 import type {
   Best50Bucket,
@@ -13,6 +14,7 @@ import type {
   RatingEntry,
   RatingEntryFields,
   SyncFlag,
+  VersionedSheet,
 } from './types'
 
 export interface RatingImportResult {
@@ -156,17 +158,18 @@ export function normalizeLxnsScores(catalog: SongCatalog, rows: LxnsScoreRow[]):
         return missing('lxns', row, 'sheet-not-found', `No sheet found for ${row.songName} (${type}/${difficulty})`)
       }
 
-      return {
+      return checked('lxns', row, catalog, sheet, {
         entry: {
           sheetId: sheet.id,
           identity: sheet.identity,
           achievementRate: achievement.rate,
-          comboFlag: normalizeCombo(row.fc),
-          syncFlag: normalizeSync(row.fs),
+          comboFlag: normalizeCombo(row.fc) ?? null,
+          syncFlag: normalizeSync(row.fs) ?? null,
           ...dxScoreField(row.dxScore),
           source: { provider: 'lxns', providerId: row.id, providerSongName: row.songName },
         },
-      }
+        raw: { comboFlag: row.fc, syncFlag: row.fs },
+      })
     }),
   )
 }
@@ -201,7 +204,7 @@ export function normalizeMaimaiNetRecords(catalog: SongCatalog, rows: MaimaiNetR
         )
       }
 
-      return {
+      return checked('maimai-net', row, catalog, sheet, {
         entry: {
           sheetId: sheet.id,
           identity: sheet.identity,
@@ -211,7 +214,9 @@ export function normalizeMaimaiNetRecords(catalog: SongCatalog, rows: MaimaiNetR
           ...dxScoreField(row.achievement.dxScore?.achieved),
           source: { provider: 'maimai-net', providerSongName: row.sheet.songId },
         },
-      }
+        // maimai NET shows `achieved / total`: the total is the chart's maximum as the player's region has it
+        raw: { sourceMaxDxScore: row.achievement.dxScore?.total },
+      })
     }),
   )
 }
@@ -248,13 +253,13 @@ export function normalizeDivingFishRows(catalog: SongCatalog, rows: DivingFishRo
         return missing('diving-fish', row, 'sheet-not-found', `No sheet found for ${row.title} (${type}/${difficulty})`)
       }
 
-      return {
+      return checked('diving-fish', row, catalog, sheet, {
         entry: {
           sheetId: sheet.id,
           identity: sheet.identity,
           achievementRate: achievement.rate,
-          comboFlag: normalizeCombo(row.fc),
-          syncFlag: normalizeSync(row.fs),
+          comboFlag: normalizeCombo(row.fc) ?? null,
+          syncFlag: normalizeSync(row.fs) ?? null,
           ...dxScoreField(row.dxScore),
           source: {
             provider: 'diving-fish',
@@ -263,7 +268,8 @@ export function normalizeDivingFishRows(catalog: SongCatalog, rows: DivingFishRo
             best50Bucket: row.bucket,
           },
         },
-      }
+        raw: { comboFlag: row.fc, syncFlag: row.fs },
+      })
     }),
   )
 }
@@ -277,6 +283,8 @@ export interface AquaDxRow {
   comboStatus?: number | string | null
   /** 0 none, 1 FS … 4 FDX+, 5 SYNC PLAY */
   syncStatus?: number | string | null
+  /** Plays of the chart, when the export has it: a score with 0 plays is impossible (R8) */
+  playCount?: number | null
 }
 
 export function normalizeAquaDxRows(
@@ -304,16 +312,21 @@ export function normalizeAquaDxRows(
       })
       if (!sheet) return missing('aqua-dx', row, 'sheet-not-found', `No sheet found for AquaDX music id ${row.musicId}`)
 
-      return {
+      return checked('aqua-dx', row, catalog, sheet, {
         entry: {
           sheetId: sheet.id,
           identity: sheet.identity,
           achievementRate: achievement.rate,
-          comboFlag: normalizeAquaComboStatus(row.comboStatus ?? null),
-          syncFlag: normalizeAquaSyncStatus(row.syncStatus ?? null),
+          comboFlag: normalizeAquaComboStatus(row.comboStatus ?? null) ?? null,
+          syncFlag: normalizeAquaSyncStatus(row.syncStatus ?? null) ?? null,
           source: { provider: 'aqua-dx', providerId: row.musicId },
         },
-      }
+        raw: {
+          comboFlag: row.comboStatus,
+          syncFlag: row.syncStatus,
+          playCount: typeof row.playCount === 'number' ? row.playCount : null,
+        },
+      })
     }),
   )
 }
@@ -349,14 +362,14 @@ export function normalizeMuNetRows(
       })
       if (!sheet) return missing('mu-net', row, 'sheet-not-found', `No sheet found for MuNET music id ${row.musicId}`)
 
-      return {
+      return checked('mu-net', row, catalog, sheet, {
         entry: {
           sheetId: sheet.id,
           identity: sheet.identity,
           achievementRate: achievement.rate,
           source: { provider: 'mu-net', providerId: row.musicId },
         },
-      }
+      })
     }),
   )
 }
@@ -398,16 +411,17 @@ export function normalizeAquaSqliteRows(
           )
         }
 
-        return {
+        return checked('aqua-sqlite', row, catalog, sheet, {
           entry: {
             sheetId: sheet.id,
             identity: sheet.identity,
             achievementRate: achievement.rate,
-            comboFlag: normalizeAquaComboStatus(row.combo_status ?? null),
-            syncFlag: normalizeAquaSyncStatus(row.sync_status ?? null),
+            comboFlag: normalizeAquaComboStatus(row.combo_status ?? null) ?? null,
+            syncFlag: normalizeAquaSyncStatus(row.sync_status ?? null) ?? null,
             source: { provider: 'aqua-sqlite', providerId: row.music_id },
           },
-        }
+          raw: { comboFlag: row.combo_status, syncFlag: row.sync_status },
+        })
       }),
   )
 }
@@ -455,10 +469,79 @@ function validateAchievement(
 ): { rate: number } | { warning: ImportWarning } {
   const rate = normalizeAchievement(value, scale)
   if (rate === null) {
+    // Above 101% is a number, just not a possible one on a rating chart (UTAGE never gets this far): R1
+    if (Number.isFinite(value) && value / scale > 101) {
+      return impossible(provider, row, null, ['R1'], `${String(value / scale)}% is above 101%`)
+    }
     return missing(provider, row, 'invalid-achievement', `Invalid ${provider} achievement: ${String(value)}`)
   }
 
   return { rate }
+}
+
+function impossible(
+  provider: ImportProvider,
+  row: unknown,
+  sheetId: string | null,
+  rules: ScoreValidationRule[],
+  detail: string,
+): { warning: ImportWarning } {
+  return {
+    warning: {
+      provider,
+      code: 'impossible-score',
+      message: `Impossible ${provider} score (${rules.join(', ')}): ${detail}`,
+      row,
+      ...(sheetId ? { sheetId } : {}),
+      rules,
+    },
+  }
+}
+
+interface CheckedEntry {
+  entry: RatingEntryFields
+  /**
+   * What the source sent where the entry keeps less: a combo or sync value the normalizer did not recognize (the
+   * entry has `null`), the play count, the chart's maximum DX score as the source shows it
+   */
+  raw?: { comboFlag?: unknown; syncFlag?: unknown; playCount?: number | null; sourceMaxDxScore?: number | null }
+}
+
+/**
+ * Runs the import validator (gekichumai/meta#82) on a resolved entry: an impossible one becomes an
+ * `impossible-score` warning carrying the broken rules, never a clamped entry.
+ */
+function checked(
+  provider: ImportProvider,
+  row: unknown,
+  catalog: SongCatalog,
+  sheet: VersionedSheet,
+  { entry, raw = {} }: CheckedEntry,
+): ImportRowResult {
+  const achievement = toAchievementInt(entry.achievementRate)
+  // `withAchievementInt` reports an achievement with no integer form
+  if (achievement === null) return { entry }
+  const rules = validateScore(
+    {
+      achievement,
+      comboFlag: entry.comboFlag == null ? unknownOrNone(raw.comboFlag) : entry.comboFlag,
+      syncFlag: entry.syncFlag == null ? unknownOrNone(raw.syncFlag) : entry.syncFlag,
+      dxScore: entry.dxScore,
+      playCount: raw.playCount,
+    },
+    scoreValidationChartOf(catalog, sheet, raw.sourceMaxDxScore),
+  )
+  if (rules.length === 0) return { entry }
+  return impossible(provider, row, sheet.id, rules, `${sheet.id} at ${String(entry.achievementRate)}%`)
+}
+
+/**
+ * A source value the entry turned into `null`: `null` when it means "none" (absent, an empty string, Aqua's status
+ * 0), otherwise the value itself, which the validator reports as unknown (R2)
+ */
+function unknownOrNone(value: unknown): unknown {
+  if (value === undefined || value === null || value === '' || value === 0 || value === '0') return null
+  return value
 }
 
 function normalizeAchievement(value: number, scale: number): number | null {
@@ -513,24 +596,38 @@ function dxScoreField(value: unknown): { dxScore?: number } {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? { dxScore: value } : {}
 }
 
-function normalizeCombo(value: string | null): ComboFlag {
+/** The combo flag of a provider value: `null` for none (`null`, `''`), `undefined` for a value it does not know */
+function normalizeCombo(value: string | null): ComboFlag | undefined {
+  if (value === null || value === '') return null
   if (value === 'fc' || value === 'fcp' || value === 'ap' || value === 'app') return value
-  return null
+  return undefined
 }
 
-function normalizeSync(value: string | null): SyncFlag {
+/** The sync flag of a provider value: `null` for none (`null`, `''`), `undefined` for a value it does not know */
+function normalizeSync(value: string | null): SyncFlag | undefined {
+  if (value === null || value === '') return null
   if (value === 'fs' || value === 'fsp' || value === 'fsd' || value === 'fsdp' || value === 'sync') return value
-  return null
+  return undefined
 }
 
-function normalizeAquaComboStatus(value: number | string | null): ComboFlag {
-  if (typeof value === 'number') return AQUA_COMBO_STATUS_TO_FLAG[value] ?? null
-  return normalizeCombo(value)
+/** A status number, also accepted as a decimal string (`"3"`) */
+function statusNumber(value: number | string): number | null {
+  if (typeof value === 'number') return value
+  return /^\d+$/.test(value.trim()) ? Number(value.trim()) : null
 }
 
-function normalizeAquaSyncStatus(value: number | string | null): SyncFlag {
-  if (typeof value === 'number') return AQUA_SYNC_STATUS_TO_FLAG[value] ?? null
-  return normalizeSync(value)
+function normalizeAquaComboStatus(value: number | string | null): ComboFlag | undefined {
+  if (value === null) return null
+  const status = statusNumber(value)
+  if (status !== null) return status in AQUA_COMBO_STATUS_TO_FLAG ? AQUA_COMBO_STATUS_TO_FLAG[status]! : undefined
+  return normalizeCombo(value as string)
+}
+
+function normalizeAquaSyncStatus(value: number | string | null): SyncFlag | undefined {
+  if (value === null) return null
+  const status = statusNumber(value)
+  if (status !== null) return status in AQUA_SYNC_STATUS_TO_FLAG ? AQUA_SYNC_STATUS_TO_FLAG[status]! : undefined
+  return normalizeSync(value as string)
 }
 
 function normalizeStandardDxType(value: string): typeof TypeEnum.STD | typeof TypeEnum.DX | null {
