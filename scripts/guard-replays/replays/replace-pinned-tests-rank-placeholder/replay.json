@@ -1,0 +1,7 @@
+{
+  "mistake": "DXRank requests https://shama.dxrating.net/images/rank/<version>/null.png when the score has no rank, instead of drawing the placeholder.",
+  "history": ["98d811c5 (Avoid rank image request without rank)"],
+  "guard": "DXRank.test.tsx renders under the real AppContextProvider and asserts no image is requested",
+  "check": "cd apps/web && pnpm exec vitest run src/components/global/__tests__/DXRank.test.tsx",
+  "expect": "uses the placeholder instead of requesting a rank image"
+}

@@ -1,0 +1,7 @@
+{
+  "mistake": "The web song catalog ignores the visitor's region, so CN players see another version's internal levels.",
+  "history": ["#647 aeb39bae (meta#78)"],
+  "guard": "CatalogContext.test.tsx renders under the real AppContextProvider with a stored CN choice",
+  "check": "cd apps/web && pnpm exec vitest run src/catalog/__tests__/CatalogContext.test.tsx",
+  "expect": "uses CN's own internal levels on CN's current version"
+}

@@ -1,0 +1,10 @@
+{
+  "mistake": "A test replaces one of our own modules with vi.mock, so it asserts how the code is built (here: calls into the internal Sentry wrapper) instead of what it does.",
+  "history": [
+    "#444 2a9f6321 (telemetry.test.ts mocked ../../../lib/functions/sentry)",
+    "#647 aeb39bae (six web tests had to edit their useAppContext mock because CatalogContext started reading the region; none could catch the CN bug)"
+  ],
+  "guard": "oxlint rule test-boundaries/no-own-module-mock",
+  "check": "pnpm exec oxlint apps/backend/src/services/functions/fetch-net-records/telemetry.test.ts",
+  "expect": "no-own-module-mock"
+}

@@ -1,0 +1,12 @@
+diff --git a/apps/backend/src/services/functions/fetch-net-records/telemetry.ts b/apps/backend/src/services/functions/fetch-net-records/telemetry.ts
+index dcb754e8..a9aa0f54 100644
+--- a/apps/backend/src/services/functions/fetch-net-records/telemetry.ts
++++ b/apps/backend/src/services/functions/fetch-net-records/telemetry.ts
+@@ -55,7 +55,6 @@ export function recordNetFailure(region: string, route: NetRoute, error: unknown
+     attributes: {
+       region,
+       route,
+-      outcome,
+       error_code: net?.code ?? 'unknown',
+       step: net?.step ?? 'unknown',
+       net_error_code: net?.netErrorCode ?? 'none',

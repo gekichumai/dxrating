@@ -3,7 +3,10 @@ import { NetImportError } from '../../../lib/functions/client'
 import { NO_SUCCESS_WINDOW_MS, netOutcome, recordNetFailure, recordNetSuccess } from './telemetry'
 
 const { count, distribution, warn } = vi.hoisted(() => ({ count: vi.fn(), distribution: vi.fn(), warn: vi.fn() }))
-vi.mock('../../../lib/functions/sentry', () => ({ Sentry: { metrics: { count, distribution }, logger: { warn } } }))
+vi.mock('@sentry/node', async (original) => {
+  const actual = await original<typeof import('@sentry/node')>()
+  return { ...actual, metrics: { ...actual.metrics, count, distribution }, logger: { ...actual.logger, warn } }
+})
 
 afterEach(() => {
   vi.clearAllMocks()

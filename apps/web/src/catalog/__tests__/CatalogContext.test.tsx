@@ -1,8 +1,10 @@
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
-import { act } from '@testing-library/react'
 import { hydrateRoot } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
+import { act, render, screen } from '@testing-library/react'
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
+import { AppContextProvider, LATEST_REGION_VERSIONS } from '@/models/context/AppContext'
+import { useAppContext } from '@/models/context/useAppContext'
 import { buildCatalogSlice, toCatalogMeta } from '../catalogSource'
 import {
   CatalogSliceProvider,
@@ -11,11 +13,6 @@ import {
   useIsCatalogComplete,
 } from '../CatalogContext'
 import { setLoadedCatalogDocumentForTests } from '../clientCatalog'
-
-vi.mock('@/models/context/useAppContext', () => ({
-  useAppContext: () => ({ region: 'jp' }),
-  useAppContextDXDataVersion: () => 'MAGiCAL',
-}))
 
 // 君の知らない物語, as the song page's loader puts it in the page
 const song = catalogSnapshot.songs.find((candidate) => candidate.id === 'dsng_kkx38yfx4t')!
@@ -34,9 +31,11 @@ function CatalogSummary() {
 }
 
 const app = (
-  <CatalogSliceProvider slice={slice}>
-    <CatalogSummary />
-  </CatalogSliceProvider>
+  <AppContextProvider>
+    <CatalogSliceProvider slice={slice}>
+      <CatalogSummary />
+    </CatalogSliceProvider>
+  </AppContextProvider>
 )
 
 describe('catalog during SSR and hydration', () => {
@@ -78,5 +77,55 @@ describe('catalog during SSR and hydration', () => {
     expect(onRecoverableError).not.toHaveBeenCalled()
     expect(container.textContent).toContain(`complete:${catalogSnapshot.songs.length}:`)
     expect(container.textContent).toContain(':catalog')
+  })
+})
+
+describe("catalog of the visitor's game version and region", () => {
+  const CN_LEVEL_VALUE = 12.3
+  const [sheet] = song.sheets
+  const withCnLevel = {
+    ...catalogSnapshot,
+    updatedAt: '2099-01-01T00:00:00.000Z',
+    songs: catalogSnapshot.songs.map((candidate) =>
+      candidate === song
+        ? {
+            ...song,
+            sheets: song.sheets.map((s) =>
+              s === sheet ? { ...s, serverOverrides: { ...s.serverOverrides, cn: { levelValue: CN_LEVEL_VALUE } } } : s,
+            ),
+          }
+        : candidate,
+    ),
+  }
+
+  function SheetLevel() {
+    const { region, hydrated } = useAppContext()
+    const catalog = useCompleteSongCatalog()
+    const value = catalog?.sheets.find((candidate) => candidate.id === sheet.id)?.internalLevelValue
+    return <output>{hydrated ? `${region} level ${value}` : 'loading'}</output>
+  }
+
+  const renderFor = async (choice: { version: string; region: string }) => {
+    window.localStorage.setItem('app-context', JSON.stringify(choice))
+    setLoadedCatalogDocumentForTests(withCnLevel)
+    render(
+      <AppContextProvider>
+        <SheetLevel />
+      </AppContextProvider>,
+    )
+    return (await screen.findByText(new RegExp(`^${choice.region} level `))).textContent
+  }
+
+  afterEach(() => {
+    window.localStorage.clear()
+    setLoadedCatalogDocumentForTests(catalogSnapshot)
+  })
+
+  it("uses CN's own internal levels on CN's current version", async () => {
+    expect(await renderFor({ version: LATEST_REGION_VERSIONS.cn, region: 'cn' })).toBe(`cn level ${CN_LEVEL_VALUE}`)
+  })
+
+  it("keeps the version's internal levels in other regions", async () => {
+    expect(await renderFor({ version: LATEST_REGION_VERSIONS.cn, region: 'jp' })).not.toBe(`jp level ${CN_LEVEL_VALUE}`)
   })
 })
