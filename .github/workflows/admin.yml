@@ -41,7 +41,7 @@ permissions:
 jobs:
   admin-api:
     name: Admin API
-    runs-on: boat
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
       postgres:
@@ -86,7 +86,7 @@ jobs:
 
   admin-app:
     name: Admin app
-    runs-on: boat
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -119,7 +119,7 @@ jobs:
     name: Deploy admin app
     needs: [admin-app, admin-api]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.ADMIN_DEPLOY_ENABLED == 'true'
-    runs-on: boat
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -150,7 +150,7 @@ jobs:
     name: Deploy admin API
     needs: [admin-app, admin-api]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.ADMIN_DEPLOY_ENABLED == 'true'
-    runs-on: boat
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: read

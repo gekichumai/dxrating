@@ -1,6 +1,8 @@
 import { createHash, generateKeyPairSync, randomBytes } from 'node:crypto'
 import { Pool } from 'pg'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { GenericEndpointContext } from 'better-auth'
+import { passkeySignUp } from '../lib/passkey-sign-up'
 import { cleanDatabase, extractSessionCookie, getBaseUrl, setupTestServer, signUp, teardownTestServer } from './setup'
 
 const ORIGIN = 'http://localhost:5173'
@@ -88,7 +90,7 @@ const registerOptions = (query: Record<string, string>, cookie = '') =>
 
 /** Runs a whole registration ceremony and returns the verify-registration response */
 const register = async ({ email, cookie = '' }: { email?: string; cookie?: string }) => {
-  const optionsResponse = await registerOptions(email ? { context: email } : {}, cookie)
+  const optionsResponse = await registerOptions(email ? { context: JSON.stringify({ email }) } : {}, cookie)
   if (optionsResponse.status !== 200) return optionsResponse
   const options = (await optionsResponse.json()) as { challenge: string; rp: { id: string }; user: { id: string } }
   const challengeCookie = cookiesOf(optionsResponse)
@@ -122,13 +124,13 @@ describe('passkey-first sign-up', () => {
   })
 
   it('creates nothing when the ceremony is never finished', async () => {
-    expect((await registerOptions({ context: 'abandoned@example.com' })).status).toBe(200)
+    expect((await registerOptions({ context: JSON.stringify({ email: 'abandoned@example.com' }) })).status).toBe(200)
     expect((await pool.query('SELECT id FROM "user"')).rowCount).toBe(0)
   })
 
   it('refuses an email that already has an account, and never attaches a passkey to it', async () => {
     await signUp('taken@example.com', 'password123', 'Taken')
-    const response = await registerOptions({ context: 'Taken@example.com' })
+    const response = await registerOptions({ context: JSON.stringify({ email: 'Taken@example.com' }) })
     expect(response.status).toBe(422)
     expect(await response.json()).toMatchObject({ code: 'USER_ALREADY_EXISTS' })
     expect((await pool.query('SELECT id FROM passkey')).rowCount).toBe(0)
@@ -136,7 +138,47 @@ describe('passkey-first sign-up', () => {
 
   it('refuses a missing or malformed email', async () => {
     expect((await registerOptions({})).status).toBe(400)
-    expect((await registerOptions({ context: 'not-an-email' })).status).toBe(400)
+    expect((await registerOptions({ context: JSON.stringify({ email: 'not-an-email' }) })).status).toBe(400)
+    // A bare address, without the JSON envelope that carries the Turnstile token
+    expect((await registerOptions({ context: 'bare@example.com' })).status).toBe(400)
+  })
+})
+
+describe('passkey-first sign-up with Turnstile on', () => {
+  const resolveUser = passkeySignUp({ turnstileSecretKey: 'test-secret' }).resolveUser
+  const fakeContext = () => {
+    const findUserByEmail = vi.fn().mockResolvedValue({ id: 'existing' })
+    const ctx = {
+      headers: new Headers(),
+      context: { internalAdapter: { findUserByEmail }, generateId: () => 'new-user' },
+    } as unknown as GenericEndpointContext
+    return { ctx, findUserByEmail }
+  }
+
+  it('refuses a request without a token before saying anything about the address', async () => {
+    const { ctx, findUserByEmail } = fakeContext()
+    await expect(resolveUser({ ctx, context: JSON.stringify({ email: 'taken@example.com' }) })).rejects.toMatchObject({
+      body: { code: 'MISSING_RESPONSE' },
+    })
+    // Without the check, the answer (422 USER_ALREADY_EXISTS or a challenge) would tell whether the address is taken
+    expect(findUserByEmail).not.toHaveBeenCalled()
+  })
+
+  it('refuses a token Cloudflare rejects before saying anything about the address', async () => {
+    const { ctx, findUserByEmail } = fakeContext()
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ success: false }))
+    try {
+      await expect(
+        resolveUser({ ctx, context: JSON.stringify({ email: 'taken@example.com', captcha: 'bad-token' }) }),
+      ).rejects.toMatchObject({ body: { code: 'VERIFICATION_FAILED' } })
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+        expect.objectContaining({ method: 'POST' }),
+      )
+      expect(findUserByEmail).not.toHaveBeenCalled()
+    } finally {
+      fetchMock.mockRestore()
+    }
   })
 })
 
