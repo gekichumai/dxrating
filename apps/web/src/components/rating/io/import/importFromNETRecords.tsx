@@ -27,7 +27,14 @@ import {
   type FetchNetRecordProgressState,
   isFetchNetRecordProgressState,
 } from './netImportStages'
-import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
+import {
+  importFallbackEntries,
+  importPath,
+  impossibleScoreCount,
+  impossibleScoresNotice,
+  runServerImportToEnd,
+  summarizeImportJob,
+} from './cloudImport'
 import { ImportAlreadyRunningError, ServerImportFailedError } from '@/models/scores/cloudImports'
 
 const ERROR_CODE_MESSAGES = NET_IMPORT_ERROR_MESSAGES
@@ -191,6 +198,7 @@ export const importFromNETRecords = async (
               summary: summarizeImportJob(job, getLocale()),
             })}
           </span>
+          <ImpossibleScoresLine count={job.rejections?.length ?? 0} />
         </div>,
       )
       netImportLastSuccess.set(Date.now())
@@ -259,6 +267,7 @@ export const importFromNETRecords = async (
             region: String(region).toUpperCase(),
           })}
         </span>
+        <ImpossibleScoresLine count={impossibleScoreCount(importResult.warnings)} />
         {lastRecord && (
           <>
             <span className="text-sm text-secondary">{m.ratingCalculator_io_import_netRecords_latestPlay()}</span>
@@ -338,4 +347,10 @@ export const importFromNETRecords = async (
   } finally {
     importInFlight = false
   }
+}
+
+/** The impossible scores an import left out (meta#82), under its success line; nothing when there were none */
+function ImpossibleScoresLine({ count }: { count: number }) {
+  const notice = impossibleScoresNotice(count, getLocale())
+  return notice ? <span className="text-sm text-secondary">{notice}</span> : null
 }

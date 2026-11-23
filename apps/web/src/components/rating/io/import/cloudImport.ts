@@ -1,4 +1,5 @@
 import type { ImportJobDTO } from '@gekichumai/api-contract'
+import type { ImportWarning, ScoreValidationRule } from '@gekichumai/maimai-domain'
 import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { migrateLegacyImportEntries } from '@/catalog/savedDataMigration'
 import { cloudImportConfirm } from '@/components/cloud-save/cloudImportConfirm'
@@ -19,6 +20,7 @@ import type {
   ServerImportKind,
   WebScoreRepository,
 } from '@/models/scores/ScoreRepository'
+import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
 import type { Locale } from '@/paraglide/runtime'
 
@@ -151,4 +153,29 @@ export function cloudImportErrorMessage(error: unknown, locale: Locale): string 
     return m.ratingCalculator_cloudSave_import_errors_alreadyRunning({}, { locale })
   if (error instanceof ImportTooLargeError) return m.ratingCalculator_cloudSave_import_errors_tooLarge({}, { locale })
   return null
+}
+
+/** The words of each hard score rule an import checks (gekichumai/meta#82) */
+export const IMPOSSIBLE_RULE_MESSAGES = {
+  R1: m.ratingCalculator_io_import_impossibleRule_r1,
+  R2: m.ratingCalculator_io_import_impossibleRule_r2,
+  R3: m.ratingCalculator_io_import_impossibleRule_r3,
+  R4: m.ratingCalculator_io_import_impossibleRule_r4,
+  R5: m.ratingCalculator_io_import_impossibleRule_r5,
+  R6: m.ratingCalculator_io_import_impossibleRule_r6,
+  R7: m.ratingCalculator_io_import_impossibleRule_r7,
+  R8: m.ratingCalculator_io_import_impossibleRule_r8,
+} satisfies Record<ScoreValidationRule, PlainMessage>
+
+/** The rows of a normalized import that were impossible scores (meta#82): left out, never clamped */
+export function impossibleScoreCount(warnings: readonly ImportWarning[]): number {
+  return warnings.filter((warning) => warning.code === 'impossible-score').length
+}
+
+/**
+ * What to tell the user about the impossible scores an import left out (meta#82): the rows a local import's
+ * normalizer dropped, or a server job's `rejections`. `null` when there were none
+ */
+export function impossibleScoresNotice(count: number, locale: Locale): string | null {
+  return count > 0 ? m.ratingCalculator_io_import_impossibleScores({ count }, { locale }) : null
 }

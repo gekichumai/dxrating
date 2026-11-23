@@ -32,6 +32,8 @@ import {
   importFallbackEntries,
   importPath,
   runServerImportToEnd,
+  impossibleScoreCount,
+  impossibleScoresNotice,
   maskedRowsNotice,
   summarizeImportJob,
 } from './cloudImport'
@@ -60,6 +62,8 @@ type DivingFishRequestBody = {
 type DivingFishImportMessages = {
   loading: string
   success: (count: number) => string
+  /** The impossible scores (meta#82) a local import left out, or `null` for none */
+  impossible: (count: number) => string | null
   /** A cloud save: what the server's job changed */
   serverSuccess: (job: ImportJobDTO) => string
   /** A cloud save: the failed job's code in words */
@@ -179,6 +183,8 @@ const fetchDivingFish = async (
     toast.success(messages.success(entries.length), {
       id: toastId,
     })
+    const impossible = messages.impossible(impossibleScoreCount(importResult.warnings))
+    if (impossible) toast(impossible)
   } catch (error) {
     analytics.failed(
       error instanceof Error && error.message === 'No Diving Fish Profile' ? 'missing_profile' : 'provider_error',
@@ -293,6 +299,7 @@ export const ImportDivingFishDialogContent: FC<{
               await fetchDivingFish(await loadCatalog(), divingFishConfig!, repository, {
                 loading: m.ratingCalculator_io_import_divingFish_loading({}, { locale }),
                 success: (count) => m.ratingCalculator_io_import_divingFish_success({ count }, { locale }),
+                impossible: (count) => impossibleScoresNotice(count, locale),
                 serverSuccess: (job) =>
                   [
                     m.ratingCalculator_cloudSave_import_success(
@@ -304,6 +311,8 @@ export const ImportDivingFishDialogContent: FC<{
                     ),
                     // Rows the player hid on Diving-Fish: said apart, as nothing here can import them
                     maskedRowsNotice(job, locale),
+                    // Impossible scores the server rejected (meta#82)
+                    impossibleScoresNotice(job.rejections?.length ?? 0, locale),
                   ]
                     .filter(Boolean)
                     .join(' '),

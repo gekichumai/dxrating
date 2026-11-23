@@ -1760,5 +1760,34 @@
   "ratingCalculator_cloudSave_exportImport_pickTitle": "Choose a save to import",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "This file has more than one save.",
   "ratingCalculator_cloudSave_exportImport_claimedOnly": "Imported as “not verified”: where the records came from is shown as the file claims it.",
-  "share_image_footerCaption": "Scan to open on DXRating"
+  "share_image_footerCaption": "Scan to open on DXRating",
+  "ratingCalculator_io_import_impossibleScores": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} score was left out because it can't come from a real play.",
+        "countPlural=*": "{countNumber} scores were left out because they can't come from a real play."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} impossible score left out",
+        "countPlural=*": "{countNumber} impossible scores left out"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections_unknownChart": "Unknown chart",
+  "ratingCalculator_io_import_impossibleRule_r1": "Achievement above 101%",
+  "ratingCalculator_io_import_impossibleRule_r2": "Unknown combo, sync or difficulty value",
+  "ratingCalculator_io_import_impossibleRule_r3": "DX score above the chart's maximum",
+  "ratingCalculator_io_import_impossibleRule_r4": "Maximum DX score without AP+ and 101%",
+  "ratingCalculator_io_import_impossibleRule_r5": "AP+ below 101%",
+  "ratingCalculator_io_import_impossibleRule_r6": "AP below 100.5%",
+  "ratingCalculator_io_import_impossibleRule_r7": "AP with a DX score below 2 per note",
+  "ratingCalculator_io_import_impossibleRule_r8": "A score with no plays"
 }

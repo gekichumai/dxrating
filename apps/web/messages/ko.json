@@ -1760,5 +1760,34 @@
   "ratingCalculator_cloudSave_exportImport_pickTitle": "가져올 저장 선택",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "이 파일에는 저장이 여러 개 있습니다.",
   "ratingCalculator_cloudSave_exportImport_claimedOnly": "“검증되지 않음”으로 가져왔습니다. 기록의 출처는 파일이 주장하는 대로 표시됩니다.",
-  "share_image_footerCaption": "스캔하여 DXRating에서 열기"
+  "share_image_footerCaption": "스캔하여 DXRating에서 열기",
+  "ratingCalculator_io_import_impossibleScores": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "실제 플레이로는 나올 수 없는 기록 {countNumber}개를 제외했습니다.",
+        "countPlural=*": "실제 플레이로는 나올 수 없는 기록 {countNumber}개를 제외했습니다."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "제외된 불가능한 기록 {countNumber}개",
+        "countPlural=*": "제외된 불가능한 기록 {countNumber}개"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections_unknownChart": "알 수 없는 채보",
+  "ratingCalculator_io_import_impossibleRule_r1": "달성률이 101% 초과",
+  "ratingCalculator_io_import_impossibleRule_r2": "알 수 없는 콤보·싱크·난이도 값",
+  "ratingCalculator_io_import_impossibleRule_r3": "DX 스코어가 채보 최대치 초과",
+  "ratingCalculator_io_import_impossibleRule_r4": "DX 스코어가 최대치인데 AP+·101%가 아님",
+  "ratingCalculator_io_import_impossibleRule_r5": "AP+인데 101% 미만",
+  "ratingCalculator_io_import_impossibleRule_r6": "AP인데 100.5% 미만",
+  "ratingCalculator_io_import_impossibleRule_r7": "AP인데 DX 스코어가 노트 수의 2배 미만",
+  "ratingCalculator_io_import_impossibleRule_r8": "플레이 횟수가 0인데 기록이 있음"
 }

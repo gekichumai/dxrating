@@ -1742,5 +1742,34 @@
   "ratingCalculator_cloudSave_exportImport_pickTitle": "Pilih save untuk diimpor",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "File ini berisi lebih dari satu save.",
   "ratingCalculator_cloudSave_exportImport_claimedOnly": "Diimpor sebagai “belum terverifikasi”: asal catatan ditampilkan sesuai klaim di file.",
-  "share_image_footerCaption": "Pindai untuk membuka di DXRating"
+  "share_image_footerCaption": "Pindai untuk membuka di DXRating",
+  "ratingCalculator_io_import_impossibleScores": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} skor tidak diimpor karena tidak mungkin berasal dari permainan sungguhan.",
+        "countPlural=*": "{countNumber} skor tidak diimpor karena tidak mungkin berasal dari permainan sungguhan."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} skor mustahil tidak diimpor",
+        "countPlural=*": "{countNumber} skor mustahil tidak diimpor"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections_unknownChart": "Chart tidak dikenal",
+  "ratingCalculator_io_import_impossibleRule_r1": "Pencapaian di atas 101%",
+  "ratingCalculator_io_import_impossibleRule_r2": "Nilai combo, sync, atau tingkat kesulitan tidak dikenal",
+  "ratingCalculator_io_import_impossibleRule_r3": "Skor DX melebihi batas maksimum chart",
+  "ratingCalculator_io_import_impossibleRule_r4": "Skor DX maksimum tanpa AP+ dan 101%",
+  "ratingCalculator_io_import_impossibleRule_r5": "AP+ di bawah 101%",
+  "ratingCalculator_io_import_impossibleRule_r6": "AP di bawah 100,5%",
+  "ratingCalculator_io_import_impossibleRule_r7": "AP dengan skor DX di bawah 2 per not",
+  "ratingCalculator_io_import_impossibleRule_r8": "Skor tanpa pernah dimainkan"
 }

@@ -1752,5 +1752,34 @@
   "ratingCalculator_cloudSave_exportImport_pickTitle": "Pumili ng save na i-import",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "May higit sa isang save ang file na ito.",
   "ratingCalculator_cloudSave_exportImport_claimedOnly": "Na-import bilang “hindi verified”: ipinapakita ang pinagmulan ng mga record ayon sa sinasabi ng file.",
-  "share_image_footerCaption": "I-scan para buksan sa DXRating"
+  "share_image_footerCaption": "I-scan para buksan sa DXRating",
+  "ratingCalculator_io_import_impossibleScores": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} score ang hindi isinama dahil hindi ito maaaring manggaling sa totoong laro.",
+        "countPlural=*": "{countNumber} na score ang hindi isinama dahil hindi maaaring manggaling ang mga ito sa totoong laro."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} imposibleng score ang hindi isinama",
+        "countPlural=*": "{countNumber} na imposibleng score ang hindi isinama"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections_unknownChart": "Hindi kilalang chart",
+  "ratingCalculator_io_import_impossibleRule_r1": "Achievement na lampas sa 101%",
+  "ratingCalculator_io_import_impossibleRule_r2": "Hindi kilalang value ng combo, sync o difficulty",
+  "ratingCalculator_io_import_impossibleRule_r3": "DX score na lampas sa maximum ng chart",
+  "ratingCalculator_io_import_impossibleRule_r4": "Maximum na DX score nang walang AP+ at 101%",
+  "ratingCalculator_io_import_impossibleRule_r5": "AP+ na mas mababa sa 101%",
+  "ratingCalculator_io_import_impossibleRule_r6": "AP na mas mababa sa 100.5%",
+  "ratingCalculator_io_import_impossibleRule_r7": "AP na may DX score na mas mababa sa 2 bawat note",
+  "ratingCalculator_io_import_impossibleRule_r8": "Score na walang play"
 }

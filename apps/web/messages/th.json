@@ -1742,5 +1742,34 @@
   "ratingCalculator_cloudSave_exportImport_pickTitle": "เลือกเซฟที่จะนำเข้า",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "ไฟล์นี้มีมากกว่าหนึ่งเซฟ",
   "ratingCalculator_cloudSave_exportImport_claimedOnly": "นำเข้าเป็น “ยังไม่ได้ยืนยัน”: ที่มาของเรคคอร์ดแสดงตามที่ไฟล์ระบุ",
-  "share_image_footerCaption": "สแกนเพื่อเปิดใน DXRating"
+  "share_image_footerCaption": "สแกนเพื่อเปิดใน DXRating",
+  "ratingCalculator_io_import_impossibleScores": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "ไม่ได้นำเข้า {countNumber} คะแนน เพราะไม่อาจมาจากการเล่นจริง",
+        "countPlural=*": "ไม่ได้นำเข้า {countNumber} คะแนน เพราะไม่อาจมาจากการเล่นจริง"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "ไม่ได้นำเข้าคะแนนที่เป็นไปไม่ได้ {countNumber} รายการ",
+        "countPlural=*": "ไม่ได้นำเข้าคะแนนที่เป็นไปไม่ได้ {countNumber} รายการ"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections_unknownChart": "ชาร์ตที่ไม่รู้จัก",
+  "ratingCalculator_io_import_impossibleRule_r1": "Achievement เกิน 101%",
+  "ratingCalculator_io_import_impossibleRule_r2": "ค่าคอมโบ ซิงก์ หรือระดับความยากที่ไม่รู้จัก",
+  "ratingCalculator_io_import_impossibleRule_r3": "คะแนน DX เกินค่าสูงสุดของชาร์ต",
+  "ratingCalculator_io_import_impossibleRule_r4": "คะแนน DX สูงสุดแต่ไม่ใช่ AP+ และ 101%",
+  "ratingCalculator_io_import_impossibleRule_r5": "AP+ ต่ำกว่า 101%",
+  "ratingCalculator_io_import_impossibleRule_r6": "AP ต่ำกว่า 100.5%",
+  "ratingCalculator_io_import_impossibleRule_r7": "AP แต่คะแนน DX ต่ำกว่า 2 ต่อโน้ต",
+  "ratingCalculator_io_import_impossibleRule_r8": "มีคะแนนแต่ไม่เคยเล่น"
 }

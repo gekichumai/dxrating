@@ -34,7 +34,13 @@ import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
-import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
+import {
+  announceImportLeftOut,
+  cloudImportErrorMessage,
+  importFileEntries,
+  impossibleScoreCount,
+  impossibleScoresNotice,
+} from './cloudImport'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import { asyncHandler, reportRejection } from '@/lib/rejections'
@@ -272,6 +278,9 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
               // A cloud save counts what the server took, not what was sent
               toast.success(m.ratingCalculator_io_import_aquaSqlite_success({ count: result.count }, { locale }))
               announceImportLeftOut(result, locale, (message) => toast(message))
+              // Impossible scores (meta#82) never reach the save: said apart from rows that failed
+              const impossible = impossibleScoresNotice(impossibleScoreCount(warnings), locale)
+              if (impossible) toast(impossible)
 
               onClose?.()
             })}

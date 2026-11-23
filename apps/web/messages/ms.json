@@ -1742,5 +1742,34 @@
   "ratingCalculator_cloudSave_exportImport_pickTitle": "Pilih simpanan untuk diimport",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "Fail ini mempunyai lebih daripada satu simpanan.",
   "ratingCalculator_cloudSave_exportImport_claimedOnly": "Diimport sebagai “tidak disahkan”: asal rekod ditunjukkan seperti yang didakwa oleh fail.",
-  "share_image_footerCaption": "Imbas untuk buka di DXRating"
+  "share_image_footerCaption": "Imbas untuk buka di DXRating",
+  "ratingCalculator_io_import_impossibleScores": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} skor ditinggalkan kerana ia tidak mungkin datang daripada permainan sebenar.",
+        "countPlural=*": "{countNumber} skor ditinggalkan kerana ia tidak mungkin datang daripada permainan sebenar."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{countNumber} skor mustahil ditinggalkan",
+        "countPlural=*": "{countNumber} skor mustahil ditinggalkan"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections_unknownChart": "Carta tidak diketahui",
+  "ratingCalculator_io_import_impossibleRule_r1": "Pencapaian melebihi 101%",
+  "ratingCalculator_io_import_impossibleRule_r2": "Nilai kombo, sync atau kesukaran tidak diketahui",
+  "ratingCalculator_io_import_impossibleRule_r3": "Skor DX melebihi maksimum carta",
+  "ratingCalculator_io_import_impossibleRule_r4": "Skor DX maksimum tanpa AP+ dan 101%",
+  "ratingCalculator_io_import_impossibleRule_r5": "AP+ di bawah 101%",
+  "ratingCalculator_io_import_impossibleRule_r6": "AP di bawah 100.5%",
+  "ratingCalculator_io_import_impossibleRule_r7": "AP dengan skor DX di bawah 2 bagi setiap not",
+  "ratingCalculator_io_import_impossibleRule_r8": "Skor tanpa sebarang permainan"
 }
