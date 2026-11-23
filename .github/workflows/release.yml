@@ -84,6 +84,8 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           VITE_BACKEND_URL: https://miruku.dxrating.net
           VITE_BETTER_AUTH_URL: https://miruku.dxrating.net
+          # Chrome's Email Verification origin trial (apps/web/src/setup/origin-trials.ts); empty emits nothing
+          VITE_EMAIL_VERIFICATION_ORIGIN_TRIAL_TOKEN: ${{ vars.EMAIL_VERIFICATION_ORIGIN_TRIAL_TOKEN }}
 
       - name: Deploy to Cloudflare Workers
         run: pnpm --filter @gekichumai/dxrating-web exec wrangler deploy --config=dist/server/wrangler.json --name=dxrating
