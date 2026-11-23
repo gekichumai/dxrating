@@ -7,7 +7,7 @@ const noVoid = {
         context.report({
           node,
           message:
-            '`void` drops a promise rejection, which reaches Sentry as unhandled. Await it, or end it with .catch(...) that handles the rejection.',
+            '`void` drops a promise rejection, which reaches Sentry as unhandled, so ignore the "add void operator" hint from no-floating-promises. Await the promise, or end it with a .catch: in apps/web, `.catch(reportRejection)`, or wrap an async event handler in `asyncHandler` (both from @/lib/rejections).',
         })
       },
     }
