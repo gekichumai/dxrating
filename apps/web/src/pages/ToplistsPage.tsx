@@ -33,6 +33,7 @@ import { type FlattenedSheet, useSheets } from '@/songs'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
+import { reportRejection } from '@/lib/rejections'
 
 const TAB_LABELS = {
   ap: m.toplists_tabs_ap,
@@ -83,11 +84,13 @@ export const ToplistsPage: FC = () => {
   const tabsActions = useRef<TabsActions>(null)
   useEffect(() => {
     let cancelled = false
-    void document.fonts?.ready.then(() => {
-      if (cancelled) return
-      tabsActions.current?.updateIndicator()
-      tabsActions.current?.updateScrollButtons()
-    })
+    document.fonts?.ready
+      .then(() => {
+        if (cancelled) return
+        tabsActions.current?.updateIndicator()
+        tabsActions.current?.updateScrollButtons()
+      })
+      .catch(reportRejection)
     return () => {
       cancelled = true
     }
@@ -125,7 +128,9 @@ export const ToplistsPage: FC = () => {
             action={tabsActions}
             className="min-w-0 lg:flex-1"
             value={kind}
-            onChange={(_, value) => void navigate({ search: { tab: value, level }, replace: true })}
+            onChange={(_, value) => {
+              navigate({ search: { tab: value, level }, replace: true })
+            }}
             variant="scrollable"
             scrollButtons="auto"
             allowScrollButtonsMobile
@@ -150,12 +155,12 @@ export const ToplistsPage: FC = () => {
                 labelId="toplist-sort"
                 label={m.toplists_sort_label({}, { locale })}
                 value={sort}
-                onChange={(event) =>
-                  void navigate({
+                onChange={(event) => {
+                  navigate({
                     search: (prev) => ({ ...prev, sort: event.target.value as ToplistSort }),
                     replace: true,
                   })
-                }
+                }}
               >
                 {TOPLIST_SORTS.map((item) => (
                   <MenuItem key={item} value={item}>
@@ -170,12 +175,12 @@ export const ToplistsPage: FC = () => {
                 labelId="toplist-level"
                 label={m.toplists_level_label({}, { locale })}
                 value={level ?? ''}
-                onChange={(event) =>
-                  void navigate({
+                onChange={(event) => {
+                  navigate({
                     search: (prev) => ({ ...prev, level: event.target.value || undefined }),
                     replace: true,
                   })
-                }
+                }}
               >
                 <MenuItem value="">{m.toplists_level_all({}, { locale })}</MenuItem>
                 {levels.map((item) => (

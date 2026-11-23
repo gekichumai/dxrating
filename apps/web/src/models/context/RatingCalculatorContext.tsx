@@ -29,6 +29,7 @@ import { ScoreRepositoryContext } from '../scores/useScoreRepository'
 import { type CloudSaveUi, CloudSaveUiContext } from '../scores/CloudSaveUiContext'
 import { CloudSaveDemoBoundary } from '../scores/CloudSaveDemoBoundary'
 import { CloudMigrationProvider } from '../scores/CloudMigrationContext'
+import { reportRejection } from '@/lib/rejections'
 
 /**
  * The rating calculator's view of the score repository, kept source compatible: `entries` are the saved entries and
@@ -153,14 +154,16 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
     if (repository.kind !== 'local') return
     if (!completeCatalogDocument || !hasLegacySheetRecords(entries)) return
     let cancelled = false
-    void loadLegacySongIds().then((legacySongIds) => {
-      if (cancelled) return
-      const result = migrateLegacySheetRecords(entries, getMigrationCatalog(completeCatalogDocument), legacySongIds)
-      if (result.migrated === 0) return
-      backUpBeforeMigration(window.localStorage, RATING_ENTRIES_STORAGE_KEY, JSON.stringify(entries))
-      repository.applyMigration(result.records)
-      reportMigration('rating-entries', result)
-    })
+    loadLegacySongIds()
+      .then((legacySongIds) => {
+        if (cancelled) return
+        const result = migrateLegacySheetRecords(entries, getMigrationCatalog(completeCatalogDocument), legacySongIds)
+        if (result.migrated === 0) return
+        backUpBeforeMigration(window.localStorage, RATING_ENTRIES_STORAGE_KEY, JSON.stringify(entries))
+        repository.applyMigration(result.records)
+        reportMigration('rating-entries', result)
+      })
+      .catch(reportRejection)
     return () => {
       cancelled = true
     }
@@ -168,7 +171,7 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
 
   useEffect(() => {
     if (!completeCatalogDocument) return
-    void migrateStoredFavoriteSheetIds(window.localStorage, completeCatalogDocument)
+    migrateStoredFavoriteSheetIds(window.localStorage, completeCatalogDocument).catch(reportRejection)
   }, [completeCatalogDocument])
 
   const value = useMemo(() => ({ entries, modifyEntries }), [entries, modifyEntries])

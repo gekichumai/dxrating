@@ -19,6 +19,7 @@ import { hideComment } from './commentVisibility'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
+import { asyncHandler } from '@/lib/rejections'
 
 type Comment = { id: number; author_id: string }
 type SafetyAction = 'report' | 'block'
@@ -83,10 +84,10 @@ export function CommentActions({ comment }: { comment: Comment }) {
         {(['report', 'block'] as const).map((value) => (
           <MenuItem
             key={value}
-            onClick={async () => {
+            onClick={asyncHandler(async () => {
               setAnchor(null)
               if (await ensureAuthenticated()) setAction(value)
-            }}
+            })}
           >
             {SAFETY_ACTION_LABELS[value]({}, { locale })}
           </MenuItem>
@@ -109,7 +110,7 @@ export function CommentActions({ comment }: { comment: Comment }) {
           </Button>
           <Button
             disabled={pending}
-            onClick={submit}
+            onClick={asyncHandler(submit)}
             variant="contained"
             color={action === 'block' ? 'error' : 'primary'}
           >

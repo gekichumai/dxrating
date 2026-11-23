@@ -2,6 +2,7 @@ import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { fromV2Community, type CommunityV2Document } from '@gekichumai/dxdata/v2'
 import { useEffect, useRef } from 'react'
 import { getLoadedCatalogDocument, loadClientCatalogDocument, subscribeToCatalog } from './clientCatalog'
+import { reportRejection } from '@/lib/rejections'
 
 // The tags and aliases of the catalog (dxdata v2, gekichumai/meta#43). They change within minutes while the catalog
 // changes about daily, so they come from their own small document. Its responses tell the browser to revalidate
@@ -118,16 +119,16 @@ const isStale = (data: object | undefined) => {
  * (found when it mounts again), or a value a local mutation made, which may have replaced a discarded refresh. Songs
  * and sheets a newer catalog adds get their tags and aliases without a reload; the viewer's own additions stay.
  */
-export const useRefreshOnCatalogChange = (data: object | undefined, revalidate: () => unknown) => {
+export const useRefreshOnCatalogChange = (data: object | undefined, revalidate: () => Promise<unknown>) => {
   const latest = useRef(data)
   useEffect(() => {
     latest.current = data
-    if (isStale(data)) void revalidate()
+    if (isStale(data)) revalidate().catch(reportRejection)
   }, [data, revalidate])
   useEffect(
     () =>
       subscribeToCatalog(() => {
-        if (isStale(latest.current)) void revalidate()
+        if (isStale(latest.current)) revalidate().catch(reportRejection)
       }),
     [revalidate],
   )

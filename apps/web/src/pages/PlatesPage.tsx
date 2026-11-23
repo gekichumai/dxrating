@@ -73,7 +73,7 @@ export const useFollowSiteRegion = ({
     // its own, so Back leaves Plates instead of landing on a URL that shows another region than the header
     const url = new URL(window.location.href)
     url.searchParams.set('region', target)
-    void router.navigate({ href: `${url.pathname}${url.search}${url.hash}`, replace: true })
+    router.navigate({ href: `${url.pathname}${url.search}${url.hash}`, replace: true })
   }, [siteRegion, hydrated, region, explicit, available, router])
 }
 

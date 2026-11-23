@@ -99,7 +99,7 @@ const fetchNetRecords = async (
         // if the server responds with an error, DO NOT retry
         throw new Error(await response.text())
       },
-    })
+    }).catch(reject)
   })
 }
 

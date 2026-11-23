@@ -14,6 +14,7 @@ import { SheetListItemContent } from './SheetListItem'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const locale = useLocale()
@@ -43,13 +44,13 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
       // Show the new alias at once: the shared edge copy of the list can take a few minutes to include it
       const created = { song_id: sheet.songId, name: newAltName.trim() }
       rememberCreatedAlias(created)
-      void mutate(
+      mutate(
         (aliases) =>
           aliases?.some((alias) => alias.song_id === created.song_id && alias.name === created.name)
             ? aliases
             : [...(aliases ?? []), created],
         { revalidate: false },
-      )
+      ).catch(reportRejection)
     } catch (e: any) {
       captureAnalyticsEvent('sheet_alias_failed', {
         song_id: sheet.songId,
@@ -104,7 +105,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
                 onChange={(e) => setNewAltName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    handleAddAltName()
+                    handleAddAltName().catch(reportRejection)
                   }
                 }}
                 data-attr="add-alias-input"
@@ -113,7 +114,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
               <Button
                 variant="contained"
                 color="primary"
-                onClick={handleAddAltName}
+                onClick={asyncHandler(handleAddAltName)}
                 startIcon={<IconMdiPlus />}
                 disabled={newAltName.trim().length === 0 || newAltName.trim().length > 100 || loading}
                 type="submit"

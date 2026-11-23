@@ -37,6 +37,7 @@ import { createRatingImportTracker } from '@/lib/analytics'
 import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 export const ImportFromAquaSQLiteListItem: FC<{
   onClose: () => void
@@ -101,7 +102,7 @@ export const ImportFromAquaSQLiteListItem: FC<{
               }
 
               fileInput.addEventListener('change', () => {
-                onChange()
+                onChange().catch(reject)
               })
               fileInput.addEventListener('cancel', () => {
                 reject('User cancelled file selection')
@@ -236,7 +237,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
           <Button
             color="primary"
             variant="contained"
-            onClick={async () => {
+            onClick={asyncHandler(async () => {
               const analytics = createRatingImportTracker('aqua_sqlite')
               let result: Awaited<ReturnType<typeof importFileEntries>>
               try {
@@ -263,13 +264,13 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
               }
               analytics.succeeded(result.count, warnings.length)
 
-              haptic.trigger('success')
+              haptic.trigger('success')?.catch(reportRejection)
               // A cloud save counts what the server took, not what was sent
               toast.success(m.ratingCalculator_io_import_aquaSqlite_success({ count: result.count }, { locale }))
               announceImportLeftOut(result, locale, (message) => toast(message))
 
               onClose?.()
-            }}
+            })}
           >
             {m.ratingCalculator_io_import_aquaSqlite_importAction({}, { locale })}
           </Button>

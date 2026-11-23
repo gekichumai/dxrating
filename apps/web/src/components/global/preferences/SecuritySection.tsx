@@ -16,6 +16,7 @@ import { PasswordVisibilityAdornment } from '../../auth/PasswordVisibilityAdornm
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 // -- Password Subsection --
 
@@ -88,7 +89,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
             else confirmRef.current?.focus()
             return
           }
-          void handleChange()
+          handleChange().catch(reportRejection)
         }}
         noValidate
       >
@@ -308,7 +309,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading 
                 </div>
                 <IconButton
                   size="small"
-                  onClick={() => handleDelete(pk.id)}
+                  onClick={asyncHandler(() => handleDelete(pk.id))}
                   aria-label={m.auth_userProfile_passkeys_deleteNamed({ name: info.name }, { locale })}
                   title={m.auth_userProfile_passkeys_deleteNamed({ name: info.name }, { locale })}
                   className="!text-danger"
@@ -322,7 +323,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading 
       )}
 
       <Button
-        onClick={handleAdd}
+        onClick={asyncHandler(handleAdd)}
         disabled={addState.loading}
         variant="outlined"
         startIcon={addState.loading ? <CircularProgress size="1rem" /> : <IconMdiPlus />}
@@ -443,7 +444,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
                 {!isCurrent && (
                   <Button
                     size="small"
-                    onClick={() => handleRevoke(session.token)}
+                    onClick={asyncHandler(() => handleRevoke(session.token))}
                     variant="text"
                     className="!text-xs !shrink-0"
                   >

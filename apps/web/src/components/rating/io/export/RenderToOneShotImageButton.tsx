@@ -18,6 +18,7 @@ import { captureAnalyticsEvent } from '@/lib/analytics'
 import { ShareImageActions, useObjectUrl } from '@/components/global/ShareImageViewer'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler } from '@/lib/rejections'
 
 const useElapsedTime = (isLoading: boolean) => {
   const startTime = useRef<number | null>(null)
@@ -181,7 +182,7 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
       </DialogContent>
       <DialogActions>
         {error && !isValidating && (
-          <Button onClick={() => void mutate()}>
+          <Button onClick={asyncHandler(() => mutate())}>
             {m.ratingCalculator_io_export_oneshotImage_dialog_retry({}, { locale })}
           </Button>
         )}

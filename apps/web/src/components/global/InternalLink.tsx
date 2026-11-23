@@ -17,6 +17,7 @@ import { createPortal } from 'react-dom'
 import { NAVIGATION_FEEDBACK_DELAY_MS } from '@/components/layout/NavigationProgress'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { DEFAULT_LOCALE, type SupportedLocale, localizePath, splitLocalePath } from '@/setup/locale'
+import { reportRejection } from '@/lib/rejections'
 
 /** Paths the server answers on its own (llms.txt, sitemap.xml, Apple's association file, images), with no page in the router */
 const SERVER_FILE_PATH = /^\/\.well-known\/|\.(?:txt|xml|json|webmanifest|ico|png|jpe?g|webp|avif|gif|svg|pdf)$/i
@@ -131,9 +132,11 @@ export const InternalLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<H
         setNavigationId(id)
         // Settles once the next page has loaded (or once a navigation that replaced this one has). The router adds the
         // current language's prefix itself (router.tsx)
-        void Promise.resolve(router.navigate({ href })).finally(() => {
-          setNavigationId((current) => (current === id ? undefined : current))
-        })
+        Promise.resolve(router.navigate({ href }))
+          .finally(() => {
+            setNavigationId((current) => (current === id ? undefined : current))
+          })
+          .catch(reportRejection)
       },
       [href, onClick, router],
     )

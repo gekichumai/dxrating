@@ -2,6 +2,7 @@ import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { fromV2Catalog, type CatalogV2Document } from '@gekichumai/dxdata/v2'
 import snapshotAssetUrl from '@gekichumai/dxdata/snapshot.json?url'
 import * as Sentry from '@/lib/telemetry'
+import { reportRejection } from '@/lib/rejections'
 
 // The browser never gets the catalog in a JS chunk. It loads the dxdata API document once, keeps it in Cache Storage,
 // and on later visits renders from that copy at once while it revalidates in the background with the stored ETag.
@@ -104,7 +105,7 @@ async function loadCatalog(): Promise<SongCatalogDocument> {
   const cached = cache ? await readCachedCatalog(cache) : null
   if (cached && !isOlderThanBuildCatalog(cached.document)) {
     publish(cached.document, cached.unverified)
-    void revalidateCatalog(cache!, cached.etag)
+    revalidateCatalog(cache!, cached.etag).catch(reportRejection)
     return cached.document
   }
 
@@ -119,7 +120,7 @@ async function loadCatalog(): Promise<SongCatalogDocument> {
     return cached.document
   }
   publish(fresh.document, fresh.unverified)
-  if (cache) void storeCatalog(cache, fresh)
+  if (cache) storeCatalog(cache, fresh).catch(reportRejection)
   return fresh.document
 }
 
@@ -245,7 +246,7 @@ async function openCatalogCache(): Promise<Cache | null> {
   if (typeof caches === 'undefined') return null
   try {
     const cache = await caches.open(CATALOG_CACHE_NAME)
-    void cache.delete(V1_CATALOG_URL).catch(() => {})
+    cache.delete(V1_CATALOG_URL).catch(() => {})
     return cache
   } catch {
     // Cache Storage can be unavailable (some private modes): load from the network every time

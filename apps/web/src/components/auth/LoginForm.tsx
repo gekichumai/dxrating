@@ -16,6 +16,7 @@ import { PasswordVisibilityAdornment } from './PasswordVisibilityAdornment'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { ParaglideMessage } from '@inlang/paraglide-js-react'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
 
@@ -110,7 +111,7 @@ export const LoginForm = ({
           fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
         })
         if (error) throw error
-        haptic.trigger('success')
+        haptic.trigger('success')?.catch(reportRejection)
         toast.success(m.auth_signUp_toastSuccess({}, { locale }))
         setIsSignUp(false)
         setShowPassword(false)
@@ -121,12 +122,12 @@ export const LoginForm = ({
           fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
         })
         if (error) throw error
-        haptic.trigger('success')
+        haptic.trigger('success')?.catch(reportRejection)
         toast.success(m.auth_login_toastSuccess({}, { locale }))
         onSuccess?.()
       }
     } catch (e: unknown) {
-      haptic.trigger('error')
+      haptic.trigger('error')?.catch(reportRejection)
       setError(formatErrorMessage(e, m.auth_form_errorGeneric({}, { locale })))
     } finally {
       setActiveProvider(null)
@@ -151,11 +152,11 @@ export const LoginForm = ({
     try {
       const { error } = await authClient.signIn.passkey()
       if (error) throw error
-      haptic.trigger('success')
+      haptic.trigger('success')?.catch(reportRejection)
       toast.success(m.auth_login_toastSuccess({}, { locale }))
       onSuccess?.()
     } catch (e: unknown) {
-      haptic.trigger('error')
+      haptic.trigger('error')?.catch(reportRejection)
       setError(formatErrorMessage(e, m.auth_form_errorPasskey({}, { locale })))
     } finally {
       setActiveProvider(null)
@@ -179,7 +180,7 @@ export const LoginForm = ({
       <form
         aria-labelledby={formTitleId}
         className="flex flex-col gap-3"
-        onSubmit={handleFormSubmit(onSubmit)}
+        onSubmit={asyncHandler(handleFormSubmit(onSubmit))}
         noValidate
       >
         {/* A switch to sign-up still shows its heading, since the page around the form only talks about signing in */}
@@ -231,7 +232,7 @@ export const LoginForm = ({
                 />
               ) : undefined
             }
-            onClick={() => handleSocial('github')}
+            onClick={asyncHandler(() => handleSocial('github'))}
             disabled={loading}
             className="!py-2.5 !text-sm"
             fullWidth
@@ -254,7 +255,7 @@ export const LoginForm = ({
                 />
               ) : undefined
             }
-            onClick={() => handleSocial('google')}
+            onClick={asyncHandler(() => handleSocial('google'))}
             disabled={loading}
             className="!py-2.5 !text-sm"
             fullWidth
@@ -278,7 +279,7 @@ export const LoginForm = ({
                   />
                 ) : undefined
               }
-              onClick={handlePasskey}
+              onClick={asyncHandler(handlePasskey)}
               disabled={loading}
               className="!py-2.5 !text-sm"
               fullWidth
@@ -424,12 +425,12 @@ function ConditionalPasskey({ onSuccess }: { onSuccess?: () => void }) {
       const { error } = await authClient.signIn.passkey({ autoFill: true })
       if (!active || error) return
 
-      haptic.trigger('success')
+      haptic.trigger('success')?.catch(reportRejection)
       toast.success(m.auth_login_toastSuccess({}))
       onSuccess?.()
     }
 
-    void signInWithConditionalPasskey().catch(() => {})
+    signInWithConditionalPasskey().catch(() => {})
     return () => {
       active = false
     }

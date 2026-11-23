@@ -36,6 +36,7 @@ import { SHEET_TYPE_IMAGES, getSheetTypeAltText } from '../sheet/sheetTypeAssets
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 // Hairline dividers only: rows carry no fill, so the glass panel behind them stays the one surface
 const tableSx = {
@@ -230,7 +231,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     }
     await client.comments.create(payload)
 
-    mutate()
+    mutate().catch(reportRejection)
     setContent('')
   }, [sheet, content, ensureAuthenticated])
 
@@ -253,7 +254,7 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           data-attr="comment-input"
           disabled={!session}
         />
-        <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
+        <Button variant="contained" onClick={asyncHandler(handleSubmit)} disabled={!content || submitting}>
           {submitting ? <CircularProgress size={24} /> : m.global_submit({}, { locale })}
         </Button>
 

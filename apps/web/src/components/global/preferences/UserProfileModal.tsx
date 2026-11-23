@@ -20,6 +20,7 @@ import { SecuritySection } from './SecuritySection'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
+import { asyncHandler } from '@/lib/rejections'
 
 type Section = 'profile' | 'accounts' | 'security' | 'cloud-save'
 
@@ -154,7 +155,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
         // Signing out is reversible and loses nothing, so it is a neutral action rather than a red one
         <button
           type="button"
-          onClick={handleLogout}
+          onClick={asyncHandler(handleLogout)}
           className={clsx(
             NAV_ITEM_CLASS,
             'border-transparent bg-transparent text-fg-2 hover:bg-black/4 hover:text-fg-1',
@@ -225,7 +226,7 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
           <div className="px-4 pt-2 pb-3 border-0 border-t border-solid border-black/8">
             <button
               type="button"
-              onClick={handleLogout}
+              onClick={asyncHandler(handleLogout)}
               className={clsx(NAV_ITEM_CLASS, 'justify-center !gap-2 glass-inset text-fg-1 hover:bg-accent-subtle')}
             >
               <IconMdiLogout className="text-base" aria-hidden="true" />

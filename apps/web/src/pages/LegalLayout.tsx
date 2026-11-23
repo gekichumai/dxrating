@@ -40,7 +40,7 @@ export function LegalLayout({
       type="button"
       onClick={() => {
         if (canGoBack) router.history.back()
-        else void router.navigate({ to: '/' })
+        else router.navigate({ to: '/' })
       }}
     >
       <svg
