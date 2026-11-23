@@ -186,7 +186,42 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
       lastLoginMethod({
         cookieName: 'dxrating.last_used_login_method',
       }),
-      setPassword(),
+      setPassword({
+        storeFirstPassword: ({ userId, id, password }) =>
+          Effect.runPromise(
+            Effect.tryPromise({
+              try: () =>
+                database.authDb.transaction(async (tx) => {
+                  // Locks the user: a second request at the same time waits here, then finds this one's password
+                  await tx
+                    .select({ id: authSchema.user.id })
+                    .from(authSchema.user)
+                    .where(eq(authSchema.user.id, userId))
+                    .for('update')
+                  const [credential] = await tx
+                    .select({ id: authSchema.account.id, password: authSchema.account.password })
+                    .from(authSchema.account)
+                    .where(and(eq(authSchema.account.userId, userId), eq(authSchema.account.providerId, 'credential')))
+                    .limit(1)
+                  if (credential?.password) return false
+                  const updatedAt = new Date()
+                  if (credential) {
+                    await tx
+                      .update(authSchema.account)
+                      .set({ password, updatedAt })
+                      .where(eq(authSchema.account.id, credential.id))
+                  } else {
+                    // The same row Better Auth's email sign-up makes: a credential account's ID is the user's
+                    await tx
+                      .insert(authSchema.account)
+                      .values({ id, userId, providerId: 'credential', accountId: userId, password, updatedAt })
+                  }
+                  return true
+                }),
+              catch: (cause) => new AuthenticationError({ operation: 'Store first password', cause }),
+            }),
+          ),
+      }),
       ...(config.nodeEnv !== 'test' ? [haveIBeenPwned({ paths: [...PWNED_PASSWORD_PATHS] })] : []),
       ...(config.auth.turnstile.secretKey
         ? [

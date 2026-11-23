@@ -58,6 +58,20 @@ describe('setting a first password', () => {
     expect((await signIn(account.email, 'another-password')).status).toBe(401)
   })
 
+  it('adds one password however many requests race to set it', async () => {
+    const account = await passkeyOnlyAccount()
+    const passwords = Array.from({ length: 5 }, (_, index) => `racing-password-${index}`)
+    const responses = await Promise.all(passwords.map((password) => setPassword(account.cookie, password)))
+    const statuses = responses.map((response) => response.status).sort()
+    expect(statuses).toEqual([200, 400, 400, 400, 400])
+    for (const response of responses.filter((response) => response.status === 400)) {
+      expect(await response.json()).toMatchObject({ code: 'PASSWORD_ALREADY_SET' })
+    }
+    expect(await credentialAccounts(account.id)).toBe(1)
+    const winner = passwords[responses.findIndex((response) => response.status === 200)]!
+    expect((await signIn(account.email, winner)).status).toBe(200)
+  })
+
   it('refuses an account that already has a password', async () => {
     const response = await signUp('owner@example.com', 'password123', 'Owner')
     const { user } = (await response.json()) as { user: { id: string } }
