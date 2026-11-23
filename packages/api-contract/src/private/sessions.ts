@@ -1,6 +1,7 @@
 import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
+import { PgText } from './storable.ts'
 
 const oc = contractBuilder.errors({})
 
@@ -16,18 +17,18 @@ const SESSION_TAGS = ['internal', 'account']
  * session: 403 `FORBIDDEN` with `data.reason: 'SESSION_NOT_FRESH'` otherwise.
  */
 export const DeviceSessionSchema = z.object({
-  id: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  expiresAt: z.string(),
-  ipAddress: z.string().nullable(),
-  userAgent: z.string().nullable(),
+  id: PgText,
+  createdAt: PgText,
+  updatedAt: PgText,
+  expiresAt: PgText,
+  ipAddress: PgText.nullable(),
+  userAgent: PgText.nullable(),
 })
 export type DeviceSession = z.infer<typeof DeviceSessionSchema>
 
 export const DeviceSessionListSchema = z.object({ sessions: z.array(DeviceSessionSchema) })
 
-export const DeviceSessionIdSchema = z.strictObject({ id: z.string().min(1).max(256) })
+export const DeviceSessionIdSchema = z.strictObject({ id: PgText.min(1).max(256) })
 
 export const sessionsContract = {
   list: oc

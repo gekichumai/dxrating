@@ -4,7 +4,6 @@ import {
   recommendRatingRaises,
   type RatingEntry,
   type RatingRecommendation,
-  type RecommendRecord,
   type SongCatalog,
 } from '@gekichumai/maimai-domain'
 import type { DifficultyEnum, VersionEnum } from '@gekichumai/dxdata'
@@ -34,10 +33,6 @@ import { m } from '@/paraglide/messages'
 
 const PER_BUCKET = 20
 
-/**
- * B50 from every stored entry (rating-aware deduplication and import bucket hints are left to the domain, as in
- * the calculator); per-chart records only drive the recommendation lookup.
- */
 export function computeRecommendations({
   catalog,
   ratingEntries,
@@ -51,17 +46,11 @@ export function computeRecommendations({
   version: VersionEnum
   region: Region
 }) {
-  const recordMap = new Map<string, RecommendRecord>(
-    records.map(({ entry, source }) => [
-      entry.sheetId,
-      { achievementRate: entry.achievementRate, comboFlag: entry.comboFlag, source },
-    ]),
-  )
   const best50 = calculateBest50({ catalog, version, region, entries: ratingEntries })
   const suggestions = recommendRatingRaises({
     sheets: catalog.sheets,
     best50,
-    records: recordMap,
+    records: new Map(records.map(({ sheetId, best }) => [sheetId, best])),
     version,
     region,
     limit: Number.POSITIVE_INFINITY,

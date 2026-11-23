@@ -10,8 +10,6 @@ export class CommunityOverlayError extends Data.TaggedError('CommunityOverlayErr
   readonly cause: unknown
 }> {}
 
-/** The v2 community overlay (gekichumai/meta#43): tags and aliases by public ID, visible associations only */
-export const DXDATA_V2_COMMUNITY_PATH = '/api/v2/dxdata/community'
 export const DXDATA_V2_COMMUNITY_CACHE_TAG = 'dxdata-community'
 
 // The same policy as the v1 tag and alias lists (app.ts): browsers always revalidate, the edge keeps a copy for a

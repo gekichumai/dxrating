@@ -1,0 +1,9 @@
+{
+  "mistake": "The production release lock is treated as an ordering guarantee, so a release run for an older tag that takes the lock after a newer one deploys it and rolls production back.",
+  "history": [
+    "#374 54b5cb09 (serialized releases under release-production but deployed whichever tag held the lock; its unresolved review showed a delayed v1.6.522 run still deploys over v1.6.523)"
+  ],
+  "guard": "infra/release/release-workflow.test.ts runs the release workflow's newest-tag check against a fixture origin",
+  "check": "node --test infra/release/",
+  "expect": "runs wrangler deploy without the newest-tag check"
+}

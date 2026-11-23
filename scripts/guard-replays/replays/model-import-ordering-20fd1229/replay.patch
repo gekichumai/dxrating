@@ -1,0 +1,13 @@
+diff --git a/formal/import-ordering/ImportOrdering.cfg b/formal/import-ordering/ImportOrdering.cfg
+index 5e1b5362..4a4c6f0c 100644
+--- a/formal/import-ordering/ImportOrdering.cfg
++++ b/formal/import-ordering/ImportOrdering.cfg
+@@ -3,7 +3,7 @@ CONSTANTS
+   MaxClock = 7
+   Bug_3d6f21a3 = FALSE
+   Bug_0d12d685_LockTime = FALSE
+-  Bug_20fd1229 = FALSE
++  Bug_20fd1229 = TRUE
+   Bug_b4850bef = FALSE
+   Bug_d95f7c29 = FALSE
+   Bug_0d12d685_Replace = FALSE

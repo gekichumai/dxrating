@@ -21,6 +21,7 @@ import { getLocale } from '@/paraglide/runtime'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { m } from '@/paraglide/messages'
 import { netImportProgress } from './netImportProgressStore'
+import { netCredentials, netImportLastSuccess } from './netImportStorage'
 import {
   FETCH_STATE_PROGRESS,
   type FetchNetRecordProgressState,
@@ -99,13 +100,12 @@ const fetchNetRecords = async (
         // if the server responds with an error, DO NOT retry
         throw new Error(await response.text())
       },
-    })
+    }).catch(reject)
   })
 }
 
 const haptics = new WebHaptics()
 
-export const NET_IMPORT_LAST_SUCCESS_KEY = 'net-import-last-success'
 export const NET_IMPORT_COOLDOWN_MS = 15 * 60 * 1000 // 15 minutes
 
 let importInFlight = false
@@ -140,17 +140,7 @@ export const importFromNETRecords = async (
 
   netImportProgress.update({ status: 'running', stage: 'ready', progress: 0 })
   try {
-    const storedAuthParams = (() => {
-      const stored = localStorage.getItem('import-net-records')
-      if (!stored) return null
-      const parsed = JSON.parse(stored) as {
-        region: 'jp' | 'intl'
-        username: string
-        password: string
-      }
-      return parsed
-    })()
-    const params = authParams ?? storedAuthParams
+    const params = authParams ?? netCredentials.get()
     if (!params) {
       captureAnalyticsEvent('rating_import_failed', {
         source: 'maimai_net',
@@ -203,7 +193,7 @@ export const importFromNETRecords = async (
           </span>
         </div>,
       )
-      localStorage.setItem(NET_IMPORT_LAST_SUCCESS_KEY, Date.now().toString())
+      netImportLastSuccess.set(Date.now())
       captureAnalyticsEvent('rating_import_succeeded', {
         source: 'maimai_net',
         duration_ms: performance.now() - importStart,
@@ -290,7 +280,7 @@ export const importFromNETRecords = async (
       </div>,
     )
 
-    localStorage.setItem(NET_IMPORT_LAST_SUCCESS_KEY, Date.now().toString())
+    netImportLastSuccess.set(Date.now())
 
     const duration = performance.now() - importStart
     captureAnalyticsEvent('rating_import_succeeded', {

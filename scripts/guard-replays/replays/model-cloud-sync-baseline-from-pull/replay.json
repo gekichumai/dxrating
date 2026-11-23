@@ -1,0 +1,8 @@
+{
+  "mistake": "An edit takes basedOnRevision from serverRecords, which a multi-page pull advances before the view shows it, so a stale edit overwrites a verified record the user never saw.",
+  "history": ["945ce071 (fix(web): close four cloud sync races, item 1: the baseline comes from the published view)"],
+  "guard": "formal/cloud-sync/CloudSync.tla, invariant NoBlindOverwrite",
+  "check": "formal/tlc.sh formal/cloud-sync/CloudSync.tla",
+  "expect": "Invariant NoBlindOverwrite is violated",
+  "needs": ["tlc"]
+}

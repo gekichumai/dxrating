@@ -1,0 +1,12 @@
+diff --git a/apps/backend/src/lib/functions/URLS.ts b/apps/backend/src/lib/functions/URLS.ts
+index 62f6dad9..008d33d8 100644
+--- a/apps/backend/src/lib/functions/URLS.ts
++++ b/apps/backend/src/lib/functions/URLS.ts
+@@ -27,7 +27,6 @@ export const URLS = {
+       '定期メンテナンス中です',
+       '緊急メンテナンス中です',
+       'Sorry, servers are under maintenance.',
+-      '現在メンテナンスを行っております',
+     ],
+     // where the Aime login gateway and maimai NET send every request during maintenance
+     MAINTENANCE_REDIRECT: /\/maintenance(?:\.html|\/|$)/,

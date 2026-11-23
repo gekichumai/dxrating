@@ -1,0 +1,9 @@
+{
+  "mistake": "A private contract timestamp accepts any ISO 8601 string, so a year PostgreSQL cannot store (0000, or one an offset moves out of 1 to 9999) fails the write with a 500.",
+  "history": [
+    "#436 48bc1c0b (TimestampSchema was z.iso.datetime({ offset: true }): one mutation's clientEditedAt in year 0 turned a batch into a 500 and rolled back its valid siblings)"
+  ],
+  "guard": "storable-inputs.test.ts feeds every private route input values PostgreSQL cannot store",
+  "check": "pnpm --filter @gekichumai/api-contract exec vitest run src/__tests__/storable-inputs.test.ts",
+  "expect": "clientEditedAt accepts"
+}

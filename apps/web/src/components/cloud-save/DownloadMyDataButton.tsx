@@ -5,6 +5,7 @@ import IconMdiDownload from '~icons/mdi/download'
 import { saveBlobAsFile, useCloudSaveActions } from '@/models/scores/cloudSaveActions'
 import { m } from '@/paraglide/messages'
 import { useLocale } from '@/i18n/LocaleProvider'
+import { asyncHandler } from '@/lib/rejections'
 
 const isRateLimited = (error: unknown) =>
   typeof error === 'object' &&
@@ -45,7 +46,7 @@ export const DownloadMyDataButton: FC = () => {
         size="small"
         variant="outlined"
         startIcon={<IconMdiDownload aria-hidden />}
-        onClick={() => void download()}
+        onClick={asyncHandler(download)}
         aria-disabled={busy || undefined}
         aria-busy={busy || undefined}
         className={busy ? 'cursor-progress opacity-60' : undefined}

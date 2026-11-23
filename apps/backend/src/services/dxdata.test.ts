@@ -1,5 +1,5 @@
+import { DXDATA_PATH } from '@gekichumai/api-contract'
 import { Hono } from 'hono'
-import { cors } from 'hono/cors'
 import { Data, Effect } from 'effect'
 import { brotliDecompressSync } from 'node:zlib'
 import { describe, expect, it, vi } from 'vitest'
@@ -10,9 +10,8 @@ import {
   createPostgresDxdataEffects,
   DXDATA_BROWSER_CACHE_CONTROL,
   DXDATA_CDN_CACHE_CONTROL,
-  DXDATA_CORS_OPTIONS,
-  DXDATA_PATH,
 } from './dxdata'
+import { cors } from '../cors'
 
 const BODY = '{\n  "title": "でらっくす",\n  "songs": []\n}\n'
 const BODY_SHA256 = 'a'.repeat(64)
@@ -55,7 +54,7 @@ const createApp = (
   compress?: (body: string) => Promise<Buffer>,
 ) => {
   const app = new Hono()
-  app.use('*', cors(DXDATA_CORS_OPTIONS))
+  app.use('*', cors)
   // One handler for the app's lifetime, as in app.ts: it keeps the compressed body between requests
   const handler = createDxdataEffect(store, reportError, compress)
   app.on(['GET', 'HEAD'], DXDATA_PATH, (context) => Effect.runPromise(handler(context)))

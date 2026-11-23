@@ -7,6 +7,8 @@ import { m } from '@/paraglide/messages'
 import { authClient } from '../../lib/auth-client'
 import type { CloudScoreRepository, CloudScoreRepositoryOptions, CloudSyncStopReason } from './CloudScoreRepository'
 import { clearUserFeaturesCache, type FetchUserFeatures, getUserFeatures } from './userFeatures'
+import { browserStorage } from '@/utils/persisted'
+import { reportRejection } from '@/lib/rejections'
 
 /**
  * Which save the visitor works on (design §8.2, the simplified #181): the local save, or a cloud save.
@@ -217,15 +219,6 @@ export const ActiveSaveContext = createContext<ActiveSave>({
 
 export const useActiveSave = (): ActiveSave => useContext(ActiveSaveContext)
 
-function browserLocalStorage(): Storage | null {
-  if (typeof window === 'undefined') return null
-  try {
-    return window.localStorage
-  } catch {
-    return null
-  }
-}
-
 declare global {
   interface Window {
     /** Dev builds only: choose the active cloud save from the console (the save selector lists existing saves only) */
@@ -264,12 +257,12 @@ export function useActiveSaveDecision(): ActiveSave {
     // their changes in it. No flush either, the session is no longer the previous user's
     const previous = cloudRef.current
     if (previous && previous.userId !== userId) {
-      void previous.dispose({ flushTimeoutMs: 0 })
+      previous.dispose({ flushTimeoutMs: 0 }).catch(reportRejection)
       setCloudRepository(null)
     }
 
     let cancelled = false
-    const storage = browserLocalStorage()
+    const storage = browserStorage('local')
     const fallBackToLocal = () => {
       if (!cancelled) setCloudRepository(null)
     }
@@ -288,7 +281,7 @@ export function useActiveSaveDecision(): ActiveSave {
       })
     }, dependencies.decisionTimeoutMs ?? DECISION_TIMEOUT_MS)
 
-    void (async () => {
+    ;(async () => {
       const features = await getUserFeatures(userId, dependencies.fetchFeatures)
       if (cancelled) return
       setFeaturesState((current) =>
@@ -339,7 +332,7 @@ export function useActiveSaveDecision(): ActiveSave {
       })
       opened = repository
       if (cancelled) {
-        void repository.dispose({ flushTimeoutMs: 0 })
+        repository.dispose({ flushTimeoutMs: 0 }).catch(reportRejection)
         return
       }
       repository.start()
@@ -367,14 +360,14 @@ export function useActiveSaveDecision(): ActiveSave {
   useEffect(() => {
     if (!cloudRepository) return
     return () => {
-      void cloudRepository.dispose()
+      cloudRepository.dispose().catch(reportRejection)
     }
   }, [cloudRepository])
 
   const setActiveSaveId = useCallback(
     (saveId: string | null) => {
       if (!userId) return
-      writeActiveSaveId(browserLocalStorage(), userId, saveId)
+      writeActiveSaveId(browserStorage('local'), userId, saveId)
       setSelectionVersion((version) => version + 1)
     },
     [userId],

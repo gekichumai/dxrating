@@ -1,0 +1,9 @@
+{
+  "mistake": "Each release tag gets its own concurrency group, so releases of back-to-back merges deploy in parallel and an older tag can finish last.",
+  "history": [
+    "54b5cb09^ (release-${{ github.ref }} group: v1.6.521-523 deployed in parallel and v1.6.522 finished 2s after v1.6.523, rolling production back; fixed by #374)"
+  ],
+  "guard": "infra/release/release-workflow.test.ts requires one fixed concurrency group for every release run",
+  "check": "node --test infra/release/",
+  "expect": "a per-tag group let v1.6.521-523 deploy in parallel"
+}

@@ -1,14 +1,16 @@
 import { createHash } from 'node:crypto'
 import { Effect } from 'effect'
-import { Hono } from 'hono'
+import { Hono, type Handler } from 'hono'
 import pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { app } from '../app'
 import type { PublishedSong } from '../services/mcp/catalog'
 import { publishedCatalog, UMIYURI, UMIYURI_UTAGE } from '../services/mcp/test-fixture'
 import {
-  createChartOgImageHandler,
   formatInternalLevelLabelParts,
+  renderChartOgImageOutputEffect,
+  type ChartOgSongLookup,
+  type RenderChartOgImage,
   getTitleLayout,
   layoutFacts,
   resolveChartOgImageData,
@@ -198,6 +200,28 @@ describe('chart OG image endpoint', () => {
     expect(spec.paths).not.toHaveProperty('/songs/{songId}/og-image')
   })
 })
+
+const createChartOgImageHandler =
+  (lookupSong: ChartOgSongLookup, renderImage?: RenderChartOgImage): Handler =>
+  (c) =>
+    Effect.runPromise(
+      Effect.gen(function* () {
+        const songId = c.req.param('songId')
+        const type = c.req.param('type')
+        const difficulty = c.req.param('difficulty')
+        if (!songId || !type || !difficulty) return c.text('Chart not found', 404)
+        const output = yield* renderChartOgImageOutputEffect(
+          { songId, type, difficulty, locale: c.req.query('locale') },
+          lookupSong,
+          renderImage,
+        )
+        if (!output) return c.text('Chart not found', 404)
+        return new Response(output.body, {
+          headers: { ...output.headers, 'Content-Length': String(output.body.size) },
+        })
+      }),
+      { signal: c.req.raw.signal },
+    )
 
 describe('chart OG image handler', () => {
   it('resolves chart data and returns a cacheable PNG response', async () => {

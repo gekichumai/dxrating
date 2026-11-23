@@ -12,6 +12,7 @@ import type { PlayEntry } from '../../RatingCalculatorAddEntryForm'
 import { exportSavePicker } from '@/components/cloud-save/exportSavePicker'
 import { m } from '@/paraglide/messages'
 import { useLocale } from '@/i18n/LocaleProvider'
+import { reportRejection } from '@/lib/rejections'
 
 export const ImportFromJSONButtonListItem: FC<{
   onClose: () => void
@@ -72,7 +73,7 @@ export const ImportFromJSONButtonListItem: FC<{
               }
               // A cloud save counts what the server took: entries that match no chart or that it rejects are left out
               analytics.succeeded(result.count)
-              haptic.trigger('success')
+              haptic.trigger('success')?.catch(reportRejection)
               toast.success(m.ratingCalculator_io_import_json_success({ count: result.count }, { locale }))
               announceImportLeftOut(result, locale, (message) => toast(message))
               // Only a cloud save verifies records; a local save keeps the provider each entry names

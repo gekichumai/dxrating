@@ -5,10 +5,10 @@ import {
   buildSongCatalog,
   type CalculatedRatingEntry,
   calculateBest50,
+  toRatingEntries,
 } from '@gekichumai/maimai-domain'
 import { describe, expect, it } from 'vitest'
 import { buildDemoScores } from '@/fixtures/demoScores'
-import { toRatingEntries } from '@/models/userRecords'
 import { computePushRange } from './pushRange'
 
 const entry = (internalLevelValue: number, ratingAwardValue: number) =>
