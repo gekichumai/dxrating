@@ -35,7 +35,9 @@
   "overrides": [
     {
       "files": ["packages/maimai-domain/src/rating-entries.ts"],
-      "rules": { "no-restricted-properties": "off" }
+      "rules": {
+        "no-restricted-properties": "off"
+      }
     },
     {
       "files": ["**/*.ts", "**/*.tsx"],
@@ -173,6 +175,75 @@
       "rules": {
         "gdp-ts/no-define-proof": "error",
         "gdp-ts/no-proof-assertion": "error",
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "captureException",
+            "message": "Use reportFailure(error) from lib/functions/sentry: it alone decides which failures reach Sentry (client aborts, expected errors) and tags wrapped database and NET failures."
+          },
+          {
+            "property": "captureEvent",
+            "message": "Use reportFailure(error) from lib/functions/sentry: it alone decides which failures reach Sentry (client aborts, expected errors) and tags wrapped database and NET failures."
+          },
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@sentry/node",
+                "message": "Import Sentry from lib/functions/sentry and report failures with reportFailure(error): it alone decides which failures reach Sentry."
+              }
+            ],
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "(^|/)lxns(/index)?(\\.ts)?$",
+                "message": "Use services/lxns/viewer: its functions demand a ViewerIs proof (gdp-ts)."
+              },
+              {
+                "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
+                "importNames": ["viewerFromSession"],
+                "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/backend/src/lib/functions/sentry.ts", "apps/backend/src/**/*.test.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ],
         "no-restricted-imports": [
           "error",
           {
@@ -209,6 +280,12 @@
         "no-restricted-imports": [
           "error",
           {
+            "paths": [
+              {
+                "name": "@sentry/node",
+                "message": "Import Sentry from lib/functions/sentry and report failures with reportFailure(error): it alone decides which failures reach Sentry."
+              }
+            ],
             "patterns": [
               {
                 "regex": "^\\.{1,2}/.*\\.js$",
@@ -230,6 +307,12 @@
         "no-restricted-imports": [
           "error",
           {
+            "paths": [
+              {
+                "name": "@sentry/node",
+                "message": "Import Sentry from lib/functions/sentry and report failures with reportFailure(error): it alone decides which failures reach Sentry."
+              }
+            ],
             "patterns": [
               {
                 "regex": "^\\.{1,2}/.*\\.js$",
