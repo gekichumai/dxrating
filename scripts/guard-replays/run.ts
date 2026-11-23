@@ -21,9 +21,7 @@ const { values } = parseArgs({
     needs: { type: 'string', multiple: true, default: [] },
   },
 })
-const available = new Set(
-  (values.needs ?? []).concat((process.env.GUARD_REPLAY_NEEDS ?? '').split(',').filter(Boolean)),
-)
+const given = new Set(values.needs ?? [])
 
 function sh(command: string, args: string[], timeoutMs = 600_000) {
   const result = spawnSync(command, args, { cwd: root, encoding: 'utf8', timeout: timeoutMs, shell: false })
@@ -68,9 +66,9 @@ const failures: string[] = []
 let ran = 0
 for (const id of ids) {
   const replay = loadReplay(id)
-  const missing = (replay.needs ?? []).filter((need) => !available.has(need))
-  if (missing.length > 0) {
-    console.log(`- ${id}: skipped, needs ${missing.join(', ')}`)
+  const needs = replay.needs ?? []
+  if (needs.length > 0 !== given.size > 0 || needs.some((need) => !given.has(need))) {
+    console.log(`- ${id}: skipped here, needs ${needs.join(', ') || 'nothing'}`)
     continue
   }
   const patchPath = join(replaysDir, id, 'replay.patch')

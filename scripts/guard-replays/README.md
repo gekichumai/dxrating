@@ -2,7 +2,7 @@
 
 Each guard in this repo (a lint rule, a type, a test, a formal model) exists because someone made a mistake that reached a PR or production. A replay reintroduces that mistake and runs the guard. The guard must fail.
 
-`pnpm guard:replays` runs every replay. The CI gate runs it on every PR, so a guard that stops catching its mistake fails the build.
+`pnpm guard:replays --only <id>` runs one replay. The CI gate runs the replays that need nothing, the backend integration job runs those that need `postgres`, and the formal models job runs those that need `tlc`. A guard that stops catching its mistake fails the build.
 
 ## Add a replay
 
@@ -17,7 +17,7 @@ Each guard in this repo (a lint rule, a type, a test, a formal model) exists bec
    | `guard` | The guard that catches it. |
    | `check` | The command that must fail. It runs with `sh -c` from the repo root. |
    | `expect` | Text that the failing output must contain, so an unrelated failure does not count. |
-   | `needs` | Optional. Services the check needs, such as `postgres`. Replays whose needs are not given with `--needs` or `GUARD_REPLAY_NEEDS` are skipped. |
+   | `needs` | Optional. Services the check needs, such as `postgres` or `tlc`. `pnpm guard:replays` runs only replays with no needs; `pnpm guard:replays --needs postgres` runs only those that need `postgres`, in the job that has it. |
 
 4. Run `pnpm guard:replays --only <id>`.
 
