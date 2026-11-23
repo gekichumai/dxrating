@@ -121,7 +121,6 @@ Optional:
 - `SERVER_IMPORTS` — `off` (default) | `on`; server-side imports into cloud saves
 - `RESEND_API_KEY` — Resend API key for account email (verification links, password reset). Unset turns mail off: nothing is sent, `/send-verification-email` and `/request-password-reset` answer `VERIFICATION_EMAIL_NOT_ENABLED` / `RESET_PASSWORD_DISABLED`, and a warning is logged at startup. See "Account email" below
 - `EMAIL_FROM` — Sender of account email (default `DXRating <no-reply@dxrating.net>`); its domain must be verified at Resend
-- `EMAIL_TRANSPORT` — Tests only: `memory` keeps sent mail in `memoryOutbox` (`src/services/mailer.ts`) instead of sending it; refused unless `NODE_ENV=test`
 - `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_CACHE_PURGE_TOKEN` — purge the edge's public Cache-Tags at startup and invalidate `dxdata` on each new publication (see `src/services/edge-cache.ts`). The token needs only Zone → Cache Purge → Purge on dxrating.net
 
 ## Feature flags (cloud save, gekichumai/meta#17)
@@ -253,8 +252,9 @@ when the user's current address is the proven one, and returns `verified`,
 `src/services/mailer.ts` (`Mailer`) sends mail through Resend's HTTP API with
 the shared `HttpClient` (10 s timeout; a failure is logged and reported to
 Sentry with its kind and Resend's error name, never the address or the link).
-Its transport is `resend` with `RESEND_API_KEY`, `disabled` without it, and
-`memory` in tests. `deliver` sends in the background, so a request never waits
+Its transport is `resend` with `RESEND_API_KEY`, and `disabled` without it.
+Tests swap `MailerLive` for an in-memory outbox with `vi.mock`
+(`src/test/memory-mailer.ts`). `deliver` sends in the background, so a request never waits
 on Resend nor shows by its timing that a message went out.
 
 `src/lib/auth-mail.ts` connects it to Better Auth, only while the mailer is
@@ -267,17 +267,30 @@ enabled (otherwise Better Auth behaves as before mail existed):
   address another way (the Email Verification Protocol) gets no mail. A
   signed-in, unverified account asks for another with `/send-verification-email`.
   `/verify-email` sets `email_verified`; the `update.after` hook above records
-  `email_link` (an older link used later changes nothing), and
-  `autoSignInAfterVerification` signs the link's holder in.
+  `email_link` (an older link used later changes nothing). A link works only in
+  a browser signed in to the account it was made for (`hooks.before`,
+  `requireSessionForEmailLink`); otherwise it redirects with
+  `?error=SESSION_REQUIRED` and stays usable. It never signs anyone in. Anyone
+  can sign up with an address they don't own, so a click from the inbox alone
+  must not make that account look like the inbox owner's (cloud save trusts
+  verified addresses, and Better Auth then links the address's OAuth sign-ins
+  to it).
 - Password reset: `/request-password-reset` mails a link (1 hour) and
   `/reset-password` sets the password, signing every session out
   (`revokeSessionsOnPasswordReset`). A passkey or social account without a
   password gets its first one this way. haveIBeenPwned checks the new password.
+  On an account whose address was unverified, the reset hands the account to
+  the inbox holder (`onPasswordReset`, `claimUnverifiedAccount`): its passkeys
+  and social sign-ins are removed, and the address counts as verified by
+  `email_link`. A verified account keeps everything.
 - Every mailed link goes through Better Auth's endpoint, which checks the token
   and redirects to the web's `/account/verify-email` (`?error=` on failure) or
   `/account/reset-password?token=` in the visitor's language
   (`detectAuthLocale`, with the URL prefix). Any `callbackURL`/`redirectTo` a
   client sends is replaced. `FRONTEND_URL`'s origin is a trusted origin for this.
+  A reset token works until it is used, so it never reaches telemetry: the
+  backend scrubs the `/reset-password/<token>` path segment
+  (`credential-hygiene.ts`) and the web scrubs `?token=` (`sentryScrub.ts`).
 - Templates (`src/lib/auth-mail-templates.ts`): plain text and simple HTML in
   every supported language, no remote images.
 - Limits: Better Auth's defaults hold `/send-verification-email` and

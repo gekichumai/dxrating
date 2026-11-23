@@ -5,13 +5,14 @@ import { Sentry } from '../lib/functions/sentry'
 import { HttpClient } from './http-client'
 
 /**
- * Outgoing email (gekichumai/meta#80): verification links and password resets. One of three transports, chosen by the
+ * Outgoing email (gekichumai/meta#80): verification links and password resets. One of two transports, chosen by the
  * environment (`config.email`):
  *
  * - `resend`: Resend's HTTP API (`RESEND_API_KEY`, sent from `EMAIL_FROM`);
  * - `disabled`: no key, which is how every deployment ran before mail existed. Nothing can be sent, and Better Auth's
- *   mail-dependent features stay off (`enabled: false`);
- * - `memory`: an in-process outbox ({@link memoryOutbox}), for tests only.
+ *   mail-dependent features stay off (`enabled: false`).
+ *
+ * Tests replace {@link MailerLive} with an in-memory outbox (src/test/memory-mailer.ts).
  */
 
 /** A message to one recipient. Both bodies say the same thing: clients that can't show HTML show `text`. */
@@ -34,16 +35,11 @@ export class MailerError extends Data.TaggedError('MailerError')<{
   readonly cause: unknown
 }> {}
 
-export type MailerTransport = 'resend' | 'memory' | 'disabled'
-
 export class Mailer extends Context.Service<
   Mailer,
   {
-    readonly transport: MailerTransport
     /** Whether mail can be sent at all; mail-dependent features check this before they turn on */
     readonly enabled: boolean
-    /** Sends and waits for the provider's answer */
-    readonly send: (mail: Mail) => Effect.Effect<void, MailerError | MailerUnavailable>
     /**
      * Sends without waiting: the caller's request does not take the provider's time (nor reveal, by taking it, that a
      * message went out). A failure is logged and reported. Sends still running at shutdown are interrupted.
@@ -56,21 +52,6 @@ export class Mailer extends Context.Service<
 export const MAIL_SEND_TIMEOUT = Duration.seconds(10)
 
 export const RESEND_EMAILS_URL = 'https://api.resend.com/emails'
-
-/** The test transport's outbox: everything sent, oldest first */
-export class MemoryOutbox {
-  readonly sent: Mail[] = []
-  clear() {
-    this.sent.length = 0
-  }
-  /** The messages sent to `to` (case aside), oldest first */
-  to(address: string) {
-    return this.sent.filter((mail) => mail.to.toLowerCase() === address.toLowerCase())
-  }
-}
-
-/** The outbox of the `memory` transport; empty and unused with the others */
-export const memoryOutbox = new MemoryOutbox()
 
 /**
  * Sends one message through Resend (https://resend.com/docs/api-reference/emails/send-email). The provider's error
@@ -120,17 +101,18 @@ const reportFailure = (mail: Mail, error: MailerError | MailerUnavailable) =>
     }
   })
 
-/** A service from its transport's `send`, with `deliver` forking into a set the layer's scope interrupts on shutdown */
-const makeMailer = (
-  transport: MailerTransport,
+/**
+ * A service from a transport's `send` (which waits for the provider's answer), with `deliver` forking into a set the
+ * layer's scope interrupts on shutdown
+ */
+export const makeMailer = (
+  enabled: boolean,
   send: (mail: Mail) => Effect.Effect<void, MailerError | MailerUnavailable>,
 ) =>
   Effect.gen(function* () {
     const background = yield* FiberSet.make<void, never>()
     return Mailer.of({
-      transport,
-      enabled: transport !== 'disabled',
-      send,
+      enabled,
       deliver: (mail) =>
         FiberSet.run(background, send(mail).pipe(Effect.catch((error) => reportFailure(mail, error)))).pipe(
           Effect.asVoid,
@@ -147,19 +129,17 @@ export const MailerLive = Layer.effect(
     switch (email.transport) {
       case 'resend': {
         const credentials = { apiKey: email.resendApiKey, from: email.from }
-        return yield* makeMailer('resend', (mail) =>
+        return yield* makeMailer(true, (mail) =>
           sendWithResend(credentials, mail).pipe(Effect.provideService(HttpClient, http)),
         )
       }
-      case 'memory':
-        return yield* makeMailer('memory', (mail) => Effect.sync(() => void memoryOutbox.sent.push(mail)))
       case 'disabled':
         if (config.nodeEnv !== 'test') {
           yield* Effect.logWarning(
             'RESEND_API_KEY is not set: no email is sent, so no verification mail and no password reset',
           )
         }
-        return yield* makeMailer('disabled', () => Effect.fail(new MailerUnavailable()))
+        return yield* makeMailer(false, () => Effect.fail(new MailerUnavailable()))
     }
   }),
 )

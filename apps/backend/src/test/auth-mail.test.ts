@@ -1,13 +1,14 @@
 import { Pool } from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// config.ts reads the environment once, at import: keep sent mail in the in-memory outbox
-vi.hoisted(() => {
-  process.env.EMAIL_TRANSPORT = 'memory'
-})
+// Sent mail goes to an in-memory outbox instead of Resend
+vi.mock('../services/mailer', async (importOriginal) =>
+  (await import('./memory-mailer')).withMemoryMailer(await importOriginal()),
+)
 
 import { MAIL_THROTTLE_MAX } from '../lib/auth-mail'
-import { memoryOutbox, type Mail } from '../services/mailer'
+import type { Mail } from '../services/mailer'
+import { memoryOutbox } from './memory-mailer'
 import { cleanDatabase, extractSessionCookie, getBaseUrl, setupTestServer, signIn, teardownTestServer } from './setup'
 import { ORIGIN, register } from './webauthn'
 
@@ -75,9 +76,10 @@ const sessionUser = async (cookie: string) => {
 }
 
 describe('verification mail', () => {
-  it('mails one link on email sign-up, in the visitor language, that verifies the address and signs in', async () => {
+  it('mails one link on email sign-up, in the visitor language, that verifies the address in its session', async () => {
     const response = await signUpAs('new@example.com', 'ja')
     expect(response.status).toBe(200)
+    const cookie = extractSessionCookie(response)
 
     const [mail, ...others] = await mailTo('new@example.com')
     expect(others).toEqual([])
@@ -88,14 +90,38 @@ describe('verification mail', () => {
     expect(link.searchParams.get('callbackURL')).toBe('http://localhost:5173/ja/account/verify-email')
     expect(await recordOf('new@example.com')).toMatchObject({ email_verified: false, email_verified_at: null })
 
-    const verified = await fetch(link, { redirect: 'manual' })
+    const verified = await fetch(link, { redirect: 'manual', headers: { Cookie: cookie } })
     expect(verified.status).toBe(302)
     expect(verified.headers.get('location')).toBe('http://localhost:5173/ja/account/verify-email')
     const record = await recordOf('new@example.com')
     expect(record).toMatchObject({ email_verified: true, email_verification_method: 'email_link' })
     expect(record!.email_verified_at).toBeInstanceOf(Date)
-    // autoSignInAfterVerification: the link signs its holder in
-    expect(await sessionUser(extractSessionCookie(verified))).toMatchObject({ id: record!.id, emailVerified: true })
+    // The session that opened it now shows the address verified; the link signed nobody in
+    expect(extractSessionCookie(verified)).toBe('')
+    expect(await sessionUser(cookie)).toMatchObject({ id: record!.id, emailVerified: true })
+  })
+
+  it('refuses a link opened without a session of its account, and signs nobody in', async () => {
+    // Someone signs up with an address they don't own; its owner gets the mail
+    expect((await register({ email: 'victim@example.com' })).status).toBe(200)
+    const link = linkOf((await mailTo('victim@example.com'))[0]!)
+
+    const anonymous = await fetch(link, { redirect: 'manual' })
+    expect(anonymous.status).toBe(302)
+    expect(anonymous.headers.get('location')).toBe('http://localhost:5173/account/verify-email?error=SESSION_REQUIRED')
+    expect(extractSessionCookie(anonymous)).toBe('')
+
+    // Signed in to another account of theirs: still not this one
+    const other = extractSessionCookie(await signUpAs('other@example.com'))
+    const elsewhere = await fetch(link, { redirect: 'manual', headers: { Cookie: other } })
+    expect(elsewhere.headers.get('location')).toBe('http://localhost:5173/account/verify-email?error=SESSION_REQUIRED')
+    expect(await recordOf('victim@example.com')).toMatchObject({ email_verified: false, email_verified_at: null })
+
+    // A crafted callback is not followed
+    link.searchParams.set('callbackURL', 'https://evil.example/landing')
+    const crafted = await fetch(link, { redirect: 'manual' })
+    expect(crafted.status).toBe(401)
+    expect(await crafted.json()).toMatchObject({ code: 'SESSION_REQUIRED' })
   })
 
   it('mails a passkey sign-up too, but not a signed-in visitor adding a passkey', async () => {
@@ -133,7 +159,7 @@ describe('verification mail', () => {
     expect(mail!.subject).toBe('請驗證你的 DXRating 電子信箱')
     expect(linkOf(mail!).searchParams.get('callbackURL')).toBe('http://localhost:5173/zh-hant/account/verify-email')
 
-    await fetch(linkOf(mail!), { redirect: 'manual' })
+    await fetch(linkOf(mail!), { redirect: 'manual', headers: { Cookie: cookie } })
     expect(await recordOf('resend@example.com')).toMatchObject({
       email_verified: true,
       email_verification_method: 'email_link',
@@ -147,9 +173,10 @@ describe('verification mail', () => {
     const cookie = extractSessionCookie(await signUpAs('twice@example.com'))
     await auth('/send-verification-email', { cookie, body: { email: 'twice@example.com' } })
     const [first, second] = await mailTo('twice@example.com', 2)
-    await fetch(linkOf(second!), { redirect: 'manual' })
+    await fetch(linkOf(second!), { redirect: 'manual', headers: { Cookie: cookie } })
     const verified = await recordOf('twice@example.com')
-    await fetch(linkOf(first!), { redirect: 'manual' })
+    expect(verified).toMatchObject({ email_verified: true })
+    await fetch(linkOf(first!), { redirect: 'manual', headers: { Cookie: cookie } })
     expect(await recordOf('twice@example.com')).toEqual(verified)
   })
 
@@ -210,6 +237,61 @@ describe('password reset', () => {
     const reused = await auth('/reset-password', { body: { token, newPassword: 'yet-another-password' } })
     expect(reused.status).toBe(400)
     expect(await reused.json()).toMatchObject({ code: 'INVALID_TOKEN' })
+  })
+
+  /** Requests a reset for `email` and uses its link to set `newPassword` */
+  const resetPasswordOf = async (email: string, newPassword: string) => {
+    expect((await auth('/request-password-reset', { body: { email } })).status).toBe(200)
+    const mail = (await mailTo(email)).findLast((message) => message.kind === 'reset_password')!
+    const landed = await fetch(linkOf(mail), { redirect: 'manual' })
+    const token = new URL(landed.headers.get('location')!).searchParams.get('token')!
+    return auth('/reset-password', { body: { token, newPassword } })
+  }
+
+  const signInMethodsOf = async (userId: string) => ({
+    passkeys: (await pool.query('SELECT id FROM passkey WHERE user_id = $1', [userId])).rowCount,
+    accounts: (
+      await pool.query<{ provider_id: string }>('SELECT provider_id FROM account WHERE user_id = $1 ORDER BY 1', [
+        userId,
+      ])
+    ).rows.map((row) => row.provider_id),
+    sessions: (await pool.query('SELECT id FROM session WHERE user_id = $1', [userId])).rowCount,
+  })
+
+  it('hands an unverified account to the inbox that resets its password: earlier passkeys and social sign-ins go', async () => {
+    // Someone signs up with a passkey on an address they don't own, then links a social account of theirs
+    const attacker = await register({ email: 'claimed@example.com' })
+    expect(attacker.status).toBe(200)
+    const { id } = (await recordOf('claimed@example.com'))!
+    await pool.query(
+      `INSERT INTO account (id, account_id, provider_id, user_id, created_at, updated_at)
+       VALUES ('acc_attacker_github', 'attacker-github', 'github', $1, now(), now())`,
+      [id],
+    )
+    expect(await signInMethodsOf(id)).toMatchObject({ passkeys: 1, accounts: ['github'] })
+
+    // The address's owner uses "Forgot password?"
+    expect((await resetPasswordOf('claimed@example.com', 'the-owners-password')).status).toBe(200)
+
+    expect(await signInMethodsOf(id)).toEqual({ passkeys: 0, accounts: ['credential'], sessions: 0 })
+    expect(await sessionUser(extractSessionCookie(attacker))).toBeNull()
+    const record = await recordOf('claimed@example.com')
+    expect(record).toMatchObject({ email_verified: true, email_verification_method: 'email_link' })
+    expect(record!.email_verified_at).toBeInstanceOf(Date)
+    expect((await signIn('claimed@example.com', 'the-owners-password')).status).toBe(200)
+  })
+
+  it('keeps the passkeys of an account whose address was already verified', async () => {
+    const cookie = extractSessionCookie(await signUpAs('kept@example.com'))
+    const link = linkOf((await mailTo('kept@example.com'))[0]!)
+    await fetch(link, { redirect: 'manual', headers: { Cookie: cookie } })
+    expect((await register({ cookie })).status).toBe(200)
+    const { id, email_verified_at } = (await recordOf('kept@example.com'))!
+    expect(email_verified_at).toBeInstanceOf(Date)
+
+    expect((await resetPasswordOf('kept@example.com', 'a-brand-new-password')).status).toBe(200)
+    expect(await signInMethodsOf(id)).toMatchObject({ passkeys: 1, accounts: ['credential'] })
+    expect((await recordOf('kept@example.com'))!.email_verified_at).toEqual(email_verified_at)
   })
 
   it('answers the same for an unknown address and mails nothing', async () => {

@@ -71,9 +71,6 @@ describe('email settings', () => {
       from: 'a <a@b.c>',
     })
     expect(resolveEmailSettings({ EMAIL_FROM: 'a <a@b.c>' }).transport).toBe('disabled')
-    expect(
-      resolveEmailSettings({ RESEND_API_KEY: 're_key', EMAIL_FROM: 'x', EMAIL_TRANSPORT: 'memory' }).transport,
-    ).toBe('memory')
   })
 })
 

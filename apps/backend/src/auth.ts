@@ -45,7 +45,7 @@ export const createAuth = (
   mailer: typeof Mailer.Service,
 ) => {
   // Verification and password reset mail (gekichumai/meta#80); all of it off while the mailer is
-  const authMail = createAuthMail({ mailer, frontendUrl: config.frontendUrl })
+  const authMail = createAuthMail({ mailer, database, frontendUrl: config.frontendUrl })
   const crossSubDomainCookies = config.auth.cookieDomain
     ? { enabled: true as const, domain: config.auth.cookieDomain }
     : undefined
@@ -177,7 +177,6 @@ export const createAuth = (
     },
     hooks: {
       before: requireFreshSessionToAddPasskey,
-      after: authMail.afterHook,
     },
     trustedOrigins: [
       'https://dxrating.net',
@@ -211,6 +210,7 @@ export const createAuth = (
         registration: passkeySignUp({ turnstileSecretKey: config.auth.turnstile.secretKey }),
       }),
       oneTap(),
+      authMail.plugin,
       lastLoginMethod({
         cookieName: 'dxrating.last_used_login_method',
       }),

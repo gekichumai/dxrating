@@ -20,79 +20,69 @@ const emptyStringToUndefined = (value: unknown) => (value === '' ? undefined : v
 const optionalString = z.preprocess(emptyStringToUndefined, z.string().optional())
 const optionalUrl = z.preprocess(emptyStringToUndefined, z.string().url().optional())
 
-const envSchema = z
-  .object({
-    // === Core Application ===
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-    PORT: z.string().default('3000').transform(Number),
+const envSchema = z.object({
+  // === Core Application ===
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  PORT: z.string().default('3000').transform(Number),
 
-    // === Database ===
-    DATABASE_URL: z.string().url(),
+  // === Database ===
+  DATABASE_URL: z.string().url(),
 
-    // === Authentication (BetterAuth) ===
-    BETTER_AUTH_SECRET: z.string(),
-    BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'), // Adjust default if needed
-    PASSKEY_RP_ID: optionalString,
-    PASSKEY_ORIGIN: optionalUrl,
-    GOOGLE_CLIENT_ID: optionalString,
-    GOOGLE_CLIENT_SECRET: optionalString,
-    GITHUB_CLIENT_ID: optionalString,
-    GITHUB_CLIENT_SECRET: optionalString,
-    APPLE_CLIENT_ID: optionalString,
-    APPLE_TEAM_ID: optionalString,
-    APPLE_KEY_ID: optionalString,
-    APPLE_PRIVATE_KEY_B64: optionalString,
-    APPLE_APP_BUNDLE_IDENTIFIER: z.string().default('net.dxrating.ios'),
+  // === Authentication (BetterAuth) ===
+  BETTER_AUTH_SECRET: z.string(),
+  BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'), // Adjust default if needed
+  PASSKEY_RP_ID: optionalString,
+  PASSKEY_ORIGIN: optionalUrl,
+  GOOGLE_CLIENT_ID: optionalString,
+  GOOGLE_CLIENT_SECRET: optionalString,
+  GITHUB_CLIENT_ID: optionalString,
+  GITHUB_CLIENT_SECRET: optionalString,
+  APPLE_CLIENT_ID: optionalString,
+  APPLE_TEAM_ID: optionalString,
+  APPLE_KEY_ID: optionalString,
+  APPLE_PRIVATE_KEY_B64: optionalString,
+  APPLE_APP_BUNDLE_IDENTIFIER: z.string().default('net.dxrating.ios'),
 
-    // Cloudflare Turnstile (CAPTCHA)
-    TURNSTILE_SECRET_KEY: optionalString,
+  // Cloudflare Turnstile (CAPTCHA)
+  TURNSTILE_SECRET_KEY: optionalString,
 
-    // LXNS OAuth (maimai.lxns.net)
-    LXNS_CLIENT_ID: optionalString,
-    LXNS_CLIENT_SECRET: optionalString,
+  // LXNS OAuth (maimai.lxns.net)
+  LXNS_CLIENT_ID: optionalString,
+  LXNS_CLIENT_SECRET: optionalString,
 
-    // Frontend URL (used for OAuth redirects)
-    FRONTEND_URL: z.string().url().default('http://localhost:5173'),
+  // Frontend URL (used for OAuth redirects)
+  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
 
-    // PostHog (for analytics API queries)
-    POSTHOG_PROJECT_ID: optionalString,
-    POSTHOG_API_KEY: optionalString,
+  // PostHog (for analytics API queries)
+  POSTHOG_PROJECT_ID: optionalString,
+  POSTHOG_API_KEY: optionalString,
 
-    // === Feature flags (cloud save) ===
-    // `off` is the kill switch and overrides every per-user override.
-    CLOUD_SAVE_MODE: z.preprocess(emptyStringToUndefined, z.enum(['off', 'allowlist', 'optin', 'on']).default('off')),
-    // Comma-separated, case-insensitive emails that get cloud save while the mode is not `off`.
-    CLOUD_SAVE_ALLOWLIST_EMAILS: optionalString,
-    // Server-side imports write into cloud saves; off until they are explicitly enabled.
-    SERVER_IMPORTS: z.preprocess(emptyStringToUndefined, z.enum(['on', 'off']).default('off')),
-    // Cloudflare edge cache purge (services/edge-cache.ts); both unset disables it
-    CLOUDFLARE_ZONE_ID: optionalString,
-    CLOUDFLARE_CACHE_PURGE_TOKEN: optionalString,
+  // === Feature flags (cloud save) ===
+  // `off` is the kill switch and overrides every per-user override.
+  CLOUD_SAVE_MODE: z.preprocess(emptyStringToUndefined, z.enum(['off', 'allowlist', 'optin', 'on']).default('off')),
+  // Comma-separated, case-insensitive emails that get cloud save while the mode is not `off`.
+  CLOUD_SAVE_ALLOWLIST_EMAILS: optionalString,
+  // Server-side imports write into cloud saves; off until they are explicitly enabled.
+  SERVER_IMPORTS: z.preprocess(emptyStringToUndefined, z.enum(['on', 'off']).default('off')),
+  // Cloudflare edge cache purge (services/edge-cache.ts); both unset disables it
+  CLOUDFLARE_ZONE_ID: optionalString,
+  CLOUDFLARE_CACHE_PURGE_TOKEN: optionalString,
 
-    // === Email (services/mailer.ts) ===
-    // Resend API key; unset turns mail off (no verification mail, no password reset)
-    RESEND_API_KEY: optionalString,
-    // The sender of every message; its domain must be verified at Resend
-    EMAIL_FROM: z.preprocess(emptyStringToUndefined, z.string().default('DXRating <no-reply@dxrating.net>')),
-    // Tests only: `memory` keeps sent mail in an in-process outbox instead of sending it
-    EMAIL_TRANSPORT: z.preprocess(emptyStringToUndefined, z.enum(['memory']).optional()),
-  })
-  .refine((env) => env.EMAIL_TRANSPORT !== 'memory' || env.NODE_ENV === 'test', {
-    message: 'EMAIL_TRANSPORT=memory is for tests only (NODE_ENV=test)',
-    path: ['EMAIL_TRANSPORT'],
-  })
+  // === Email (services/mailer.ts) ===
+  // Resend API key; unset turns mail off (no verification mail, no password reset)
+  RESEND_API_KEY: optionalString,
+  // The sender of every message; its domain must be verified at Resend
+  EMAIL_FROM: z.preprocess(emptyStringToUndefined, z.string().default('DXRating <no-reply@dxrating.net>')),
+})
 
 export type EmailSettings =
   | { readonly transport: 'resend'; readonly resendApiKey: string; readonly from: string }
-  | { readonly transport: 'memory'; readonly from: string }
   | { readonly transport: 'disabled'; readonly from: string }
 
 export const resolveEmailSettings = (env: {
   RESEND_API_KEY?: string | undefined
   EMAIL_FROM: string
-  EMAIL_TRANSPORT?: 'memory' | undefined
 }): EmailSettings => {
-  if (env.EMAIL_TRANSPORT === 'memory') return { transport: 'memory', from: env.EMAIL_FROM }
   if (env.RESEND_API_KEY) return { transport: 'resend', resendApiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM }
   return { transport: 'disabled', from: env.EMAIL_FROM }
 }
