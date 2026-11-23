@@ -1,4 +1,9 @@
 import type { MiddlewareHandler } from 'hono'
+import { ProcedureContract } from '@orpc/contract'
+import { getOpenAPIMeta } from '@orpc/openapi'
+import { z } from 'zod'
+import { CLOUD_SAVE_NET_IMPORT_ROUTE, getCredentials, type CredentialKind } from '@gekichumai/api-contract'
+import { appContract } from '../contract'
 
 /**
  * Credential hygiene (design §7.2). SEGA IDs and passwords are used for one request and must never reach a log line
@@ -61,13 +66,6 @@ const CREDENTIAL_QUERY_PATTERN = new RegExp(
 
 const normalizeKey = (key: string) => key.toLowerCase().replace(/[-_]/g, '')
 
-const NET_ROUTE_PATTERNS = [
-  /^\/functions\/fetch-net-records(?:\/|$)/,
-  /^\/api\/v1\/io\/import\/maimai-net\/?$/,
-  /^\/api\/v1\/saves\/[^/]+\/imports\/maimai-net\/?$/,
-]
-const TOKEN_ROUTE_PATTERNS = [/^\/api\/v1\/io\/import\/lxns(?:\/|$)/, /^\/api\/v1\/saves\/[^/]+\/imports\/lxns\/?$/]
-
 /** The path of a URL, a path with a query, or a transaction name like `POST /functions/...` */
 export function pathOf(urlOrPath: string | undefined): string {
   if (!urlOrPath) return ''
@@ -79,12 +77,83 @@ export function pathOf(urlOrPath: string | undefined): string {
   }
 }
 
-/** The maimai NET routes, whose bodies carry a SEGA ID and password (new and legacy) */
-export const isNetCredentialPath = (path: string) => NET_ROUTE_PATTERNS.some((pattern) => pattern.test(path))
+// --- Credential routes ---
+
+export interface CredentialRoute {
+  /** `/api/v1/saves/{id}/imports/lxns`, `/api/auth/*` */
+  readonly template: string
+  readonly kind: CredentialKind
+}
+
+/** Routes outside the contract whose requests carry credentials; `/*` also matches every path below */
+const DIRECT_CREDENTIAL_ROUTES: ReadonlyArray<CredentialRoute> = [
+  { template: '/functions/fetch-net-records/*', kind: 'sega' },
+  { template: CLOUD_SAVE_NET_IMPORT_ROUTE.path, kind: 'sega' },
+  { template: '/api/v1/io/import/lxns/oauth_callback', kind: 'secret' },
+  { template: '/api/auth/*', kind: 'secret' },
+]
+
+const isCredentialInputKey = (key: string) => {
+  const normalized = normalizeKey(key)
+  return (
+    CREDENTIAL_KEYS.has(normalized) ||
+    normalized === 'code' ||
+    normalized === 'state' ||
+    /(?:token|secret|password)$/.test(normalized)
+  )
+}
+
+const propertyNames = (jsonSchema: unknown, names: string[] = []): string[] => {
+  if (typeof jsonSchema !== 'object' || jsonSchema === null) return names
+  const { properties } = jsonSchema as { properties?: object }
+  if (properties) names.push(...Object.keys(properties))
+  for (const child of Object.values(jsonSchema)) propertyNames(child, names)
+  return names
+}
+
+/** The procedures of `router` whose request carries credentials: marked with `credentials`, or taking a credential field */
+export function credentialRoutesOf(router: unknown, path: string[] = []): CredentialRoute[] {
+  if (typeof router !== 'object' || router === null) return []
+  if (!(router instanceof ProcedureContract)) {
+    return Object.entries(router).flatMap(([key, child]) => credentialRoutesOf(child, [...path, key]))
+  }
+  const takesCredential = (router['~orpc'].inputSchemas ?? []).some((schema) =>
+    propertyNames(z.toJSONSchema(schema as z.ZodType, { io: 'input', unrepresentable: 'any' })).some(
+      isCredentialInputKey,
+    ),
+  )
+  const kind = getCredentials(router) ?? (takesCredential ? 'secret' : undefined)
+  if (!kind) return []
+  return [{ template: `/api/v1${getOpenAPIMeta(router)?.path ?? `/${path.join('/')}`}`, kind }]
+}
+
+/** Every route whose request carries credentials: its body, query and logs never reach telemetry */
+export const CREDENTIAL_ROUTES: ReadonlyArray<CredentialRoute> = [
+  ...credentialRoutesOf(appContract),
+  ...DIRECT_CREDENTIAL_ROUTES,
+]
+
+const routePattern = (template: string) =>
+  new RegExp(
+    `^${template
+      .replace(/[.+?^$()|[\]\\]/g, '\\$&')
+      .replace(/\{[^}]+\}/g, '[^/]+')
+      .replace(/\/\*$/, '(?:/.*)?')}/?$`,
+  )
+
+const CREDENTIAL_ROUTE_PATTERNS = CREDENTIAL_ROUTES.map((route) => ({
+  ...route,
+  pattern: routePattern(route.template),
+}))
+
+const matchesCredentialRoute = (path: string, kind?: CredentialKind) =>
+  CREDENTIAL_ROUTE_PATTERNS.some((route) => (kind === undefined || route.kind === kind) && route.pattern.test(path))
+
+/** Routes whose bodies carry a SEGA ID and password */
+export const isNetCredentialPath = (path: string) => matchesCredentialRoute(path, 'sega')
 
 /** Routes whose request bodies must never be attached to telemetry */
-export const isCredentialPath = (path: string) =>
-  isNetCredentialPath(path) || TOKEN_ROUTE_PATTERNS.some((pattern) => pattern.test(path))
+export const isCredentialPath = (path: string) => matchesCredentialRoute(path)
 
 // --- Registry of the credentials of running requests ---
 
@@ -332,7 +401,7 @@ async function peekCredentials(request: Request): Promise<string[]> {
 }
 
 /**
- * Hono middleware of the credential routes (the NET routes, new and legacy, and the LXNS routes). Register it after
+ * Hono middleware of the credential routes ({@link isCredentialPath}). Register it after
  * evlog. It registers the request's SEGA ID and password (read ahead from a small JSON body) for value scrubbing
  * while the handler runs, and replaces the request logger with a scrubbing one, so no field, error or message the
  * route logs carries a credential. Request bodies are never logged by evlog itself; Sentry is told not to attach

@@ -15,6 +15,7 @@ import {
   type SyncFlag,
 } from '@gekichumai/maimai-domain'
 import { oc as contractBuilder } from '@orpc/contract'
+import { credentials } from '../credentials.ts'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
 
@@ -648,7 +649,7 @@ export const cloudSaveContract = {
       .input(ClientImportInputSchema)
       .output(ImportResultDTOSchema),
     lxns: oc
-      .meta(route('POST', '/saves/{id}/imports/lxns', 'Import from LXNS on the server'))
+      .meta(route('POST', '/saves/{id}/imports/lxns', 'Import from LXNS on the server'), credentials('secret'))
       .errors(importErrors)
       .input(LxnsImportInputSchema)
       .output(ImportResultDTOSchema),

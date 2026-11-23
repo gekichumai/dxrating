@@ -1,5 +1,10 @@
+import { credentials } from '@gekichumai/api-contract'
+import { oc } from '@orpc/contract'
+import { openapi } from '@orpc/openapi'
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import {
+  credentialRoutesOf,
   FILTERED,
   holdCredentials,
   isCredentialPath,
@@ -22,9 +27,32 @@ describe('credential hygiene', () => {
     ]) {
       expect(isNetCredentialPath(path), path).toBe(true)
     }
-    expect(isCredentialPath('/api/v1/io/import/lxns/start')).toBe(true)
-    expect(isNetCredentialPath('/api/v1/io/import/lxns/start')).toBe(false)
+    for (const path of [
+      '/api/v1/io/import/lxns/start',
+      '/api/v1/io/import/lxns/complete',
+      '/api/v1/io/import/lxns/oauth_callback',
+      '/api/v1/saves/dsav_x/imports/lxns',
+      '/api/auth/sign-in/email',
+    ]) {
+      expect(isCredentialPath(path), path).toBe(true)
+      expect(isNetCredentialPath(path), path).toBe(false)
+    }
     expect(isCredentialPath('/api/v1/saves/dsav_x/client-imports')).toBe(false)
+    expect(isCredentialPath('/api/v1/io/import/maimai-net/status')).toBe(false)
+  })
+
+  it('makes every procedure that takes a credential field a credential route', () => {
+    const contract = {
+      login: oc
+        .meta(openapi({ method: 'POST', path: '/login' }))
+        .input(z.object({ account: z.object({ apiToken: z.string() }).optional() })),
+      search: oc.meta(openapi({ method: 'GET', path: '/search' })).input(z.object({ query: z.string() })),
+      stored: oc.meta(openapi({ method: 'POST', path: '/stored' }), credentials('sega')),
+    }
+    expect(credentialRoutesOf(contract)).toEqual([
+      { template: '/api/v1/login', kind: 'secret' },
+      { template: '/api/v1/stored', kind: 'sega' },
+    ])
   })
 
   it('replaces credential keys everywhere, and the SEGA ID keys on the NET routes only', () => {

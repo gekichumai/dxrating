@@ -57,39 +57,7 @@ export function shouldCaptureSentryError(error: unknown) {
   return true
 }
 
-/**
- * Routes whose request body carries credentials. `sendDefaultPii` lets the HTTP integration attach request bodies to
- * events and transactions; for these routes the body never leaves the process, whatever Sentry's server-side
- * scrubbing would catch. Entries ending in `/` match every path below them.
- */
-export const CREDENTIAL_BODY_ROUTES = [
-  // LXNS OAuth code and state
-  '/api/v1/io/import/lxns/complete',
-  // SEGA ID and password (maimai.fetchRecords, and the NET record functions)
-  '/api/v1/io/import/maimai-net',
-  '/functions/fetch-net-records/',
-  // Better Auth: sign-in and sign-up passwords, password changes and resets, OAuth and passkey payloads
-  '/api/auth/',
-]
-
-const routePath = (value: string | undefined) => {
-  if (!value) return undefined
-  // Transaction names look like `POST /api/v1/...`
-  const target = value.includes(' ') ? value.slice(value.indexOf(' ') + 1) : value
-  try {
-    return new URL(target, 'http://localhost').pathname.replace(/\/+$/, '')
-  } catch {
-    return undefined
-  }
-}
-
-const isCredentialRoute = (value: string | undefined) => {
-  const path = routePath(value)
-  return (
-    path !== undefined &&
-    CREDENTIAL_BODY_ROUTES.some((route) => (route.endsWith('/') ? `${path}/`.startsWith(route) : path === route))
-  )
-}
+const isCredentialRoute = (value: string | undefined) => isCredentialPath(pathOf(value))
 
 function withoutBody<T extends Record<string, unknown>>(data: T | undefined): T | undefined {
   if (!data) return data
@@ -102,7 +70,7 @@ function withoutBody<T extends Record<string, unknown>>(data: T | undefined): T 
 
 type ScrubbableEvent = Pick<Sentry.Event, 'request' | 'transaction' | 'contexts' | 'spans' | 'breadcrumbs'>
 
-/** Drops request bodies (and body-like span or breadcrumb attributes) of `CREDENTIAL_BODY_ROUTES` from an event. */
+/** Drops request bodies (and body-like span or breadcrumb attributes) of the credential routes from an event. */
 export function scrubCredentialBodies<E extends ScrubbableEvent>(event: E): E {
   const traceData = event.contexts?.trace?.data as Record<string, unknown> | undefined
   const sensitive =
@@ -160,9 +128,8 @@ export function buildSentryOptions(
     sendDefaultPii: true,
     enableLogs: true,
     integrations: [
-      // HTTP integration for tracking HTTP requests; never attach the body of a credential route
       Sentry.httpIntegration({
-        ignoreIncomingRequestBody: (url) => isCredentialPath(pathOf(url)) || isCredentialRoute(url),
+        ignoreIncomingRequestBody: isCredentialRoute,
       }),
       // Send console.log, console.warn, and console.error calls as logs to Sentry
       Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
