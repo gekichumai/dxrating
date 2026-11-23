@@ -26,7 +26,7 @@
     "drizzle-orm": "1.0.0-rc.5-5935859",
     "effect": "4.0.0-rc.118",
     "hono": "catalog:",
-    "jose": "6.2.12",
+    "jose": "catalog:",
     "pg": "catalog:",
     "zod": "4.6.7"
   },

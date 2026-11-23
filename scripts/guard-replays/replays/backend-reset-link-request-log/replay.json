@@ -1,0 +1,8 @@
+{
+  "mistake": "The request log (evlog) printed the path of every request, so opening a mailed password reset link put its unspent token (/api/auth/reset-password/<token>) on the backend's stdout; the scrubbing only covered Sentry.",
+  "history": ["meta#80 review of feat/email-mail-fallback (evlog had no exclusion for the reset link)"],
+  "guard": "apps/backend/src/test/auth-mail.test.ts mails a link that sets a new password: no console line carries the token",
+  "check": "pnpm --filter @gekichumai/backend exec vitest run src/test/auth-mail.test.ts",
+  "expect": "GET /api/auth/reset-password/",
+  "needs": ["postgres"]
+}
