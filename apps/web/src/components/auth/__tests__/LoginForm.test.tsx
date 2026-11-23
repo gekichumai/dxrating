@@ -65,7 +65,7 @@ describe('LoginForm', () => {
   const continueWithEmail = async (email = 'demo@example.com') => {
     fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: email } })
     fireEvent.click(screen.getByRole('button', { name: 'Continue with email' }))
-    await screen.findByRole('button', { name: 'Back to all sign-in options' })
+    await screen.findByRole('button', { name: /Back to all sign-in options/ })
   }
 
   it('asks for the email address alone first, with passkey autofill on it', () => {
@@ -122,7 +122,10 @@ describe('LoginForm', () => {
     render(<LoginForm />)
     await continueWithEmail()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to all sign-in options' }))
+    // The way back is the account chip: it shows the address it goes back to change
+    const chip = screen.getByRole('button', { name: /Back to all sign-in options/ })
+    expect(chip.textContent).toContain('demo@example.com')
+    fireEvent.click(chip)
 
     const email = screen.getByLabelText(/^Email/) as HTMLInputElement
     expect(email.closest('[hidden]')).toBeNull()
@@ -200,7 +203,7 @@ describe('LoginForm', () => {
     await waitFor(() => expect(addPasskey).toHaveBeenCalled())
     // Settled: the form is usable again
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Back to all sign-in options' }).hasAttribute('disabled')).toBe(false),
+      expect(screen.getByRole('button', { name: /Back to all sign-in options/ }).hasAttribute('disabled')).toBe(false),
     )
     expect(screen.queryByRole('alert')).toBeNull()
   })

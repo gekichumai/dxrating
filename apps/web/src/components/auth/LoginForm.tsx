@@ -1,6 +1,6 @@
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { useResolvedTheme } from '@/utils/useResolvedTheme'
-import { Alert, Button, Chip, CircularProgress, Divider, IconButton, TextField, useMediaQuery } from '@mui/material'
+import { Alert, Button, Chip, CircularProgress, Divider, TextField, useMediaQuery } from '@mui/material'
 import clsx from 'clsx'
 import { useRef, useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
@@ -336,25 +336,28 @@ export const LoginForm = ({
           <h2 id={formTitleId} className="text-xl font-semibold leading-tight text-fg-1 m-0">
             {isSignUp ? m.auth_signUp_title({}, { locale }) : m.auth_form_title({}, { locale })}
           </h2>
-          <p className="text-sm text-fg-2 mt-1 mb-0 text-pretty">
-            {isSignUp ? m.auth_signUp_subtitle({}, { locale }) : m.auth_form_subtitle({}, { locale })}
-          </p>
+          {step === 'start' && (
+            <p className="text-sm text-fg-2 mt-1 mb-0 text-pretty">
+              {isSignUp ? m.auth_signUp_subtitle({}, { locale }) : m.auth_form_subtitle({}, { locale })}
+            </p>
+          )}
         </div>
 
-        <p className="m-0 text-center text-xs leading-relaxed text-fg-2 text-pretty">
-          <ParaglideMessage
-            message={m.auth_terms_notice}
-            inputs={{}}
-            options={{ locale }}
-            markup={{
-              terms: ({ children }) => (
-                <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="link">
-                  {children}
-                </a>
-              ),
-            }}
-          />
-        </p>
+        {step === 'credentials' && (
+          // Who the second step is for, right under the heading; pressing it goes back to change the address
+          <button
+            type="button"
+            onClick={backToStart}
+            disabled={loading}
+            className="mx-auto -mt-1 mb-1 flex max-w-full min-w-0 items-center gap-2 rounded-lg border border-solid border-ink/15 bg-transparent px-3 py-1.5 text-sm text-fg-1 cursor-pointer transition-colors hover:bg-ink/5 disabled:cursor-default disabled:opacity-60"
+          >
+            <IconArrowLeft className="size-4 shrink-0 text-fg-2" aria-hidden />
+            <span className="truncate font-medium" translate="no">
+              {email}
+            </span>
+            <span className="sr-only">{m.auth_form_back({}, { locale })}</span>
+          </button>
+        )}
         {/* Stays mounted across both steps: the browser keeps offering passkeys in the email field's autofill */}
         {!isSignUp && <ConditionalPasskey onSuccess={onSuccess} />}
 
@@ -423,21 +426,7 @@ export const LoginForm = ({
 
         {step === 'credentials' && (
           <>
-            <div className="flex items-center gap-1 -ml-2 min-w-0">
-              <IconButton
-                onClick={backToStart}
-                disabled={loading}
-                size="small"
-                aria-label={m.auth_form_back({}, { locale })}
-              >
-                <IconArrowLeft className="size-5" />
-              </IconButton>
-              <span className="text-sm font-medium text-fg-1 truncate" translate="no">
-                {email}
-              </span>
-            </div>
-
-            {asksForPassword ? (
+            {asksForPassword && (
               <TextField
                 id={passwordId}
                 {...register('password', {
@@ -478,11 +467,6 @@ export const LoginForm = ({
                   ),
                 }}
               />
-            ) : (
-              <p className="m-0 flex gap-2 text-sm text-fg-2 text-pretty">
-                <IconPasskey className="size-5 shrink-0 text-fg-1" aria-hidden />
-                {m.auth_signUp_passkey_description({}, { locale })}
-              </p>
             )}
 
             {TURNSTILE_SITE_KEY && (
@@ -529,6 +513,12 @@ export const LoginForm = ({
           )}
         </Button>
 
+        {step === 'credentials' && isSignUp && signUpWith === 'passkey' && (
+          <p className="-mt-1 mb-0 text-center text-xs leading-relaxed text-fg-2 text-pretty">
+            {m.auth_signUp_passkey_description({}, { locale })}
+          </p>
+        )}
+
         {step === 'credentials' && isSignUp && canUsePasskeys && (
           <Button
             type="button"
@@ -549,17 +539,25 @@ export const LoginForm = ({
         )}
       </form>
 
-      <Button
-        type="button"
-        variant="text"
-        onClick={toggleView}
-        disabled={loading}
-        className="!mt-2 !text-sm"
-        fullWidth
-        size="small"
-      >
-        {isSignUp ? m.auth_form_hasAccount({}, { locale }) : m.auth_form_noAccount({}, { locale })}
-      </Button>
+      <div className="mt-4 flex flex-col items-center gap-2 border-t border-t-solid border-ink/10 pt-3">
+        <Button type="button" variant="text" onClick={toggleView} disabled={loading} className="!text-sm" size="small">
+          {isSignUp ? m.auth_form_hasAccount({}, { locale }) : m.auth_form_noAccount({}, { locale })}
+        </Button>
+        <p className="m-0 text-center text-xs leading-relaxed text-fg-2 text-pretty">
+          <ParaglideMessage
+            message={m.auth_terms_notice}
+            inputs={{}}
+            options={{ locale }}
+            markup={{
+              terms: ({ children }) => (
+                <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="link">
+                  {children}
+                </a>
+              ),
+            }}
+          />
+        </p>
+      </div>
     </div>
   )
 }
