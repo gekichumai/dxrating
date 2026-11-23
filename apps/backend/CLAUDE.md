@@ -222,6 +222,7 @@ When working on Coolify deployment or integration, use context7 to query the Coo
 
 - API contracts defined in `contract.ts` using oRPC + Zod, implementations in `router.ts`
 - Auth context passed through oRPC handler context (`context.user`)
+- Better Auth error messages are translated by the i18n plugin (`src/lib/auth-error-translations.ts`, every supported language but English) into the language `src/lib/auth-locale.ts` detects: the page's own (`X-DXRating-Locale`, which the web's auth client sends on every request), then the `dxrating.locale` cookie, then Accept-Language
 - Authorization proofs (gdp-ts): functions that read or change one user's private data demand a proof about their exact arguments. See `src/proofs/README.md`.
 - Database schema changes go through Drizzle migrations (`drizzle-kit`)
 - ES modules with extensionless relative TypeScript imports. TypeScript uses `bundler` module resolution; esbuild resolves local modules into the production bundle. Keep extensions on actual output and asset paths.
