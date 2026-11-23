@@ -62,26 +62,15 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
     emailAndPassword: {
       enabled: true,
       password: {
-        hash: (password) =>
-          Effect.runPromise(
-            Effect.tryPromise({
-              try: () => bcrypt.hash(password, 10),
-              catch: (cause) => new AuthenticationError({ operation: 'Hash password', cause }),
-            }),
-          ),
-        verify: ({ hash, password }) =>
-          Effect.runPromise(
-            Effect.tryPromise({
-              try: () => bcrypt.compare(password, hash),
-              catch: (cause) => new AuthenticationError({ operation: 'Verify password', cause }),
-            }),
-          ),
+        hash: (password) => bcrypt.hash(password, 10),
+        verify: ({ hash, password }) => bcrypt.compare(password, hash),
       },
     },
     user: {
       deleteUser: {
         enabled: true,
         beforeDelete: (user) =>
+          // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
           Effect.runPromise(
             Effect.gen(function* () {
               const accounts = yield* database.query('Read linked OAuth accounts', (db) =>

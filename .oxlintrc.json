@@ -66,6 +66,57 @@
               }
             ]
           }
+        ],
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "runPromise",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseExit",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseExitWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runFork",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runForkWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runCallback",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runCallbackWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSync",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncExit",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncExitWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          }
         ]
       }
     },
@@ -152,6 +203,18 @@
             ]
           }
         ]
+      }
+    },
+    {
+      "files": [
+        "apps/backend/src/request-runner.ts",
+        "apps/backend/src/net-login-probe.ts",
+        "apps/backend/src/test/**",
+        "apps/backend/src/**/*.test.ts",
+        "apps/backend/src/**/*.test.tsx"
+      ],
+      "rules": {
+        "no-restricted-properties": "off"
       }
     }
   ],
