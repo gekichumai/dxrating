@@ -17,6 +17,8 @@
  */
 import { DifficultyEnum, type Sheet, type Song, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import type { CollapsedPlay } from './collapse-plays.ts'
+import { LATEST_REGION_VERSIONS } from './region-versions.ts'
+import { sheetLevelOn } from './song-catalog.ts'
 import type { ComboFlag, SyncFlag } from './types'
 
 export type PlateKind = 'kiwami' | 'sho' | 'shin' | 'maimai' | 'hasha'
@@ -224,7 +226,10 @@ const BASE_DIFFICULTIES: readonly DifficultyEnum[] = [
 const SD_VERSION_SET: ReadonlySet<VersionEnum> = new Set(SD_VERSIONS)
 
 /** The version a sheet belongs to on a server, honouring dxdata server overrides */
-export function sheetVersionOn(sheet: Sheet, region: PlateRegion): VersionEnum {
+export function sheetVersionOn<V extends string>(
+  sheet: { version: V; serverOverrides?: Partial<Record<string, { version?: V }>> },
+  region: PlateRegion,
+): V {
   return sheet.serverOverrides?.[region]?.version ?? sheet.version
 }
 
@@ -265,6 +270,7 @@ export interface PlateChart {
   type: typeof TypeEnum.DX | typeof TypeEnum.STD
   /** Version of the chart set: the earliest version among its Basic to Master sheets */
   version: VersionEnum
+  /** With the server's current level and internal level (`sheetLevelOn`) */
   requiredSheets: Sheet[]
   /** A required Re:MASTER is one whose plate membership differs between servers (`SERVER_VARIANT_REMASTER_SHEET_IDS`) */
   hasServerVariantRemaster: boolean
@@ -294,7 +300,10 @@ export function buildPlateCharts(songs: readonly Song[], group: PlateVersionGrou
         song,
         type,
         version,
-        requiredSheets: [...sortByDifficulty(base), ...remaster],
+        requiredSheets: [...sortByDifficulty(base), ...remaster].map((sheet) => ({
+          ...sheet,
+          ...sheetLevelOn(sheet, { version: LATEST_REGION_VERSIONS[region], region }),
+        })),
         hasServerVariantRemaster: remaster.some((sheet) => SERVER_VARIANT_REMASTER_SHEET_IDS.has(sheet.id)),
       })
     }
