@@ -1,0 +1,9 @@
+{
+  "mistake": "AGENTS.md keeps pointing agents at a package that was deleted.",
+  "history": [
+    "a183ca26 (removed apps/functions; the AGENTS.md project map from 1c44f992 kept listing it as the Cloudflare Workers edge endpoints until docs-drift)"
+  ],
+  "guard": "pnpm test:docs checks that every repo path named in AGENTS.md and CLAUDE.md exists",
+  "check": "pnpm test:docs",
+  "expect": "AGENTS.md:13 names `apps/functions/`"
+}

@@ -10,6 +10,7 @@
     "lint:fix": "oxlint --fix .",
     "test:packages": "turbo run test --filter=./packages/*",
     "test:infra": "node --test infra/posthog-proxy/worker.test.js",
+    "test:docs": "node --test scripts/agent-docs.test.mts",
     "guard:replays": "node scripts/guard-replays/run.ts"
   },
   "devDependencies": {

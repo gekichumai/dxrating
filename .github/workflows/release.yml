@@ -2,13 +2,10 @@ name: Release
 
 on:
   push:
-    # trigger on version tag push
     tags:
       - 'v*'
 
 concurrency:
-  # One production deploy at a time; a newer tag replaces any queued older one,
-  # so back-to-back merges can't deploy out of order.
   group: release-production
   cancel-in-progress: false
 
@@ -53,7 +50,6 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT;
           echo "versionlabel=$VERSION+$TRUNCATED_GITHUB_SHA" >> $GITHUB_OUTPUT;
 
-      # Populate Bundle Information
       - name: Populate Bundle Information
         id: bundle-info
         shell: bash

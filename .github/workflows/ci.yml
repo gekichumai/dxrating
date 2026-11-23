@@ -50,5 +50,8 @@ jobs:
       - name: Infra tests
         run: pnpm test:infra
 
+      - name: Docs paths
+        run: pnpm test:docs
+
       - name: Guard replays
         run: pnpm guard:replays
