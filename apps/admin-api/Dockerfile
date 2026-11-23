@@ -1,5 +1,5 @@
 # admin-api (gekichumai/meta#50 L3). Same base image as apps/backend.
-FROM node:26.12.1-bookworm-slim@sha256:b3dbaf0531ffedead011f14afc779688202fc975f89d2cebf2a63e8beed89e8a AS builder
+FROM node:26.12.1-bookworm-slim@sha256:88e480776c6149ff1d098cd304f44bf18057fb5d284a3329b78162d29821e28c AS builder
 RUN npm install -g pnpm@10.33.0
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
@@ -19,7 +19,7 @@ COPY apps/admin-api ./apps/admin-api
 WORKDIR /app/apps/admin-api
 RUN pnpm build:bundle
 
-FROM node:26.12.1-bookworm-slim@sha256:b3dbaf0531ffedead011f14afc779688202fc975f89d2cebf2a63e8beed89e8a AS runner
+FROM node:26.12.1-bookworm-slim@sha256:88e480776c6149ff1d098cd304f44bf18057fb5d284a3329b78162d29821e28c AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 RUN npm install -g pnpm@10.33.0
 WORKDIR /app
