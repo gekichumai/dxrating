@@ -1,0 +1,9 @@
+{
+  "mistake": "The active save decision lists saves through the unbound privateApiClient, so after another tab signs account B in, B's list decides whether account A's chosen save still exists and A's selection is cleared.",
+  "history": [
+    "#438 ca729895 (listSaves left without X-DXRating-Expected-User; found by the formal/session-ownership model, fixed in this PR)"
+  ],
+  "guard": "apps/web/src/models/scores/__tests__/listSavesBinding.test.ts",
+  "check": "pnpm --filter @gekichumai/dxrating-web exec vitest run src/models/scores/__tests__/listSavesBinding.test.ts",
+  "expect": "names the deciding account"
+}

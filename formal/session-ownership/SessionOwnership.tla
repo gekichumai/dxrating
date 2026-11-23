@@ -9,13 +9,11 @@
  authClient.useSession() refetches. Requests carry the cookie of the moment
  they leave. Each action below names the code it stands for.
 
- Bug_<sha> constants switch one action back to its behaviour before that fix;
- SessionOwnership.cfg sets them all FALSE. A Finding_<name> constant set TRUE is
- today's code on a path where TLC finds a violation that is still open
- (.claude/skills/verify-session-ownership/SKILL.md). The .cfg sets them FALSE:
- the two ListSaves ones then model the fix the skill names, and
- Finding_FeaturesSwitchBack = FALSE assumes the session changes at most once
- while one features request is in flight.
+ Each Bug_ constant switches one action back to its behaviour before that fix;
+ SessionOwnership.cfg sets them all FALSE. Finding_FeaturesSwitchBack set TRUE
+ lets the session change twice while one features request is in flight, where
+ TLC finds a violation that is still open
+ (.claude/skills/verify-session-ownership/SKILL.md); the .cfg sets it FALSE.
 *)
 EXTENDS Naturals
 
@@ -27,8 +25,8 @@ CONSTANTS
   Bug_945ce071,   \* render exposes cloudRepository without comparing its owner with the session
   Bug_61f5edfe,   \* fetchFeatures sends features.get with no session check around it
   Bug_cc07485f,   \* a late not-found clears the stored selection whatever save it names
-  Finding_ListSavesUnbound,    \* listSaves uses the unbound privateApiClient
-  Finding_ListClearsAnySave,   \* a save missing from the list clears the stored selection whatever save it names
+  Bug_ListSavesUnbound,        \* listSaves uses the unbound privateApiClient
+  Bug_ListClearsAnySave,       \* a save missing from the list clears the stored selection whatever save it names
   Finding_FeaturesSwitchBack   \* the session may change twice while one fetchFeatures is in flight
 
 Users == {"a", "b"}
@@ -175,15 +173,15 @@ FeatCheck2(u) ==
        ELSE FeatFail(u)
   /\ UNCHANGED <<cookie, seen, sel, exists, eff, ver, switches, selections, deletes, wrongClear>>
 
-\* dependencies.listSaves(), then the check that the chosen save is in the list
+\* dependencies.listSaves(userId), then the check that the chosen save is in the list
 DecList ==
   LET u == dec.user IN
   /\ dec.step = "list"
-  /\ IF cookie = None \/ (~Finding_ListSavesUnbound /\ cookie # u)
+  /\ IF cookie = None \/ (~Bug_ListSavesUnbound /\ cookie # u)
        THEN FallBack /\ UNCHANGED <<sel, wrongClear>>
        ELSE IF dec.save \in {s \in exists : SaveOwner[s] = cookie}
          THEN dec' = [dec EXCEPT !.step = "open"] /\ UNCHANGED <<repo, flushing, sel, wrongClear>>
-         ELSE /\ IF Finding_ListClearsAnySave \/ sel[u] = dec.save
+         ELSE /\ IF Bug_ListClearsAnySave \/ sel[u] = dec.save
                    THEN ClearSel(u)
                    ELSE UNCHANGED <<sel, wrongClear>>
               /\ FallBack
