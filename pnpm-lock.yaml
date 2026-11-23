@@ -353,6 +353,9 @@ importers:
       hono:
         specifier: 'catalog:'
         version: 4.13.16
+      jose:
+        specifier: 6.2.12
+        version: 6.2.12
       pg:
         specifier: 'catalog:'
         version: 8.23.1
