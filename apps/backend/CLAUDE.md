@@ -88,6 +88,7 @@ src/
 - `GET /health` — Health check
 - `GET|HEAD /api/v1/dxdata` — Complete published catalog or metadata-only headers
 - `POST|GET /api/auth/**` — Better Auth endpoints
+- `POST /api/auth/account/set-password` — An account without a password (passkey or social sign-up) sets its first one (`src/lib/set-password.ts`): fresh session required (403 `SESSION_NOT_FRESH`), 400 `PASSWORD_ALREADY_SET` once it has one, sign-up length rules and haveIBeenPwned
 - `POST /functions/fetch-net-records/v0` — Fetch NET records (JSON)
 - `POST /functions/fetch-net-records/v1/:region` — Fetch NET records (SSE)
 - `POST /functions/render-oneshot/v0` — Render player card image

@@ -15,7 +15,24 @@ import { revokeOAuthGrants } from './lib/oauth-revocation'
 import { passkeySignUp, requireFreshSessionToAddPasskey } from './lib/passkey-sign-up'
 import { AUTH_ERROR_TRANSLATIONS } from './lib/auth-error-translations'
 import { detectAuthLocale } from './lib/auth-locale'
+import { setPassword } from './lib/set-password'
+import { SET_PASSWORD_AUTH_PATH } from '@gekichumai/api-contract'
 import { and, eq } from 'drizzle-orm'
+/**
+ * Routes whose new password haveIBeenPwned checks: the plugin's own list (Better Auth 1.7.6) and the endpoint where a
+ * passkey or social account sets its first password, which the plugin can't know about.
+ */
+export const PWNED_PASSWORD_PATHS = [
+  '/sign-up/email',
+  '/change-password',
+  '/reset-password',
+  '/email-otp/reset-password',
+  '/phone-number/reset-password',
+  '/admin/create-user',
+  '/admin/set-user-password',
+  SET_PASSWORD_AUTH_PATH,
+] as const
+
 class AuthenticationError extends Data.TaggedError('AuthenticationError')<{
   readonly operation: string
   readonly cause: unknown
@@ -171,7 +188,8 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
       lastLoginMethod({
         cookieName: 'dxrating.last_used_login_method',
       }),
-      ...(config.nodeEnv !== 'test' ? [haveIBeenPwned()] : []),
+      setPassword(),
+      ...(config.nodeEnv !== 'test' ? [haveIBeenPwned({ paths: [...PWNED_PASSWORD_PATHS] })] : []),
       ...(config.auth.turnstile.secretKey
         ? [
             captcha({
