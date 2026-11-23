@@ -9,6 +9,10 @@ const KEYED_METHODS = new Set(['setQueryData', 'getQueryData', 'getQueryState', 
 
 const propertyName = (node) => (node.type === 'Identifier' ? node.name : node.type === 'Literal' ? node.value : null)
 
+const TYPE_WRAPPERS = new Set(['TSAsExpression', 'TSSatisfiesExpression', 'TSNonNullExpression', 'TSTypeAssertion'])
+const isArrayLiteral = (node) =>
+  node != null && (node.type === 'ArrayExpression' || (TYPE_WRAPPERS.has(node.type) && isArrayLiteral(node.expression)))
+
 export default {
   meta: { name: 'dxrating' },
   rules: {
@@ -17,7 +21,7 @@ export default {
       create(context) {
         return {
           Property(node) {
-            if (!node.computed && propertyName(node.key) === 'queryKey' && node.value.type === 'ArrayExpression') {
+            if (!node.computed && propertyName(node.key) === 'queryKey' && isArrayLiteral(node.value)) {
               context.report({ node: node.value, message })
             }
           },
@@ -27,7 +31,7 @@ export default {
               callee.type === 'MemberExpression' &&
               !callee.computed &&
               KEYED_METHODS.has(propertyName(callee.property)) &&
-              node.arguments[0]?.type === 'ArrayExpression'
+              isArrayLiteral(node.arguments[0])
             ) {
               context.report({ node: node.arguments[0], message })
             }

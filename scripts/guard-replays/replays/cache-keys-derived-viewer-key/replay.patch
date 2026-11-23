@@ -1,5 +1,5 @@
 diff --git a/apps/web/src/components/comments/useSheetComments.ts b/apps/web/src/components/comments/useSheetComments.ts
-index 0887ae9a..3c6a66ac 100644
+index 0887ae9a..401896a5 100644
 --- a/apps/web/src/components/comments/useSheetComments.ts
 +++ b/apps/web/src/components/comments/useSheetComments.ts
 @@ -1,5 +1,5 @@
@@ -20,7 +20,7 @@ index 0887ae9a..3c6a66ac 100644
 -    }),
 -  )
 +  useQuery({
-+    queryKey: ['comments.list', sheet.songId, sheet.type, sheet.difficulty],
++    queryKey: ['comments.list', sheet.songId, sheet.type, sheet.difficulty] as const,
 +    queryFn: () =>
 +      apiClient.comments.list({
 +        songId: sheet.songId,
