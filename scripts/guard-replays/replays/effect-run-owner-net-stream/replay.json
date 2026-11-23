@@ -1,0 +1,7 @@
+{
+  "mistake": "The maimai NET SSE stream runs its Effect with Effect.runPromise instead of runApp, so shutdown neither interrupts nor joins it and disposes the runtime under it.",
+  "history": ["#359 051bc983 (fetch-net-records v0 and v1 ran Effect.runPromise outside the request runner)"],
+  "guard": "oxlint no-restricted-properties on Effect and runtime run* calls in apps/backend/src",
+  "check": "pnpm lint",
+  "expect": "Run Effects through runApp"
+}

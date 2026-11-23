@@ -1,0 +1,9 @@
+{
+  "mistake": "A memoized callback formats a message with locale but omits locale from its dependencies, so it keeps the old language after an in-place switch.",
+  "history": [
+    "#509 00d5c1a (fix(web): recreate memoized callbacks when the locale switches: SecuritySection's useAsyncFn password change and passkey add omitted locale)"
+  ],
+  "guard": "react/exhaustive-deps at error, with useAsync and useAsyncFn as additional hooks",
+  "check": "pnpm exec oxlint apps/web/src/components/global/preferences/SecuritySection.tsx",
+  "expect": "React Hook useAsyncFn has a missing dependency: 'locale'"
+}

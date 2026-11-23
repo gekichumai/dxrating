@@ -67,7 +67,25 @@ const envSchema = z.object({
   // Cloudflare edge cache purge (services/edge-cache.ts); both unset disables it
   CLOUDFLARE_ZONE_ID: optionalString,
   CLOUDFLARE_CACHE_PURGE_TOKEN: optionalString,
+
+  // === Email (services/mailer.ts) ===
+  // Resend API key; unset turns mail off (no verification mail, no password reset)
+  RESEND_API_KEY: optionalString,
+  // The sender of every message; its domain must be verified at Resend
+  EMAIL_FROM: z.preprocess(emptyStringToUndefined, z.string().default('DXRating <no-reply@dxrating.net>')),
 })
+
+export type EmailSettings =
+  | { readonly transport: 'resend'; readonly resendApiKey: string; readonly from: string }
+  | { readonly transport: 'disabled'; readonly from: string }
+
+export const resolveEmailSettings = (env: {
+  RESEND_API_KEY?: string | undefined
+  EMAIL_FROM: string
+}): EmailSettings => {
+  if (env.RESEND_API_KEY) return { transport: 'resend', resendApiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM }
+  return { transport: 'disabled', from: env.EMAIL_FROM }
+}
 
 export const parseEmailAllowlist = (value: string | undefined): readonly string[] => [
   ...new Set(
@@ -145,6 +163,7 @@ export const config = {
     cloudSaveAllowlistEmails: parseEmailAllowlist(env.CLOUD_SAVE_ALLOWLIST_EMAILS),
     serverImports: env.SERVER_IMPORTS === 'on',
   },
+  email: resolveEmailSettings(env),
   edgeCache:
     env.CLOUDFLARE_ZONE_ID && env.CLOUDFLARE_CACHE_PURGE_TOKEN
       ? { zoneId: env.CLOUDFLARE_ZONE_ID, token: env.CLOUDFLARE_CACHE_PURGE_TOKEN }

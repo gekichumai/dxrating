@@ -1,0 +1,37 @@
+diff --git a/apps/web/src/components/layout/TopBar.tsx b/apps/web/src/components/layout/TopBar.tsx
+index e772d4c6..47d06656 100644
+--- a/apps/web/src/components/layout/TopBar.tsx
++++ b/apps/web/src/components/layout/TopBar.tsx
+@@ -99,13 +99,13 @@ const CommunityMenu = ({ compact = false }: { compact?: boolean }) => {
+         className={clsx(
+           HEADER_ACTION_CLASS_NAME,
+           'header-tint header-tint-target',
+-          !compact && '2xs:w-auto 2xs:gap-0.5 2xs:pl-1 2xs:pr-1.5 2xs:!bg-transparent 2xs:hover:!bg-white/60',
++          !compact && 'w-auto gap-0.5 pl-1 pr-1.5 !bg-transparent hover:!bg-white/60',
+         )}
+         style={headerTintStyle('discord')}
+       >
+         {/* Below 375px one tinted glyph; wider phones show the three brand discs, as before the glass header */}
+-        <MdiAccountGroupOutline aria-hidden className={clsx('size-5', !compact && '2xs:hidden')} />
+-        <span className={clsx('hidden items-center', !compact && '2xs:flex')} aria-hidden>
++        <MdiAccountGroupOutline aria-hidden className={clsx('size-5', !compact && 'hidden')} />
++        <span className={clsx('hidden items-center', !compact && 'flex')} aria-hidden>
+           {COMMUNITY_LINKS.map(({ key, Icon, tint }, index) => (
+             <span
+               key={key}
+@@ -118,8 +118,14 @@ const CommunityMenu = ({ compact = false }: { compact?: boolean }) => {
+               <Icon className="size-3.5" />
+             </span>
+           ))}
++          <span
++            className="header-brand-disc -ml-2 flex size-7 items-center justify-center rounded-full"
++            style={headerTintStyle('mcp')}
++          >
++            <McpLogo className="size-3.5" />
++          </span>
+         </span>
+-        <MdiChevronDown aria-hidden className={clsx('hidden size-4 text-fg-2', !compact && '2xs:block')} />
++        <MdiChevronDown aria-hidden className={clsx('hidden size-4 text-fg-2', !compact && 'block')} />
+       </ButtonBase>
+ 
+       <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>

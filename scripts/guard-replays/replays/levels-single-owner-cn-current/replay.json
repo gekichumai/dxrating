@@ -1,0 +1,9 @@
+{
+  "mistake": "The level rule takes the version's internal level before CN's own on CN's current version, so CN charts that mix versions are rated at the wrong level.",
+  "history": [
+    "#647 aeb39bae (the catalog rated CN on PRiSM PLUS with multiverInternalLevelValue[PRiSM PLUS], wrong for 580 CN charts, meta#78)"
+  ],
+  "guard": "sheetLevelOn is the one owner, so the MCP rating test fails with the catalog's",
+  "check": "pnpm --filter @gekichumai/backend exec vitest run src/services/mcp/rating.test.ts",
+  "expect": "uses the internal level of the server"
+}

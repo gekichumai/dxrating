@@ -2,6 +2,7 @@ import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
 import { announcementsContract } from './announcements.ts'
+import { credentials } from './credentials.ts'
 import { SUPPORTED_LOCALES } from './locales.ts'
 
 const oc = contractBuilder.errors({})
@@ -436,6 +437,7 @@ export const publicContractRoutes = {
           summary: 'Get LXNS OAuth authorization URL',
           tags: ['Import'],
         }),
+        credentials('secret'),
       )
       .output(z.object({ url: z.string() })),
     complete: oc
@@ -459,6 +461,7 @@ export const publicContractRoutes = {
           summary: 'Check LXNS OAuth connection status',
           tags: ['Import'],
         }),
+        credentials('secret'),
       )
       .output(z.object({ connected: z.boolean() })),
     start: oc
@@ -469,6 +472,7 @@ export const publicContractRoutes = {
           summary: 'Import scores from LXNS using stored OAuth token',
           tags: ['Import'],
         }),
+        credentials('secret'),
       )
       .output(LxnsStartOutputSchema),
     disconnect: oc
@@ -479,6 +483,7 @@ export const publicContractRoutes = {
           summary: 'Disconnect LXNS account',
           tags: ['Import'],
         }),
+        credentials('secret'),
       )
       .output(z.object({ success: z.boolean() })),
   },

@@ -5,6 +5,7 @@ import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import type { SupportedLocale } from '@/setup/locale'
 import { aliasQuestion } from './aliasQuestion'
+import { reportRejection } from '@/lib/rejections'
 
 /**
  * What clicking an alias copies. Chinese-speaking players share an alias as "<alias>是什么歌" ("what song is
@@ -60,7 +61,7 @@ export const SheetAltNames: FC<{ altNames: string[] }> = ({ altNames }) => {
               title={m.sheet_aliases_copy({}, { locale })}
               onClick={() => {
                 const { clipboard, toastContent } = aliasCopyContent(altName, locale)
-                void navigator.clipboard?.writeText(clipboard)
+                navigator.clipboard?.writeText(clipboard).catch(reportRejection)
                 toast.success(m.sheet_copyAltName_toastSuccess({ content: toastContent }, { locale }), {
                   id: `copy-sheet-alt-name-${altName}`,
                 })

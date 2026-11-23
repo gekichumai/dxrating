@@ -2,11 +2,10 @@ import { Effect, Data } from 'effect'
 import { coverPath, coverUrl, DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import type { SheetDifficulty } from '@gekichumai/maimai-domain'
 import { ImageResponse } from '@takumi-rs/image-response'
-import type { Handler } from 'hono'
 import { createHash } from 'node:crypto'
 import type { ReactElement } from 'react'
 import sharp from 'sharp'
-import { Sentry } from '../../../lib/functions/sentry'
+import { reportFailure } from '../../../lib/functions/sentry'
 import type { PublishedSong } from '../../mcp/catalog'
 import { fetchAssetEffect } from '../oneshot-renderer/assetFetcher'
 import { ChartOgCard, OG_FONT, OG_HEIGHT, OG_WIDTH, SongOgCard, type OgCardImages, type OgSheetBadge } from './card'
@@ -206,35 +205,6 @@ function isUtageType(type: TypeEnum) {
   return type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P
 }
 
-export function createChartOgImageHandler(lookupSong: ChartOgSongLookup, renderImage?: RenderChartOgImage): Handler {
-  return (c) =>
-    Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const songId = c.req.param('songId')
-          const type = c.req.param('type')
-          const difficulty = c.req.param('difficulty')
-          if (!songId || !type || !difficulty) return c.text('Chart not found', 404)
-
-          const output = yield* renderChartOgImageOutputEffect(
-            { songId, type, difficulty, locale: c.req.query('locale') },
-            lookupSong,
-            renderImage,
-          )
-          if (!output) return c.text('Chart not found', 404)
-
-          return new Response(output.body, {
-            headers: {
-              ...output.headers,
-              'Content-Length': String(output.body.size),
-            },
-          })
-        }),
-      ),
-      { signal: c.req.raw.signal },
-    )
-}
-
 export const renderChartOgImageOutputEffect = <E, R>(
   input: { songId: string; type: string; difficulty: string; locale?: string | undefined },
   lookupSong: ChartOgSongLookup<E, R>,
@@ -409,7 +379,7 @@ const loadCover = (songId: string) =>
     Effect.map((cover): Buffer | null => cover),
     Effect.catch((error) =>
       Effect.sync(() => {
-        Sentry.captureException(error.cause, { level: 'warning', extra: { songId } })
+        reportFailure(error.cause, { level: 'warning', extra: { songId } })
         return null
       }),
     ),

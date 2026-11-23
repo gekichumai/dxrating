@@ -1,0 +1,87 @@
+diff --git a/apps/backend/src/router.ts b/apps/backend/src/router.ts
+index bd6ca696..e2129fa1 100644
+--- a/apps/backend/src/router.ts
++++ b/apps/backend/src/router.ts
+@@ -367,19 +367,22 @@ const aliasesHandler = {
+   list: os.aliases.list.handler(
+     handlerGen(function* ({ input }) {
+       const database = yield* Database
++      const cache = yield* ApplicationCache
+       const catalogIdentities = yield* CatalogIdentities
+-      const rows = yield* database.query('Aliases.list', (db) =>
+-        db
+-          .select({
+-            song_id: songAliases.song_id,
+-            name: songAliases.name,
+-          })
+-          .from(songAliases)
+-          .orderBy(songAliases.id)
+-          .$withCache(),
+-      )
+-      // The same name can be submitted for a song more than once; list it once, in submission order
+-      const result = uniqueAliases(rows)
++      let result = yield* cache.get<AliasListResult>('aliases:list')
++      if (!result) {
++        const rows = yield* database.query('Aliases.list', (db) =>
++          db
++            .select({
++              song_id: songAliases.song_id,
++              name: songAliases.name,
++            })
++            .from(songAliases)
++            .orderBy(songAliases.id),
++        )
++        result = uniqueAliases(rows)
++        yield* cache.set('aliases:list', result)
++      }
+ 
+       if (input?.idScheme === 'public') {
+         const publicIds = yield* withCatalogIdentityErrors(
+@@ -403,6 +406,7 @@ const aliasesHandler = {
+       const user = context.user
+       if (!user) return yield* new UnauthorizedError()
+ 
++      const cache = yield* ApplicationCache
+       const identity = yield* withCatalogIdentityErrors(catalogIdentities.resolveSongInput(input.songId))
+ 
+       const res = yield* database
+@@ -416,7 +420,10 @@ const aliasesHandler = {
+             })
+             .returning({ id: songAliases.id }),
+         )
+-        .pipe(Effect.uninterruptible)
++        .pipe(
++          Effect.tap(() => cache.delete('aliases:list')),
++          Effect.uninterruptible,
++        )
+ 
+       return res[0]
+     }),
+diff --git a/apps/backend/src/services/cache.ts b/apps/backend/src/services/cache.ts
+index 426efcb4..67fca562 100644
+--- a/apps/backend/src/services/cache.ts
++++ b/apps/backend/src/services/cache.ts
+@@ -4,13 +4,14 @@ import { Clock, Context, Effect, Layer } from 'effect'
+  * Responses of services outside our database, kept for a TTL. A select of our own tables is cached with Drizzle's
+  * `.$withCache()` instead (db/query-cache.ts), whose writes invalidate it.
+  */
+-export type ApplicationCacheKey = 'analytics:trending' | `net-status:${'intl' | 'jp'}`
++export type ApplicationCacheKey = 'analytics:trending' | `net-status:${'intl' | 'jp'}` | 'aliases:list'
+ 
+ export class ApplicationCache extends Context.Service<
+   ApplicationCache,
+   {
+     readonly get: <A>(key: ApplicationCacheKey) => Effect.Effect<A | undefined>
+     readonly set: (key: ApplicationCacheKey, value: unknown, ttlMs?: number) => Effect.Effect<void>
++    readonly delete: (key: ApplicationCacheKey) => Effect.Effect<void>
+   }
+ >()('dxrating/ApplicationCache') {}
+ 
+@@ -33,5 +34,6 @@ export const ApplicationCacheLive = Layer.sync(ApplicationCache, () => {
+         const now = yield* Clock.currentTimeMillis
+         entries.set(key, { value, expiresAt: now + ttlMs })
+       }),
++    delete: (key) => Effect.sync(() => void entries.delete(key)),
+   }
+ })
+\ No newline at end of file

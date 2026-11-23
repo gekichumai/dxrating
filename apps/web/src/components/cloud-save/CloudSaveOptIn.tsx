@@ -11,6 +11,7 @@ import { CLOUD_SAVE_CONSENT_VERSION, useCloudSaveActions } from '@/models/scores
 import { m } from '@/paraglide/messages'
 import { useLocale } from '@/i18n/LocaleProvider'
 import './cloud-save.css'
+import { asyncHandler } from '@/lib/rejections'
 
 /** The privacy policy, in a new tab so the consent stays open; its text comes from the translation */
 const PrivacyPolicyLink: FC<{ children?: ReactNode }> = ({ children }) => {
@@ -204,7 +205,7 @@ export const CloudSaveOptIn: FC = () => {
         open={consentOpen}
         busy={busy}
         onCancel={() => setConsentOpen(false)}
-        onAgree={() => void agree()}
+        onAgree={asyncHandler(agree)}
       />
     </div>
   )

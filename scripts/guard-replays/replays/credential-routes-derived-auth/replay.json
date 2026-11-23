@@ -1,0 +1,7 @@
+{
+  "mistake": "The credential routes leave out the NET record functions and Better Auth, so Sentry receives SEGA and Better Auth passwords from their request bodies.",
+  "history": ["#514 ede94c51 (CREDENTIAL_BODY_ROUTES lacked /functions/fetch-net-records/ and /api/auth/)"],
+  "guard": "CREDENTIAL_ROUTES in credential-hygiene.ts is the one owner of credential routes; the real Sentry SDK test checks every one of them (src/test/credential-routes.test.ts, in the backend job, fails too: the dropped direct routes are left unclassified)",
+  "check": "pnpm --filter @gekichumai/backend exec vitest run src/lib/functions/sentry-scrub.sdk.test.ts src/lib/credential-hygiene.test.ts",
+  "expect": "sends no credential body for /api/auth/sign-in/email"
+}

@@ -1,0 +1,10 @@
+{
+  "mistake": "IndexedDB writes of server records are not revision-guarded, so a late answer in one tab puts an older revision over a record another tab already cached.",
+  "history": [
+    "f6fd8083 / 36f797e5 (fix(web): cached records never go back in revision; a delayed acknowledgement overwrote a newer record and stayed stale)"
+  ],
+  "guard": "formal/cloud-sync/CloudSync.tla, invariant CacheMonotonic",
+  "check": "formal/tlc.sh formal/cloud-sync/CloudSync.tla",
+  "expect": "Invariant CacheMonotonic is violated",
+  "needs": ["tlc"]
+}

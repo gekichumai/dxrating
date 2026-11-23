@@ -1,4 +1,4 @@
-import { privateContractRoutes, publicContractRoutes } from '@gekichumai/api-contract'
+import { credentials, privateContractRoutes, publicContractRoutes } from '@gekichumai/api-contract'
 import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
@@ -73,6 +73,7 @@ export const appContract = oc.router({
           summary: 'Fetch records from MaimaiNET',
           tags: ['Import'],
         }),
+        credentials('sega'),
       )
       .input(
         z.object({

@@ -1,0 +1,10 @@
+{
+  "mistake": "The chart page formats the release date with toLocaleString in the browser's time zone and counts days from Date.now(), so the first client render differs from the server's UTC render.",
+  "history": [
+    "#283 89017de4 (SongSheetContent release date: toLocaleString without a time zone, relative date from Date.now())"
+  ],
+  "guard": "the e2e hydration matrix (apps/web/e2e/hydration-matrix.spec.ts) on the chart page, with a time zone on each side of UTC and a skewed clock",
+  "check": "cd apps/web && VITE_E2E_BUILD=1 pnpm exec vite build >/dev/null && pnpm exec playwright test e2e/hydration-matrix.spec.ts --grep '/songs/.*/dx/master$'",
+  "expect": "Minified React error #418",
+  "needs": ["e2e"]
+}

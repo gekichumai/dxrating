@@ -1,0 +1,9 @@
+{
+  "mistake": "A contract procedure that takes an OAuth code and state is not a credential route, so Sentry receives its request body.",
+  "history": [
+    "#501 6665a93d (lxns.complete took code and state, and its body reached Sentry until a review follow-up listed the route)"
+  ],
+  "guard": "credentialRoutesOf in credential-hygiene.ts makes every procedure with a credential input field a credential route; the unit test derives the routes of a synthetic contract",
+  "check": "pnpm --filter @gekichumai/backend exec vitest run src/lib/credential-hygiene.test.ts",
+  "expect": "makes every procedure that takes a credential field a credential route"
+}

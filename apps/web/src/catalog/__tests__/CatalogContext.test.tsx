@@ -91,6 +91,7 @@ describe("catalog of the visitor's game version and region", () => {
         ? {
             ...song,
             sheets: song.sheets.map((s) =>
+              // oxlint-disable-next-line no-restricted-properties -- builds a fixture: gives the sheet a CN level override
               s === sheet ? { ...s, serverOverrides: { ...s.serverOverrides, cn: { levelValue: CN_LEVEL_VALUE } } } : s,
             ),
           }

@@ -163,4 +163,47 @@ describe('Tags API', () => {
 
     expect(body1.id).toBe(body2.id)
   })
+
+  it("takes a deleted account's tags and associations off the list", async () => {
+    await signUp('leaving-tagger@example.com', 'password123', 'Leaving')
+    const cookie = extractSessionCookie(await signIn('leaving-tagger@example.com', 'password123'))
+    const session = await (await fetch(`${getBaseUrl()}/api/auth/get-session`, { headers: { Cookie: cookie } })).json()
+
+    const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+    const group = await pool.query(`INSERT INTO tag_groups (localized_name, color) VALUES ($1, $2) RETURNING id`, [
+      JSON.stringify({ en: 'Group' }),
+      '#0000FF',
+    ])
+    const tag = await pool.query(
+      `INSERT INTO tags (created_by, localized_name, localized_description, group_id) VALUES ($1, $2, $3, $4) RETURNING id`,
+      [session.user.id, JSON.stringify({ en: 'Tag' }), JSON.stringify({ en: 'Desc' }), group.rows[0].id],
+    )
+    await pool.end()
+
+    const attach = await authenticatedFetch(`${getBaseUrl()}/api/v1/tags/attach`, cookie, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        songId: 'song-1',
+        sheetType: 'dx',
+        sheetDifficulty: 'master',
+        tagId: Number(tag.rows[0].id),
+      }),
+    })
+    expect(attach.status).toBe(200)
+    const listed = await (await fetch(`${getBaseUrl()}/api/v1/tags`)).json()
+    expect(listed.tags).toHaveLength(1)
+    expect(listed.tagSongs).toHaveLength(1)
+
+    const deletion = await authenticatedFetch(`${getBaseUrl()}/api/auth/delete-user`, cookie, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: 'password123' }),
+    })
+    expect(deletion.status).toBe(200)
+
+    const tags = await (await fetch(`${getBaseUrl()}/api/v1/tags`)).json()
+    expect(tags.tags).toEqual([])
+    expect(tags.tagSongs).toEqual([])
+  })
 })

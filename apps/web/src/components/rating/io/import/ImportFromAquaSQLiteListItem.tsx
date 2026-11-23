@@ -17,7 +17,7 @@ import {
   ListItemText,
   MenuItem,
 } from '@mui/material'
-import { type FC, useCallback, useMemo, useState } from 'react'
+import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import sqljs, { type Database } from 'sql.js'
 // The binary of the installed sql.js, served with the app: sql.js.org only hosts the latest build, under another
@@ -37,6 +37,7 @@ import { createRatingImportTracker } from '@/lib/analytics'
 import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 export const ImportFromAquaSQLiteListItem: FC<{
   onClose: () => void
@@ -101,7 +102,7 @@ export const ImportFromAquaSQLiteListItem: FC<{
               }
 
               fileInput.addEventListener('change', () => {
-                onChange()
+                onChange().catch(reject)
               })
               fileInput.addEventListener('cancel', () => {
                 reject('User cancelled file selection')
@@ -140,15 +141,19 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   const locale = useLocale()
   const repository = useScoreRepository()
   const haptic = useWebHaptics()
-  const users = useMemo(() => {
+  const readUsers = useMemo((): { users: AquaUser[]; error?: unknown } => {
     try {
-      return readAquaUsers(db)
-    } catch (e) {
-      toast.error(m.ratingCalculator_io_import_aquaSqlite_readUsersFailed({ error: formatErrorMessage(e) }, { locale }))
-      console.error('Failed to read users from Aqua SQLite database', e)
-      return []
+      return { users: readAquaUsers(db) }
+    } catch (error) {
+      return { users: [], error }
     }
   }, [db])
+  const { users } = readUsers
+  useEffect(() => {
+    if (!('error' in readUsers)) return
+    toast.error(m.ratingCalculator_io_import_aquaSqlite_readUsersFailed({ error: formatErrorMessage(readUsers.error) }))
+    console.error('Failed to read users from Aqua SQLite database', readUsers.error)
+  }, [readUsers])
   const [selectedUser, setSelectedUser] = useState<AquaUser | null>(null)
   const { data: sheets } = useSheets()
   const catalog = useCompleteSongCatalog()
@@ -236,7 +241,7 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
           <Button
             color="primary"
             variant="contained"
-            onClick={async () => {
+            onClick={asyncHandler(async () => {
               const analytics = createRatingImportTracker('aqua_sqlite')
               let result: Awaited<ReturnType<typeof importFileEntries>>
               try {
@@ -263,13 +268,13 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
               }
               analytics.succeeded(result.count, warnings.length)
 
-              haptic.trigger('success')
+              haptic.trigger('success')?.catch(reportRejection)
               // A cloud save counts what the server took, not what was sent
               toast.success(m.ratingCalculator_io_import_aquaSqlite_success({ count: result.count }, { locale }))
               announceImportLeftOut(result, locale, (message) => toast(message))
 
               onClose?.()
-            }}
+            })}
           >
             {m.ratingCalculator_io_import_aquaSqlite_importAction({}, { locale })}
           </Button>

@@ -1,0 +1,13 @@
+diff --git a/packages/api-contract/src/contract.ts b/packages/api-contract/src/contract.ts
+index 66cae574..c7a9aa98 100644
+--- a/packages/api-contract/src/contract.ts
++++ b/packages/api-contract/src/contract.ts
+@@ -1,7 +1,7 @@
+ import { oc as contractBuilder } from '@orpc/contract'
+ import { openapi } from '@orpc/openapi'
+ import { z } from 'zod'
+-import { announcementsContract } from './announcements.ts'
++import { announcementsContract } from './announcements'
+ import { credentials } from './credentials.ts'
+ import { SUPPORTED_LOCALES } from './locales.ts'
+ 

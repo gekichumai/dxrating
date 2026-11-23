@@ -1,0 +1,7 @@
+{
+  "mistake": "A mailed password reset link lands on /account/reset-password?token=…, and the web's Sentry scrubber kept the live token in request URLs, transactions and pageloads.",
+  "history": ["meta#80 review of feat/email-mail-fallback (SECRET_QUERY_PARAMS filtered only code and state)"],
+  "guard": "apps/web/src/lib/sentryScrub.test.ts filters the token of a password reset landing",
+  "check": "pnpm --filter @gekichumai/dxrating-web exec vitest run src/lib/sentryScrub.test.ts",
+  "expect": "synthetic-reset-token"
+}

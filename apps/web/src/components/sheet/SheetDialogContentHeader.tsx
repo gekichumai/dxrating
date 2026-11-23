@@ -15,6 +15,7 @@ import { captureAnalyticsEvent } from '../../lib/analytics'
 import type { FlattenedSheet } from '../../songs'
 import { buildSheetLink } from './sheetLinks'
 import { sheetStateSpring } from './sheetMotion'
+import { reportRejection } from '@/lib/rejections'
 
 export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet; onClose?: () => void }> = memo(
   ({ sheet, onClose }) => {
@@ -50,7 +51,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet; onClose?: () 
             size="small"
             onClick={() => {
               // The link opens the chart in the language it was copied from
-              navigator.clipboard.writeText(buildSheetLink(sheet, undefined, locale))
+              navigator.clipboard.writeText(buildSheetLink(sheet, undefined, locale)).catch(reportRejection)
               toast.success(m.sheet_copyLink_toastSuccess({}, { locale }), {
                 id: `copy-sheet-link-${sheet.id}`,
               })

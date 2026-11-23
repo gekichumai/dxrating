@@ -15,6 +15,7 @@ import { SheetAltNames } from '../sheet/SheetAltNames'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { useServerAliases } from '@/models/useServerAliases'
 import { m } from '@/paraglide/messages'
+import { reportRejection } from '@/lib/rejections'
 
 // One outlined treatment for every search service: neutral ink (the brand glyph identifies the service), sentence
 // case, and a hover tint only where hover exists
@@ -71,7 +72,7 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const newTab = m.sheet_searchLinks_newTab({}, { locale })
 
   const copyTitle = () => {
-    navigator.clipboard.writeText(song.title)
+    navigator.clipboard.writeText(song.title).catch(reportRejection)
     toast.success(m.sheet_copyTitle_toastSuccess({}, { locale }), { id: `copy-song-title-${song.songId}` })
   }
 

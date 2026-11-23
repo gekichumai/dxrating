@@ -1,0 +1,14 @@
+diff --git a/apps/web/package.json b/apps/web/package.json
+index dcf8c18e..c21b0792 100644
+--- a/apps/web/package.json
++++ b/apps/web/package.json
+@@ -69,8 +69,7 @@
+     "type-fest": "^4.41.0",
+     "uqr": "0.1.3",
+     "use-long-press": "^3.3.0",
+-    "web-haptics": "^0.0.6",
+-    "zod": "4.6.7"
++    "web-haptics": "^0.0.6"
+   },
+   "devDependencies": {
+     "@cloudflare/vite-plugin": "^1.66.0",

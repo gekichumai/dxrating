@@ -10,6 +10,7 @@ import type { DemoCloudSaveFlow, DemoCloudSaveState } from './demoCloudSave'
 import { LocalScoreRepository } from './LocalScoreRepository'
 import type { WebScoreRepository } from './ScoreRepository'
 import { isScoreRepositoryOverrideAllowed, ScoreRepositoryOverrideProvider, useHydrated } from './useScoreRepository'
+import { reportRejection } from '@/lib/rejections'
 
 /**
  * Dev and preview demos of the cloud save surfaces (screenshots): `?demoCloudSave=1` swaps in an in-memory cloud
@@ -87,11 +88,13 @@ export const CloudSaveDemoBoundary: FC<PropsWithChildren<{ url?: string }>> = ({
       return
     }
     let cancelled = false
-    void import('./demoCloudSave').then(({ createDemoCloudSave, createDemoCloudSaveActions }) => {
-      if (cancelled) return
-      const loaded = createDemoCloudSave(catalog, requested)
-      setDemo({ ...loaded, actions: flow ? createDemoCloudSaveActions(flow) : null })
-    })
+    import('./demoCloudSave')
+      .then(({ createDemoCloudSave, createDemoCloudSaveActions }) => {
+        if (cancelled) return
+        const loaded = createDemoCloudSave(catalog, requested)
+        setDemo({ ...loaded, actions: flow ? createDemoCloudSaveActions(flow) : null })
+      })
+      .catch(reportRejection)
     return () => {
       cancelled = true
     }

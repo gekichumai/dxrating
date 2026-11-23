@@ -33,6 +33,7 @@ import { type FlattenedSheet, useSheets } from '@/songs'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
+import { reportRejection } from '@/lib/rejections'
 
 const TAB_LABELS = {
   ap: m.toplists_tabs_ap,
@@ -83,11 +84,13 @@ export const ToplistsPage: FC = () => {
   const tabsActions = useRef<TabsActions>(null)
   useEffect(() => {
     let cancelled = false
-    void document.fonts?.ready.then(() => {
-      if (cancelled) return
-      tabsActions.current?.updateIndicator()
-      tabsActions.current?.updateScrollButtons()
-    })
+    document.fonts?.ready
+      .then(() => {
+        if (cancelled) return
+        tabsActions.current?.updateIndicator()
+        tabsActions.current?.updateScrollButtons()
+      })
+      .catch(reportRejection)
     return () => {
       cancelled = true
     }
@@ -125,7 +128,9 @@ export const ToplistsPage: FC = () => {
             action={tabsActions}
             className="min-w-0 lg:flex-1"
             value={kind}
-            onChange={(_, value) => void navigate({ search: { tab: value, level }, replace: true })}
+            onChange={(_, value) => {
+              navigate({ search: { tab: value, level }, replace: true })
+            }}
             variant="scrollable"
             scrollButtons="auto"
             allowScrollButtonsMobile
@@ -150,12 +155,12 @@ export const ToplistsPage: FC = () => {
                 labelId="toplist-sort"
                 label={m.toplists_sort_label({}, { locale })}
                 value={sort}
-                onChange={(event) =>
-                  void navigate({
+                onChange={(event) => {
+                  navigate({
                     search: (prev) => ({ ...prev, sort: event.target.value as ToplistSort }),
                     replace: true,
                   })
-                }
+                }}
               >
                 {TOPLIST_SORTS.map((item) => (
                   <MenuItem key={item} value={item}>
@@ -170,12 +175,12 @@ export const ToplistsPage: FC = () => {
                 labelId="toplist-level"
                 label={m.toplists_level_label({}, { locale })}
                 value={level ?? ''}
-                onChange={(event) =>
-                  void navigate({
+                onChange={(event) => {
+                  navigate({
                     search: (prev) => ({ ...prev, level: event.target.value || undefined }),
                     replace: true,
                   })
-                }
+                }}
               >
                 <MenuItem value="">{m.toplists_level_all({}, { locale })}</MenuItem>
                 {levels.map((item) => (
@@ -298,7 +303,7 @@ const ToplistItem: FC<{ row: ToplistRow; sheet: FlattenedSheet; position: number
   const locale = useLocale()
   const cover = coverUrl(sheet.songId)
   const level = sheet.internalLevelValue.toFixed(1)
-  const achievement = `${row.entry.achievementRate.toFixed(4)}%`
+  const achievement = `${row.best.achievementRate.toFixed(4)}%`
   const chart = (
     <span className="flex flex-wrap items-center gap-1">
       <DifficultyLevelBadge difficulty={sheet.difficulty} level={level} />
@@ -312,7 +317,7 @@ const ToplistItem: FC<{ row: ToplistRow; sheet: FlattenedSheet; position: number
         sheet={sheet}
         className="rounded-lg !py-1.5 lg:!py-1 max-2xs:!px-3"
         analytics={{ source: 'toplist', position }}
-        SheetDialogContentProps={{ currentAchievementRate: row.entry.achievementRate }}
+        SheetDialogContentProps={{ currentAchievementRate: row.best.achievementRate }}
       >
         {/* Phones and tablets: the iOS score row. Title, chart and lamps on the left; achievement, rank and rating on
             the right. Below 375px the position goes and the jacket shrinks, so a Re:MASTER pill still clears the
@@ -332,11 +337,11 @@ const ToplistItem: FC<{ row: ToplistRow; sheet: FlattenedSheet; position: number
               {sheet.title}
             </span>
             {chart}
-            <LampBadges comboFlag={row.entry.comboFlag} syncFlag={row.entry.syncFlag} />
+            <LampBadges comboFlag={row.best.comboFlag} syncFlag={row.best.syncFlag} />
           </span>
           <span className="flex flex-col items-end gap-1 shrink-0 num">
             <span className="font-semibold text-sm leading-tight text-fg-1">{achievement}</span>
-            <RankBadge achievementRate={row.entry.achievementRate} />
+            <RankBadge achievementRate={row.best.achievementRate} />
             <span className="text-xs leading-tight text-fg-2 whitespace-nowrap">
               {row.dxScore !== null && row.dxScoreMax ? (
                 <DxScoreText row={row} compact />
@@ -374,10 +379,10 @@ const ToplistItem: FC<{ row: ToplistRow; sheet: FlattenedSheet; position: number
           {chart}
           <span className="text-right font-semibold text-fg-1">{achievement}</span>
           <span>
-            <RankBadge achievementRate={row.entry.achievementRate} />
+            <RankBadge achievementRate={row.best.achievementRate} />
           </span>
           <span>
-            <LampBadges comboFlag={row.entry.comboFlag} syncFlag={row.entry.syncFlag} />
+            <LampBadges comboFlag={row.best.comboFlag} syncFlag={row.best.syncFlag} />
           </span>
           {showDxScore && (
             <span className="text-right text-xs text-fg-2 whitespace-nowrap">
