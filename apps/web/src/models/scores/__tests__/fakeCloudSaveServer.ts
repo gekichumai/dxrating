@@ -7,12 +7,15 @@ import type {
   RecordDTO,
 } from '@gekichumai/api-contract'
 import {
+  type ChangesMode,
+  changesResetRequired,
   decideManualMutation,
   type ManualEntryMethod,
   type ManualSetValue,
+  pageOfChanges,
   type Provenance,
 } from '@gekichumai/maimai-domain'
-import type { ChangesMode, CloudSaveRecordsApi } from '../CloudScoreRepository'
+import type { CloudSaveRecordsApi } from '../CloudScoreRepository'
 
 /**
  * An in-memory cloud save server for the web tests: per-row revisions (§5.2), the manual mutation rules of
@@ -141,9 +144,9 @@ export class FakeCloudSaveServer {
     if (this.failures.length) throw this.failures.shift()
   }
 
-  /** `pullChanges` of the backend (apps/backend/src/services/cloud-save/changes.ts), row for row */
+  /** `pullChanges` of the backend (apps/backend/src/services/cloud-save/changes.ts), with its paging rules */
   private changes(since: number, limit: number, mode: ChangesMode): ChangesDTO {
-    if (since > 0 && (since > this.revision || (mode === 'incremental' && since < this.tombstoneHorizon))) {
+    if (changesResetRequired(since, mode, { revision: this.revision, tombstoneHorizon: this.tombstoneHorizon })) {
       return {
         records: [],
         nextSince: 0,
@@ -153,26 +156,16 @@ export class FakeCloudSaveServer {
         checksum: null,
       }
     }
-    // `since = 0`: live rows only; later pages (either mode): live rows and tombstones
     const rows = [...this.records.values()]
       .filter((record) => record.revision > since && (since > 0 || record.deletedAt === null))
       .sort((a, b) => a.revision - b.revision)
-    const page = rows.slice(0, limit)
-    const hasMore = rows.length > limit
+    const { records, nextSince, hasMore } = pageOfChanges(rows, limit, this.revision)
     let checksum: ChecksumDTO | null = null
     if (!hasMore) {
       checksum = this.checksumOverride ?? this.checksum()
       this.checksumOverride = null
     }
-    return {
-      records: page,
-      // The last page resumes at the save's revision, past purged tombstones
-      nextSince: hasMore ? page[page.length - 1]!.revision : this.revision,
-      hasMore,
-      revision: this.revision,
-      resetRequired: false,
-      checksum,
-    }
+    return { records, nextSince, hasMore, revision: this.revision, resetRequired: false, checksum }
   }
 
   private apply(mutation: MutationItemInput): MutationResultDTO {

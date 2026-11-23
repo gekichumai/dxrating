@@ -1,0 +1,9 @@
+{
+  "mistake": "The server resets a full pull's later pages by the tombstone horizon, while the web tests' fake server, a hand copy of the paging rule, does not, so the web tests pass.",
+  "history": [
+    "fbde9264 (fix(backend): a full pull's later pages pass mode=full and are never reset by the horizon; the fake learned the rule only later, in 36f797e5)"
+  ],
+  "guard": "the fake server and pullChanges share changesResetRequired and pageOfChanges (packages/maimai-domain/src/cloud-save-changes.ts)",
+  "check": "pnpm --filter @gekichumai/dxrating-web exec vitest run src/models/scores/__tests__/CloudScoreRepository.test.ts",
+  "expect": "keeps every page of a full pull in full mode"
+}

@@ -9,7 +9,7 @@ import {
   type MutationsResultDTO,
   type RecordDTO,
 } from '@gekichumai/api-contract'
-import { decideManualMutation, type ManualEntryMethod } from '@gekichumai/maimai-domain'
+import { type ChangesMode, decideManualMutation, type ManualEntryMethod } from '@gekichumai/maimai-domain'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
 import { FETCH_STATE_PROGRESS, isFetchNetRecordProgressState } from '../../components/rating/io/import/netImportStages'
 import {
@@ -90,12 +90,6 @@ import { uuidv7 } from './uuidv7'
  * the browser fetched from those providers the old way upload as `legacy-local`, claiming the provider; they stay
  * `client_reported` and are never shown as verified.
  */
-
-/**
- * `incremental`: the changes after `since`, reset when `since` is older than the tombstone horizon. `full`: a page of
- * a full pull, never reset by the horizon (§5.6)
- */
-export type ChangesMode = 'incremental' | 'full'
 
 /** The import routes this repository calls, the shape of `privateApiClient.cloudSave.imports` */
 export interface CloudSaveImportsApi {

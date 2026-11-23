@@ -1,0 +1,8 @@
+{
+  "mistake": "push() drops acknowledged entries from memory before the IndexedDB write that records the answer, so a failed write loses a superseded edit this tab never stored.",
+  "history": ["0b175c20 (fix(web): keep a sent change until the write recording its answer commits)"],
+  "guard": "formal/cloud-sync/CloudSync.tla, invariant NoLostIntent",
+  "check": "formal/tlc.sh formal/cloud-sync/CloudSync.tla",
+  "expect": "Invariant NoLostIntent is violated",
+  "needs": ["tlc"]
+}
