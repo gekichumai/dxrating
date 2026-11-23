@@ -178,7 +178,10 @@ describe('LoginForm', () => {
 
     await waitFor(() =>
       expect(addPasskey).toHaveBeenCalledWith(
-        expect.objectContaining({ context: 'New@example.com', createSession: true }),
+        expect.objectContaining({
+          context: JSON.stringify({ email: 'New@example.com', captcha: 'test-token' }),
+          createSession: true,
+        }),
       ),
     )
     await waitFor(() => expect(onSuccess).toHaveBeenCalledOnce())
@@ -217,7 +220,8 @@ describe('LoginForm', () => {
     expect(password.getAttribute('passwordrules')).toBe('minlength: 8;')
     expect(document.querySelector('input[name="email"]')!.getAttribute('autocomplete')).toBe('email')
     // The rule is shown before it's broken
-    expect(screen.getByText('At least 8 characters')).toBeTruthy()
+    // ...and the field is described by it
+    expect(password.getAttribute('aria-describedby')).toBe(screen.getByText('At least 8 characters').id)
 
     fireEvent.change(password, { target: { value: 'demo-password' } })
     fireEvent.click(await screen.findByRole('button', { name: 'Create account' }))

@@ -186,9 +186,10 @@ export const LoginForm = ({
     setError(null)
     try {
       const { error } = await authClient.passkey.addPasskey({
-        context: email,
+        // The backend checks Turnstile before it answers anything about the address (apps/backend/src/lib/
+        // passkey-sign-up.ts); the plugin sends no custom headers on that request, so the token rides in `context`
+        context: JSON.stringify({ email, ...(turnstileToken ? { captcha: turnstileToken } : {}) }),
         createSession: true,
-        fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
       })
       if (error) {
         if (isCancelledPasskey(error)) return
@@ -310,7 +311,6 @@ export const LoginForm = ({
   const formTitleId = loginFormTitleId(idPrefix)
   const emailId = `${idPrefix}-${isSignUp ? 'sign-up' : 'sign-in'}-email`
   const passwordId = `${idPrefix}-${isSignUp ? 'sign-up' : 'sign-in'}-password`
-  const passwordHintId = `${passwordId}-hint`
   const asksForPassword = step === 'credentials' && (!isSignUp || signUpWith === 'password')
   const email = getValues('email').trim()
 
@@ -460,7 +460,6 @@ export const LoginForm = ({
                 helperText={
                   errors.password?.message ?? (isSignUp ? m.auth_form_passwordHint({}, { locale }) : undefined)
                 }
-                FormHelperTextProps={{ id: passwordHintId }}
                 disabled={loading}
                 fullWidth
                 size="small"
