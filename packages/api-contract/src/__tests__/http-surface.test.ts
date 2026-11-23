@@ -31,6 +31,9 @@ const preflightPasses = ({ method, path }: Route, headers: string[] = []) => {
   )
 }
 
+const grantsCredentials = (origin: string) =>
+  typeof CORS_POLICIES.api.origin === 'function' && CORS_POLICIES.api.origin(origin) === origin
+
 describe('the HTTP surface', () => {
   it('lets a browser call every route with its method', () => {
     expect(allRoutes.length).toBeGreaterThan(30)
@@ -52,6 +55,31 @@ describe('the HTTP surface', () => {
   it('accepts the revalidation of every catalog and public list', () => {
     for (const path of [...CORS_GROUP_PATHS.catalog, ...CORS_GROUP_PATHS.publicList]) {
       expect(preflightPasses({ method: 'GET', path }, ['If-None-Match']), path).toBe(true)
+    }
+  })
+
+  it('sends credentials to first-party and local dev origins', () => {
+    for (const origin of [
+      'https://dxrating.net',
+      'https://pr-12.dxrating.pages.dev',
+      'http://localhost:5173',
+      'http://dxrating.localhost:5173',
+      'http://127.0.0.1:3000',
+      'http://[::1]:5173',
+    ]) {
+      expect(grantsCredentials(origin), origin).toBe(true)
+    }
+  })
+
+  it('refuses origins that only look local', () => {
+    for (const origin of [
+      'https://localhost.attacker.example',
+      'https://notlocalhost.example',
+      'https://127.0.0.1.attacker.example',
+      'https://attacker.example',
+      'null',
+    ]) {
+      expect(grantsCredentials(origin), origin).toBe(false)
     }
   })
 

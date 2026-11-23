@@ -1,0 +1,7 @@
+{
+  "mistake": "The API CORS policy trusted any origin that contained 'localhost' or '127.0.0.1', so https://localhost.attacker.example got a credentialed CORS grant.",
+  "history": ["gekichumai/dxrating#166 (62d9af78)"],
+  "guard": "http-surface.test.ts 'refuses origins that only look local'",
+  "check": "pnpm --filter @gekichumai/api-contract exec vitest run src/__tests__/http-surface.test.ts",
+  "expect": "https://localhost.attacker.example"
+}

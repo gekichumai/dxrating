@@ -34,9 +34,10 @@ export interface CorsPolicy {
   credentials?: boolean
 }
 
+const LOCAL_DEV_ORIGIN = /^https?:\/\/(?:(?:[a-z0-9-]+\.)*localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/
+
 const isFirstPartyWebOrigin = (origin: string) =>
-  origin.includes('localhost') ||
-  origin.includes('127.0.0.1') ||
+  LOCAL_DEV_ORIGIN.test(origin) ||
   origin === 'https://dxrating.net' ||
   origin.endsWith('.dxrating.pages.dev') ||
   origin.endsWith('.galvin.workers.dev')
