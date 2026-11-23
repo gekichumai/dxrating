@@ -1,8 +1,8 @@
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { useResolvedTheme } from '@/utils/useResolvedTheme'
-import { Alert, Button, Chip, CircularProgress, Divider, TextField, useMediaQuery } from '@mui/material'
+import { Alert, Button, Chip, CircularProgress, Divider, IconButton, TextField, useMediaQuery } from '@mui/material'
 import clsx from 'clsx'
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { useEffectOnce as useMountEffect } from 'react-use'
@@ -10,6 +10,7 @@ import { useWebHaptics } from 'web-haptics/react'
 import IconLogosGithub from '~icons/logos/github-icon'
 import IconLogosGoogle from '~icons/logos/google-icon'
 import IconPasskey from '~icons/material-symbols/passkey'
+import IconArrowLeft from '~icons/mdi/arrow-left'
 import { authClient } from '../../lib/auth-client'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
 import { PasswordVisibilityAdornment } from './PasswordVisibilityAdornment'
@@ -20,6 +21,9 @@ import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
 
+const PASSWORD_MIN_LENGTH = 8
+const PASSWORD_MAX_LENGTH = 128
+
 interface LoginFormValues {
   email: string
   password: string
@@ -27,12 +31,46 @@ interface LoginFormValues {
 
 type AuthProvider = 'google' | 'github' | 'passkey' | 'email'
 
+/**
+ * The form walks through two steps. `start` offers every way in: a passkey, GitHub, Google, or an email address.
+ * `credentials` follows the email address: a password to sign in, or a passkey (a password if the visitor prefers) to
+ * create an account.
+ */
+type Step = 'start' | 'credentials'
+
 /** Id of the form's heading, stable across sign-in and sign-up, so a dialog around the form can take it as its name */
 export const loginFormTitleId = (idPrefix: string) => `${idPrefix}-auth-form-title`
 
 const LAST_USED_CHIP_CLASS = '!h-5 !text-xs !font-semibold'
 // On the filled (last used) button, the chip inverts so it doesn't vanish into the same accent fill
 const LAST_USED_BUTTON_CHIP_CLASS = `${LAST_USED_CHIP_CLASS} !bg-surface/90 !text-accent-strong`
+
+/** The visitor closed the browser's passkey prompt: not an error worth a message */
+const CANCELLED_PASSKEY_CODES = new Set(['AUTH_CANCELLED', 'ERROR_CEREMONY_ABORTED'])
+const isCancelledPasskey = (error: unknown) =>
+  typeof error === 'object' &&
+  error !== null &&
+  'code' in error &&
+  typeof error.code === 'string' &&
+  CANCELLED_PASSKEY_CODES.has(error.code)
+
+const browserSupportsPasskeys = () => typeof PublicKeyCredential === 'function'
+
+/**
+ * After a password sign-in or sign-up, asks the password manager to create a passkey for the account without a prompt
+ * (Chrome's automatic passkey upgrade, conditional create). Browsers without it are left alone: on them the same call
+ * would open a full passkey dialog the visitor never asked for. Whatever happens, the sign-in already succeeded.
+ */
+const upgradeToPasskeyQuietly = async () => {
+  if (!browserSupportsPasskeys()) return
+  const getCapabilities = (
+    PublicKeyCredential as unknown as { getClientCapabilities?: () => Promise<Record<string, boolean>> }
+  ).getClientCapabilities
+  if (typeof getCapabilities !== 'function') return
+  const capabilities = await getCapabilities.call(PublicKeyCredential)
+  if (capabilities.conditionalCreate !== true) return
+  await authClient.passkey.addPasskey({ useAutoRegister: true })
+}
 
 export const LoginForm = ({
   idPrefix = 'auth',
@@ -53,16 +91,25 @@ export const LoginForm = ({
   const {
     register,
     handleSubmit: handleFormSubmit,
+    getValues,
+    setFocus,
     formState: { errors, isValid },
   } = useForm<LoginFormValues>({
     // Errors appear once a field is left or the form is submitted, not on the first keystroke
     mode: 'onTouched',
     defaultValues: { email: '', password: '' },
+    // The email field leaves the page on the second step; its value must stay
+    shouldUnregister: false,
   })
   const haptic = useWebHaptics()
   const [pendingProvider, setPendingProvider] = useState<AuthProvider | null>(null)
   const loading = pendingProvider !== null
   const [isSignUp, setIsSignUp] = useState(false)
+  const [step, setStep] = useState<Step>('start')
+  // How a new account is secured. Passkey unless the browser can't make one; chosen when the visitor leaves the first
+  // step, since the first render happens on the server where there is no browser to ask
+  const [signUpWith, setSignUpWith] = useState<'passkey' | 'password'>('passkey')
+  const [canUsePasskeys, setCanUsePasskeys] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
@@ -83,6 +130,9 @@ export const LoginForm = ({
   }
   const lastUsedMethod = authClient.getLastUsedLoginMethod() as AuthProvider | null
   const isLastUsed = (provider: AuthProvider) => lastUsedMethod === provider
+  // One filled button on the first step: the method used last time, or a passkey for a visitor who hasn't signed in
+  const primaryProvider: AuthProvider =
+    lastUsedMethod && (lastUsedMethod !== 'passkey' || !isSignUp) ? lastUsedMethod : isSignUp ? 'email' : 'passkey'
 
   const setActiveProvider = (provider: AuthProvider | null) => {
     setPendingProvider(provider)
@@ -91,48 +141,111 @@ export const LoginForm = ({
 
   const captchaHeaders = turnstileToken ? { 'x-captcha-response': turnstileToken } : undefined
   const waitingForTurnstile = !!TURNSTILE_SITE_KEY && !turnstileToken
-  const buttonLoading = loading || (isValid && waitingForTurnstile)
+  const buttonLoading = loading || (step === 'credentials' && isValid && waitingForTurnstile)
   // Submit stays available so validation can run and focus the first invalid field; only a running request blocks it
   const buttonDisabled = loading
 
+  const resetTurnstile = () => {
+    turnstileRef.current?.reset()
+    setTurnstileToken(null)
+  }
+
+  const finishSignIn = (message: string) => {
+    haptic.trigger('success')?.catch(reportRejection)
+    toast.success(message)
+    onSuccess?.()
+  }
+
+  const fail = (e: unknown, fallback: string) => {
+    haptic.trigger('error')?.catch(reportRejection)
+    setError(formatErrorMessage(e, fallback))
+  }
+
+  const goToCredentials = () => {
+    const supported = browserSupportsPasskeys()
+    setCanUsePasskeys(supported)
+    if (!supported) setSignUpWith('password')
+    setStep('credentials')
+    setError(null)
+    // Signing in always asks for the password; a new account asks for one only when the visitor chose it
+    if (!isSignUp || !supported || signUpWith === 'password') {
+      // The field mounts with this render; focus it once it's there
+      requestAnimationFrame(() => setFocus('password'))
+    }
+  }
+
+  const backToStart = () => {
+    setStep('start')
+    setShowPassword(false)
+    setError(null)
+    resetTurnstile()
+    requestAnimationFrame(() => setFocus('email'))
+  }
+
+  const signUpWithPasskey = async (email: string) => {
+    setActiveProvider('passkey')
+    setError(null)
+    try {
+      const { error } = await authClient.passkey.addPasskey({
+        context: email,
+        createSession: true,
+        fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
+      })
+      if (error) {
+        if (isCancelledPasskey(error)) return
+        throw error
+      }
+      finishSignIn(m.auth_signUp_toastSuccess({}, { locale }))
+    } catch (e: unknown) {
+      fail(e, m.auth_signUp_passkey_error({}, { locale }))
+    } finally {
+      setActiveProvider(null)
+      resetTurnstile()
+    }
+  }
+
   const onSubmit = async (data: LoginFormValues) => {
+    const email = data.email.trim()
+    if (step === 'start') {
+      goToCredentials()
+      return
+    }
     if (waitingForTurnstile) {
       setError(m.auth_form_captchaPending({}, { locale }))
+      return
+    }
+    if (isSignUp && signUpWith === 'passkey') {
+      await signUpWithPasskey(email)
       return
     }
     setActiveProvider('email')
     setError(null)
     try {
       if (isSignUp) {
+        // Better Auth signs a new account in straight away
         const { error } = await authClient.signUp.email({
-          email: data.email,
+          email,
           password: data.password,
-          name: data.email.split('@')[0], // Default name
+          name: email.split('@')[0], // Default name
           fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
         })
         if (error) throw error
-        haptic.trigger('success')?.catch(reportRejection)
-        toast.success(m.auth_signUp_toastSuccess({}, { locale }))
-        setIsSignUp(false)
-        setShowPassword(false)
+        finishSignIn(m.auth_signUp_toastSuccess({}, { locale }))
       } else {
         const { error } = await authClient.signIn.email({
-          email: data.email,
+          email,
           password: data.password,
           fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
         })
         if (error) throw error
-        haptic.trigger('success')?.catch(reportRejection)
-        toast.success(m.auth_login_toastSuccess({}, { locale }))
-        onSuccess?.()
+        finishSignIn(m.auth_login_toastSuccess({}, { locale }))
       }
+      upgradeToPasskeyQuietly().catch(() => {})
     } catch (e: unknown) {
-      haptic.trigger('error')?.catch(reportRejection)
-      setError(formatErrorMessage(e, m.auth_form_errorGeneric({}, { locale })))
+      fail(e, m.auth_form_errorGeneric({}, { locale }))
     } finally {
       setActiveProvider(null)
-      turnstileRef.current?.reset()
-      setTurnstileToken(null)
+      resetTurnstile()
     }
   }
 
@@ -151,13 +264,13 @@ export const LoginForm = ({
     setError(null)
     try {
       const { error } = await authClient.signIn.passkey()
-      if (error) throw error
-      haptic.trigger('success')?.catch(reportRejection)
-      toast.success(m.auth_login_toastSuccess({}, { locale }))
-      onSuccess?.()
+      if (error) {
+        if (isCancelledPasskey(error)) return
+        throw error
+      }
+      finishSignIn(m.auth_login_toastSuccess({}, { locale }))
     } catch (e: unknown) {
-      haptic.trigger('error')?.catch(reportRejection)
-      setError(formatErrorMessage(e, m.auth_form_errorPasskey({}, { locale })))
+      fail(e, m.auth_form_errorPasskey({}, { locale }))
     } finally {
       setActiveProvider(null)
     }
@@ -167,13 +280,49 @@ export const LoginForm = ({
     setIsSignUp(!isSignUp)
     setShowPassword(false)
     setError(null)
-    turnstileRef.current?.reset()
-    setTurnstileToken(null)
+    resetTurnstile()
   }
+
+  const lastUsedChip = (provider: AuthProvider) =>
+    isLastUsed(provider) ? (
+      <Chip
+        label={m.auth_form_lastUsed({}, { locale })}
+        size="small"
+        color="primary"
+        className={primaryProvider === provider ? LAST_USED_BUTTON_CHIP_CLASS : LAST_USED_CHIP_CLASS}
+      />
+    ) : undefined
+
+  const providerButton = (provider: AuthProvider, icon: ReactNode, label: string, onClick: () => void) => (
+    <Button
+      type="button"
+      variant={primaryProvider === provider ? 'contained' : 'outlined'}
+      startIcon={pendingProvider === provider ? <CircularProgress size={20} color="inherit" /> : icon}
+      endIcon={lastUsedChip(provider)}
+      onClick={onClick}
+      disabled={loading}
+      className="!py-2.5 !text-sm"
+      fullWidth
+    >
+      {label}
+    </Button>
+  )
 
   const formTitleId = loginFormTitleId(idPrefix)
   const emailId = `${idPrefix}-${isSignUp ? 'sign-up' : 'sign-in'}-email`
   const passwordId = `${idPrefix}-${isSignUp ? 'sign-up' : 'sign-in'}-password`
+  const passwordHintId = `${passwordId}-hint`
+  const asksForPassword = step === 'credentials' && (!isSignUp || signUpWith === 'password')
+  const email = getValues('email').trim()
+
+  const submitLabel =
+    step === 'start'
+      ? m.auth_form_continueWithEmail({}, { locale })
+      : !isSignUp
+        ? m.auth_login_label({}, { locale })
+        : signUpWith === 'passkey'
+          ? m.auth_signUp_passkey_create({}, { locale })
+          : m.auth_signUp_label({}, { locale })
 
   return (
     <div className="w-full">
@@ -207,108 +356,56 @@ export const LoginForm = ({
             }}
           />
         </p>
+        {/* Stays mounted across both steps: the browser keeps offering passkeys in the email field's autofill */}
         {!isSignUp && <ConditionalPasskey onSuccess={onSuccess} />}
 
         {error && <Alert severity="error">{error}</Alert>}
 
-        <div className="flex flex-col gap-2">
-          <Button
-            type="button"
-            variant={isLastUsed('github') ? 'contained' : 'outlined'}
-            startIcon={
-              pendingProvider === 'github' ? (
-                <CircularProgress size={20} />
+        {step === 'start' && (
+          <>
+            <div className="flex flex-col gap-2">
+              {!isSignUp &&
+                providerButton(
+                  'passkey',
+                  <IconPasskey className="size-5" />,
+                  m.auth_form_signInWithPasskey({}, { locale }),
+                  asyncHandler(handlePasskey),
+                )}
+              {providerButton(
+                'github',
+                <IconLogosGithub className="w-5 h-5 dark:invert" />,
+                m.auth_form_continueWithGithub({}, { locale }),
+                asyncHandler(() => handleSocial('github')),
+              )}
+              {providerButton(
+                'google',
+                <IconLogosGoogle className="w-5 h-5" />,
+                m.auth_form_continueWithGoogle({}, { locale }),
+                asyncHandler(() => handleSocial('google')),
+              )}
+            </div>
+
+            <Divider className="!my-1">
+              {isLastUsed('email') ? (
+                lastUsedChip('email')
               ) : (
-                <IconLogosGithub className="w-5 h-5 dark:invert" />
-              )
-            }
-            endIcon={
-              isLastUsed('github') ? (
-                <Chip
-                  label={m.auth_form_lastUsed({}, { locale })}
-                  size="small"
-                  color="primary"
-                  className={LAST_USED_BUTTON_CHIP_CLASS}
-                />
-              ) : undefined
-            }
-            onClick={asyncHandler(() => handleSocial('github'))}
-            disabled={loading}
-            className="!py-2.5 !text-sm"
-            fullWidth
-          >
-            {m.auth_form_continueWithGithub({}, { locale })}
-          </Button>
-          <Button
-            type="button"
-            variant={isLastUsed('google') ? 'contained' : 'outlined'}
-            startIcon={
-              pendingProvider === 'google' ? <CircularProgress size={20} /> : <IconLogosGoogle className="w-5 h-5" />
-            }
-            endIcon={
-              isLastUsed('google') ? (
-                <Chip
-                  label={m.auth_form_lastUsed({}, { locale })}
-                  size="small"
-                  color="primary"
-                  className={LAST_USED_BUTTON_CHIP_CLASS}
-                />
-              ) : undefined
-            }
-            onClick={asyncHandler(() => handleSocial('google'))}
-            disabled={loading}
-            className="!py-2.5 !text-sm"
-            fullWidth
-          >
-            {m.auth_form_continueWithGoogle({}, { locale })}
-          </Button>
-          {!isSignUp && (
-            <Button
-              type="button"
-              variant={isLastUsed('passkey') ? 'contained' : 'outlined'}
-              startIcon={
-                pendingProvider === 'passkey' ? <CircularProgress size={20} /> : <IconPasskey className="size-5" />
-              }
-              endIcon={
-                isLastUsed('passkey') ? (
-                  <Chip
-                    label={m.auth_form_lastUsed({}, { locale })}
-                    size="small"
-                    color="primary"
-                    className={LAST_USED_BUTTON_CHIP_CLASS}
-                  />
-                ) : undefined
-              }
-              onClick={asyncHandler(handlePasskey)}
-              disabled={loading}
-              className="!py-2.5 !text-sm"
-              fullWidth
-            >
-              {m.auth_form_signInWithPasskey({}, { locale })}
-            </Button>
-          )}
-        </div>
+                <span className="text-xs text-fg-2">{m.auth_form_or({}, { locale })}</span>
+              )}
+            </Divider>
+          </>
+        )}
 
-        <Divider className="!my-1">
-          {isLastUsed('email') ? (
-            <Chip
-              label={m.auth_form_lastUsed({}, { locale })}
-              size="small"
-              color="primary"
-              className={LAST_USED_CHIP_CLASS}
-            />
-          ) : (
-            <span className="text-xs text-fg-2">{m.auth_form_or({}, { locale })}</span>
-          )}
-        </Divider>
-
-        <div className="flex flex-col gap-2">
+        {/*
+         * One email field for both steps. On the second it's hidden but stays in the form, so the browser keeps its
+         * passkey autofill running and password managers save and fill the address together with the password.
+         */}
+        <div hidden={step !== 'start'}>
           <TextField
             id={emailId}
             {...register('email', {
               required: m.auth_form_validation_emailRequired({}, { locale }),
               pattern: {
-                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                value: /^\s*[^\s@]+@[^\s@]+\.[^\s@]+\s*$/,
                 message: m.auth_form_validation_emailInvalid({}, { locale }),
               },
             })}
@@ -321,75 +418,137 @@ export const LoginForm = ({
             disabled={loading}
             fullWidth
             size="small"
-          />
-          <TextField
-            id={passwordId}
-            {...register('password', {
-              required: m.auth_form_validation_passwordRequired({}, { locale }),
-              minLength: {
-                value: 8,
-                message: m.auth_form_validation_passwordMinLength({}, { locale }),
-              },
-            })}
-            label={m.auth_form_password({}, { locale })}
-            type={showPassword ? 'text' : 'password'}
-            autoComplete={isSignUp ? 'new-password' : 'current-password webauthn'}
-            required
-            error={!!errors.password}
-            helperText={errors.password?.message}
-            disabled={loading}
-            fullWidth
-            size="small"
-            InputProps={{
-              endAdornment: (
-                <PasswordVisibilityAdornment
-                  visible={showPassword}
-                  fieldLabel={m.auth_form_password({}, { locale })}
-                  inputId={passwordId}
-                  onToggle={() => setShowPassword((visible) => !visible)}
-                />
-              ),
-            }}
+            inputProps={{ autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, inputMode: 'email' }}
           />
         </div>
 
-        {TURNSTILE_SITE_KEY && (
-          <Turnstile
-            key={turnstileWidgetKey}
-            ref={turnstileRef}
-            siteKey={TURNSTILE_SITE_KEY}
-            onSuccess={(token) => {
-              setTurnstileToken(token)
-              // The "wait for the security check" message is stale once the check passes
-              setError((current) => (current === m.auth_form_captchaPending({}, { locale }) ? null : current))
-            }}
-            onExpire={() => setTurnstileToken(null)}
-            options={{
-              size: turnstileSize,
-              // The widget's iframe takes a theme option rather than CSS: follow the page theme, OS preference until known
-              theme: turnstileTheme,
-              appearance: 'interaction-only',
-            }}
-            style={{ borderRadius: 12, overflow: 'hidden' }}
-          />
+        {step === 'credentials' && (
+          <>
+            <div className="flex items-center gap-1 -ml-2 min-w-0">
+              <IconButton
+                onClick={backToStart}
+                disabled={loading}
+                size="small"
+                aria-label={m.auth_form_back({}, { locale })}
+              >
+                <IconArrowLeft className="size-5" />
+              </IconButton>
+              <span className="text-sm font-medium text-fg-1 truncate" translate="no">
+                {email}
+              </span>
+            </div>
+
+            {asksForPassword ? (
+              <TextField
+                id={passwordId}
+                {...register('password', {
+                  required: m.auth_form_validation_passwordRequired({}, { locale }),
+                  minLength: {
+                    value: PASSWORD_MIN_LENGTH,
+                    message: m.auth_form_validation_passwordMinLength({}, { locale }),
+                  },
+                  maxLength: {
+                    value: PASSWORD_MAX_LENGTH,
+                    message: m.auth_form_validation_passwordMaxLength({}, { locale }),
+                  },
+                })}
+                label={m.auth_form_password({}, { locale })}
+                type={showPassword ? 'text' : 'password'}
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                required
+                error={!!errors.password}
+                // A new password's rule shows before it's broken, not only after
+                helperText={
+                  errors.password?.message ?? (isSignUp ? m.auth_form_passwordHint({}, { locale }) : undefined)
+                }
+                FormHelperTextProps={{ id: passwordHintId }}
+                disabled={loading}
+                fullWidth
+                size="small"
+                inputProps={{
+                  ...(isSignUp ? { passwordrules: `minlength: ${PASSWORD_MIN_LENGTH};` } : {}),
+                  maxLength: PASSWORD_MAX_LENGTH,
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <PasswordVisibilityAdornment
+                      visible={showPassword}
+                      fieldLabel={m.auth_form_password({}, { locale })}
+                      inputId={passwordId}
+                      onToggle={() => setShowPassword((visible) => !visible)}
+                    />
+                  ),
+                }}
+              />
+            ) : (
+              <p className="m-0 flex gap-2 text-sm text-fg-2 text-pretty">
+                <IconPasskey className="size-5 shrink-0 text-fg-1" aria-hidden />
+                {m.auth_signUp_passkey_description({}, { locale })}
+              </p>
+            )}
+
+            {TURNSTILE_SITE_KEY && (
+              <Turnstile
+                key={turnstileWidgetKey}
+                ref={turnstileRef}
+                siteKey={TURNSTILE_SITE_KEY}
+                onSuccess={(token) => {
+                  setTurnstileToken(token)
+                  // The "wait for the security check" message is stale once the check passes
+                  setError((current) => (current === m.auth_form_captchaPending({}, { locale }) ? null : current))
+                }}
+                onExpire={() => setTurnstileToken(null)}
+                options={{
+                  size: turnstileSize,
+                  // The widget's iframe takes a theme option rather than CSS: follow the page theme, OS preference until
+                  // known
+                  theme: turnstileTheme,
+                  appearance: 'interaction-only',
+                }}
+                style={{ borderRadius: 12, overflow: 'hidden' }}
+              />
+            )}
+          </>
         )}
 
         <Button
           type="submit"
-          variant="contained"
+          variant={step === 'start' && primaryProvider !== 'email' ? 'outlined' : 'contained'}
           disabled={buttonDisabled}
           aria-busy={buttonLoading || undefined}
+          startIcon={
+            step === 'credentials' && isSignUp && signUpWith === 'passkey' && !buttonLoading ? (
+              <IconPasskey className="size-5" />
+            ) : undefined
+          }
           className="!py-2.5"
           fullWidth
         >
           {buttonLoading ? (
             <CircularProgress size={20} color="inherit" aria-label={m.auth_form_pending({}, { locale })} />
-          ) : isSignUp ? (
-            m.auth_signUp_label({}, { locale })
           ) : (
-            m.auth_form_continue({}, { locale })
+            submitLabel
           )}
         </Button>
+
+        {step === 'credentials' && isSignUp && canUsePasskeys && (
+          <Button
+            type="button"
+            variant="text"
+            size="small"
+            disabled={loading}
+            onClick={() => {
+              const next = signUpWith === 'passkey' ? 'password' : 'passkey'
+              setSignUpWith(next)
+              setError(null)
+              if (next === 'password') requestAnimationFrame(() => setFocus('password'))
+            }}
+          >
+            {signUpWith === 'passkey'
+              ? m.auth_signUp_passkey_usePassword({}, { locale })
+              : m.auth_signUp_passkey_usePasskey({}, { locale })}
+          </Button>
+        )}
       </form>
 
       <Button
