@@ -14,6 +14,7 @@ import aaguidData from '../../../data/passkey-aaguids.json'
 import { authClient } from '../../../lib/auth-client'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
 import { hasErrorCode } from '../../auth/authLinks'
+import { isAuthMailEnabled } from '../../../setup/auth-mail'
 import { PasswordVisibilityAdornment } from '../../auth/PasswordVisibilityAdornment'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 import { useLocale } from '@/i18n/LocaleProvider'
@@ -49,6 +50,8 @@ const EmailSubsection: FC<{ email: AccountEmail; headingAs: HeadingTag; idPrefix
 
   const titleId = `${idPrefix}-email-title`
   const descriptionId = `${idPrefix}-email-description`
+  // Without account email nothing can verify an address: say nothing about it rather than offer a link that can't come
+  const mailEnabled = isAuthMailEnabled()
 
   return (
     <section className="flex flex-col gap-4" aria-labelledby={titleId}>
@@ -62,19 +65,21 @@ const EmailSubsection: FC<{ email: AccountEmail; headingAs: HeadingTag; idPrefix
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-fg-1" translate="no">
           {email.address}
         </span>
-        <Chip
-          label={
-            email.verified
-              ? m.auth_userProfile_email_verified({}, { locale })
-              : m.auth_userProfile_email_unverified({}, { locale })
-          }
-          size="small"
-          color={email.verified ? 'success' : 'warning'}
-          variant="outlined"
-          className="!h-5 !text-xs"
-        />
+        {(email.verified || mailEnabled) && (
+          <Chip
+            label={
+              email.verified
+                ? m.auth_userProfile_email_verified({}, { locale })
+                : m.auth_userProfile_email_unverified({}, { locale })
+            }
+            size="small"
+            color={email.verified ? 'success' : 'warning'}
+            variant="outlined"
+            className="!h-5 !text-xs"
+          />
+        )}
       </div>
-      {!email.verified && (
+      {!email.verified && mailEnabled && (
         <>
           <p id={descriptionId} className="m-0 text-sm leading-normal text-fg-2 text-pretty">
             {m.auth_userProfile_email_unverifiedDescription({}, { locale })}

@@ -79,6 +79,8 @@ jobs:
           test -n "$SENTRY_AUTH_TOKEN"
           pnpm turbo run build --filter=@gekichumai/dxrating-web... --force
         env:
+          # `true` once the backend has RESEND_API_KEY (apps/web/src/setup/auth-mail.ts); unset hides mail controls
+          VITE_AUTH_MAIL_ENABLED: ${{ vars.AUTH_MAIL_ENABLED }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           VITE_BACKEND_URL: https://miruku.dxrating.net
           VITE_BETTER_AUTH_URL: https://miruku.dxrating.net

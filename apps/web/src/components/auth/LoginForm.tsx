@@ -14,6 +14,7 @@ import IconArrowLeft from '~icons/mdi/arrow-left'
 import { authClient } from '../../lib/auth-client'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
 import { hasErrorCode } from './authLinks'
+import { isAuthMailEnabled } from '../../setup/auth-mail'
 import { PasswordVisibilityAdornment } from './PasswordVisibilityAdornment'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { ParaglideMessage } from '@inlang/paraglide-js-react'
@@ -512,7 +513,7 @@ export const LoginForm = ({
               />
             )}
 
-            {!isSignUp && (
+            {!isSignUp && isAuthMailEnabled() && (
               <Button
                 type="button"
                 variant="text"

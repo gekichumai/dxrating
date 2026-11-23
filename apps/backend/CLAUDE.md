@@ -119,7 +119,7 @@ Optional:
 - `CLOUD_SAVE_MODE` — `off` (default) | `allowlist` | `optin` | `on`; see "Feature flags" below
 - `CLOUD_SAVE_ALLOWLIST_EMAILS` — Comma-separated emails that get cloud save while the mode is not `off` (verified emails only, `user.email_verified`: an OAuth provider's word, or a mailed link once mail is on; an email/password or passkey account that hasn't used its link needs `flag:set`). See "Email verification" below
 - `SERVER_IMPORTS` — `off` (default) | `on`; server-side imports into cloud saves
-- `RESEND_API_KEY` — Resend API key for account email (verification links, password reset). Unset turns mail off: nothing is sent, `/send-verification-email` and `/request-password-reset` answer `VERIFICATION_EMAIL_NOT_ENABLED` / `RESET_PASSWORD_DISABLED`, and a warning is logged at startup. See "Account email" below
+- `RESEND_API_KEY` — Resend API key for account email (verification links, password reset). Unset turns mail off: nothing is sent, `/send-verification-email` and `/request-password-reset` answer `VERIFICATION_EMAIL_NOT_ENABLED` / `RESET_PASSWORD_DISABLED`, and a warning is logged at startup. The web offers "Forgot password?" and the verification resend only when its build has `VITE_AUTH_MAIL_ENABLED=true` (the `AUTH_MAIL_ENABLED` repository variable, `apps/web/src/setup/auth-mail.ts`): set it when you set this key. See "Account email" below
 - `EMAIL_FROM` — Sender of account email (default `DXRating <no-reply@dxrating.net>`); its domain must be verified at Resend
 - `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_CACHE_PURGE_TOKEN` — purge the edge's public Cache-Tags at startup and invalidate `dxdata` on each new publication (see `src/services/edge-cache.ts`). The token needs only Zone → Cache Purge → Purge on dxrating.net
 

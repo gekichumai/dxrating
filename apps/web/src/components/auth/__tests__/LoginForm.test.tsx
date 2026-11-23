@@ -60,6 +60,8 @@ describe('LoginForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+    vi.stubEnv('VITE_AUTH_MAIL_ENABLED', 'true')
     passkeySignIn.mockResolvedValue({ error: null })
   })
 
@@ -113,6 +115,14 @@ describe('LoginForm', () => {
     await continueWithEmail()
     fireEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
     expect((await screen.findByRole('alert')).textContent).toBe("Password reset by email isn't available right now.")
+  })
+
+  it('offers no password reset in a build without account email', async () => {
+    vi.stubEnv('VITE_AUTH_MAIL_ENABLED', '')
+    render(<LoginForm />)
+    await continueWithEmail()
+    expect(screen.getByLabelText(/^Password/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Forgot password?' })).toBeNull()
   })
 
   it('offers no password reset while creating an account', async () => {
