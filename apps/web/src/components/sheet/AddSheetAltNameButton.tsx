@@ -18,7 +18,7 @@ import { m } from '@/paraglide/messages'
 export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const locale = useLocale()
   const [open, setOpen] = useState(false)
-  const { session, openLoginDialog, LoginDialog } = useAuth()
+  const { session, openLoginDialog, loginDialog } = useAuth()
 
   const [newAltName, setNewAltName] = useState('')
   const { mutate } = useServerAliases()
@@ -59,11 +59,11 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
       })
       toast.error(m.sheet_aliases_toastFailed({ error: formatErrorMessage(e) }, { locale }))
     }
-  }, [newAltName, sheet.songId, mutate, locale])
+  }, [session, newAltName, sheet.songId, sheet.type, sheet.difficulty, mutate, locale])
 
   return (
     <>
-      <LoginDialog />
+      {loginDialog}
       <MotionButtonBase
         className="h-6 glass-inset inline-flex self-start items-center justify-center gap-1 px-2 cursor-pointer text-fg-1 hover:bg-white/80 active:bg-black/6 transition-colors duration-150 mt-1 -ml-2"
         onClick={() => {

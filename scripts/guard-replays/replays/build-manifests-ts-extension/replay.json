@@ -1,0 +1,9 @@
+{
+  "mistake": "A package Node loads from source imports a sibling file without its .ts extension, so the backend cannot start.",
+  "history": [
+    "#558 88854502 (its review fix restored the .ts extensions in packages/api-contract after extensionless imports stopped the backend from starting)"
+  ],
+  "guard": "the packages/** no-restricted-imports rule in .oxlintrc.json",
+  "check": "pnpm exec oxlint packages/api-contract",
+  "expect": "Node loads this package from source: write the .ts extension."
+}

@@ -7,6 +7,8 @@ const PAGE_TITLES = {
   'auth:terms.title': m.auth_terms_title,
   'auth:privacy.title': m.auth_privacy_title,
   'auth:account-security.title': m.auth_accountSecurity_title,
+  'auth:reset-password.title': m.auth_resetPassword_title,
+  'auth:verify-email.title': m.auth_verifyEmail_title,
   'rating-calculator:io.import.lxns.callback.page-title': m.ratingCalculator_io_import_lxns_callback_pageTitle,
 } satisfies Record<string, PlainMessage>
 

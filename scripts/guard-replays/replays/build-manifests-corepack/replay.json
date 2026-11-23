@@ -1,0 +1,10 @@
+{
+  "mistake": "A Dockerfile enables pnpm through corepack, which the slim Node image does not ship, so the image build fails with exit 127.",
+  "history": [
+    "eddc4286 (switched apps/backend/Dockerfile to `corepack enable`)",
+    "031c94f2 (reverted it after the build broke)"
+  ],
+  "guard": "infra/build-manifests.test.mts rejects corepack in every Dockerfile",
+  "check": "node --test infra/build-manifests.test.mts",
+  "expect": "apps/backend/Dockerfile: node images do not ship corepack"
+}

@@ -1,0 +1,9 @@
+{
+  "mistake": "A hook is called inside a plain async helper instead of a component or hook.",
+  "history": [
+    "#219 78df95a6 (useTranslation called inside the async fetchDivingFish helper in ImportFromDivingFishButtonListItem.tsx)"
+  ],
+  "guard": "react/rules-of-hooks at error for apps/web/src and apps/admin/src",
+  "check": "pnpm exec oxlint apps/web/src/components/rating/io/import/ImportFromDivingFishButtonListItem.tsx",
+  "expect": "rules-of-hooks"
+}

@@ -9,10 +9,11 @@
     "lint": "oxlint . && pnpm --filter @gekichumai/backend lint:effect",
     "lint:fix": "oxlint --fix .",
     "test:packages": "turbo run test --filter=./packages/*",
-    "test:infra": "node --test infra/posthog-proxy/worker.test.js",
+    "test:infra": "node --test --test-concurrency=1 'infra/**/*.test.{js,mts}'",
     "guard:replays": "node scripts/guard-replays/run.ts"
   },
   "devDependencies": {
+    "@gdp-ts/core": "0.1.0",
     "oxfmt": "^0.49.0",
     "oxlint": "^1.64.0",
     "tsconfig": "workspace:*",

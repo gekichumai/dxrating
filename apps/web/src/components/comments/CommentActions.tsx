@@ -38,7 +38,7 @@ const SAFETY_ACTION_SUCCESS = {
 
 export function CommentActions({ comment }: { comment: Comment }) {
   const locale = useLocale()
-  const { user, ensureAuthenticated, LoginDialog } = useAuth()
+  const { user, ensureAuthenticated, loginDialog } = useAuth()
   const { mutate } = useSWRConfig()
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const [action, setAction] = useState<SafetyAction | null>(null)
@@ -117,7 +117,7 @@ export function CommentActions({ comment }: { comment: Comment }) {
           </Button>
         </DialogActions>
       </Dialog>
-      <LoginDialog />
+      {loginDialog}
     </>
   )
 }

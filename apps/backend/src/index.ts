@@ -1,4 +1,4 @@
-import { initSentry, Sentry } from './lib/functions/sentry'
+import { initSentry, reportFailure, Sentry } from './lib/functions/sentry'
 initSentry()
 
 import './logger'
@@ -62,7 +62,7 @@ runMain(
               ),
             reportError: (error) =>
               Effect.sync(() => {
-                Sentry.captureException(error, { tags: { component: 'edge-cache' } })
+                reportFailure(error, { tags: { component: 'edge-cache' } })
               }),
           }).pipe(Effect.provideContext(context)),
         )

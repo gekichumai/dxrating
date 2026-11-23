@@ -29,7 +29,7 @@ import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc/server/plugins'
 import { onError, ORPCError } from '@orpc/server'
-import { Sentry } from './lib/functions/sentry'
+import { reportFailure } from './lib/functions/sentry'
 import { reportProcedureError } from './orpc-error-reporting'
 import { Database } from './db/index'
 import { compressCatalogBody, createDxdataEffect, createPostgresDxdataEffects } from './services/dxdata'
@@ -278,7 +278,7 @@ app.onError((err, c) => {
   if (isExpectedRequestEnd(err)) return expectedRequestEnd(c, err)
 
   log?.error(err)
-  Sentry.captureException(err, { tags: { requestId } })
+  reportFailure(err, { signal: c.req.raw.signal, tags: { requestId } })
 
   if (err instanceof HTTPException) {
     return err.getResponse()
@@ -306,6 +306,10 @@ app.use(
       '/',
       '/.well-known/api-catalog',
       '/api/v1/monitoring/tunnel',
+      // Better Auth's mailed reset link carries its token in the path, and opening the link doesn't spend it: a
+      // logged path would let anyone who reads the logs reset the account. Setting the password (POST
+      // /api/auth/reset-password, token in the body) is still logged.
+      '/api/auth/reset-password/*',
     ],
   }) as unknown as MiddlewareHandler,
 )
@@ -658,7 +662,7 @@ const reportCatalogError = (error: unknown, c: Context<EvlogVariables>) => {
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
   log?.error(error instanceof Error ? error : new Error(String(error)))
-  Sentry.captureException(error, { tags: { requestId } })
+  reportFailure(error, { signal: c.req.raw.signal, tags: { requestId } })
 }
 const dxdataHandler = createDxdataEffect(dxdataStore, reportCatalogError)
 // v2 (gekichumai/meta#43): the same publication, transformed once per published body
@@ -781,7 +785,7 @@ const reportApiError = (c: Context, error: unknown) => {
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
   log?.error(error instanceof Error ? error : new Error(String(error)))
-  Sentry.captureException(error, { tags: { requestId } })
+  reportFailure(error, { signal: c.req.raw.signal, tags: { requestId } })
   return c.json({ error: 'Internal server error', requestId }, 500)
 }
 

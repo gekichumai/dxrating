@@ -57,6 +57,9 @@ catalogs:
     hono:
       specifier: ^4.13.14
       version: 4.13.16
+    jose:
+      specifier: 6.2.12
+      version: 6.2.12
     pg:
       specifier: ^8.23.1
       version: 8.23.1
@@ -87,6 +90,9 @@ importers:
 
   .:
     devDependencies:
+      '@gdp-ts/core':
+        specifier: 0.1.0
+        version: 0.1.0(oxlint@1.64.0)(typescript@7.0.2)
       oxfmt:
         specifier: ^0.49.0
         version: 0.49.0
@@ -194,7 +200,7 @@ importers:
         specifier: 'catalog:'
         version: 4.13.16
       jose:
-        specifier: 6.2.12
+        specifier: 'catalog:'
         version: 6.2.12
       pg:
         specifier: 'catalog:'
@@ -353,6 +359,9 @@ importers:
       hono:
         specifier: 'catalog:'
         version: 4.13.16
+      jose:
+        specifier: 'catalog:'
+        version: 6.2.12
       pg:
         specifier: 'catalog:'
         version: 8.23.1
@@ -486,6 +495,9 @@ importers:
       '@sentry/tanstackstart-react':
         specifier: ^10.70.0
         version: 10.70.0(react@19.2.6)(rollup@4.58.0)
+      '@simplewebauthn/browser':
+        specifier: 13.3.0
+        version: 13.3.0
       '@tanstack/react-query':
         specifier: ^5.100.11
         version: 5.100.11(react@19.2.6)
@@ -643,6 +655,9 @@ importers:
       '@svgr/plugin-jsx':
         specifier: ^8.1.0
         version: 8.1.0(@svgr/core@8.1.0(typescript@5.9.3))
+      '@tanstack/start-client-core':
+        specifier: ^1.170.14
+        version: 1.170.14
       '@types/d3':
         specifier: ^7.4.3
         version: 7.4.3
@@ -799,6 +814,21 @@ importers:
         specifier: 'catalog:'
         version: 5.0.2(@opentelemetry/api@1.10.0)(@types/node@25.9.9)(@vitest/ui@5.0.2)(happy-dom@20.9.0)(vite@8.3.5(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
 
+  packages/oxlint-plugin:
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.9.9
+      oxlint:
+        specifier: ^1.64.0
+        version: 1.64.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.2(@opentelemetry/api@1.10.0)(@types/node@25.9.9)(@vitest/ui@5.0.2)(happy-dom@20.9.0)(vite@8.3.5(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+
   packages/tsconfig: {}
 
   scripts/annotator:
@@ -821,6 +851,9 @@ importers:
       he:
         specifier: ^1.2.0
         version: 1.2.0
+      lodash:
+        specifier: ^4.17.23
+        version: 4.17.23
       pg:
         specifier: 'catalog:'
         version: 8.23.1
