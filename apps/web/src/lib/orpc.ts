@@ -3,18 +3,13 @@ import type { RouterContractClient } from '@orpc/contract'
 import type { JsonifiedClient } from '@orpc/openapi'
 import { OpenAPILink } from '@orpc/openapi/fetch'
 import { createTanstackQueryUtils } from '@orpc/tanstack-query'
-import { decodeLegacyErrorResponse } from '@gekichumai/api-contract'
+import { CORS_POLICIES, corsGroupFor, decodeLegacyErrorResponse } from '@gekichumai/api-contract'
 import { appContract } from './contract'
 
-// The tag, alias and announcement lists are public and shared through the edge cache, which answers them with
-// `Access-Control-Allow-Origin: *`; a credentialed request would fail CORS against that, so these reads omit cookies
-const PUBLIC_LIST_PATHS = new Set(['/api/v1/tags', '/api/v1/aliases', '/api/v1/announcements'])
 export const credentialsFor = (url: string | URL | Request, method = 'GET'): RequestCredentials => {
   const href = typeof url === 'string' ? url : url instanceof URL ? url.href : url.url
-  const verb = method.toUpperCase()
-  return (verb === 'GET' || verb === 'HEAD') && PUBLIC_LIST_PATHS.has(new URL(href, 'http://localhost').pathname)
-    ? 'omit'
-    : 'include'
+  const group = corsGroupFor(new URL(href, 'http://localhost').pathname, method.toUpperCase())
+  return CORS_POLICIES[group].credentials ? 'include' : 'omit'
 }
 
 const link = new OpenAPILink(appContract, {

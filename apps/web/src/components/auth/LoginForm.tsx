@@ -1,3 +1,4 @@
+import { CAPTCHA_RESPONSE_HEADER } from '@gekichumai/api-contract'
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
 import { WebAuthnAbortService } from '@simplewebauthn/browser'
 import { useResolvedTheme } from '@/utils/useResolvedTheme'
@@ -170,7 +171,7 @@ export const LoginForm = ({
     onPendingChange?.(provider !== null)
   }
 
-  const captchaHeaders = turnstileToken ? { 'x-captcha-response': turnstileToken } : undefined
+  const captchaHeaders = turnstileToken ? { [CAPTCHA_RESPONSE_HEADER]: turnstileToken } : undefined
   const waitingForTurnstile = !!TURNSTILE_SITE_KEY && !turnstileToken
   const buttonLoading = loading || (step === 'credentials' && isValid && waitingForTurnstile)
   // Submit stays available so validation can run and focus the first invalid field; only a running request blocks it

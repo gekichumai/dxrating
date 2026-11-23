@@ -17,6 +17,7 @@ import {
 import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
+import type { ApiMethod } from '../http-surface.ts'
 import { fromQuery, isStorableText, PgBigint, PgInteger, PgText, PgTimestamp } from './storable.ts'
 
 /**
@@ -574,7 +575,7 @@ const oc = contractBuilder.errors({
 })
 const importErrors = { CONFLICT: { data: CloudSaveErrorDataSchemas.importInProgress } }
 
-const route = (method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: `/${string}`, summary: string) =>
+const route = (method: ApiMethod, path: `/${string}`, summary: string) =>
   openapi({ method, path, summary, tags: CLOUD_SAVE_ROUTE_TAGS })
 
 // --- Routes ---

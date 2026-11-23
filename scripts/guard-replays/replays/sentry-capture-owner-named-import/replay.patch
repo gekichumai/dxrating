@@ -1,8 +1,8 @@
 diff --git a/apps/backend/src/app.ts b/apps/backend/src/app.ts
-index bd474340..89999251 100644
+index 18a66335..ce36a85a 100644
 --- a/apps/backend/src/app.ts
 +++ b/apps/backend/src/app.ts
-@@ -30,8 +30,8 @@ import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
+@@ -29,8 +29,8 @@ import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
  import { ZodToJsonSchemaConverter } from '@orpc/zod'
  import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc/server/plugins'
  import { onError, ORPCError } from '@orpc/server'
@@ -11,9 +11,9 @@ index bd474340..89999251 100644
 +import { captureException } from '@sentry/node'
 +import { classifyFailure, reportFailure } from './lib/functions/sentry'
  import { Database } from './db/index'
- import {
-   compressCatalogBody,
-@@ -721,7 +721,17 @@ const openAPIHandler = new OpenAPIHandler(appRouter, {
+ import { compressCatalogBody, createDxdataEffect, createPostgresDxdataEffects } from './services/dxdata'
+ import { createDxdataV2Store, DXDATA_V2_CACHE_TAG } from './services/dxdata-v2'
+@@ -641,7 +641,17 @@ const openAPIHandler = new OpenAPIHandler(appRouter, {
      status: COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500,
    }),
    plugins: [new RequestHeadersHandlerPlugin<ApiContext>(), new ResponseHeadersHandlerPlugin<ApiContext>()],
