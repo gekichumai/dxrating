@@ -349,7 +349,7 @@ describe('LoginForm', () => {
       // What Chrome does as the form is submitted
       tokenField()!.value = TOKEN
       fireEvent.click(screen.getByRole('button', { name: 'Continue with email' }))
-      await screen.findByRole('button', { name: 'Back to all sign-in options' })
+      await screen.findByRole('button', { name: /Back to all sign-in options/ })
       fireEvent.change(screen.getByLabelText(/^Password/), { target: { value: 'demo-password' } })
       fireEvent.click(await screen.findByRole('button', { name: 'Create account' }))
 
