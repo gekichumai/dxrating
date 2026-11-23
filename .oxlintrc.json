@@ -40,6 +40,19 @@
       }
     },
     {
+      "files": ["apps/web/src/**", "apps/admin/src/**"],
+      "rules": {
+        "react/rules-of-hooks": "error",
+        "react/exhaustive-deps": [
+          "error",
+          {
+            "additionalHooks": "^(useAsync|useAsyncFn)$"
+          }
+        ],
+        "dxrating/no-nested-component": "error"
+      }
+    },
+    {
       "files": ["**/*.ts", "**/*.tsx"],
       "rules": {
         "no-restricted-imports": [
@@ -600,6 +613,10 @@
     {
       "name": "gdp-ts",
       "specifier": "@gdp-ts/core/lint/plugin"
+    },
+    {
+      "name": "dxrating",
+      "specifier": "./packages/oxlint-plugin/index.ts"
     }
   ]
 }

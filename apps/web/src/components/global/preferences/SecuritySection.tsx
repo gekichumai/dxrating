@@ -121,7 +121,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: 
 }) => {
   const locale = useLocale()
   const queryClient = useQueryClient()
-  const hasPasswordKey = hasPasswordQueryKey(userId)
+  const hasPasswordKey = useMemo(() => hasPasswordQueryKey(userId), [userId])
   // An account made with a passkey or a social provider has no password: it sets a first one, with no current password
   // to give. If the accounts can't be read, the change form stays (the server refuses whichever doesn't apply).
   const { data: hasPassword = true, isPending: accountsPending } = useQuery({
@@ -190,7 +190,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: 
     }
     toast.success(m.auth_userProfile_password_success({}, { locale }))
     resetFields()
-  }, [hasPassword, currentPassword, newPassword, locale, queryClient])
+  }, [hasPassword, currentPassword, newPassword, locale, queryClient, hasPasswordKey])
 
   const togglePasswordVisibility = (field: keyof typeof visiblePasswords) => {
     setVisiblePasswords((visible) => ({ ...visible, [field]: !visible[field] }))

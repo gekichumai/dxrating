@@ -1,0 +1,22 @@
+diff --git a/apps/web/src/components/global/preferences/SecuritySection.tsx b/apps/web/src/components/global/preferences/SecuritySection.tsx
+index 8873902c..61a65cb4 100644
+--- a/apps/web/src/components/global/preferences/SecuritySection.tsx
++++ b/apps/web/src/components/global/preferences/SecuritySection.tsx
+@@ -106,7 +106,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId:
+     }
+     toast.success(m.auth_userProfile_password_success({}, { locale }))
+     resetFields()
+-  }, [hasPassword, currentPassword, newPassword, locale, queryClient, hasPasswordKey])
++  }, [hasPassword, currentPassword, newPassword, queryClient, hasPasswordKey])
+ 
+   const togglePasswordVisibility = (field: keyof typeof visiblePasswords) => {
+     setVisiblePasswords((visible) => ({ ...visible, [field]: !visible[field] }))
+@@ -325,7 +325,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
+     }
+     toast.success(m.auth_userProfile_passkeys_added({}, { locale }))
+     queryClient.invalidateQueries({ queryKey: ['passkeys'] })
+-  }, [queryClient, locale])
++  }, [queryClient])
+ 
+   const handleDelete = async (id: string) => {
+     const confirmed = await confirmDelete.confirm()
