@@ -4,18 +4,16 @@ import { readMigrationFiles } from 'drizzle-orm/migrator'
 
 const migrationsFolder = path.resolve(import.meta.dirname, '../../drizzle')
 const lockPath = path.join(migrationsFolder, 'migrations.lock.json')
-const immutable = 'Applied migrations are immutable: restore it and add a new migration with drizzle-kit generate.'
+const immutable =
+  'Applied migrations are immutable: restore it and add a new migration with drizzle-kit generate. If it is not on main yet, delete its line from drizzle/migrations.lock.json and run pnpm --filter @gekichumai/backend migrations:lock.'
 
 const read = () => ({
   lock: JSON.parse(readFileSync(lockPath, 'utf8')) as Record<string, string>,
   files: new Map(readMigrationFiles({ migrationsFolder }).map((migration) => [migration.name, migration.hash])),
 })
 
-/**
- * Compares every migration folder with drizzle/migrations.lock.json, the sha256 that Drizzle's ledger
- * stores for each applied migration. Drizzle skips any migration whose name is already in the ledger,
- * so an edited migration.sql runs on new databases and never on the ones that applied the old SQL.
- */
+// The lock holds the sha256 Drizzle's ledger stores. Drizzle skips a migration whose name is in the ledger,
+// so an edited migration.sql runs on new databases and never on the ones that applied the old SQL.
 export const checkMigrationLock = ({ lock, files } = read()) => {
   const lastLocked = Object.keys(lock).sort().at(-1) ?? ''
   const violations: string[] = []
