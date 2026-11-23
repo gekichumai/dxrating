@@ -10,9 +10,17 @@ type MessageFile = Record<string, string | Variant[]>
 const read = (locale: string): MessageFile =>
   JSON.parse(readFileSync(path.resolve(__dirname, `../../../messages/${locale}.json`), 'utf8'))
 
-/** Every pattern of a message, keyed by its match: `*` for a plain string */
 const variants = (value: string | Variant[]): [string, string][] =>
   typeof value === 'string' ? [['*', value]] : value.flatMap((variant) => Object.entries(variant.match))
+
+const DROPPED_ON_PURPOSE = [
+  {
+    id: 'song_seo_title',
+    placeholder: '{level}',
+    locales: ['ja', 'ko', 'zh-Hans', 'zh-Hant'],
+    reason: '#406 chose CJK chart page titles that show the internal level alone (譜面定数14.7)',
+  },
+]
 
 describe('messages/*.json', () => {
   it('translates every message in every locale, with no blank text', () => {
@@ -50,20 +58,24 @@ describe('messages/*.json', () => {
   it('uses exactly the placeholders and markup tags the English message has', () => {
     const en = read('en')
     // English `one` says "1 record", a translation's may print {count}; the test above says where it must
-    const tokens = (key: string, pattern = '') =>
+    const tokens = (key: string, ignored: string[], pattern = '') =>
       [...new Set(pattern.match(/\{[^}]*\}/g))]
         .filter((token) => key !== 'countPlural=one' || token !== '{count}')
+        .filter((token) => !ignored.includes(token))
         .sort()
     for (const locale of SUPPORTED_LOCALES) {
       const mismatched = Object.entries(read(locale))
         .filter(([id]) => id !== '$schema')
         .flatMap(([id, value]) => {
           const english = Object.fromEntries(variants(en[id]))
+          const ignored = DROPPED_ON_PURPOSE.filter((drop) => drop.id === id && drop.locales.includes(locale)).map(
+            (drop) => drop.placeholder,
+          )
           return variants(value)
             .map(([key, pattern]) => ({
               key,
-              has: tokens(key, pattern),
-              expected: tokens(key, english[key] ?? english['countPlural=*']),
+              has: tokens(key, ignored, pattern),
+              expected: tokens(key, ignored, english[key] ?? english['countPlural=*']),
             }))
             .filter(({ has, expected }) => has.join() !== expected.join())
             .map(

@@ -259,7 +259,7 @@
   "song_type_utage": "宴",
   "song_type_utage2p": "Buddy",
   "song_seo_description": "{title}（{artist}）{sheetLabel} 譜面（Lv.{level}）。{facts}。在 DXRating 查看 maimai DX 各達成率的單曲 Rating、定數變化與所有難度。",
-  "song_seo_title": "{title} {sheetLabel} {level}（定數 {constant}）｜maimai DX 譜面 - DXRating",
+  "song_seo_title": "{title} {sheetLabel} 定數 {constant}｜maimai DX 譜面 - DXRating",
   "song_seo_titleNoConstant": "{title} {sheetLabel} Lv.{level}｜maimai DX 譜面 - DXRating",
   "song_seo_fact_constant": "譜面定數 {value}",
   "song_seo_fact_notes": "音符數 {value}",

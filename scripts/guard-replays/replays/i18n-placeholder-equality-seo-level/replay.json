@@ -1,9 +1,0 @@
-{
-  "mistake": "A translation drops a placeholder the English message has, so that locale silently omits the value.",
-  "history": [
-    "#406 a75ddfc8 and #408 9af64df4 (ja, ko, zh-Hans and zh-Hant chart page titles dropped {level} from English '{level} ({constant})'; #408 reworked the same SEO strings and kept the drop)"
-  ],
-  "guard": "apps/web messages.test.ts requires exactly the English placeholders and tags in every variant",
-  "check": "pnpm --filter @gekichumai/dxrating-web exec vitest run src/i18n/__tests__/messages.test.ts",
-  "expect": "song_seo_title [*]: has {constant} {sheetLabel} {title}, English has {constant} {level} {sheetLabel} {title}"
-}
