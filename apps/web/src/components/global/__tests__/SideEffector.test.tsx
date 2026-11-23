@@ -7,7 +7,7 @@ import type { ScoreRepository } from '@/models/scores/ScoreRepository'
 import { SideEffectorAutoImportRating } from '../SideEffector'
 
 const mocks = vi.hoisted(() => ({
-  importFromNETRecords: vi.fn(),
+  importFromNETRecords: vi.fn(async () => {}),
   catalog: null as unknown,
   repository: null as unknown,
 }))

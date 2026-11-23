@@ -8,28 +8,18 @@ export class DxdataDecodeError extends Data.TaggedError('DxdataDecodeError')<{
 import type { Context, Env } from 'hono'
 import { promisify } from 'node:util'
 import { brotliCompress, constants as zlibConstants } from 'node:zlib'
-import { API_CLIENT_HEADER } from './api-usage'
 
 const brotliCompressAsync = promisify(brotliCompress)
 
 const PRODUCTION_CHANNEL = 'production-v1'
 const API_SCHEMA_VERSION = 1
 
-export const DXDATA_PATH = '/api/v1/dxdata'
 export const DXDATA_BROWSER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400'
 // The publisher (dxdata-assembly-line) only moves the publication pointer in Postgres; nothing purges the edge.
 // So the edge keeps the body for a minute, then revalidates it in the background with the stored ETag. An
 // unchanged catalog costs one metadata query and a bodiless 304, and a new one reaches the edge within about a
 // minute of publication. stale-while-revalidate keeps every visitor on a cached copy while that happens.
 export const DXDATA_CDN_CACHE_CONTROL = 'public, max-age=60, stale-while-revalidate=86400, stale-if-error=604800'
-
-export const DXDATA_CORS_OPTIONS = {
-  origin: '*',
-  allowHeaders: ['Content-Type', 'If-None-Match', API_CLIENT_HEADER],
-  allowMethods: ['GET', 'HEAD', 'OPTIONS'],
-  exposeHeaders: ['Content-Length', 'ETag', 'Cache-Control', 'CDN-Cache-Control', 'Cloudflare-CDN-Cache-Control'],
-  maxAge: 86400,
-}
 
 export interface PublishedDxdataMetadata {
   catalogRunId: string

@@ -1,0 +1,22 @@
+diff --git a/.github/workflows/backend.yml b/.github/workflows/backend.yml
+index 95ea5b00..07819851 100644
+--- a/.github/workflows/backend.yml
++++ b/.github/workflows/backend.yml
+@@ -47,7 +47,7 @@ jobs:
+       - name: Setup Node.js
+         uses: actions/setup-node@v4
+         with:
+-          node-version-file: '.node-version'
++          node-version-file: 'apps/backend/.node-version'
+           cache: 'pnpm'
+ 
+       - name: Cache Turbo
+@@ -105,7 +105,7 @@ jobs:
+       - name: Setup Node.js
+         uses: actions/setup-node@v4
+         with:
+-          node-version-file: '.node-version'
++          node-version-file: 'apps/backend/.node-version'
+           cache: 'pnpm'
+ 
+       - name: Install dependencies

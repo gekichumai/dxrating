@@ -148,6 +148,11 @@ describe('device sessions', () => {
     expect(await sessionIds(user.id)).toContain(secondId)
   })
 
+  it('answers an id PostgreSQL cannot store with a 400, never a 500', async () => {
+    const user = await signUp()
+    expect((await revokeSession(user.cookie, 'a\u0000b')).status).toBe(400)
+  })
+
   it("does not revoke another user's session", async () => {
     const user = await signUp()
     const other = await signUp()

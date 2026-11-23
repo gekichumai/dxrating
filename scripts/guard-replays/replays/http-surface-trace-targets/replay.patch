@@ -1,0 +1,21 @@
+diff --git a/apps/web/src/setup/trace-propagation.ts b/apps/web/src/setup/trace-propagation.ts
+index ab4c65d5..4c9f98cc 100644
+--- a/apps/web/src/setup/trace-propagation.ts
++++ b/apps/web/src/setup/trace-propagation.ts
+@@ -1,12 +1,7 @@
+-import { pathsRefusingHeader, TRACE_HEADERS } from '@gekichumai/api-contract'
+-
+-const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')
+-
+-const untraced = [...new Set(TRACE_HEADERS.flatMap(pathsRefusingHeader))].map(escapeRegExp).join('|')
+-
+-/** The requests Sentry adds its trace headers to: this site, and the API paths whose CORS preflight allows them */
++// Not the song catalog: trace headers would make its revalidation fail the API's CORS preflight
+ export const TRACE_PROPAGATION_TARGETS: (string | RegExp)[] = [
++  'localhost',
+   /^\//,
+   /^https?:\/\/dxrating\.net/,
+-  new RegExp(`^https?://(?:miruku\\.dxrating\\.net|localhost(?::\\d+)?)(?=/)(?!(?:${untraced})(?:[?#]|$))`),
++  /^https?:\/\/miruku\.dxrating\.net\/(?!api\/v1\/dxdata)/,
+ ]
+\ No newline at end of file

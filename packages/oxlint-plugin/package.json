@@ -1,0 +1,20 @@
+{
+  "name": "@gekichumai/oxlint-plugin",
+  "version": "1.6.0",
+  "private": true,
+  "type": "module",
+  "main": "index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "oxlint": "^1.64.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

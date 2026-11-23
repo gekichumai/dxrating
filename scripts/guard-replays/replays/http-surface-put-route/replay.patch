@@ -1,0 +1,13 @@
+diff --git a/packages/api-contract/src/private/features.ts b/packages/api-contract/src/private/features.ts
+index b5c427ec..75e6e3f4 100644
+--- a/packages/api-contract/src/private/features.ts
++++ b/packages/api-contract/src/private/features.ts
+@@ -44,7 +44,7 @@ export const featuresContract = {
+   optInCloudSave: oc
+     .meta(
+       openapi({
+-        method: 'POST',
++        method: 'PUT',
+         path: '/me/features/cloud-save/opt-in',
+         summary: 'Opt in to the cloud save beta',
+         tags: PRIVATE_CLOUD_SAVE_TAGS,

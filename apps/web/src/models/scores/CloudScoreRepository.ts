@@ -57,6 +57,7 @@ import {
 } from './ScoreRepository'
 import type { InternalLevelResolver } from './collapseScoreRecords'
 import { uuidv7 } from './uuidv7'
+import { reportRejection } from '@/lib/rejections'
 
 /**
  * A cloud save (meta#17, design §5.7, §8.1): the server's records cached in IndexedDB, with local changes applied
@@ -838,10 +839,10 @@ export class CloudScoreRepository implements WebScoreRepository {
         if (this.retryTimer) clearTimeout(this.retryTimer)
         this.retryTimer = null
       }
-      void this.sync()
+      this.sync().catch(reportRejection)
     }
     const onVisible = () => {
-      if (this.isVisible()) void this.sync()
+      if (this.isVisible()) this.sync().catch(reportRejection)
     }
     if (target) {
       target.addEventListener('online', onOnline)
@@ -855,7 +856,7 @@ export class CloudScoreRepository implements WebScoreRepository {
         : this.options.visibilityTarget
     visibilityTarget?.addEventListener('visibilitychange', onVisible)
     this.intervalTimer = setInterval(() => {
-      if (this.isVisible()) void this.sync()
+      if (this.isVisible()) this.sync().catch(reportRejection)
     }, SYNC_INTERVAL_MS)
 
     this.removeListeners = () => {
@@ -866,7 +867,7 @@ export class CloudScoreRepository implements WebScoreRepository {
       visibilityTarget?.removeEventListener('visibilitychange', onVisible)
     }
 
-    void this.sync()
+    this.sync().catch(reportRejection)
   }
 
   /** Resolves once no sync cycle runs (tests, and callers that want the result of a write) */
@@ -1033,7 +1034,7 @@ export class CloudScoreRepository implements WebScoreRepository {
     this.retryTimer = setTimeout(() => {
       this.retryTimer = null
       this.backoffUntil = 0
-      void this.sync()
+      this.sync().catch(reportRejection)
     }, delay)
   }
 
@@ -1042,7 +1043,7 @@ export class CloudScoreRepository implements WebScoreRepository {
     if (this.debounceTimer) clearTimeout(this.debounceTimer)
     this.debounceTimer = setTimeout(() => {
       this.debounceTimer = null
-      void this.sync()
+      this.sync().catch(reportRejection)
     }, SYNC_DEBOUNCE_MS)
   }
 
@@ -1311,7 +1312,7 @@ export class CloudScoreRepository implements WebScoreRepository {
       this.rerun = true
       return
     }
-    void this.reload()
+    this.reload()
       .then(() => {
         // Another tab queued changes and may not hold the lock: the lock holder pushes them
         if (this.pendingEntries().length > 0) this.scheduleDebouncedSync()

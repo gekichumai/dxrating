@@ -63,8 +63,8 @@ export function startViewTransition(
   const transition = document.startViewTransition(apply)
   activeTransition = transition
   // A skipped animation rejects ready, but must still apply the preference.
-  void transition.ready.catch(() => {})
-  void transition.finished.then(cleanup, cleanup)
+  transition.ready.catch(() => {})
+  transition.finished.then(cleanup, cleanup)
   return transition.updateCallbackDone.catch((error: unknown) => {
     // The browser skipped the transition: the page was hidden (WebKit then rejects without calling the update), or the
     // update took too long. Neither is a failure of the update, so apply it if the browser did not, and resolve.

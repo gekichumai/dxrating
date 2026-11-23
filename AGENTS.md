@@ -94,7 +94,7 @@ Web requires `apps/web/.env` (no `.env.example` — create manually):
 - The web app is server-rendered. SSR-visible markup must be deterministic between the server render and the first client render; do not suppress hydration warnings as a substitute for fixing the mismatch.
 - Request-scoped render inputs such as locale and render time belong in TanStack Start middleware/root route context, then in shared providers such as `RenderEnvironmentProvider`. Do not call `Date.now()`, depend on the browser time zone, or read browser-only state for text that appears in the first hydrated render unless the value is seeded from the server.
 - The locale is the URL path prefix (`/ja/…`, `/zh-hans/…`; English has none), read in `apps/web/src/setup/locale.ts`, and reaches React through the root route context and `LocaleProvider`. The router's `rewrite` (`src/router.tsx`) strips the prefix before matching and adds it to every href it builds, so `<Link>`, `navigate()` and `redirect()` never pass a locale, and `InternalLink` prefixes plain hrefs. `src/setup/locale-redirect.ts` runs before rendering: `?locale=xx` gets a 301 to the prefixed URL (other params kept), and an unprefixed URL gets a 302 to the visitor's language (picker cookie, then Accept-Language). Components read it with `useLocale()` and pass it to every message call: `m.key(inputs, { locale })`. Never call a message without `{ locale }` in code that can run during SSR: a Worker isolate renders requests in different locales at once, and the implicit locale is isolate-wide state. The only exceptions are effect callbacks (they never run on the server and should read the locale when they fire) and browser-only modules listed in `src/i18n/__tests__/locale-args.test.ts`, which enforces this.
-- Language switches happen in place (`useSetLocale()`, no reload), and the picker then pushes the same page under the new prefix. A memoized callback that formats a message must list `locale` in its dependencies (`useMemo`, `useCallback`, `useAsyncFn`), or it keeps the old language. Don't add `locale` to effect dependencies just to refresh text; that makes a language switch re-run the effect.
+- Language switches happen in place (`useSetLocale()`, no reload), and the picker then pushes the same page under the new prefix. Don't add `locale` to effect dependencies just to refresh text; that makes a language switch re-run the effect.
 - For sheet release dates and other date-only values rendered in SSR, use the date helpers in `apps/web/src/utils/dateFormatting.ts`. Avoid ad hoc `new Date(...)` plus `toLocaleString()` in components, especially without an explicit `timeZone`.
 - For relative times, use the rendered-at timestamp from `apps/web/src/utils/renderEnvironment.tsx` for the first render and update after mount. This preserves SSR/client parity while keeping the live UI behavior.
 - After SSR-visible web changes, validate at least one non-English locale on a production build or preview and check the browser console for React hydration errors such as React #418.
@@ -114,16 +114,10 @@ Web requires `apps/web/.env` (no `.env.example` — create manually):
 - Drizzle ORM with PostgreSQL 16.
 - Schema: `apps/backend/src/db/schema.ts` (app tables), `apps/backend/src/db/auth-schema.ts` (Better Auth tables).
 - Migrations live in `apps/backend/drizzle/`. Generate with `drizzle-kit generate`, apply with `drizzle-kit migrate`.
-- Never hand-edit generated migration SQL files.
-
-### Caching
-- `apps/backend/src/router.ts` uses an in-memory Keyv cache (30-minute TTL).
-- Mutations that affect cached data must call `await cache.delete('<key>')` after the write.
-- Current cached keys: `tags:list`.
 
 ## Code Conventions
 
-- **ESM throughout** — use extensionless relative imports in bundled TypeScript code (e.g., `import { foo } from './foo'`). Backend and renderer use TypeScript's `bundler` module resolution and esbuild for Node-compatible output. Source-only packages loaded directly by Node retain explicit `.ts` extensions on runtime imports; type-only imports can be extensionless. Keep extensions for assets and actual emitted file paths.
+- **ESM throughout** — use extensionless relative imports in bundled TypeScript code (e.g., `import { foo } from './foo'`). Backend and renderer use TypeScript's `bundler` module resolution and esbuild for Node-compatible output. Keep extensions for assets and actual emitted file paths.
 - **Linter**: oxlint — do not add ESLint.
 - **Formatter**: oxfmt — do not add Prettier.
 - **Node.js 26.12.1**, pnpm 10.33.0.
@@ -147,7 +141,7 @@ pnpm build       # verify no TypeScript errors
 
 ## Fixing Sentry Issues
 
-When asked to fix a Sentry issue, mark it resolved via the commit message ([docs](https://docs.sentry.io/product/releases/?platform=browser#resolving-issues-via-commits)). Put `Fixes <SHORT-ID>` in the commit message (or PR description), using the issue's short ID as shown in Sentry (e.g. `Fixes DXRATING-1A`). Use one `Fixes` line per issue when a commit fixes several.
+When asked to fix a Sentry issue, mark it resolved via the commit message ([docs](https://docs.sentry.io/product/releases/?platform=browser#resolving-issues-via-commits)). Put `Fixes <SHORT-ID>` in the commit message (or PR description), using the issue's short ID as shown in Sentry (e.g. `Fixes DXRATING-1A`).
 
 Sentry then resolves the issue once the release containing the commit ships, and flags it as a regression if it reappears in a later release, so devs get notified.
 

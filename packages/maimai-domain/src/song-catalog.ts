@@ -26,23 +26,47 @@ export interface SongCatalog {
   resolveReference: (reference: ProviderSheetReference) => VersionedSheet | null
 }
 
+export interface RegionalSheetLevels {
+  level: string
+  internalLevelValue: number
+  multiverInternalLevelValue?: Partial<Record<string, number>>
+  serverOverrides?: Partial<Record<string, { level?: string; levelValue?: number }>>
+}
+
+function overrideRegionOf(version: VersionEnum, region: Region | undefined): 'intl' | 'cn' | null {
+  return (region === 'intl' || region === 'cn') && version === LATEST_REGION_VERSIONS[region] ? region : null
+}
+
 /**
- * The server whose `serverOverrides` replace the sheets' level and internal level in a catalog, or null. Only CN's
- * current version: CN mixes the internal levels of several game versions, so the catalog carries CN's own values
- * (from LXNS) where no version's value is right. An older CN version keeps the multiver values.
+ * A sheet's level and internal level in a game version on a region: the one precedence rule for every caller.
+ *
+ * A region's `serverOverrides` describe its server today, so they apply on its current version only, where the
+ * override's level wins. Its internal level wins first on CN, whose overrides carry CN's own values (from LXNS) where
+ * CN mixes several game versions; other regions' override `levelValue` only restates their level string, so the
+ * version's value beats it there. Otherwise the version's value, then the sheet's own.
  */
-export function overrideServerOf(version: VersionEnum, region: Region | undefined): 'cn' | null {
-  return region === 'cn' && version === LATEST_REGION_VERSIONS.cn ? 'cn' : null
+export function sheetLevelOn(
+  sheet: RegionalSheetLevels,
+  { version, region }: { version: VersionEnum; region?: Region },
+): { level: string; internalLevelValue: number } {
+  const overrideRegion = overrideRegionOf(version, region)
+  const override = overrideRegion ? sheet.serverOverrides?.[overrideRegion] : undefined
+  const versionValue = sheet.multiverInternalLevelValue?.[version]
+  return {
+    level: override?.level ?? sheet.level,
+    internalLevelValue:
+      (overrideRegion === 'cn' ? (override?.levelValue ?? versionValue) : (versionValue ?? override?.levelValue)) ??
+      sheet.internalLevelValue,
+  }
 }
 
 export function buildSongCatalog(source: SongCatalogSource, version: VersionEnum, region?: Region): SongCatalog {
   const latestReleaseDateByVersion = buildLatestReleaseDateByVersion(source)
-  const server = overrideServerOf(version, region)
   // Catalogs are cached and shared by every caller, so their sheets are frozen. Shallowly: the nested values are the
   // document's own, and deep-freezing every sheet was a measurable share of the SSR worker's cold start.
   const sheets = Object.freeze(
     source.songs.flatMap((song) =>
-      projectSong(song, version, latestReleaseDateByVersion, server).map((sheet) => Object.freeze(sheet)),
+      projectSong(song, version, latestReleaseDateByVersion, region).map((sheet) => Object.freeze(sheet)),
     ),
   )
   return createSongCatalog(version, source.songs, sheets)
@@ -51,8 +75,8 @@ export function buildSongCatalog(source: SongCatalogSource, version: VersionEnum
 const catalogCache = new WeakMap<SongCatalogSource, Map<string, SongCatalog>>()
 
 /**
- * The song catalog of a document under a version, built once per document, version and override server. Pass the
- * region where it decides the internal levels (ratings, sheet lists): CN's current version uses CN's own values.
+ * The song catalog of a document under a version, built once per document, version and override region. Pass the
+ * region where it decides the levels (ratings, sheet lists): see `sheetLevelOn`.
  */
 export function getSongCatalog(source: SongCatalogSource, version: VersionEnum, region?: Region): SongCatalog {
   let byVersion = catalogCache.get(source)
@@ -60,8 +84,8 @@ export function getSongCatalog(source: SongCatalogSource, version: VersionEnum, 
     byVersion = new Map()
     catalogCache.set(source, byVersion)
   }
-  const server = overrideServerOf(version, region)
-  const key = server ? `${version}\u0000${server}` : version
+  const overrideRegion = overrideRegionOf(version, region)
+  const key = overrideRegion ? `${version}\u0000${overrideRegion}` : version
   let catalog = byVersion.get(key)
   if (!catalog) {
     catalog = buildSongCatalog(source, version, region)
@@ -196,7 +220,7 @@ function projectSong(
   song: Song,
   version: VersionEnum,
   latestReleaseDateByVersion: ReadonlyMap<string, string>,
-  server: 'cn' | null,
+  region: Region | undefined,
 ): VersionedSheet[] {
   // Copy the song's own fields once; each sheet adds its own, without the song's `sheets` (a sheet listing every
   // sibling made the catalog quadratic in size).
@@ -204,7 +228,6 @@ function projectSong(
   return song.sheets.map((sheet) => {
     const identity = { songId, type: sheet.type, difficulty: sheet.difficulty as SheetDifficulty } as SheetIdentity
     const isTypeUtage = isUtageType(sheet.type)
-    const override = server ? sheet.serverOverrides?.[server] : undefined
 
     return {
       ...songFields,
@@ -214,9 +237,7 @@ function projectSong(
       isTypeUtage,
       isRatingEligible: !isTypeUtage,
       releaseDateTimestamp: resolveReleaseDateTimestamp(sheet.releaseDate, sheet.version, latestReleaseDateByVersion),
-      level: override?.level ?? sheet.level,
-      internalLevelValue:
-        override?.levelValue ?? sheet.multiverInternalLevelValue?.[version] ?? sheet.internalLevelValue,
+      ...sheetLevelOn(sheet, { version, region }),
     }
   })
 }

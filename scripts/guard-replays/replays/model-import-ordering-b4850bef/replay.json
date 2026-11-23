@@ -1,0 +1,10 @@
+{
+  "mistake": "A client upload that skipped a record only because it was deleted after the upload's transaction began still records the save revision, so the next identical upload short-circuits instead of restoring the better score.",
+  "history": [
+    "#437 b4850bef (applyClientImportChunk had no chunks.timeBound; fixed with the same rule as completeImportJob)"
+  ],
+  "guard": "formal/import-ordering ShortCircuitSound (Bug_b4850bef = applyClientImportChunk without chunks.timeBound)",
+  "check": "formal/tlc.sh formal/import-ordering/ImportOrdering.tla",
+  "expect": "Invariant ShortCircuitSound is violated",
+  "needs": ["tlc"]
+}

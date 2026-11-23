@@ -1,0 +1,13 @@
+diff --git a/apps/backend/src/lib/credential-hygiene.ts b/apps/backend/src/lib/credential-hygiene.ts
+index 93d77788..02e65aba 100644
+--- a/apps/backend/src/lib/credential-hygiene.ts
++++ b/apps/backend/src/lib/credential-hygiene.ts
+@@ -103,8 +103,6 @@ const isCredentialInputKey = (key: string) => {
+   const normalized = normalizeKey(key)
+   return (
+     CREDENTIAL_KEYS.has(normalized) ||
+-    normalized === 'code' ||
+-    normalized === 'state' ||
+     /(?:token|secret|password|passwd|credentials?|(?:api|access|private|secret|signing|session|auth)key)$/.test(
+       normalized,
+     )

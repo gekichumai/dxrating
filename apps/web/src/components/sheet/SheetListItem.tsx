@@ -32,6 +32,7 @@ import { getSheetTypeAltText, SHEET_TYPE_IMAGES, SHEET_TYPE_UTAGE_2P_END_ADORNME
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import { isPlainNavigationClick, LinkBehavior } from '@/components/global/InternalLink'
+import { reportRejection } from '@/lib/rejections'
 
 export interface SheetListItemAnalyticsProps {
   source: SheetViewSource
@@ -110,7 +111,7 @@ export const SheetListItem: FC<{
             if (!isPlainNavigationClick(e)) return
             e.preventDefault()
             setOpen(true)
-            haptic.trigger('medium')
+            haptic.trigger('medium')?.catch(reportRejection)
             captureSheetContentViewed(sheet, analytics)
           }}
           // Horizontal padding comes from CSS classes (!px-4 unless the list passes its own inset). Gutters must not depend
@@ -598,7 +599,7 @@ export const SheetTitle: FC<SheetTitleProps> = ({
             aria-label={m.sheet_copyTitle_tooltip({}, { locale })}
             title={m.sheet_copyTitle_tooltip({}, { locale })}
             onClick={() => {
-              navigator.clipboard.writeText(title)
+              navigator.clipboard.writeText(title).catch(reportRejection)
               toast.success(m.sheet_copyTitle_toastSuccess({}, { locale }), {
                 id: `copy-sheet-title-${title}`,
               })

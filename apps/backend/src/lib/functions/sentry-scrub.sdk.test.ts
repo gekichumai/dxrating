@@ -4,6 +4,7 @@ import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import * as Sentry from '@sentry/node'
 import { afterEach, describe, expect, it } from 'vitest'
+import { CREDENTIAL_ROUTES } from '../credential-hygiene'
 import { sentryOptions } from './sentry'
 
 const lxnsBody = JSON.stringify({ code: 'synthetic-code', state: 'synthetic-state' })
@@ -92,6 +93,20 @@ describe('backend Sentry and the LXNS completion body', () => {
     expect(sent).toContain(path)
     expect(sent).not.toContain('synthetic-password')
     expect(sent).not.toContain('synthetic-sega-id')
+  })
+
+  it.each(CREDENTIAL_ROUTES.map(({ template }) => template))('sends no request body of %s', async (template) => {
+    const path = template.replace(/\{[^}]+\}/g, 'dsav_x').replace(/\/\*$/, '/x')
+    const body = JSON.stringify({
+      id: 'leaked-sega-id',
+      password: 'leaked-password',
+      code: 'leaked-code',
+      note: 'leaked',
+    })
+    const sent = await envelopesFor(true, path, body)
+    expect(sent).toContain('"type":"event"')
+    expect(sent).toContain(path)
+    expect(sent).not.toContain('leaked')
   })
 
   it('keeps bodies of other routes', async () => {

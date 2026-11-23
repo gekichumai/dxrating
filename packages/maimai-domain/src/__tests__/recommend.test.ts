@@ -1,9 +1,17 @@
 import { CategoryEnum, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
 import { calculateBest50 } from '../best50'
+import { collapsePlays } from '../collapse-plays'
+import { mintRatingEntry } from '../rating-entries'
 import { recommendRatingRaises } from '../recommend'
 import { buildSongCatalog } from '../song-catalog'
-import type { RatingEntry } from '../types'
+import type { RatingEntry, RatingEntryFields } from '../types'
+
+const rated = (fields: RatingEntryFields[]): RatingEntry[] => fields.map(mintRatingEntry)
+const recordsOf = (entries: RatingEntry[]) =>
+  new Map(
+    entries.map((e) => [e.sheetId, collapsePlays([{ ...e, best50Bucket: e.source?.best50Bucket ?? null }], null)]),
+  )
 
 function makeSong(id: string, version: VersionEnum, level: number) {
   return {
@@ -39,12 +47,12 @@ describe('recommendRatingRaises', () => {
     makeSong('old2', VersionEnum.PRiSM, 12),
   ]
   const catalog = buildSongCatalog({ songs, versions: [] }, VersionEnum.MAGiCAL)
-  const entries: RatingEntry[] = [
+  const entries = rated([
     { sheetId: 'old1:m', identity: { songId: 'old1', type: 'dx', difficulty: 'master' }, achievementRate: 99 },
-  ]
+  ])
   const best50 = calculateBest50({ catalog, version: VersionEnum.MAGiCAL, region: 'jp', entries })
   const sheets = ['new1:m', 'old1:m', 'old2:m'].map((id) => catalog.getById(id)!)
-  const records = new Map(entries.map((e) => [e.sheetId, e]))
+  const records = recordsOf(entries)
   const recs = recommendRatingRaises({ sheets, best50, records, version: VersionEnum.MAGiCAL, region: 'jp' })
 
   it('suggests unplayed charts at the lowest target when buckets are not full', () => {
@@ -84,7 +92,7 @@ describe('recommendRatingRaises agrees with a B50 recalculation', () => {
     const before = calculateBest50({ catalog, version, region, entries }).statistics.b50Sum
     const raised = entries.map((e) => (e.sheetId === sheetId ? { ...e, achievementRate } : e))
     if (!raised.some((e) => e.sheetId === sheetId))
-      raised.push({ sheetId, identity: identity(sheetId.split(':')[0]!), achievementRate })
+      raised.push(mintRatingEntry({ sheetId, identity: identity(sheetId.split(':')[0]!), achievementRate }))
     return calculateBest50({ catalog, version, region, entries: raised }).statistics.b50Sum - before
   }
 
@@ -99,18 +107,18 @@ describe('recommendRatingRaises agrees with a B50 recalculation', () => {
     ]
     const catalog = buildSongCatalog({ songs, versions: [] }, VersionEnum.MAGiCAL)
     const hint = { provider: 'diving-fish' as const, best50Bucket: 'b15' as const }
-    const entries: RatingEntry[] = [
+    const entries = rated([
       ...songs
         .slice(0, 15)
         .map((s) => ({ sheetId: `${s.id}:m`, identity: identity(s.id), achievementRate: 100.5, source: hint })),
       { sheetId: 'apollo:m', identity: identity('apollo'), achievementRate: 99, source: hint },
-    ]
+    ])
     const best50 = calculateBest50({ catalog, version: VersionEnum.MAGiCAL, region: 'cn', entries })
     expect(best50.b15).toHaveLength(15)
     const recs = recommendRatingRaises({
       sheets: [catalog.getById('apollo:m')!],
       best50,
-      records: new Map(entries.map((e) => [e.sheetId, e])),
+      records: recordsOf(entries),
       version: VersionEnum.MAGiCAL,
       region: 'cn',
     })
@@ -122,14 +130,12 @@ describe('recommendRatingRaises agrees with a B50 recalculation', () => {
   it('keeps an existing AP bonus in current and target ratings', () => {
     const songs = [makeSong('ap', VersionEnum.PRiSM, 13)]
     const catalog = buildSongCatalog({ songs, versions: [] }, VersionEnum.MAGiCAL)
-    const entries: RatingEntry[] = [
-      { sheetId: 'ap:m', identity: identity('ap'), achievementRate: 100.1, comboFlag: 'ap' },
-    ]
+    const entries = rated([{ sheetId: 'ap:m', identity: identity('ap'), achievementRate: 100.1, comboFlag: 'ap' }])
     const best50 = calculateBest50({ catalog, version: VersionEnum.MAGiCAL, region: 'jp', entries })
     const [rec] = recommendRatingRaises({
       sheets: [catalog.getById('ap:m')!],
       best50,
-      records: new Map(entries.map((e) => [e.sheetId, e])),
+      records: recordsOf(entries),
       version: VersionEnum.MAGiCAL,
       region: 'jp',
     })
@@ -143,15 +149,15 @@ describe('recommendRatingRaises agrees with a B50 recalculation', () => {
       makeSong('cand', VersionEnum.PRiSM, 13),
     ]
     const catalog = buildSongCatalog({ songs, versions: [] }, VersionEnum.MAGiCAL)
-    const entries: RatingEntry[] = [
+    const entries = rated([
       ...songs.slice(0, 35).map((s) => ({ sheetId: `${s.id}:m`, identity: identity(s.id), achievementRate: 100.5 })),
       { sheetId: 'cand:m', identity: identity('cand'), achievementRate: 99, comboFlag: 'fc' },
-    ]
+    ])
     const best50 = calculateBest50({ catalog, version: VersionEnum.MAGiCAL, region: 'jp', entries })
     const recs = recommendRatingRaises({
       sheets: [catalog.getById('cand:m')!],
       best50,
-      records: new Map(entries.map((e) => [e.sheetId, e])),
+      records: recordsOf(entries),
       version: VersionEnum.MAGiCAL,
       region: 'jp',
     })

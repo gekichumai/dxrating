@@ -10,7 +10,7 @@ const { auth } = vi.hoisted(() => ({
     isAuthenticated: false,
     loginOpen: false,
     openLoginDialog: vi.fn(),
-    LoginDialog: (() => null) as () => ReactElement | null,
+    loginDialog: null as ReactElement | null,
   },
 }))
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => auth }))
@@ -47,7 +47,7 @@ describe('LXNS import menu item', () => {
 
   it('keeps the import menu, and so the sign-in form, open while the user tabs through sign-in', () => {
     auth.isAuthenticated = false
-    auth.LoginDialog = () => (
+    auth.loginDialog = (
       <Dialog open aria-label="Sign in">
         <TextField label="Email" />
         <TextField label="Password" />

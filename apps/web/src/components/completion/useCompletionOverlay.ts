@@ -43,7 +43,7 @@ export function useCompletionOverlay(table: ConstantTable): CompletionOverlaySta
     setMounted(true)
   }, [])
 
-  const records = useMemo(() => (mounted ? bySheetId : new Map()), [mounted, bySheetId])
+  const records: typeof bySheetId = useMemo(() => (mounted ? bySheetId : new Map()), [mounted, bySheetId])
   const active = mounted && records.size > 0
   const sheetIds = useMemo(() => table.groups.flatMap((group) => group.charts.map((chart) => chart.sheetId)), [table])
   const summary = useMemo(() => summarizeCompletion(sheetIds, records, target), [sheetIds, records, target])

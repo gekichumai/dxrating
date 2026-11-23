@@ -1,0 +1,10 @@
+{
+  "mistake": "A view reads one play of a chart (the highest achievement) instead of the record of all its plays, so an AP or FDX from a lower play is lost.",
+  "history": [
+    "#419 d404f201 (the completion overlay, share image and progress matrix read the highest-achievement entry)",
+    "#419 0454263d (constant-table badges did the same)"
+  ],
+  "guard": "Completion, plate, recommend and toplist inputs are CollapsedPlay, which only collapsePlays makes, so one play does not compile there",
+  "check": "pnpm --filter @gekichumai/dxrating-web build",
+  "expect": "useCollapsePlays"
+}

@@ -1,0 +1,18 @@
+diff --git a/apps/web/src/models/useServerAliases.ts b/apps/web/src/models/useServerAliases.ts
+index 03c9d59a..2fb23608 100644
+--- a/apps/web/src/models/useServerAliases.ts
++++ b/apps/web/src/models/useServerAliases.ts
+@@ -1,6 +1,8 @@
+-import { useCommunityLists, type CommunityLists } from '../catalog/communityOverlay'
+-
+-const aliasesOf = (lists: CommunityLists) => lists.aliases
++import useSWR from 'swr'
++import { loadCommunityLists } from '../catalog/communityOverlay'
+ 
+ /** The aliases of every song, by public song ID, from the v2 community overlay */
+-export const useServerAliases = () => useCommunityLists(aliasesOf)
+\ No newline at end of file
++export const useServerAliases = () =>
++  useSWR('aliases.list', async () => (await loadCommunityLists()).aliases, {
++    focusThrottleInterval: 1000 * 60 * 60,
++  })

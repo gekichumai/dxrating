@@ -1,10 +1,12 @@
 export * from './src/achievement.ts'
 export * from './src/best50.ts'
 export * from './src/cloud-save-changes.ts'
+export * from './src/collapse-plays.ts'
 export * from './src/region-versions.ts'
 export * from './src/dx-score.ts'
 export * from './src/import-normalizers.ts'
 export * from './src/legacy-migration.ts'
+export { best50HintOf, toRatingEntries, toRatingEntry } from './src/rating-entries.ts'
 export * from './src/score-merge.ts'
 export * from './src/score-provenance.ts'
 export * from './src/sheet-identity.ts'
@@ -14,6 +16,7 @@ export {
   getSongCatalog,
   releaseDateToTimestamp,
   resolveReleaseDateTimestamp,
+  sheetLevelOn,
 } from './src/song-catalog.ts'
 export type { SongCatalog, SongCatalogSource } from './src/song-catalog.ts'
 export * from './src/types.ts'
