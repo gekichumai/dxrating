@@ -117,8 +117,11 @@ Optional:
 - `MCP_ANALYTICS_SECRET` — HMAC secret of the daily-rotating MCP analytics distinct_id (random per process if unset)
 - `MCP_POSTHOG_KEY`, `MCP_POSTHOG_HOST`, `MCP_ANALYTICS_SAMPLE_RATE`, `MCP_ANALYTICS_DAILY_CAP` — MCP PostHog events (see `src/services/mcp/analytics.ts`)
 - `CLOUD_SAVE_MODE` — `off` (default) | `allowlist` | `optin` | `on`; see "Feature flags" below
-- `CLOUD_SAVE_ALLOWLIST_EMAILS` — Comma-separated emails that get cloud save while the mode is not `off` (verified emails only, `user.email_verified`; email/password and passkey sign-ups are unverified, so grant those with `flag:set`). See "Email verification" below
+- `CLOUD_SAVE_ALLOWLIST_EMAILS` — Comma-separated emails that get cloud save while the mode is not `off` (verified emails only, `user.email_verified`: an OAuth provider's word, or a mailed link once mail is on; an email/password or passkey account that hasn't used its link needs `flag:set`). See "Email verification" below
 - `SERVER_IMPORTS` — `off` (default) | `on`; server-side imports into cloud saves
+- `RESEND_API_KEY` — Resend API key for account email (verification links, password reset). Unset turns mail off: nothing is sent, `/send-verification-email` and `/request-password-reset` answer `VERIFICATION_EMAIL_NOT_ENABLED` / `RESET_PASSWORD_DISABLED`, and a warning is logged at startup. See "Account email" below
+- `EMAIL_FROM` — Sender of account email (default `DXRating <no-reply@dxrating.net>`); its domain must be verified at Resend
+- `EMAIL_TRANSPORT` — Tests only: `memory` keeps sent mail in `memoryOutbox` (`src/services/mailer.ts`) instead of sending it; refused unless `NODE_ENV=test`
 - `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_CACHE_PURGE_TOKEN` — purge the edge's public Cache-Tags at startup and invalidate `dxdata` on each new publication (see `src/services/edge-cache.ts`). The token needs only Zone → Cache Purge → Purge on dxrating.net
 
 ## Feature flags (cloud save, gekichumai/meta#17)
@@ -150,9 +153,11 @@ node dist/flag-set.js cloud_save owner@example.com off   # in the production ima
 ```
 
 It prints whether the address is verified and, when it is, how and since when
-(`email verified by oauth at 2026-01-14T15:01:21Z`). `NOT verified` means
-nobody has proved the address belongs to the account holder: check it is the
-right person before granting. `verified by unknown` is an address verified
+(`email verified by oauth at 2026-01-14T15:01:21Z`; `by email_link` for a
+mailed link). `NOT verified` means nobody has proved the address belongs to the
+account holder: check it is the right person before granting, or have them use
+"Resend verification email" on their account page, after which the allowlist
+matches them without `flag:set`. `verified by unknown` is an address verified
 before the method was recorded (see below).
 
 ### Cloud save services (`src/services/cloud-save/`)
@@ -242,6 +247,43 @@ when the user's current address is the proven one, and returns `verified`,
 `already_verified` or `email_mismatch` (treat the last as not verified). The
 `*_backfill_email_verified_at` migration gave already-verified users their
 `created_at` and `oauth` (an OAuth account is linked) or `unknown`.
+
+### Account email
+
+`src/services/mailer.ts` (`Mailer`) sends mail through Resend's HTTP API with
+the shared `HttpClient` (10 s timeout; a failure is logged and reported to
+Sentry with its kind and Resend's error name, never the address or the link).
+Its transport is `resend` with `RESEND_API_KEY`, `disabled` without it, and
+`memory` in tests. `deliver` sends in the background, so a request never waits
+on Resend nor shows by its timing that a message went out.
+
+`src/lib/auth-mail.ts` connects it to Better Auth, only while the mailer is
+enabled (otherwise Better Auth behaves as before mail existed):
+
+- Verification: a link (24 hours) is mailed after email sign-up and passkey
+  sign-up, from a `hooks.after` on those routes rather than Better Auth's
+  `sendOnSignUp`. It reads the account after the whole request ran and mails
+  only an address that is still unverified, so a sign-up that proved its
+  address another way (the Email Verification Protocol) gets no mail. A
+  signed-in, unverified account asks for another with `/send-verification-email`.
+  `/verify-email` sets `email_verified`; the `update.after` hook above records
+  `email_link` (an older link used later changes nothing), and
+  `autoSignInAfterVerification` signs the link's holder in.
+- Password reset: `/request-password-reset` mails a link (1 hour) and
+  `/reset-password` sets the password, signing every session out
+  (`revokeSessionsOnPasswordReset`). A passkey or social account without a
+  password gets its first one this way. haveIBeenPwned checks the new password.
+- Every mailed link goes through Better Auth's endpoint, which checks the token
+  and redirects to the web's `/account/verify-email` (`?error=` on failure) or
+  `/account/reset-password?token=` in the visitor's language
+  (`detectAuthLocale`, with the URL prefix). Any `callbackURL`/`redirectTo` a
+  client sends is replaced. `FRONTEND_URL`'s origin is a trusted origin for this.
+- Templates (`src/lib/auth-mail-templates.ts`): plain text and simple HTML in
+  every supported language, no remote images.
+- Limits: Better Auth's defaults hold `/send-verification-email` and
+  `/request-password-reset` to 3 a minute per IP in production; `/reset-password`
+  and `/verify-email` get 10 a minute; and one address gets at most 3 messages
+  of a kind in 15 minutes (in memory, per instance).
 
 ## Deployment
 
