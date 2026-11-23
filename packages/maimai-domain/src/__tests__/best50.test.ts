@@ -1,6 +1,7 @@
 import { CategoryEnum, DifficultyEnum, ServerEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { describe, expect, it } from 'vitest'
 import { SCORE_COEFFICIENT_TABLE, calculateBest50, calculateRatingAward } from '../best50'
+import { mintRatingEntry } from '../rating-entries'
 import { buildSongCatalog, type SongCatalogSource } from '../song-catalog'
 import type { ComboFlag, RatingEntry, SheetIdentity } from '../types'
 
@@ -65,12 +66,12 @@ function providerEntry(
   provider: NonNullable<RatingEntry['source']>['provider'],
   best50Bucket?: 'b15' | 'b35',
 ): RatingEntry {
-  return {
+  return mintRatingEntry({
     sheetId: sheetIdOf(identity),
     identity,
     achievementRate,
     source: best50Bucket ? { provider, best50Bucket } : undefined,
-  }
+  })
 }
 
 function masterIdentity(songId: string): SheetIdentity {
@@ -430,7 +431,7 @@ describe('Best 50', () => {
   it('preserves selected source provenance when duplicate Diving Fish hints force cn bucket', () => {
     const catalog = buildSongCatalog(makeData(), VersionEnum.CiRCLEPLUS)
     const identity = masterIdentity('current')
-    const selectedEntry: RatingEntry = {
+    const selectedEntry = mintRatingEntry({
       sheetId: sheetIdOf(identity),
       identity,
       achievementRate: 100.5,
@@ -439,7 +440,7 @@ describe('Best 50', () => {
         providerId: 'lxns-current',
         providerSongName: 'LXNS Current',
       },
-    }
+    })
     const result = calculateBest50({
       catalog,
       version: VersionEnum.CiRCLEPLUS,
@@ -469,7 +470,7 @@ describe('Best 50', () => {
   ])('uses the highest-rated authoritative hint for duplicate cn rows: $name', ({ hintedEntries }) => {
     const catalog = buildSongCatalog(makeData(), VersionEnum.CiRCLEPLUS)
     const identity = masterIdentity('current')
-    const selectedEntry: RatingEntry = {
+    const selectedEntry = mintRatingEntry({
       sheetId: sheetIdOf(identity),
       identity,
       achievementRate: 100.5,
@@ -478,7 +479,7 @@ describe('Best 50', () => {
         providerId: 'lxns-current',
         providerSongName: 'LXNS Current',
       },
-    }
+    })
     const result = calculateBest50({
       catalog,
       version: VersionEnum.CiRCLEPLUS,
@@ -508,12 +509,12 @@ describe('Best 50', () => {
   ])('prefers b15 when duplicate cn authoritative hints are tied: $name', ({ hintedEntries }) => {
     const catalog = buildSongCatalog(makeData(), VersionEnum.CiRCLEPLUS)
     const identity = masterIdentity('current')
-    const selectedEntry: RatingEntry = {
+    const selectedEntry = mintRatingEntry({
       sheetId: sheetIdOf(identity),
       identity,
       achievementRate: 100.5,
       source: { provider: 'lxns', providerId: 'lxns-current' },
-    }
+    })
     const result = calculateBest50({
       catalog,
       version: VersionEnum.CiRCLEPLUS,

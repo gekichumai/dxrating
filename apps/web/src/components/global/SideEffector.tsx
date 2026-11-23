@@ -12,11 +12,8 @@ import { autoNetImportKey } from '../../models/scores/cloudImports'
 import { useVersionTheme } from '../../utils/useVersionTheme'
 import toast from 'react-hot-toast'
 import IconMdiCached from '~icons/mdi/cached'
-import {
-  NET_IMPORT_COOLDOWN_MS,
-  NET_IMPORT_LAST_SUCCESS_KEY,
-  importFromNETRecords,
-} from '../rating/io/import/importFromNETRecords'
+import { NET_IMPORT_COOLDOWN_MS, importFromNETRecords } from '../rating/io/import/importFromNETRecords'
+import { netAutoImport, netImportLastSuccess } from '../rating/io/import/netImportStorage'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import { CatalogUnverifiedHint } from './CatalogUnverifiedHint'
@@ -55,27 +52,14 @@ export const SideEffectorAutoImportRating: FC = () => {
   useEffect(() => {
     if (!catalog || !activeSave.decided || startedForRef.current === catalog) return
     startedForRef.current = catalog
-    const mode = (() => {
-      try {
-        const mode = localStorage.getItem('rating-auto-import-from-net')
-        if (!mode) return 'disabled'
-
-        const parsed = JSON.parse(mode)
-        if (parsed === 'merge') return 'merge'
-        if (parsed === 'replace') return 'replace'
-        if (parsed === true) return 'replace'
-        return 'disabled'
-      } catch {
-        return 'disabled'
-      }
-    })() as 'merge' | 'replace' | 'disabled'
-
-    if (mode === 'disabled') return
+    const stored = netAutoImport.get()
+    if (stored === false) return
+    const mode = stored === true ? 'replace' : stored
 
     // Cooldown: skip auto-import if last success was within 15 minutes
-    const lastSuccess = localStorage.getItem(NET_IMPORT_LAST_SUCCESS_KEY)
-    if (lastSuccess) {
-      const elapsed = Date.now() - Number(lastSuccess)
+    const lastSuccess = netImportLastSuccess.get()
+    if (lastSuccess !== null) {
+      const elapsed = Date.now() - lastSuccess
       if (elapsed < NET_IMPORT_COOLDOWN_MS) {
         const minutes = Math.round(elapsed / 60_000)
         toast(

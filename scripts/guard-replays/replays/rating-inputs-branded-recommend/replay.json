@@ -1,0 +1,10 @@
+{
+  "mistake": "A view builds calculateBest50 input itself from its per-chart records, so the B50 drops duplicate plays and the CN Diving-Fish bucket hint and differs from /rating.",
+  "history": [
+    "#422 d395df5a (RecommendPage built RatingEntry[] inline from achievement-deduplicated records without the hint)",
+    "#417 0efa1f4e (home quick stats did the same)"
+  ],
+  "guard": "RatingEntry is branded: only toRatingEntries and the import normalizers in maimai-domain mint one, so a hand-built entry does not compile",
+  "check": "pnpm --filter @gekichumai/dxrating-web build",
+  "expect": "useToRatingEntries"
+}

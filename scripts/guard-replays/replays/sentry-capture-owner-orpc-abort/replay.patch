@@ -1,0 +1,33 @@
+diff --git a/apps/backend/src/app.ts b/apps/backend/src/app.ts
+index bd474340..f311ab30 100644
+--- a/apps/backend/src/app.ts
++++ b/apps/backend/src/app.ts
+@@ -30,8 +30,7 @@ import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
+ import { ZodToJsonSchemaConverter } from '@orpc/zod'
+ import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc/server/plugins'
+ import { onError, ORPCError } from '@orpc/server'
+-import { reportFailure } from './lib/functions/sentry'
+-import { reportProcedureError } from './orpc-error-reporting'
++import { classifyFailure, reportFailure, Sentry } from './lib/functions/sentry'
+ import { Database } from './db/index'
+ import {
+   compressCatalogBody,
+@@ -721,7 +720,17 @@ const openAPIHandler = new OpenAPIHandler(appRouter, {
+     status: COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500,
+   }),
+   plugins: [new RequestHeadersHandlerPlugin<ApiContext>(), new ResponseHeadersHandlerPlugin<ApiContext>()],
+-  clientInterceptors: [onError((error, { path, signal }) => reportProcedureError(error, { path, signal }))],
++  clientInterceptors: [
++    onError((error, { path }) => {
++      if (!classifyFailure(error).report) return
++
++      const procedureName = path.join('.')
++      console.error(`[oRPC] ${procedureName} failed:`, error)
++      Sentry.captureException(error, {
++        tags: { 'orpc.procedure': procedureName },
++      })
++    }),
++  ],
+ })
+ 
+ // oRPC OpenAPI generator for spec

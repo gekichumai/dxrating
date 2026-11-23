@@ -100,6 +100,7 @@ const leaves = (schema: z.ZodType, path: string): Array<[string, z.ZodType]> => 
 
 const isBigintColumn = (schema: z.ZodType): boolean => {
   const out = defOf(schema).type === 'pipe' ? defOf(schema).out! : schema
+  // oxlint-disable-next-line no-underscore-dangle -- Zod 4 exposes the brand parent chain only on _zod
   for (let current: z.core.$ZodType | undefined = out; current; current = current._zod.parent) {
     if (current === PgBigint) return true
   }

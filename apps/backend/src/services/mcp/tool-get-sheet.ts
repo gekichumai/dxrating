@@ -162,11 +162,13 @@ function sheetDetail(
     type: sheet.type,
     difficulty: sheet.difficulty,
     ...sheetOnServer(sheet, server),
+    // oxlint-disable-next-line no-restricted-properties -- the raw per-version table, shown as is
     ...(sheet.multiverInternalLevelValue ? { internalLevelByVersion: sheet.multiverInternalLevelValue } : {}),
     noteDesigner: sheet.noteDesigner ?? null,
     noteCounts: sheet.noteCounts,
     releaseDate: sheet.releaseDate ?? null,
     servers: sheet.serverIds,
+    // oxlint-disable-next-line no-restricted-properties -- the raw per-server table, shown as is
     ...(server === undefined && sheet.serverOverrides ? { serverOverrides: sheet.serverOverrides } : {}),
     isSpecial: sheet.isSpecial,
     ...(sheet.comment ? { comment: sheet.comment } : {}),
