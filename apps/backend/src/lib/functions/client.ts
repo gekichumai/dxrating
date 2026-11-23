@@ -127,6 +127,45 @@ export function netErrorPageMessage(netErrorCode: string | undefined): string {
 
 const MAINTENANCE_MESSAGE = 'maimai NET or the SEGA ID login is under maintenance.'
 
+/** A maimai NET or SEGA ID answer that is neither maintenance nor the error page: what `fetchEffect` hands callers */
+export type NetPage =
+  | { readonly kind: 'Page'; readonly status: 200; readonly html: string }
+  | { readonly kind: 'Redirect'; readonly status: number; readonly location: string }
+  | { readonly kind: 'UnexpectedStatus'; readonly status: number; readonly html: string }
+
+export type NetResponse =
+  | NetPage
+  | { readonly kind: 'Maintenance' }
+  | { readonly kind: 'ErrorPage'; readonly location: string }
+
+/**
+ * What a maimai NET or SEGA ID answer means; a state it does not know is `UnexpectedStatus`, never a guess. `html` is
+ * empty for a redirect, whose body is not read.
+ */
+export function classifyNetResponse(status: number, location: string | null, html: string): NetResponse {
+  // JP NET answers 503 during emergency maintenance; the Aime gateway and NET redirect to a maintenance page
+  if (status === 503) return { kind: 'Maintenance' }
+  if (status >= 300 && status < 400 && location) {
+    if (URLS.CHECKLIST.MAINTENANCE_REDIRECT.test(location)) return { kind: 'Maintenance' }
+    if (URLS.CHECKLIST.ERROR.includes(location)) return { kind: 'ErrorPage', location }
+    return { kind: 'Redirect', status, location }
+  }
+  if (URLS.CHECKLIST.MAINTENANCE.some((text) => html.includes(text))) return { kind: 'Maintenance' }
+  return status === 200 ? { kind: 'Page', status, html } : { kind: 'UnexpectedStatus', status, html }
+}
+
+const unexpectedAnswerError = (url: string, answer: { status: number; html: string }, submittedId?: string) =>
+  new NetImportError('INTERNAL_ERROR', `unexpected maimai NET response status: ${answer.status} ${netStepOf(url)}`, {
+    step: netStepOf(url),
+    upstreamMessage: pageSignals(answer.html, submittedId),
+  })
+
+const parsePageEffect = (html: string) =>
+  Effect.try({
+    try: () => new DOMParser({ errorHandler: () => {} }).parseFromString(html, 'text/html'),
+    catch: () => new NetImportError('INTERNAL_ERROR', 'failed to parse record page'),
+  })
+
 const CAPTCHA_MARKERS = [
   'g-recaptcha',
   'recaptcha/api',
@@ -401,52 +440,64 @@ export class Client {
       return parseNetErrorCode(text)
     }).pipe(Effect.timeout('5 seconds'), Effect.option, Effect.map(Option.getOrUndefined))
 
-  fetchEffect = (url: string, init?: RequestInit, errorRedirectCode: NetImportErrorCode = 'UNKNOWN_ERROR') =>
+  /** One request: maintenance fails with `NET_MAINTENANCE` and the error page with `errorRedirectCode` */
+  fetchEffect = (
+    url: string,
+    init?: RequestInit,
+    errorRedirectCode: NetImportErrorCode = 'UNKNOWN_ERROR',
+  ): Effect.Effect<NetPage, NetImportError | NetRequestError> =>
     Effect.gen({ self: this }, function* () {
       const step = netStepOf(url)
       const res = yield* this.requestEffect(url, init)
-      const location = res.headers.get('location') ?? ''
-      // maimai NET answers 503 during emergency maintenance; the Aime gateway and NET redirect to a maintenance page
-      if (
-        res.status === 503 ||
-        (res.status >= 300 && res.status < 400 && URLS.CHECKLIST.MAINTENANCE_REDIRECT.test(location))
-      ) {
-        yield* this.releaseEffect(res)
-        return yield* Effect.fail(new NetImportError('NET_MAINTENANCE', MAINTENANCE_MESSAGE, { step }))
+      const html =
+        res.status >= 300 && res.status < 400
+          ? yield* this.releaseEffect(res).pipe(Effect.as(''))
+          : yield* Effect.tryPromise({
+              try: () => res.text(),
+              catch: (cause) => new NetRequestError({ operation: 'read maimai NET response', cause }),
+            })
+      const answer = classifyNetResponse(res.status, res.headers.get('location'), html)
+      switch (answer.kind) {
+        case 'Maintenance':
+          return yield* Effect.fail(new NetImportError('NET_MAINTENANCE', MAINTENANCE_MESSAGE, { step }))
+        case 'ErrorPage': {
+          const netErrorCode =
+            errorRedirectCode === 'AIME_CARD_UNAVAILABLE' ? undefined : yield* this.errorPageCodeEffect(answer.location)
+          return yield* Effect.fail(
+            new NetImportError(
+              errorRedirectCode,
+              errorRedirectCode === 'AIME_CARD_UNAVAILABLE'
+                ? 'SEGA ID authentication succeeded, but maimai NET did not provide a usable Aime card.'
+                : errorRedirectCode === 'INVALID_CREDENTIALS'
+                  ? 'maimai NET rejected the SEGA ID login.'
+                  : netErrorPageMessage(netErrorCode),
+              { step, netErrorCode },
+            ),
+          )
+        }
+        default:
+          return answer
       }
-      if (res.status === 302 && URLS.CHECKLIST.ERROR.includes(location)) {
-        yield* this.releaseEffect(res)
-        // the code tells a rejected password from a refusal of another kind (DXRATING-BACKEND-1W, the 11-01 outage)
-        const netErrorCode =
-          errorRedirectCode === 'AIME_CARD_UNAVAILABLE' ? undefined : yield* this.errorPageCodeEffect(location)
-        return yield* Effect.fail(
-          new NetImportError(
-            errorRedirectCode,
-            errorRedirectCode === 'AIME_CARD_UNAVAILABLE'
-              ? 'SEGA ID authentication succeeded, but maimai NET did not provide a usable Aime card.'
-              : errorRedirectCode === 'INVALID_CREDENTIALS'
-                ? 'maimai NET rejected the SEGA ID login.'
-                : netErrorPageMessage(netErrorCode),
-            { step, netErrorCode },
-          ),
-        )
-      }
-      return res
     })
 
+  /** A request whose answer only sets cookies: a page or a redirect; any other status fails */
+  protected stepEffect = (
+    url: string,
+    init?: RequestInit,
+    errorRedirectCode?: NetImportErrorCode,
+    submittedId?: string,
+  ) =>
+    this.fetchEffect(url, init, errorRedirectCode).pipe(
+      Effect.flatMap((answer) =>
+        answer.kind === 'UnexpectedStatus' ? Effect.fail(unexpectedAnswerError(url, answer, submittedId)) : Effect.void,
+      ),
+    )
+
+  /** The legacy routes parse whatever page NET answered (an empty one for a redirect) */
   fetchAsDOMEffect = (url: string, init?: RequestInit) =>
-    Effect.gen({ self: this }, function* () {
-      const res = yield* this.fetchEffect(url, init)
-      const text = yield* Effect.tryPromise({
-        try: () => res.text(),
-        catch: (cause) => new NetRequestError({ operation: 'read maimai NET response', cause }),
-      })
-      yield* this.checkMaintenanceEffect(text, netStepOf(url))
-      return yield* Effect.try({
-        try: () => new DOMParser({ errorHandler: () => {} }).parseFromString(text, 'text/html'),
-        catch: () => new NetImportError('INTERNAL_ERROR', 'failed to parse record page'),
-      })
-    })
+    this.fetchEffect(url, init).pipe(
+      Effect.flatMap((answer) => parsePageEffect(answer.kind === 'Redirect' ? '' : answer.html)),
+    )
 
   /**
    * A page that must be a real answer: anything but a 200 (a redirect to the login page, a server error) fails with
@@ -454,25 +505,15 @@ export class Client {
    * nothing (design §7.1): a page that silently parsed as empty would drop records.
    */
   protected fetchStrictPageEffect = (url: string) =>
-    Effect.gen({ self: this }, function* () {
-      const res = yield* this.fetchEffect(url)
-      if (res.status !== 200) {
-        yield* Effect.tryPromise({
-          try: () => res.body?.cancel() ?? Promise.resolve(),
-          catch: (cause) => new NetRequestError({ operation: 'release maimai NET response', cause }),
-        })
-        return yield* Effect.fail(new NetImportError('UNKNOWN_ERROR', `maimai NET answered ${res.status}`))
-      }
-      const text = yield* Effect.tryPromise({
-        try: () => res.text(),
-        catch: (cause) => new NetRequestError({ operation: 'read maimai NET response', cause }),
-      })
-      yield* this.checkMaintenanceEffect(text)
-      return yield* Effect.try({
-        try: () => new DOMParser({ errorHandler: () => {} }).parseFromString(text, 'text/html'),
-        catch: () => new NetImportError('INTERNAL_ERROR', 'failed to parse record page'),
-      })
-    })
+    this.fetchEffect(url).pipe(
+      Effect.flatMap((answer) =>
+        answer.kind === 'Page'
+          ? parsePageEffect(answer.html)
+          : Effect.fail(
+              new NetImportError('UNKNOWN_ERROR', `maimai NET answered ${answer.status}`, { step: netStepOf(url) }),
+            ),
+      ),
+    )
 
   protected fetchRecordPageEffect = (url: string) =>
     (this.strictPages ? this.fetchStrictPageEffect(url) : this.fetchAsDOMEffect(url)).pipe(
@@ -491,12 +532,6 @@ export class Client {
       catch: (cause) => new NetRequestError({ operation: 'publish maimai NET progress', cause }),
     })
 
-  protected checkMaintenanceEffect = (text: string, step?: NetStep) =>
-    Effect.try({
-      try: () => this.checkMaintenance(text, step),
-      catch: (error) => (error instanceof NetImportError ? error : new NetImportError('INTERNAL_ERROR')),
-    })
-
   disposeEffect = () =>
     Effect.tryPromise({
       try: async () => {
@@ -506,12 +541,6 @@ export class Client {
       },
       catch: (cause) => new NetRequestError({ operation: 'close maimai NET connections', cause }),
     })
-
-  checkMaintenance(text: string, step?: NetStep) {
-    if (URLS.CHECKLIST.MAINTENANCE.some((m) => text.includes(m))) {
-      throw new NetImportError('NET_MAINTENANCE', MAINTENANCE_MESSAGE, { step })
-    }
-  }
 }
 
 export class MaimaiNETJpClient extends Client {
@@ -528,7 +557,7 @@ export class MaimaiNETJpClient extends Client {
         return yield* Effect.fail(new NetImportError('TOKEN_ERROR', undefined, { step: 'login_page', upstreamMessage }))
       }
 
-      const login = yield* this.fetchEffect(
+      yield* this.stepEffect(
         URLS.JP.LOGIN_ENDPOINT,
         {
           method: 'POST',
@@ -543,21 +572,10 @@ export class MaimaiNETJpClient extends Client {
           }),
         },
         'INVALID_CREDENTIALS',
+        id,
       )
-      if (URLS.CHECKLIST.ERROR.includes(login.headers.get('location') ?? '')) {
-        return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS'))
-      }
-
-      yield* Effect.tryPromise({
-        try: () => login.body?.cancel() ?? Promise.resolve(),
-        catch: (cause) => new NetRequestError({ operation: 'release maimai NET login response', cause }),
-      })
       for (const url of [URLS.JP.LOGIN_AIMELIST, URLS.JP.LOGIN_AIMELIST_SUBMIT, URLS.JP.HOMEPAGE]) {
-        const response = yield* this.fetchEffect(url)
-        yield* Effect.tryPromise({
-          try: () => response.body?.cancel() ?? Promise.resolve(),
-          catch: (cause) => new NetRequestError({ operation: 'release maimai NET login response', cause }),
-        })
+        yield* this.stepEffect(url)
       }
 
       yield* this.progress('auth:succeeded')
@@ -603,13 +621,9 @@ export class MaimaiNETIntlClient extends Client {
     Effect.gen({ self: this }, function* () {
       yield* this.progress('auth:in-progress')
 
-      const loginPage = yield* this.fetchEffect(URLS.INTL.LOGIN_PAGE)
-      yield* Effect.tryPromise({
-        try: () => loginPage.body?.cancel() ?? Promise.resolve(),
-        catch: (cause) => new NetRequestError({ operation: 'release maimai NET login page', cause }),
-      })
+      yield* this.stepEffect(URLS.INTL.LOGIN_PAGE)
 
-      const loginResponse = yield* this.fetchEffect(URLS.INTL.LOGIN_ENDPOINT, {
+      const login = yield* this.fetchEffect(URLS.INTL.LOGIN_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -620,47 +634,26 @@ export class MaimaiNETIntlClient extends Client {
           retention: '1',
         }),
       })
-      if (loginResponse.status !== 302) {
-        const page = yield* Effect.tryPromise({
-          try: () => loginResponse.text(),
-          catch: (cause) => new NetRequestError({ operation: 'read maimai NET login response', cause }),
-        })
-        return yield* Effect.fail(
-          new NetImportError(
-            'INTERNAL_ERROR',
-            `unexpected login response status: ${loginResponse.status} ${URLS.INTL.LOGIN_ENDPOINT}`,
-            { step: 'login_submit', upstreamMessage: pageSignals(page, id) },
-          ),
-        )
-      }
-      const redirectURL = loginResponse.headers.get('location')
-      yield* Effect.tryPromise({
-        try: () => loginResponse.body?.cancel() ?? Promise.resolve(),
-        catch: (cause) => new NetRequestError({ operation: 'release maimai NET login response', cause }),
-      })
-      if (!redirectURL) {
-        return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS', undefined, { step: 'login_submit' }))
+      if (login.kind !== 'Redirect') {
+        return yield* Effect.fail(unexpectedAnswerError(URLS.INTL.LOGIN_ENDPOINT, login, id))
       }
 
-      const redirectDestinationResponse = yield* this.fetchEffect(redirectURL, undefined, 'AIME_CARD_UNAVAILABLE')
-
-      const redirectDestinationText = yield* Effect.tryPromise({
-        try: () => redirectDestinationResponse.text(),
-        catch: (cause) => new NetRequestError({ operation: 'read maimai NET login response', cause }),
-      })
-      yield* this.checkMaintenanceEffect(redirectDestinationText, 'login_callback')
-
-      if (redirectURL.startsWith('https://lng-tgk-aime-gw.am-all.net/common_auth/login')) {
+      const callback = yield* this.fetchEffect(login.location, undefined, 'AIME_CARD_UNAVAILABLE')
+      if (login.location.startsWith('https://lng-tgk-aime-gw.am-all.net/common_auth/login')) {
+        const page = callback.kind === 'Redirect' ? '' : callback.html
         const textDom = yield* parseNetResponse(() =>
-          new DOMParser({ errorHandler: () => {} }).parseFromString(redirectDestinationText, 'text/html'),
+          new DOMParser({ errorHandler: () => {} }).parseFromString(page, 'text/html'),
         )
         const errorString = textDom.querySelector('#error')?.textContent?.trim() ?? undefined
         return yield* Effect.fail(
           new NetImportError('INVALID_CREDENTIALS', errorString, {
             step: 'login_submit',
-            upstreamMessage: pageSignals(redirectDestinationText, id),
+            upstreamMessage: pageSignals(page, id),
           }),
         )
+      }
+      if (callback.kind === 'UnexpectedStatus') {
+        return yield* Effect.fail(unexpectedAnswerError(login.location, callback, id))
       }
 
       yield* this.progress('auth:succeeded')
