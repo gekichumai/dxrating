@@ -1,0 +1,13 @@
+diff --git a/formal/cloud-sync/CloudSync.cfg b/formal/cloud-sync/CloudSync.cfg
+index ad513666..17daa88c 100644
+--- a/formal/cloud-sync/CloudSync.cfg
++++ b/formal/cloud-sync/CloudSync.cfg
+@@ -10,7 +10,7 @@ CONSTANTS
+     Bug_f6fd8083_StaleAckPut = FALSE
+     Bug_945ce071_BaselineFromPull = FALSE
+     Bug_945ce071_DuplicateAckIssue = FALSE
+-    Bug_0b175c20_ForgetBeforeWrite = FALSE
++    Bug_0b175c20_ForgetBeforeWrite = TRUE
+ 
+ SYMMETRY TabSymmetry
+ 

@@ -11,14 +11,16 @@ import {
   MenuItem,
 } from '@mui/material'
 import { MoreHorizontal } from 'lucide-react'
-import { useSWRConfig } from 'swr'
+import { useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { apiClient } from '../../lib/orpc'
 import { useAuth } from '../../hooks/useAuth'
 import { hideComment } from './commentVisibility'
+import { filterLoadedComments } from './useSheetComments'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
+import { asyncHandler } from '@/lib/rejections'
 
 type Comment = { id: number; author_id: string }
 type SafetyAction = 'report' | 'block'
@@ -38,8 +40,8 @@ const SAFETY_ACTION_SUCCESS = {
 
 export function CommentActions({ comment }: { comment: Comment }) {
   const locale = useLocale()
-  const { user, ensureAuthenticated, LoginDialog } = useAuth()
-  const { mutate } = useSWRConfig()
+  const { user, ensureAuthenticated, loginDialog } = useAuth()
+  const queryClient = useQueryClient()
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const [action, setAction] = useState<SafetyAction | null>(null)
   const [pending, setPending] = useState(false)
@@ -52,11 +54,8 @@ export function CommentActions({ comment }: { comment: Comment }) {
     try {
       if (action === 'report') await apiClient.comments.report({ commentId: comment.id })
       else await apiClient.comments.blockAuthor({ commentId: comment.id })
-      await mutate(
-        (key) => Array.isArray(key) && key[0] === 'comments.list' && key[1] === user.id,
-        (data: Comment[] | undefined) =>
-          data?.filter((item) => (action === 'report' ? item.id !== comment.id : item.author_id !== comment.author_id)),
-        { revalidate: true },
+      await filterLoadedComments(queryClient, (item) =>
+        action === 'report' ? item.id !== comment.id : item.author_id !== comment.author_id,
       ).catch(() => {
         /* The server saved the preference; keep the local filter if refresh fails. */
       })
@@ -83,10 +82,10 @@ export function CommentActions({ comment }: { comment: Comment }) {
         {(['report', 'block'] as const).map((value) => (
           <MenuItem
             key={value}
-            onClick={async () => {
+            onClick={asyncHandler(async () => {
               setAnchor(null)
               if (await ensureAuthenticated()) setAction(value)
-            }}
+            })}
           >
             {SAFETY_ACTION_LABELS[value]({}, { locale })}
           </MenuItem>
@@ -109,7 +108,7 @@ export function CommentActions({ comment }: { comment: Comment }) {
           </Button>
           <Button
             disabled={pending}
-            onClick={submit}
+            onClick={asyncHandler(submit)}
             variant="contained"
             color={action === 'block' ? 'error' : 'primary'}
           >
@@ -117,7 +116,7 @@ export function CommentActions({ comment }: { comment: Comment }) {
           </Button>
         </DialogActions>
       </Dialog>
-      <LoginDialog />
+      {loginDialog}
     </>
   )
 }

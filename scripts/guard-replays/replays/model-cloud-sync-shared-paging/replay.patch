@@ -1,0 +1,13 @@
+diff --git a/packages/maimai-domain/src/cloud-save-changes.ts b/packages/maimai-domain/src/cloud-save-changes.ts
+index ec087344..fd14b214 100644
+--- a/packages/maimai-domain/src/cloud-save-changes.ts
++++ b/packages/maimai-domain/src/cloud-save-changes.ts
+@@ -20,7 +20,7 @@ export function changesResetRequired(
+   mode: ChangesMode,
+   save: { revision: number; tombstoneHorizon: number },
+ ): boolean {
+-  return since > 0 && (since > save.revision || (mode === 'incremental' && since < save.tombstoneHorizon))
++  return since > 0 && (since > save.revision || since < save.tombstoneHorizon)
+ }
+ 
+ /**

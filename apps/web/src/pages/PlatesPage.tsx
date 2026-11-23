@@ -1,5 +1,5 @@
 import { coverUrl, DifficultyEnum } from '@gekichumai/dxdata'
-import type { PlateKind, PlateRecord, PlateRegion } from '@gekichumai/maimai-domain'
+import type { PlateKind, PlateRegion } from '@gekichumai/maimai-domain'
 import { useRouter } from '@tanstack/react-router'
 import { type FC, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useCompleteCatalogDocument } from '@/catalog/CatalogContext'
@@ -73,7 +73,7 @@ export const useFollowSiteRegion = ({
     // its own, so Back leaves Plates instead of landing on a URL that shows another region than the header
     const url = new URL(window.location.href)
     url.searchParams.set('region', target)
-    void router.navigate({ href: `${url.pathname}${url.search}${url.hash}`, replace: true })
+    router.navigate({ href: `${url.pathname}${url.search}${url.hash}`, replace: true })
   }, [siteRegion, hydrated, region, explicit, available, router])
 }
 
@@ -99,39 +99,16 @@ const PLATE_CONDITION_SHORT = {
   hasha: m.plates_conditionShort_hasha,
 } satisfies Record<PlateKind, PlainMessage>
 
-const COMBO_RANK: Record<NonNullable<PlateRecord['comboFlag']>, number> = { fc: 1, fcp: 2, ap: 3, app: 4 }
-const SYNC_RANK: Record<NonNullable<PlateRecord['syncFlag']>, number> = { sync: 1, fs: 2, fsp: 3, fsd: 4, fsdp: 5 }
-const rankOf = <K extends string>(ranks: Record<K, number>, flag: K | null | undefined) => (flag ? ranks[flag] : 0)
-
-/**
- * Records keyed by sheet ID, in the shape the plate rules read. Duplicate entries of a sheet are merged field by
- * field (best achievement, best combo, best sync): an AP with a lower score still counts for 神.
- * Empty until mounted, so the first client render matches the user-agnostic server (and edge-cached) HTML.
- */
+/** Empty until mounted, so the first client render matches the user-agnostic server (and edge-cached) HTML */
 const usePlateRecords = () => {
-  const { entries, isDemo } = useUserRecords()
+  const { bySheetId, isDemo } = useUserRecords()
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
-  const records = useMemo(() => {
-    const map = new Map<string, PlateRecord>()
-    if (!mounted) return map
-    for (const entry of entries) {
-      const existing = map.get(entry.sheetId)
-      map.set(entry.sheetId, {
-        achievementRate: Math.max(existing?.achievementRate ?? 0, entry.achievementRate),
-        comboFlag:
-          rankOf(COMBO_RANK, entry.comboFlag) > rankOf(COMBO_RANK, existing?.comboFlag)
-            ? entry.comboFlag
-            : (existing?.comboFlag ?? null),
-        syncFlag:
-          rankOf(SYNC_RANK, entry.syncFlag) > rankOf(SYNC_RANK, existing?.syncFlag)
-            ? entry.syncFlag
-            : (existing?.syncFlag ?? null),
-      })
-    }
-    return map
-  }, [entries, mounted])
-  return { records, ready: mounted, hasRecords: mounted && entries.length > 0, isDemo: mounted && isDemo }
+  const records = useMemo(
+    () => new Map(mounted ? [...bySheetId].map(([sheetId, record]) => [sheetId, record.best]) : []),
+    [bySheetId, mounted],
+  )
+  return { records, ready: mounted, hasRecords: mounted && bySheetId.size > 0, isDemo: mounted && isDemo }
 }
 
 const PlateBreadcrumb: FC<{ leaf?: string; region: PlateRegion }> = ({ leaf, region }) => {

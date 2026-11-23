@@ -29,7 +29,7 @@ import { COMMON_ERROR_STATUS_MAP, OpenAPIGenerator } from '@orpc/openapi'
 import { ZodToJsonSchemaConverter } from '@orpc/zod'
 import { RequestHeadersHandlerPlugin, ResponseHeadersHandlerPlugin } from '@orpc/server/plugins'
 import { onError, ORPCError } from '@orpc/server'
-import { Sentry } from './lib/functions/sentry'
+import { reportFailure } from './lib/functions/sentry'
 import { reportProcedureError } from './orpc-error-reporting'
 import { Database } from './db/index'
 import { compressCatalogBody, createDxdataEffect, createPostgresDxdataEffects } from './services/dxdata'
@@ -61,7 +61,7 @@ import {
   MCP_SERVER_CARD_PATH,
 } from '@gekichumai/api-contract'
 import { cors } from './cors'
-import { credentialHygiene, holdCredentials } from './lib/credential-hygiene'
+import { credentialHygiene, holdCredentials, isCredentialPath } from './lib/credential-hygiene'
 import { netImportHandler } from './services/cloud-save/net-import-route'
 import { McpCatalogSource } from './services/application'
 import { clientKey, createRateLimiter, handleMcpRequest, MCP_RATE_LIMIT, rateLimited } from './services/mcp/http'
@@ -278,7 +278,7 @@ app.onError((err, c) => {
   if (isExpectedRequestEnd(err)) return expectedRequestEnd(c, err)
 
   log?.error(err)
-  Sentry.captureException(err, { tags: { requestId } })
+  reportFailure(err, { signal: c.req.raw.signal, tags: { requestId } })
 
   if (err instanceof HTTPException) {
     return err.getResponse()
@@ -306,21 +306,16 @@ app.use(
       '/',
       '/.well-known/api-catalog',
       '/api/v1/monitoring/tunnel',
+      // Better Auth's mailed reset link carries its token in the path, and opening the link doesn't spend it: a
+      // logged path would let anyone who reads the logs reset the account. Setting the password (POST
+      // /api/auth/reset-password, token in the body) is still logged.
+      '/api/auth/reset-password/*',
     ],
   }) as unknown as MiddlewareHandler,
 )
 
-// Credential hygiene (design §7.2): the routes that carry a SEGA ID and password (or LXNS tokens) never log or report
-// them. Right after evlog, so their request logger is the scrubbing one.
-for (const path of [
-  '/functions/fetch-net-records/*',
-  '/api/v1/io/import/maimai-net',
-  '/api/v1/io/import/lxns/*',
-  CLOUD_SAVE_NET_IMPORT_ROUTE.honoPath,
-  '/api/v1/saves/:id/imports/lxns',
-]) {
-  app.use(path, credentialHygiene)
-}
+// Right after evlog, so the request logger of a credential route is the scrubbing one
+app.use('*', (c, next) => (isCredentialPath(c.req.path) ? credentialHygiene(c, next) : next()))
 
 // API usage accounting: classify each request by route template and caller,
 // attach the result to the request wide event, and add it to the per-minute
@@ -658,7 +653,7 @@ const reportCatalogError = (error: unknown, c: Context<EvlogVariables>) => {
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
   log?.error(error instanceof Error ? error : new Error(String(error)))
-  Sentry.captureException(error, { tags: { requestId } })
+  reportFailure(error, { signal: c.req.raw.signal, tags: { requestId } })
 }
 const dxdataHandler = createDxdataEffect(dxdataStore, reportCatalogError)
 // v2 (gekichumai/meta#43): the same publication, transformed once per published body
@@ -781,7 +776,7 @@ const reportApiError = (c: Context, error: unknown) => {
   const log = c.get('log')
   const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
   log?.error(error instanceof Error ? error : new Error(String(error)))
-  Sentry.captureException(error, { tags: { requestId } })
+  reportFailure(error, { signal: c.req.raw.signal, tags: { requestId } })
   return c.json({ error: 'Internal server error', requestId }, 500)
 }
 

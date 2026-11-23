@@ -1,0 +1,10 @@
+{
+  "mistake": "A deletion is dated with now(), when its transaction began, instead of when it got the save lock, so an import job that started while the delete waited for the lock sees the tombstone as older than itself and revives the record.",
+  "history": [
+    "#436 0d12d685 (review 4503806156: lockSave used now(); fixed with clock_timestamp() once the lock is held)"
+  ],
+  "guard": "formal/import-ordering DeletionSticky (Bug_0d12d685_LockTime = LockedDelete dates the tombstone at the transaction's begin)",
+  "check": "formal/tlc.sh formal/import-ordering/ImportOrdering.tla",
+  "expect": "Invariant DeletionSticky is violated",
+  "needs": ["tlc"]
+}

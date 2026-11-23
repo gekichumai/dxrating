@@ -1,6 +1,7 @@
 import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { match } from 'ts-pattern'
 import { toAchievementInt } from './achievement.ts'
+import { mintRatingEntry } from './rating-entries.ts'
 import type { SongCatalog } from './song-catalog'
 import type {
   Best50Bucket,
@@ -10,6 +11,7 @@ import type {
   LegacySongIdMap,
   ProviderMusicIdMap,
   RatingEntry,
+  RatingEntryFields,
   SyncFlag,
 } from './types'
 
@@ -64,7 +66,7 @@ export function withAchievementInt(result: RatingImportResult): RatingImportResu
   return { entries, warnings }
 }
 
-type ImportRowResult = { entry: RatingEntry } | { warning: ImportWarning } | { skipped: true }
+type ImportRowResult = { entry: RatingEntryFields } | { warning: ImportWarning } | { skipped: true }
 
 /**
  * Level index: 0 BASIC, 1 ADVANCED, 2 EXPERT, 3 MASTER, 4 Re:MASTER. LXNS, Diving-Fish, MuNET, AquaDX
@@ -412,7 +414,7 @@ export function normalizeAquaSqliteRows(
 
 function finalizeImport(results: ImportRowResult[]): RatingImportResult {
   const warnings = results.flatMap((result) => ('warning' in result ? [result.warning] : []))
-  const bySheetId = new Map<string, RatingEntry>()
+  const bySheetId = new Map<string, RatingEntryFields>()
 
   for (const result of results) {
     if (!('entry' in result)) continue
@@ -425,7 +427,7 @@ function finalizeImport(results: ImportRowResult[]): RatingImportResult {
     }
   }
 
-  return { entries: [...bySheetId.values()], warnings }
+  return { entries: [...bySheetId.values()].map(mintRatingEntry), warnings }
 }
 
 function missing(
@@ -467,7 +469,7 @@ function normalizeAchievement(value: number, scale: number): number | null {
   return rate
 }
 
-function mergeDuplicateEntry(existing: RatingEntry, candidate: RatingEntry): RatingEntry {
+function mergeDuplicateEntry(existing: RatingEntryFields, candidate: RatingEntryFields): RatingEntryFields {
   const preferred = compareEntry(candidate, existing) > 0 ? candidate : existing
   const other = preferred === candidate ? existing : candidate
 
@@ -477,7 +479,7 @@ function mergeDuplicateEntry(existing: RatingEntry, candidate: RatingEntry): Rat
   }
 }
 
-function compareEntry(a: RatingEntry, b: RatingEntry): number {
+function compareEntry(a: RatingEntryFields, b: RatingEntryFields): number {
   if (a.achievementRate !== b.achievementRate) return a.achievementRate - b.achievementRate
 
   const comboDifference = comboRank(a.comboFlag) - comboRank(b.comboFlag)

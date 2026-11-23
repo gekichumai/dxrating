@@ -1,0 +1,10 @@
+{
+  "mistake": "A client cache key is written by hand and leaves out an input of the response: the alias list is cached under 'aliases.list', which does not change when the catalog it was resolved against does.",
+  "history": [
+    "f79903ae and fd464e05 (the useSheets SWR key left out the aliases, then the tag-song associations)",
+    "#565 e8100467 (the 'aliases.list' and 'tags.list' SWR keys left out the catalog version)"
+  ],
+  "guard": "no-restricted-imports bans swr in apps/web; query keys come from oRPC or requestQuery",
+  "check": "pnpm exec oxlint apps/web/src/models/useServerAliases.ts",
+  "expect": "Use useQuery(orpc.<route>.queryOptions({ input }))"
+}

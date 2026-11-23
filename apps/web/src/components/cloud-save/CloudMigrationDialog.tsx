@@ -35,6 +35,7 @@ import { LoadError } from './LoadError'
 import { m } from '@/paraglide/messages'
 import { useLocale } from '@/i18n/LocaleProvider'
 import './cloud-save.css'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 /**
  * "Back up to cloud" (design §10): the first sign-in migration, only ever started here, by the user.
@@ -152,7 +153,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
   )
 
   useEffect(() => {
-    if (open) void loadSaves()
+    if (open) loadSaves().catch(reportRejection)
   }, [open, attempt, loadSaves])
 
   // The heading of each new step takes the focus: the button that led there is gone
@@ -311,7 +312,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
           </DialogContent>
           <DialogActions>
             <Button onClick={close}>{m.ratingCalculator_cloudSave_migration_notNow({}, { locale })}</Button>
-            <Button variant="contained" onClick={() => void run('fresh', null)}>
+            <Button variant="contained" onClick={asyncHandler(() => run('fresh', null))}>
               {m.ratingCalculator_cloudSave_migration_backUp({}, { locale })}
             </Button>
           </DialogActions>
@@ -409,7 +410,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
           </DialogContent>
           <DialogActions>
             <Button onClick={close}>{m.ratingCalculator_cloudSave_migration_notNow({}, { locale })}</Button>
-            <Button variant="contained" onClick={() => void run(choice, target)}>
+            <Button variant="contained" onClick={asyncHandler(() => run(choice, target))}>
               {choice === 'merge'
                 ? m.ratingCalculator_cloudSave_migration_mergeAction({}, { locale })
                 : m.ratingCalculator_cloudSave_migration_cloudOnlyAction({}, { locale })}
@@ -441,7 +442,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
             <Button onClick={() => setStep({ kind: 'existing', target })}>
               {m.ratingCalculator_cloudSave_importConfirm_back({}, { locale })}
             </Button>
-            <Button color="error" variant="contained" onClick={() => void run('replace', target)}>
+            <Button color="error" variant="contained" onClick={asyncHandler(() => run('replace', target))}>
               {m.ratingCalculator_cloudSave_migration_replaceConfirm({}, { locale })}
             </Button>
           </DialogActions>
@@ -530,7 +531,7 @@ export const CloudMigrationDialog: FC<CloudMigrationDialogProps> = ({
             {step.retryable ? (
               <>
                 <Button onClick={close}>{m.ratingCalculator_cloudSave_migration_close({}, { locale })}</Button>
-                <Button variant="contained" onClick={() => void run(step.mode, step.target)}>
+                <Button variant="contained" onClick={asyncHandler(() => run(step.mode, step.target))}>
                   {m.ratingCalculator_cloudSave_retry({}, { locale })}
                 </Button>
               </>

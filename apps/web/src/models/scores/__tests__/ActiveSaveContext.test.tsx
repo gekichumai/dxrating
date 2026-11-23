@@ -314,6 +314,25 @@ describe('ActiveSaveContext', () => {
     expect(readActiveSaveId(window.localStorage, 'user-1')).toBeNull()
   })
 
+  it('keeps a save chosen while the save list was on its way, though the list lacks the save it was asked for', async () => {
+    writeActiveSaveId(window.localStorage, 'user-1', 'dsav_gone')
+    const deps = dependencies('user-1', {
+      fetchFeatures: vi.fn(async () => FEATURES_ON),
+      listSaves: vi.fn(async () => {
+        // The migration's onActivate chose its new save after an await, before this decision was cancelled
+        writeActiveSaveId(window.localStorage, 'user-1', 'dsav_new')
+        return [save('dsav_new')]
+      }),
+    })
+
+    renderActiveSave(deps)
+    await waitFor(() => expect(deps.listSaves).toHaveBeenCalledWith('user-1'))
+    await settle()
+
+    expect(readActiveSaveId(window.localStorage, 'user-1')).toBe('dsav_new')
+    expect(toast).not.toHaveBeenCalled()
+  })
+
   it("never commits a render that exposes the previous user's save, after a sign-out or an account switch", async () => {
     writeActiveSaveId(window.localStorage, 'user-1', 'dsav_main')
     let userId: string | null = 'user-1'

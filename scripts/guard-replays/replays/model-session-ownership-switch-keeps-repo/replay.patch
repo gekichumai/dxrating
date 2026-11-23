@@ -1,0 +1,13 @@
+diff --git a/formal/session-ownership/SessionOwnership.cfg b/formal/session-ownership/SessionOwnership.cfg
+index 35cae459..34451aea 100644
+--- a/formal/session-ownership/SessionOwnership.cfg
++++ b/formal/session-ownership/SessionOwnership.cfg
+@@ -3,7 +3,7 @@ CONSTANTS
+   MaxSwitches = 3
+   MaxSelections = 2
+   MaxDeletes = 2
+-  Bug_0d2a2e32 = FALSE
++  Bug_0d2a2e32 = TRUE
+   Bug_945ce071 = FALSE
+   Bug_61f5edfe = FALSE
+   Bug_cc07485f = FALSE

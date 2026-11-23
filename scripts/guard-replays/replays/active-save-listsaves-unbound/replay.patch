@@ -1,0 +1,15 @@
+diff --git a/apps/web/src/models/scores/ActiveSaveContext.tsx b/apps/web/src/models/scores/ActiveSaveContext.tsx
+index 3a8fafdd..39bf1899 100644
+--- a/apps/web/src/models/scores/ActiveSaveContext.tsx
++++ b/apps/web/src/models/scores/ActiveSaveContext.tsx
+@@ -125,8 +125,8 @@ export const defaultActiveSaveDependencies: ActiveSaveDependencies = {
+     return features
+   },
+   async listSaves(userId) {
+-    const { privateApiClientFor } = await import('../../lib/privateApi')
+-    return (await privateApiClientFor(userId).cloudSave.saves.list()).saves as SaveDTO[]
++    const client = await loadPrivateApi()
++    return (await client.cloudSave.saves.list()).saves as SaveDTO[]
+   },
+   async openCloudRepository(options) {
+     const [{ CloudScoreRepository }, { streamNetImport }, { privateApiClientFor }, Sentry] = await Promise.all([

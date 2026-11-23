@@ -1,0 +1,20 @@
+diff --git a/apps/web/src/models/scores/ActiveSaveContext.tsx b/apps/web/src/models/scores/ActiveSaveContext.tsx
+index 3a8fafdd..a640414f 100644
+--- a/apps/web/src/models/scores/ActiveSaveContext.tsx
++++ b/apps/web/src/models/scores/ActiveSaveContext.tsx
+@@ -303,13 +303,8 @@ export function useActiveSaveDecision(): ActiveSave {
+       const saves = await dependencies.listSaves(userId)
+       if (cancelled) return
+       if (!saves.some((save) => save.id === saveId)) {
+-        // The selection may name another save by now, chosen after this decision started
+-        if (readActiveSaveId(storage, userId) === saveId) {
+-          writeActiveSaveId(storage, userId, null)
+-          toast(m.ratingCalculator_cloudSave_saveMissing({}, { locale: localeRef.current }), {
+-            id: 'cloud-save-missing',
+-          })
+-        }
++        writeActiveSaveId(storage, userId, null)
++        toast(m.ratingCalculator_cloudSave_saveMissing({}, { locale: localeRef.current }), { id: 'cloud-save-missing' })
+         return fallBackToLocal()
+       }
+ 

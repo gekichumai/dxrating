@@ -1,5 +1,5 @@
 import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
-import type { PlateRecord } from '@gekichumai/maimai-domain'
+import { collapsePlays, type ChartPlay, type PlateRecord } from '@gekichumai/maimai-domain'
 import { describe, expect, it } from 'vitest'
 import { evaluatePlatePage, type PlatePageChart } from '../plateData'
 import {
@@ -28,12 +28,8 @@ const chart = (songId: string, levelValue: number): PlatePageChart => ({
   })),
 })
 
-const record = (achievementRate: number, extra: Partial<PlateRecord> = {}): PlateRecord => ({
-  achievementRate,
-  comboFlag: null,
-  syncFlag: null,
-  ...extra,
-})
+const record = (achievementRate: number, extra: Partial<ChartPlay> = {}): PlateRecord =>
+  collapsePlays([{ achievementRate, best50Bucket: null, ...extra }], null)
 
 describe('rankRemainingSongs', () => {
   const charts = [chart('untouched', 14), chart('close', 13), chart('one-far', 12), chart('done', 11)]

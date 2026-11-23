@@ -1,8 +1,10 @@
 import * as Sentry from '@sentry/node'
-import type { Scope } from '@sentry/node'
 import { COMMON_ERROR_STATUS_MAP, ORPCError } from '@orpc/server'
-import { databaseErrorTags } from '../../db/errors'
-import { NetImportError } from './client'
+import { Cause } from 'effect'
+import { isSqlError } from 'effect/sql/SqlError'
+import { DatabaseError } from '../../db/errors'
+import { isExpectedRequestEnd } from '../../request-runner'
+import { NetImportError, type NetImportErrorCode } from './client'
 import {
   isCredentialPath,
   pathOf,
@@ -11,85 +13,111 @@ import {
   scrubSentryLog,
 } from '../credential-hygiene'
 
-// Export types for use in other files
-export type { Scope }
+export type FailureClass = { readonly report: false } | { readonly report: true; readonly tags: Record<string, string> }
+
+const EXPECTED_NET_CODES: ReadonlySet<NetImportErrorCode> = new Set<NetImportErrorCode>([
+  'INVALID_CREDENTIALS',
+  'NET_MAINTENANCE',
+  'AIME_CARD_UNAVAILABLE',
+])
+const EXPECTED_MESSAGES = [
+  'Invalid parameters',
+  'QQ parameter is required',
+  'Friend code parameter is required',
+  'invalid credentials',
+  'Failed to fetch',
+]
+
+/** An error and its causes, outermost first: `.cause` links and the squashed failure of an Effect `Cause`. */
+const causeChain = (error: unknown): unknown[] => {
+  const chain: unknown[] = []
+  for (let link = error; link !== null && link !== undefined && chain.length < 8; ) {
+    chain.push(link)
+    link = Cause.isCause(link)
+      ? Cause.squash(link)
+      : typeof link === 'object'
+        ? (link as { cause?: unknown }).cause
+        : undefined
+  }
+  return chain
+}
+
+const isExpectedLink = (link: unknown) =>
+  isExpectedRequestEnd(link) ||
+  (link instanceof NetImportError && EXPECTED_NET_CODES.has(link.code)) ||
+  (link instanceof Error && EXPECTED_MESSAGES.some((message) => link.message.includes(message)))
 
 /**
- * Sentry tags of a maimai NET import failure: our code, the request that failed and the ERROR CODE NET showed. None
- * holds a URL, credential or anything of the page beyond its error code.
+ * Decides whether a failure reaches Sentry. The outermost error is what the client was answered, so an `ORPCError`
+ * with a 4xx status is not reported. Neither is a failure with an expected one anywhere in its cause chain: the client
+ * left, the server is shutting down, a maimai NET account state, invalid input. A reported failure is tagged with the
+ * database operation and SQL error reason and with the maimai NET code, step and error code found down its chain. No
+ * tag holds query text, parameters, URLs or credentials.
  */
-export function netErrorTags(error: unknown): Record<string, string> {
-  if (!(error instanceof NetImportError)) return {}
+export function classifyFailure(error: unknown): FailureClass {
+  if (error instanceof ORPCError) {
+    const status = COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500
+    if (status >= 400 && status < 500) return { report: false }
+  }
+  const chain = causeChain(error)
+  if (chain.some(isExpectedLink)) return { report: false }
+
+  const database = chain.find((link) => link instanceof DatabaseError)
+  const sql = chain.find(isSqlError)
+  const net = chain.find((link) => link instanceof NetImportError)
   return {
-    'net.code': error.code,
-    ...(error.step ? { 'net.step': error.step } : {}),
-    ...(error.netErrorCode ? { 'net.error_code': error.netErrorCode } : {}),
+    report: true,
+    tags: {
+      ...(database ? { 'db.operation': database.operation } : {}),
+      ...(database && sql ? { 'db.error': sql.reason['_tag'] } : {}),
+      ...(net ? { 'net.code': net.code } : {}),
+      ...(net?.step ? { 'net.step': net.step } : {}),
+      ...(net?.netErrorCode ? { 'net.error_code': net.netErrorCode } : {}),
+    },
   }
 }
 
-export function shouldCaptureSentryError(error: unknown) {
-  if (error instanceof ORPCError) {
-    const status = COMMON_ERROR_STATUS_MAP[error.code as keyof typeof COMMON_ERROR_STATUS_MAP] ?? 500
-    if (status >= 400 && status < 500) return false
-  }
+/**
+ * The tags `classifyFailure` gives a reported failure (database operation, SQL error reason, maimai NET codes), for a
+ * log line; an expected failure has none. Like the Sentry tags, they hold no query text or parameters.
+ */
+export const failureTags = (error: unknown): Record<string, string> => {
+  const failure = classifyFailure(error)
+  return failure.report ? failure.tags : {}
+}
 
-  if (
-    error instanceof NetImportError &&
-    ['INVALID_CREDENTIALS', 'NET_MAINTENANCE', 'AIME_CARD_UNAVAILABLE'].includes(error.code)
-  ) {
+/**
+ * The client left: the request signal is aborted and the failure is its own reason (the Node adapter aborts with the
+ * socket error as a string, "Error: aborted", which oRPC rethrows), an `AbortError` it caused, or the request runner's
+ * client-closed error. Any other failure of an aborted request is still a failure.
+ */
+export const isClientAbort = (error: unknown, signal: AbortSignal | undefined): boolean => {
+  if (!signal?.aborted) return false
+  if (error === signal.reason) return true
+  return (error instanceof Error && error.name === 'AbortError') || isExpectedRequestEnd(error)
+}
+
+type ReportContext = {
+  readonly tags?: Record<string, string | undefined>
+  readonly contexts?: Record<string, Record<string, unknown>>
+  readonly extra?: Record<string, unknown>
+  readonly level?: Sentry.SeverityLevel
+  /** The request's signal, so a failure caused by the client leaving is not reported. */
+  readonly signal?: AbortSignal | undefined
+}
+
+/** Sends a failure to Sentry unless the client left or `classifyFailure` expects it, and says whether it did. */
+export function reportFailure(error: unknown, { signal, ...context }: ReportContext = {}): boolean {
+  if (isClientAbort(error, signal)) {
+    Sentry.addBreadcrumb({ category: 'request', level: 'info', message: 'Aborted by the client', data: context.tags })
     return false
   }
-
-  if (error instanceof Error) {
-    if (
-      error.message.includes('Invalid parameters') ||
-      error.message.includes('QQ parameter is required') ||
-      error.message.includes('Friend code parameter is required')
-    ) {
-      return false
-    }
-
-    if (error.message.includes('invalid credentials') || error.message.includes('Failed to fetch')) {
-      return false
-    }
-  }
-
+  if (!classifyFailure(error).report) return false
+  Sentry.captureException(error, context)
   return true
 }
 
-/**
- * Routes whose request body carries credentials. `sendDefaultPii` lets the HTTP integration attach request bodies to
- * events and transactions; for these routes the body never leaves the process, whatever Sentry's server-side
- * scrubbing would catch. Entries ending in `/` match every path below them.
- */
-export const CREDENTIAL_BODY_ROUTES = [
-  // LXNS OAuth code and state
-  '/api/v1/io/import/lxns/complete',
-  // SEGA ID and password (maimai.fetchRecords, and the NET record functions)
-  '/api/v1/io/import/maimai-net',
-  '/functions/fetch-net-records/',
-  // Better Auth: sign-in and sign-up passwords, password changes and resets, OAuth and passkey payloads
-  '/api/auth/',
-]
-
-const routePath = (value: string | undefined) => {
-  if (!value) return undefined
-  // Transaction names look like `POST /api/v1/...`
-  const target = value.includes(' ') ? value.slice(value.indexOf(' ') + 1) : value
-  try {
-    return new URL(target, 'http://localhost').pathname.replace(/\/+$/, '')
-  } catch {
-    return undefined
-  }
-}
-
-const isCredentialRoute = (value: string | undefined) => {
-  const path = routePath(value)
-  return (
-    path !== undefined &&
-    CREDENTIAL_BODY_ROUTES.some((route) => (route.endsWith('/') ? `${path}/`.startsWith(route) : path === route))
-  )
-}
+const isCredentialRoute = (value: string | undefined) => isCredentialPath(pathOf(value))
 
 function withoutBody<T extends Record<string, unknown>>(data: T | undefined): T | undefined {
   if (!data) return data
@@ -102,7 +130,7 @@ function withoutBody<T extends Record<string, unknown>>(data: T | undefined): T 
 
 type ScrubbableEvent = Pick<Sentry.Event, 'request' | 'transaction' | 'contexts' | 'spans' | 'breadcrumbs'>
 
-/** Drops request bodies (and body-like span or breadcrumb attributes) of `CREDENTIAL_BODY_ROUTES` from an event. */
+/** Drops request bodies (and body-like span or breadcrumb attributes) of the credential routes from an event. */
 export function scrubCredentialBodies<E extends ScrubbableEvent>(event: E): E {
   const traceData = event.contexts?.trace?.data as Record<string, unknown> | undefined
   const sensitive =
@@ -160,9 +188,8 @@ export function buildSentryOptions(
     sendDefaultPii: true,
     enableLogs: true,
     integrations: [
-      // HTTP integration for tracking HTTP requests; never attach the body of a credential route
       Sentry.httpIntegration({
-        ignoreIncomingRequestBody: (url) => isCredentialPath(pathOf(url)) || isCredentialRoute(url),
+        ignoreIncomingRequestBody: isCredentialRoute,
       }),
       // Send console.log, console.warn, and console.error calls as logs to Sentry
       Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
@@ -171,12 +198,10 @@ export function buildSentryOptions(
     // Every MCP request is traced (a span per MCP message); the rest at 10%
     tracesSampler: ({ name, inheritOrSampleWith }) =>
       /\/mcp(?:\?|$|\s)/.test(name) ? 1.0 : inheritOrSampleWith(environment === 'production' ? 0.1 : 1.0),
-    // Configure which errors to capture; whatever is sent is scrubbed of credentials
-    // A database failure also names its operation and SQL error reason, whichever path captured it
     beforeSend(event, hint) {
-      if (!shouldCaptureSentryError(hint.originalException)) return null
-      const tags = databaseErrorTags(hint.originalException)
-      if (Object.keys(tags).length > 0) event.tags = { ...event.tags, ...tags }
+      const failure = classifyFailure(hint.originalException)
+      if (!failure.report) return null
+      event.tags = { ...event.tags, ...failure.tags }
       return scrubCredentialBodies(scrubSentryEvent(event))
     },
     beforeBreadcrumb(breadcrumb) {

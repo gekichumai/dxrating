@@ -8,7 +8,15 @@
     "jsx-a11y/click-events-have-key-events": "off",
     "import/no-named-as-default": "off",
     "import/no-named-as-default-member": "off",
-    "import/no-unassigned-import": "off"
+    "import/no-unassigned-import": "off",
+    "no-restricted-properties": [
+      "error",
+      {
+        "property": "ratingEligibility",
+        "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+      }
+    ],
+    "workspace/declared-dependency": "error"
   },
   "categories": {
     "correctness": "warn",
@@ -27,6 +35,62 @@
   ],
   "overrides": [
     {
+      "files": ["packages/maimai-domain/src/rating-entries.ts"],
+      "rules": {
+        "no-restricted-properties": "off"
+      }
+    },
+    {
+      "files": ["apps/web/src/**", "apps/admin/src/**"],
+      "rules": {
+        "react/rules-of-hooks": "error",
+        "react/exhaustive-deps": [
+          "error",
+          {
+            "additionalHooks": "^(useAsync|useAsyncFn)$"
+          }
+        ],
+        "dxrating/no-nested-component": "error",
+        "dxrating/no-void": "error",
+        "typescript/no-floating-promises": [
+          "error",
+          {
+            "allowForKnownSafeCalls": [
+              {
+                "from": "package",
+                "package": "@tanstack/router-core",
+                "name": ["NavigateFn", "UseNavigateResult"]
+              },
+              {
+                "from": "package",
+                "package": "@tanstack/query-core",
+                "name": ["invalidateQueries"]
+              },
+              {
+                "from": "package",
+                "package": "web-haptics",
+                "name": ["trigger"]
+              },
+              {
+                "from": "package",
+                "package": "react-hot-toast",
+                "name": ["promise"]
+              }
+            ]
+          }
+        ],
+        "typescript/no-misused-promises": "error"
+      }
+    },
+    {
+      "files": ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+      "rules": {
+        "dxrating/no-void": "off",
+        "typescript/no-floating-promises": "off",
+        "typescript/no-misused-promises": "off"
+      }
+    },
+    {
       "files": ["**/*.ts", "**/*.tsx"],
       "rules": {
         "no-restricted-imports": [
@@ -43,10 +107,370 @@
       }
     },
     {
+      "files": ["packages/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/(.*/)?([^/.]+|[^/]*\\.js)$",
+                "allowTypeImports": true,
+                "message": "Node loads this package from source: write the .ts extension."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/oneshot-renderer/**/*.ts", "packages/**/__tests__/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/**/*.ts", "apps/**/*.tsx"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/web/**/*.ts", "apps/web/**/*.tsx"],
+      "rules": {
+        "dxrating/derived-query-keys": "error",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "^swr(/|$)",
+                "message": "Use useQuery(orpc.<route>.queryOptions({ input })) or requestQuery from @/lib/query: the key is derived from the request."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/web/src/**/*.ts", "apps/web/src/**/*.tsx"],
+      "rules": {
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "localStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "name": "sessionStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          }
+        ],
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "window",
+            "property": "localStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "object": "window",
+            "property": "sessionStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "object": "globalThis",
+            "property": "localStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "object": "globalThis",
+            "property": "sessionStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "react-use",
+                "importNames": ["useLocalStorage", "useSessionStorage"],
+                "message": "Use usePersisted(persisted(key, schema, fallback)) from @/utils/persisted: react-use casts the stored JSON without checking it."
+              }
+            ],
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "^swr(/|$)",
+                "message": "Use useQuery(orpc.<route>.queryOptions({ input })) or requestQuery from @/lib/query: the key is derived from the request."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/web/src/utils/persisted.ts",
+        "apps/web/src/**/__tests__/**",
+        "apps/web/src/**/*.test.ts",
+        "apps/web/src/**/*.test.tsx"
+      ],
+      "rules": {
+        "no-restricted-globals": "off",
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ]
+      }
+    },
+    {
       "files": ["apps/backend/src/**/*.ts", "apps/backend/src/**/*.tsx"],
       "rules": {
         "gdp-ts/no-define-proof": "error",
         "gdp-ts/no-proof-assertion": "error",
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "captureException",
+            "message": "Use reportFailure(error) from lib/functions/sentry: it alone decides which failures reach Sentry (client aborts, expected errors) and tags wrapped database and NET failures."
+          },
+          {
+            "property": "captureEvent",
+            "message": "Use reportFailure(error) from lib/functions/sentry: it alone decides which failures reach Sentry (client aborts, expected errors) and tags wrapped database and NET failures."
+          },
+          {
+            "property": "runPromise",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseExit",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseExitWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runFork",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runForkWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runCallback",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runCallbackWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSync",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncExit",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncExitWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@sentry/node",
+                "message": "Import Sentry from lib/functions/sentry and report failures with reportFailure(error): it alone decides which failures reach Sentry."
+              }
+            ],
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "(^|/)lxns(/index)?(\\.ts)?$",
+                "message": "Use services/lxns/viewer: its functions demand a ViewerIs proof (gdp-ts)."
+              },
+              {
+                "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
+                "importNames": ["viewerFromSession"],
+                "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              },
+              {
+                "regex": "^effect/Effect$",
+                "importNames": [
+                  "runPromise",
+                  "runPromiseExit",
+                  "runPromiseWith",
+                  "runPromiseExitWith",
+                  "runFork",
+                  "runForkWith",
+                  "runCallback",
+                  "runCallbackWith",
+                  "runSync",
+                  "runSyncExit",
+                  "runSyncWith",
+                  "runSyncExitWith"
+                ],
+                "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+              },
+              {
+                "regex": "^hono/cors$",
+                "message": "CORS comes from the HTTP surface: give a path its policy in CORS_GROUP_PATHS, or a policy its headers and methods in CORS_POLICIES (packages/api-contract/src/http-surface.ts), and apply it with the cors middleware of apps/backend/src/cors.ts."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/backend/src/lib/functions/sentry.ts", "apps/backend/src/**/*.test.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "runPromise",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseExit",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseExitWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runFork",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runForkWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runCallback",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runCallbackWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSync",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncExit",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncExitWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ],
         "no-restricted-imports": [
           "error",
           {
@@ -63,6 +487,24 @@
                 "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
                 "importNames": ["viewerFromSession"],
                 "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              },
+              {
+                "regex": "^effect/Effect$",
+                "importNames": [
+                  "runPromise",
+                  "runPromiseExit",
+                  "runPromiseWith",
+                  "runPromiseExitWith",
+                  "runFork",
+                  "runForkWith",
+                  "runCallback",
+                  "runCallbackWith",
+                  "runSync",
+                  "runSyncExit",
+                  "runSyncWith",
+                  "runSyncExitWith"
+                ],
+                "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
               },
               {
                 "regex": "^hono/cors$",
@@ -87,6 +529,12 @@
         "no-restricted-imports": [
           "error",
           {
+            "paths": [
+              {
+                "name": "@sentry/node",
+                "message": "Import Sentry from lib/functions/sentry and report failures with reportFailure(error): it alone decides which failures reach Sentry."
+              }
+            ],
             "patterns": [
               {
                 "regex": "^\\.{1,2}/.*\\.js$",
@@ -96,6 +544,24 @@
                 "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
                 "importNames": ["viewerFromSession"],
                 "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              },
+              {
+                "regex": "^effect/Effect$",
+                "importNames": [
+                  "runPromise",
+                  "runPromiseExit",
+                  "runPromiseWith",
+                  "runPromiseExitWith",
+                  "runFork",
+                  "runForkWith",
+                  "runCallback",
+                  "runCallbackWith",
+                  "runSync",
+                  "runSyncExit",
+                  "runSyncWith",
+                  "runSyncExitWith"
+                ],
+                "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
               },
               {
                 "regex": "^hono/cors$",
@@ -112,6 +578,12 @@
         "no-restricted-imports": [
           "error",
           {
+            "paths": [
+              {
+                "name": "@sentry/node",
+                "message": "Import Sentry from lib/functions/sentry and report failures with reportFailure(error): it alone decides which failures reach Sentry."
+              }
+            ],
             "patterns": [
               {
                 "regex": "^\\.{1,2}/.*\\.js$",
@@ -120,6 +592,24 @@
               {
                 "regex": "(^|/)lxns(/index)?(\\.ts)?$",
                 "message": "Use services/lxns/viewer: its functions demand a ViewerIs proof (gdp-ts)."
+              },
+              {
+                "regex": "^effect/Effect$",
+                "importNames": [
+                  "runPromise",
+                  "runPromiseExit",
+                  "runPromiseWith",
+                  "runPromiseExitWith",
+                  "runFork",
+                  "runForkWith",
+                  "runCallback",
+                  "runCallbackWith",
+                  "runSync",
+                  "runSyncExit",
+                  "runSyncWith",
+                  "runSyncExitWith"
+                ],
+                "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
               },
               {
                 "regex": "^hono/cors$",
@@ -151,6 +641,55 @@
       }
     },
     {
+      "files": ["apps/backend/src/cors.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@sentry/node",
+                "message": "Import Sentry from lib/functions/sentry and report failures with reportFailure(error): it alone decides which failures reach Sentry."
+              }
+            ],
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "(^|/)lxns(/index)?(\\.ts)?$",
+                "message": "Use services/lxns/viewer: its functions demand a ViewerIs proof (gdp-ts)."
+              },
+              {
+                "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
+                "importNames": ["viewerFromSession"],
+                "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              },
+              {
+                "regex": "^effect/Effect$",
+                "importNames": [
+                  "runPromise",
+                  "runPromiseExit",
+                  "runPromiseWith",
+                  "runPromiseExitWith",
+                  "runFork",
+                  "runForkWith",
+                  "runCallback",
+                  "runCallbackWith",
+                  "runSync",
+                  "runSyncExit",
+                  "runSyncWith",
+                  "runSyncExitWith"
+                ],
+                "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["apps/admin-api/**/*.ts"],
       "rules": {
         "no-restricted-imports": [
@@ -171,35 +710,247 @@
       }
     },
     {
-      "files": ["apps/backend/src/cors.ts"],
+      "files": ["packages/api-contract/src/private/**"],
       "rules": {
-        "no-restricted-imports": [
+        "no-restricted-properties": [
           "error",
           {
-            "patterns": [
-              {
-                "regex": "^\\.{1,2}/.*\\.js$",
-                "message": "Use extensionless relative imports in TypeScript source."
-              },
-              {
-                "regex": "(^|/)lxns(/index)?(\\.ts)?$",
-                "message": "Use services/lxns/viewer: its functions demand a ViewerIs proof (gdp-ts)."
-              },
-              {
-                "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
-                "importNames": ["viewerFromSession"],
-                "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
-              }
-            ]
+            "object": "z",
+            "property": "string",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "number",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "int",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "int32",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "uint32",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "int64",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "uint64",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "float32",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "float64",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "bigint",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "coerce",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "iso",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "object": "z",
+            "property": "date",
+            "message": "Build private contract schemas from ./storable (PgText, PgInteger, PgBigint, PgTimestamp, fromQuery): PostgreSQL rejects U+0000, lone surrogates, integers beyond the column and years outside 1 to 9999, so a bare primitive lets them through to a 500."
+          },
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
           }
         ]
+      }
+    },
+    {
+      "files": ["packages/api-contract/src/private/storable.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/backend/src/request-runner.ts",
+        "apps/backend/src/net-login-probe.ts",
+        "apps/backend/src/test/**"
+      ],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "captureException",
+            "message": "Use reportFailure(error) from lib/functions/sentry: it alone decides which failures reach Sentry (client aborts, expected errors) and tags wrapped database and NET failures."
+          },
+          {
+            "property": "captureEvent",
+            "message": "Use reportFailure(error) from lib/functions/sentry: it alone decides which failures reach Sentry (client aborts, expected errors) and tags wrapped database and NET failures."
+          },
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/backend/src/**/*.test.ts", "apps/backend/src/**/*.test.tsx"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/backend/src/services/dxdata-openapi.test.ts", "apps/backend/src/services/mcp/server.test.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/web/src/lib/query.ts"],
+      "rules": {
+        "dxrating/derived-query-keys": "off"
+      }
+    },
+    {
+      "files": [
+        "**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+        "**/__tests__/**",
+        "apps/backend/src/test/**",
+        "apps/web/src/test-utils/**"
+      ],
+      "rules": {
+        "test-boundaries/no-own-module-mock": "error"
+      }
+    },
+    {
+      "files": [
+        "apps/backend/src/test/account-deletion.test.ts",
+        "apps/backend/src/test/auth-mail.test.ts",
+        "apps/backend/src/test/chart-og-image.test.ts",
+        "apps/backend/src/test/cloud-save-server-imports.test.ts",
+        "apps/backend/src/test/credential-hygiene-sentry-http.test.ts",
+        "apps/backend/src/test/email-verification-protocol.test.ts",
+        "apps/backend/src/test/maimai-net-status.test.ts",
+        "apps/backend/src/test/net-import-http.test.ts",
+        "apps/backend/src/test/oneshot-renderer-http.test.ts",
+        "apps/web/src/__tests__/sheets-loading.test.tsx",
+        "apps/web/src/components/auth/__tests__/LoginForm.test.tsx",
+        "apps/web/src/components/auth/__tests__/LoginForm.turnstile.test.tsx",
+        "apps/web/src/components/global/__tests__/CatalogUnverifiedHint.test.tsx",
+        "apps/web/src/components/global/__tests__/ResponsiveDialog.test.tsx",
+        "apps/web/src/components/global/__tests__/SideEffector.test.tsx",
+        "apps/web/src/components/global/backgrounds/__tests__/VersionBackground.test.tsx",
+        "apps/web/src/components/global/preferences/__tests__/LocaleSelector.test.tsx",
+        "apps/web/src/components/global/preferences/__tests__/SecuritySection.test.tsx",
+        "apps/web/src/components/global/preferences/__tests__/ThemeSelector.test.tsx",
+        "apps/web/src/components/global/preferences/__tests__/UserProfileModal.test.tsx",
+        "apps/web/src/components/global/site-meta/__tests__/About.test.tsx",
+        "apps/web/src/components/home/__tests__/HomeHub.test.tsx",
+        "apps/web/src/components/layout/__tests__/AppTabs.test.tsx",
+        "apps/web/src/components/layout/__tests__/ThemedBody.test.tsx",
+        "apps/web/src/components/layout/__tests__/TopBar.test.tsx",
+        "apps/web/src/components/rating/__tests__/RatingCalculatorAddEntryForm.test.tsx",
+        "apps/web/src/components/rating/io/import/NetImportProgress.test.tsx",
+        "apps/web/src/components/rating/io/import/__tests__/ImportFromLxnsButtonListItem.cloud.test.tsx",
+        "apps/web/src/components/rating/io/import/__tests__/ImportFromLxnsButtonListItem.test.tsx",
+        "apps/web/src/components/sheet/tags/__tests__/SheetTags.test.tsx",
+        "apps/web/src/components/song/__tests__/SongHeaderAliases.test.tsx",
+        "apps/web/src/components/song/hub/__tests__/songHubCatalog.test.tsx",
+        "apps/web/src/hooks/__tests__/useAuth.test.tsx",
+        "apps/web/src/models/__tests__/useUserRecords.test.tsx",
+        "apps/web/src/models/scores/__tests__/cloudSaveActions.test.ts",
+        "apps/web/src/models/scores/__tests__/fetchFeaturesSession.test.ts",
+        "apps/web/src/pages/__tests__/LxnsOauthCallback.test.tsx",
+        "apps/web/src/pages/__tests__/ProgressSummaryPage.test.tsx",
+        "apps/web/src/pages/__tests__/RecentPage.test.tsx",
+        "apps/web/src/pages/__tests__/SheetList.test.tsx",
+        "apps/web/src/pages/__tests__/SongHubPage.test.tsx",
+        "apps/web/src/pages/__tests__/SongPage.test.tsx",
+        "apps/web/src/pages/__tests__/TrendingPage.test.tsx",
+        "apps/web/src/pages/__tests__/platesFollowSiteRegion.test.tsx",
+        "apps/web/src/routes/__tests__/-account-reset-password.test.tsx",
+        "apps/web/src/routes/__tests__/-account-security.test.tsx",
+        "apps/web/src/routes/__tests__/-account-verify-email.test.tsx",
+        "apps/web/src/routes/__tests__/-charts-trending.test.tsx",
+        "apps/web/src/routes/__tests__/-index.test.ts",
+        "apps/web/src/routes/__tests__/-song-hub-route.test.ts",
+        "apps/web/src/test-utils/setup-auth.ts"
+      ],
+      "rules": {
+        "test-boundaries/no-own-module-mock": "off"
       }
     }
   ],
   "jsPlugins": [
+    "./oxlint-plugins/workspace-deps.mts",
     {
       "name": "gdp-ts",
       "specifier": "@gdp-ts/core/lint/plugin"
+    },
+    {
+      "name": "dxrating",
+      "specifier": "./packages/oxlint-plugin/index.ts"
+    },
+    {
+      "name": "test-boundaries",
+      "specifier": "./scripts/lint/test-boundaries.mjs"
     }
   ]
 }

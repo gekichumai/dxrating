@@ -1,0 +1,11 @@
+{
+  "mistake": "A cloud save write is built without the expected-user binding, so a request account A started runs under account B's session after another tab signs B in.",
+  "history": [
+    "#440 5306f424, 41532e95, 8d0e7fe4 (the migration's createSave and the beta opt-in wrote under whichever account the cookie named; browser-side checks kept racing)",
+    "#440 326850a6 (the server binding that closed it, applied by hand per route)"
+  ],
+  "guard": "cloud-save-router.ts builds every route from one base that binds by the contract's method, and src/test/private-route-binding.test.ts sends every private write without the header and for another account",
+  "check": "pnpm --filter @gekichumai/backend exec vitest run src/test/private-route-binding.test.ts",
+  "expect": "cloudSave.saves.create answers 400 without the header",
+  "needs": ["postgres"]
+}

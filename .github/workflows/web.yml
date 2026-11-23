@@ -8,6 +8,7 @@ on:
       - 'apps/web/**'
       - 'packages/**'
       - 'pnpm-lock.yaml'
+      - 'scripts/guard-replays/**'
       - '.github/workflows/web.yml'
   pull_request:
     branches:
@@ -16,6 +17,7 @@ on:
       - 'apps/web/**'
       - 'packages/**'
       - 'pnpm-lock.yaml'
+      - 'scripts/guard-replays/**'
       - '.github/workflows/web.yml'
   workflow_dispatch:
 
@@ -47,14 +49,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Includes the i18n parity test: messages/*.json must match the i18next resources (pnpm i18n:convert)
       - name: Run web tests
         run: pnpm --filter @gekichumai/dxrating-web exec vitest run
 
   e2e:
     name: Web e2e (production build)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -83,9 +84,17 @@ jobs:
       # The runner's preinstalled Google Chrome: `playwright install` hangs after the download on this Node version
       - name: Run Playwright
         run: pnpm --filter @gekichumai/dxrating-web exec playwright test
-        timeout-minutes: 10
+        timeout-minutes: 15
         env:
           E2E_EXPECT_SENTRY: '1'
+          E2E_CHROMIUM_PATH: /usr/bin/google-chrome
+
+      # Each replay rebuilds the app with a past mistake put back (layout overflow, hydration), so it runs after the
+      # tests of this build
+      - name: Guard replays (e2e)
+        run: node scripts/guard-replays/run.ts --needs e2e
+        timeout-minutes: 35
+        env:
           E2E_CHROMIUM_PATH: /usr/bin/google-chrome
 
       - name: Upload traces

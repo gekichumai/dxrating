@@ -2,7 +2,7 @@ import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { toV2Community } from '@gekichumai/dxdata/v2'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { SWRConfig } from 'swr'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setLoadedCatalogDocumentForTests } from '../../catalog/clientCatalog'
 import { resetCommunityListsForTests } from '../../catalog/communityOverlay'
@@ -12,9 +12,10 @@ const [first, ...rest] = catalogSnapshot.songs
 const newSong = { ...first!, id: 'dsng_newsong000' }
 const overlay = toV2Community({ tagGroups: [], tags: [], tagSongs: [] }, [{ song_id: newSong.id, name: 'new alias' }])
 
-const wrapper = ({ children }: { children: ReactNode }) => (
-  <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>{children}</SWRConfig>
-)
+const withClient = (client: QueryClient) =>
+  function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  }
 
 describe('useServerAliases', () => {
   beforeEach(() => {
@@ -32,7 +33,7 @@ describe('useServerAliases', () => {
   })
 
   it('picks up the aliases of songs a refreshed catalog adds', async () => {
-    const { result } = renderHook(() => useServerAliases(), { wrapper })
+    const { result } = renderHook(() => useServerAliases(), { wrapper: withClient(new QueryClient()) })
     await waitFor(() => expect(result.current.data).toEqual([]))
 
     act(() => {
@@ -46,11 +47,8 @@ describe('useServerAliases', () => {
   })
 
   it('picks them up when it mounts again after a catalog was published while nothing was mounted', async () => {
-    // One SWR cache for both mounts, as navigating between pages keeps it
-    const cache = new Map()
-    const persistent = ({ children }: { children: ReactNode }) => (
-      <SWRConfig value={{ provider: () => cache, dedupingInterval: 0 }}>{children}</SWRConfig>
-    )
+    // One query cache for both mounts, as navigating between pages keeps it
+    const persistent = withClient(new QueryClient())
     const firstMount = renderHook(() => useServerAliases(), { wrapper: persistent })
     await waitFor(() => expect(firstMount.result.current.data).toEqual([]))
     firstMount.unmount()

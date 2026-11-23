@@ -12,6 +12,7 @@ import {
 import { flushSync } from 'react-dom'
 import { DEFAULT_LOCALE, type SupportedLocale, splitLocalePath } from '@/setup/locale'
 import { setClientLocale } from './runtime'
+import { reportRejection } from '@/lib/rejections'
 
 interface LocaleContextValue {
   locale: SupportedLocale
@@ -65,7 +66,7 @@ export const LocaleUrlSync: FC = () => {
 
   useEffect(() => {
     const urlLocale = splitLocalePath(new URL(publicHref, 'https://dxrating.net').pathname).locale
-    if (urlLocale !== locale) void setLocale(urlLocale)
+    if (urlLocale !== locale) setLocale(urlLocale).catch(reportRejection)
     // Only a URL change re-checks: a picker switch updates the locale first and the URL a moment later
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [publicHref])

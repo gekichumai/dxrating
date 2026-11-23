@@ -1,0 +1,15 @@
+diff --git a/apps/web/src/catalog/CatalogContext.tsx b/apps/web/src/catalog/CatalogContext.tsx
+index 601c7629..420ea875 100644
+--- a/apps/web/src/catalog/CatalogContext.tsx
++++ b/apps/web/src/catalog/CatalogContext.tsx
+@@ -106,9 +106,8 @@ export const useCompleteCatalogDocument = (): SongCatalogDocument | null => {
+ /** The complete song catalog under the selected game version, or null until it has loaded */
+ export const useCompleteSongCatalog = (): SongCatalog | null => {
+   const version = useAppContextDXDataVersion()
+-  const { region } = useAppContext()
+   const document = useCompleteCatalogDocument()
+-  return document ? getSongCatalog(document, version, region) : null
++  return document ? getSongCatalog(document, version) : null
+ }
+ 
+ /** For event handlers (imports and the like): resolves to the complete song catalog, waiting for it if needed */

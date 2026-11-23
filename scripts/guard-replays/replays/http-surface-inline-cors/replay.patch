@@ -1,5 +1,5 @@
 diff --git a/apps/backend/src/app.ts b/apps/backend/src/app.ts
-index 1b96cf73..56203ebd 100644
+index 67538433..f6a26aa4 100644
 --- a/apps/backend/src/app.ts
 +++ b/apps/backend/src/app.ts
 @@ -61,6 +61,7 @@ import {
@@ -7,7 +7,7 @@ index 1b96cf73..56203ebd 100644
  } from '@gekichumai/api-contract'
  import { cors } from './cors'
 +import { cors as honoCors } from 'hono/cors'
- import { credentialHygiene, holdCredentials } from './lib/credential-hygiene'
+ import { credentialHygiene, holdCredentials, isCredentialPath } from './lib/credential-hygiene'
  import { netImportHandler } from './services/cloud-save/net-import-route'
  import { McpCatalogSource } from './services/application'
 @@ -290,7 +291,18 @@ app.onError((err, c) => {

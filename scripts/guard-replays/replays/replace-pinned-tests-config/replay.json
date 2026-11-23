@@ -1,0 +1,7 @@
+{
+  "mistake": "A developer's .env.local overrides the test environment, so the backend tests run against the dev database.",
+  "history": ["#269 8a350624 (config.ts loaded .env.local with override: true in tests)"],
+  "guard": "config.test.ts loads config with a real .env.local in a temporary working directory",
+  "check": "cd apps/backend && DATABASE_URL=postgres://postgres:postgres@localhost:5432/dxrating_test pnpm exec vitest run src/test/config.test.ts",
+  "expect": "does not let .env.local override the test environment"
+}

@@ -1,0 +1,13 @@
+diff --git a/apps/web/src/components/layout/navigationOrigins.ts b/apps/web/src/components/layout/navigationOrigins.ts
+index 9b2edb50..7c664378 100644
+--- a/apps/web/src/components/layout/navigationOrigins.ts
++++ b/apps/web/src/components/layout/navigationOrigins.ts
+@@ -35,7 +35,7 @@ export const recordNavigationOrigin = (from: LocationLike | undefined, to: Locat
+   if (!from || !toKey || originByEntry.has(toKey) || fromIndex === undefined || toIndex === undefined) return
+   let origin: NavigationOrigin | undefined
+   if (toIndex === fromIndex + 1) {
+-    origin = { pathname: from.pathname, href: from.href }
++    origin = { pathname: from.pathname, href: from.pathname }
+   } else if (toIndex === fromIndex && from.pathname === to.pathname) {
+     const fromKey = entryKey(from)
+     origin = fromKey ? originByEntry.get(fromKey) : undefined

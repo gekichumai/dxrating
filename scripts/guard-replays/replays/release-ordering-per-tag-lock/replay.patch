@@ -1,0 +1,14 @@
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index cbe84d89..769d2aee 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -6,8 +6,7 @@ on:
+       - 'v*'
+ 
+ concurrency:
+-  group: release-production
+-  cancel-in-progress: false
++  group: release-${{ github.ref }}
+ 
+ jobs:
+   newest:

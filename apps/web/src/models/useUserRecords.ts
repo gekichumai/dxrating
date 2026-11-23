@@ -1,22 +1,18 @@
-import type { RatingEntry } from '@gekichumai/maimai-domain'
+import { toRatingEntries, type RatingEntry } from '@gekichumai/maimai-domain'
 import { useEffect, useMemo, useState } from 'react'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
 import { useSongCatalog } from '@/catalog/CatalogContext'
 import { buildDemoScores, isDemoScoresEnabled } from '@/fixtures/demoScores'
 import { useRatingCalculatorContext } from './context/RatingCalculatorContext'
-import { groupUserRecords, toRatingEntries, type UserRecord } from './userRecords'
+import { groupUserRecords, type UserRecord } from './userRecords'
 
 export type { UserRecord } from './userRecords'
 
 export interface UserRecords {
   /** Raw entries, in the stored shape */
   entries: readonly PlayEntry[]
-  /**
-   * Every entry as `calculateBest50` input, duplicates and import bucket hints kept: B50 must be computed from this,
-   * never from `records` (B50 deduplicates by rating, AP bonus included, not by achievement)
-   */
   ratingEntries: RatingEntry[]
-  /** Records joined with their sheets, keyed by public sheet ID (see `UserRecord` for duplicate handling) */
+  /** Records joined with their sheets, keyed by public sheet ID */
   bySheetId: ReadonlyMap<string, UserRecord>
   records: readonly UserRecord[]
   /** The fixture of `?demoScores=1` is shown instead of the user's own scores */

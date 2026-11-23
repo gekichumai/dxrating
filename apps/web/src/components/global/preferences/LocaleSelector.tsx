@@ -9,6 +9,7 @@ import MdiCheck from '~icons/mdi/check'
 import MdiTranslate from '~icons/mdi/translate'
 import { startViewTransition, wipeOriginFromClick } from '../../../utils/startViewTransition'
 import { m } from '@/paraglide/messages'
+import { reportRejection } from '@/lib/rejections'
 
 /** The page on screen as the given language's URL: `/ja/rating?x=1` → `/th/rating?x=1` */
 export const localizedCurrentUrl = (
@@ -46,7 +47,7 @@ export const LocaleSelectorItem: FC<
         flushSync(onClose)
         if (selected) return
         const previousLocale = currentLocale
-        void startViewTransition(() => {
+        startViewTransition(() => {
           persistClientLocalePreference(locale)
           // The new language renders in place, then the URL moves to that language's path for the same page
           const changed = setLocale(locale).then(() => {
@@ -57,7 +58,7 @@ export const LocaleSelectorItem: FC<
             previous_locale: previousLocale,
           })
           return changed
-        }, origin)
+        }, origin).catch(reportRejection)
       }}
     >
       {selected && (

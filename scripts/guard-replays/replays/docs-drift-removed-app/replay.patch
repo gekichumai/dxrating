@@ -1,0 +1,12 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index ccf2f28c..a89fe8e7 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -10,6 +10,7 @@ ## Project
+ - `apps/backend/` — Hono API server (oRPC, Effect, Drizzle ORM, PostgreSQL, Better Auth); see `apps/backend/CLAUDE.md`
+ - `apps/admin/`, `apps/admin-api/` — Admin console and its API
+ - `apps/shishenmege/` — The 是什么歌.com redirect Worker
++- `apps/functions/` — Cloudflare Workers (edge endpoints)
+ - `packages/api-contract/` — oRPC contracts shared by the backend and the web app
+ - `packages/maimai-domain/` — Song catalog, sheet identity, Best 50 and import rules shared by the web app and backend
+ - `packages/dxdata/` — Pre-annotated maimai DX song/sheet metadata

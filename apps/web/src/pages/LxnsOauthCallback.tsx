@@ -74,7 +74,9 @@ export const LxnsOauthCallback: FC = () => {
     <Button
       variant={outcome.status === 'error' ? 'contained' : 'text'}
       disabled={outcome.status === 'pending'}
-      onClick={() => navigate({ to: '/rating' })}
+      onClick={() => {
+        navigate({ to: '/rating' })
+      }}
     >
       {m.ratingCalculator_io_import_lxns_callback_back({}, { locale })}
     </Button>
