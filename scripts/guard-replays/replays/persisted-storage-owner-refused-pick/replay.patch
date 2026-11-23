@@ -1,0 +1,14 @@
+diff --git a/apps/web/src/utils/persisted.ts b/apps/web/src/utils/persisted.ts
+index 321aeb36..ba164a13 100644
+--- a/apps/web/src/utils/persisted.ts
++++ b/apps/web/src/utils/persisted.ts
+@@ -99,9 +99,7 @@ export function persisted<T, F>(
+ 
+   const write = (raw: string | null): boolean => {
+     if (typeof window === 'undefined') return false
+-    const over = readStored()
+     const saved = store(raw)
+-    unsaved = saved ? null : { raw, over }
+     window.dispatchEvent(new CustomEvent(CHANGED_EVENT, { detail: id }))
+     return saved
+   }

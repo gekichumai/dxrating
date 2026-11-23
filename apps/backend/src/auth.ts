@@ -15,6 +15,10 @@ import { passkeySignUp, requireFreshSessionToAddPasskey } from './lib/passkey-si
 import { localizeAuthError } from './lib/auth-error-localization'
 import { setPassword } from './lib/set-password'
 import { emailVerificationHooks, emailVerificationUserFields } from './lib/email-verification-record'
+import { createAuthMail } from './lib/auth-mail'
+import { Mailer } from './services/mailer'
+import { EmailVerificationProtocol } from './services/email-verification-protocol'
+import { emailVerificationProtocol } from './lib/email-verification-protocol/plugin'
 import { SET_PASSWORD_AUTH_PATH } from '@gekichumai/api-contract'
 import { and, eq } from 'drizzle-orm'
 /**
@@ -32,12 +36,31 @@ export const PWNED_PASSWORD_PATHS = [
   SET_PASSWORD_AUTH_PATH,
 ] as const
 
+/**
+ * The origins our sign-up form is served from, which an Email Verification Protocol token must be bound to (its
+ * KB-JWT's `aud`): the web's (`FRONTEND_URL`), production's, and the Vite dev servers outside production
+ */
+export const emailVerificationAudiences = (config: typeof AppConfig.Service) => [
+  ...new Set([
+    new URL(config.frontendUrl).origin,
+    'https://dxrating.net',
+    ...(config.nodeEnv === 'production' ? [] : ['http://localhost:5173', 'http://localhost:5174']),
+  ]),
+]
+
 class AuthenticationError extends Data.TaggedError('AuthenticationError')<{
   readonly operation: string
   readonly cause: unknown
 }> {}
 
-export const createAuth = (database: typeof Database.Service, config: typeof AppConfig.Service) => {
+export const createAuth = (
+  database: typeof Database.Service,
+  config: typeof AppConfig.Service,
+  mailer: typeof Mailer.Service,
+  emailVerificationProtocolVerifier: typeof EmailVerificationProtocol.Service,
+) => {
+  // Verification and password reset mail (gekichumai/meta#80); all of it off while the mailer is
+  const authMail = createAuthMail({ mailer, database, frontendUrl: config.frontendUrl })
   const crossSubDomainCookies = config.auth.cookieDomain
     ? { enabled: true as const, domain: config.auth.cookieDomain }
     : undefined
@@ -80,21 +103,20 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
     baseURL: config.auth.url,
     emailAndPassword: {
       enabled: true,
+      ...authMail.passwordReset,
       password: {
-        hash: (password) =>
-          Effect.runPromise(
-            Effect.tryPromise({
-              try: () => bcrypt.hash(password, 10),
-              catch: (cause) => new AuthenticationError({ operation: 'Hash password', cause }),
-            }),
-          ),
-        verify: ({ hash, password }) =>
-          Effect.runPromise(
-            Effect.tryPromise({
-              try: () => bcrypt.compare(password, hash),
-              catch: (cause) => new AuthenticationError({ operation: 'Verify password', cause }),
-            }),
-          ),
+        hash: (password) => bcrypt.hash(password, 10),
+        verify: ({ hash, password }) => bcrypt.compare(password, hash),
+      },
+    },
+    ...(authMail.emailVerification ? { emailVerification: authMail.emailVerification } : {}),
+    rateLimit: {
+      // Better Auth's defaults already hold /send-verification-email and /request-password-reset to 3 a minute per
+      // address (and auth-mail.ts mails one address at most 3 times in 15 minutes); these also slow down guessing
+      // tokens at the routes that take them
+      customRules: {
+        '/reset-password': { window: 60, max: 10 },
+        '/verify-email': { window: 60, max: 10 },
       },
     },
     user: {
@@ -103,6 +125,7 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
       deleteUser: {
         enabled: true,
         beforeDelete: (user) =>
+          // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
           Effect.runPromise(
             Effect.gen(function* () {
               const accounts = yield* database.query('Read linked OAuth accounts', (db) =>
@@ -149,7 +172,11 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
     databaseHooks: {
       user: {
         ...emailVerificationHooks(database),
-        delete: { after: () => Effect.runPromise(database.wroteOutside([authSchema.user])) },
+        delete: {
+          after: () =>
+            // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
+            Effect.runPromise(database.wroteOutside([authSchema.user])),
+        },
       },
     },
     advanced: {
@@ -168,6 +195,8 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
       'dxrating://',
       'http://localhost:5173',
       'http://localhost:5174',
+      // Mailed links redirect here (auth-mail.ts); Better Auth checks every callback URL against this list
+      new URL(config.frontendUrl).origin,
     ],
     socialProviders: {
       google: {
@@ -192,11 +221,19 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
         registration: passkeySignUp({ turnstileSecretKey: config.auth.turnstile.secretKey }),
       }),
       oneTap(),
+      // Before authMail: its after-hook on sign-up mails only an address this one didn't just verify
+      emailVerificationProtocol({
+        verifier: emailVerificationProtocolVerifier,
+        database,
+        audiences: emailVerificationAudiences(config),
+      }),
+      authMail.plugin,
       lastLoginMethod({
         cookieName: 'dxrating.last_used_login_method',
       }),
       setPassword({
         storeFirstPassword: ({ userId, id, password }) =>
+          // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
           Effect.runPromise(
             Effect.tryPromise({
               try: () =>
@@ -266,7 +303,9 @@ export const AuthenticationLive = Layer.effect(
   Effect.gen(function* () {
     const database = yield* Database
     const config = yield* AppConfig
-    const auth = yield* Effect.sync(() => createAuth(database, config))
+    const mailer = yield* Mailer
+    const emailVerificationProtocolVerifier = yield* EmailVerificationProtocol
+    const auth = yield* Effect.sync(() => createAuth(database, config, mailer, emailVerificationProtocolVerifier))
     const normalizeUnlinkRequest = Effect.fn('Authentication.normalizeUnlinkRequest')(function* (request: Request) {
       if (request.method !== 'POST' || new URL(request.url).pathname !== '/api/auth/unlink-account') return request
 

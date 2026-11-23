@@ -1,0 +1,9 @@
+{
+  "mistake": "The root .oxlintrc.json loads the jsPlugin @gdp-ts/core/lint/plugin, but the root package.json does not declare @gdp-ts/core, so it resolves only because apps/backend's copy is hoisted.",
+  "history": [
+    "#491 70c5263d (the gdp-ts pilot added the jsPlugin to .oxlintrc.json and declared @gdp-ts/core only in apps/backend)"
+  ],
+  "guard": "the jsPlugins check in oxlint-plugins/workspace-deps.mts",
+  "check": "pnpm exec oxlint oxlint-plugins",
+  "expect": "Add @gdp-ts/core to package.json devDependencies"
+}

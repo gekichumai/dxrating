@@ -12,7 +12,6 @@ import { Sentry } from '../lib/functions/sentry'
  * sent to PostHog.
  */
 
-export const API_CLIENT_HEADER = 'X-DXRating-Client'
 export const API_USAGE_FLUSH_INTERVAL = '1 minute'
 export const MAX_API_USAGE_BUCKETS = 500
 

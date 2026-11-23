@@ -1,0 +1,10 @@
+{
+  "mistake": "packageManager is bumped, but a Dockerfile keeps installing the old pnpm.",
+  "history": [
+    "62e5fecb (bumped packageManager to pnpm@10.33.0 and left the Dockerfiles on 10.30.3)",
+    "#269 8a350624 (fixed apps/backend/Dockerfile; .devcontainer/Dockerfile stayed on 10.30.3 until this guard)"
+  ],
+  "guard": "infra/build-manifests.test.mts checks every pnpm@ pin in a Dockerfile against packageManager",
+  "check": "node --test infra/build-manifests.test.mts",
+  "expect": ".devcontainer/Dockerfile: install pnpm@"
+}

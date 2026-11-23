@@ -1,3 +1,4 @@
+import { DXDATA_V2_COMMUNITY_PATH } from '@gekichumai/api-contract'
 import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { fromV2Community, type CommunityV2Document } from '@gekichumai/dxdata/v2'
 import { keepPreviousData, useQuery, type QueryClient } from '@tanstack/react-query'
@@ -9,7 +10,7 @@ import { getLoadedCatalogDocument, loadClientCatalogDocument, subscribeToCatalog
 // changes about daily, so they come from their own small document. Its responses tell the browser to revalidate
 // every time (the edge answers a 304 when nothing changed), so a plain fetch() always sees a current copy; like the
 // catalog it is a plain GET route of the backend, not an oRPC procedure.
-export const COMMUNITY_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v2/dxdata/community`
+export const COMMUNITY_URL = `${import.meta.env.VITE_BACKEND_URL}${DXDATA_V2_COMMUNITY_PATH}`
 
 /** Requests within this window share one load: the tag and alias hooks mount together */
 const SHARE_MS = 5_000

@@ -7,10 +7,12 @@ import { EffectDrizzleQueryError } from 'drizzle-orm/effect-core'
 import { Cause, Effect } from 'effect'
 import { ConnectionError, SqlError } from 'effect/sql/SqlError'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { databaseErrorTags, DatabaseError } from '../db/errors'
-import { buildSentryOptions, Sentry } from '../lib/functions/sentry'
-import { isClientAbort, reportProcedureError } from '../orpc-error-reporting'
+import { DatabaseError } from '../db/errors'
+import { buildSentryOptions, classifyFailure, isClientAbort, reportFailure, Sentry } from '../lib/functions/sentry'
+import { reportProcedureError } from '../orpc-error-reporting'
 import { ClientClosedRequestError } from '../request-runner'
+import { withCatalogIdentityErrors } from '../router'
+import { CatalogIdentityError } from '../services/catalog-identities'
 
 const connectionTimeout = () =>
   new DatabaseError({
@@ -45,6 +47,17 @@ const makeHandler = () => {
     failing: os.meta(openapi({ method: 'GET', path: '/failing' })).handler(
       handlerGen(function* () {
         return yield* Effect.fail(connectionTimeout())
+      }),
+    ),
+    catalog: os.meta(openapi({ method: 'GET', path: '/catalog' })).handler(
+      handlerGen(function* () {
+        return yield* withCatalogIdentityErrors(
+          Effect.fail(
+            new CatalogIdentityError('unavailable', 'Published catalog identities are unavailable', {
+              cause: connectionTimeout(),
+            }),
+          ),
+        )
       }),
     ),
   }
@@ -109,7 +122,9 @@ describe('oRPC error reporting', () => {
     await handled.catch(() => undefined)
 
     expect(await captured()).toEqual([])
-    expect(breadcrumbs).toContainEqual(expect.objectContaining({ message: 'slow aborted by the client' }))
+    expect(breadcrumbs).toContainEqual(
+      expect.objectContaining({ message: 'Aborted by the client', data: { 'orpc.procedure': 'slow' } }),
+    )
   })
 
   it('captures a real failure, tagged with the procedure and the SQL error reason', async () => {
@@ -123,6 +138,21 @@ describe('oRPC error reporting', () => {
     expect(sent[0]?.exception?.values?.at(-1)?.type).toBe('DatabaseError')
     expect(sent[0]?.tags).toMatchObject({
       'orpc.procedure': 'failing',
+      'db.operation': 'Announcements.listPublic',
+      'db.error': 'ConnectionError',
+    })
+  })
+
+  it('tags a database failure wrapped in other errors (DXRATING-BACKEND-2N)', async () => {
+    const { handler } = makeHandler()
+
+    const { response } = await handler.handle(new Request('http://localhost/catalog'))
+
+    expect(response?.status).toBe(503)
+    const sent = await captured()
+    expect(sent).toHaveLength(1)
+    expect(sent[0]?.tags).toMatchObject({
+      'orpc.procedure': 'catalog',
       'db.operation': 'Announcements.listPublic',
       'db.error': 'ConnectionError',
     })
@@ -152,15 +182,15 @@ describe('oRPC error reporting', () => {
     expect(isClientAbort(new Error('Error: aborted'), controller.signal)).toBe(false)
   })
 
-  it('tags a database error captured outside oRPC, as the Hono routes and the global error handler capture it', async () => {
-    // app.onError and the dxdata routes call captureException with only a requestId (DXRATING-BACKEND-2K)
+  it('tags a database error reported outside oRPC, as the Hono routes and the global error handler report it', async () => {
+    // app.onError and the dxdata routes report with only a requestId (DXRATING-BACKEND-2K)
     const raw = new DatabaseError({
       operation: 'Read published catalog',
       cause: new SqlError({
         reason: new ConnectionError({ cause: new Error('Connection timed out'), operation: 'connect' }),
       }),
     })
-    Sentry.captureException(raw, { tags: { requestId: 'synthetic' } })
+    reportFailure(raw, { tags: { requestId: 'synthetic' } })
 
     const sent = await captured()
     expect(sent).toHaveLength(1)
@@ -172,9 +202,10 @@ describe('oRPC error reporting', () => {
   })
 
   it('tags only database errors', () => {
-    expect(databaseErrorTags(new Error('boom'))).toEqual({})
-    expect(databaseErrorTags(new DatabaseError({ operation: 'Read', cause: new Error('boom') }))).toEqual({
-      'db.operation': 'Read',
+    expect(classifyFailure(new Error('boom'))).toEqual({ report: true, tags: {} })
+    expect(classifyFailure(new DatabaseError({ operation: 'Read', cause: new Error('boom') }))).toEqual({
+      report: true,
+      tags: { 'db.operation': 'Read' },
     })
   })
 })

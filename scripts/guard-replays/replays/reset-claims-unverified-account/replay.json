@@ -1,0 +1,8 @@
+{
+  "mistake": "A password reset on an account whose address was never verified kept the passkeys and social sign-ins someone added before, so whoever set the account up on another person's address could still sign in after its owner reset it.",
+  "history": ["meta#80 review of feat/email-mail-fallback (revokeSessionsOnPasswordReset only)"],
+  "guard": "apps/backend/src/test/auth-mail.test.ts hands an unverified account to the inbox that resets its password",
+  "check": "pnpm --filter @gekichumai/backend exec vitest run src/test/auth-mail.test.ts",
+  "expect": "hands an unverified account to the inbox",
+  "needs": ["postgres"]
+}

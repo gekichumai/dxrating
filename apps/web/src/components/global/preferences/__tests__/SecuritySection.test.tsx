@@ -7,22 +7,30 @@ import { LocaleProvider, useSetLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import { SecuritySection } from '../SecuritySection'
 
-const { addPasskey, changePassword, listAccounts, listUserPasskeys, listSessions, setInitialPassword } = vi.hoisted(
-  () => ({
-    addPasskey: vi.fn(),
-    changePassword: vi.fn(),
-    listAccounts: vi.fn(),
-    listUserPasskeys: vi.fn(),
-    listSessions: vi.fn(),
-    setInitialPassword: vi.fn(),
-  }),
-)
+const {
+  addPasskey,
+  changePassword,
+  listAccounts,
+  listUserPasskeys,
+  listSessions,
+  sendVerificationEmail,
+  setInitialPassword,
+} = vi.hoisted(() => ({
+  sendVerificationEmail: vi.fn(),
+  addPasskey: vi.fn(),
+  changePassword: vi.fn(),
+  listAccounts: vi.fn(),
+  listUserPasskeys: vi.fn(),
+  listSessions: vi.fn(),
+  setInitialPassword: vi.fn(),
+}))
 
 vi.mock('@/lib/auth-client', () => ({
   authClient: {
     changePassword,
     listAccounts,
     listSessions,
+    sendVerificationEmail,
     setInitialPassword,
     passkey: {
       addPasskey,
@@ -48,11 +56,61 @@ function TestProviders({ children }: { children: ReactNode }) {
 describe('SecuritySection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.unstubAllEnvs()
+    vi.stubEnv('VITE_AUTH_MAIL_ENABLED', 'true')
     changePassword.mockResolvedValue({ error: null })
     listAccounts.mockResolvedValue({ data: [{ id: 'a1', providerId: 'credential', accountId: 'u1' }], error: null })
     setInitialPassword.mockResolvedValue({ data: { status: true }, error: null })
     listUserPasskeys.mockResolvedValue({ data: [] })
     listSessions.mockResolvedValue({ data: [] })
+  })
+
+  it('shows whether the address is verified, and resends the link for one that is not', async () => {
+    sendVerificationEmail.mockResolvedValue({ data: { status: true }, error: null })
+    const { rerender } = render(
+      <SecuritySection userId="u1" email={{ address: 'player@example.com', verified: false }} />,
+      { wrapper: TestProviders },
+    )
+    const email = screen.getByRole('region', { name: 'Email address' })
+    expect(email.textContent).toContain('player@example.com')
+    expect(email.textContent).toContain('Not verified')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Resend verification email' }))
+    await waitFor(() => expect(sendVerificationEmail).toHaveBeenCalledWith({ email: 'player@example.com' }))
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith('Email sent. Open the link in it to verify your address.'),
+    )
+
+    rerender(<SecuritySection userId="u1" email={{ address: 'player@example.com', verified: true }} />)
+    expect(screen.getByRole('region', { name: 'Email address' }).textContent).toContain('Verified')
+    expect(screen.queryByRole('button', { name: 'Resend verification email' })).toBeNull()
+  })
+
+  it('says when verification mail is off', async () => {
+    sendVerificationEmail.mockResolvedValue({
+      data: null,
+      error: { code: 'VERIFICATION_EMAIL_NOT_ENABLED', message: "Verification email isn't enabled", status: 400 },
+    })
+    render(<SecuritySection userId="u1" email={{ address: 'player@example.com', verified: false }} />, {
+      wrapper: TestProviders,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Resend verification email' }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Verification email isn't available right now."))
+  })
+
+  it('shows the address alone, with no verification to chase, in a build without account email', () => {
+    vi.stubEnv('VITE_AUTH_MAIL_ENABLED', '')
+    const { rerender } = render(
+      <SecuritySection userId="u1" email={{ address: 'player@example.com', verified: false }} />,
+      { wrapper: TestProviders },
+    )
+    const email = screen.getByRole('region', { name: 'Email address' })
+    expect(email.textContent).toContain('player@example.com')
+    expect(email.textContent).not.toContain('Not verified')
+    expect(screen.queryByRole('button', { name: 'Resend verification email' })).toBeNull()
+
+    rerender(<SecuritySection userId="u1" email={{ address: 'player@example.com', verified: true }} />)
+    expect(screen.getByRole('region', { name: 'Email address' }).textContent).toContain('Verified')
   })
 
   it('uses a semantic password form with stable password-manager fields', async () => {

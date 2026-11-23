@@ -1,8 +1,8 @@
-import * as Sentry from '@sentry/node'
 import { getTableName, is, type Table } from 'drizzle-orm'
 import type { EffectCacheShape } from 'drizzle-orm/cache/core/cache-effect'
 import { getTableConfig, PgTable } from 'drizzle-orm/pg-core'
 import { Clock, Context, Effect } from 'effect'
+import { Sentry } from '../lib/functions/sentry'
 import * as authSchema from './auth-schema'
 import * as schema from './schema'
 

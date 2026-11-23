@@ -31,7 +31,7 @@ const SheetTagsAddDialog: FC<{
   const locale = useLocale()
   const [pending, setPending] = useState(false)
   const localizeMessage = useLocalizedMessageTranslation()
-  const { session, openLoginDialog, LoginDialog } = useAuth()
+  const { session, openLoginDialog, loginDialog } = useAuth()
 
   const queryClient = useQueryClient()
   const { data: tagGroups, isLoading: loadingTags } = useQuery(orpc.tags.list.queryOptions({ select: groupTags }))
@@ -73,7 +73,7 @@ const SheetTagsAddDialog: FC<{
 
   return (
     <div className="flex flex-col gap-2 p-4 relative">
-      <LoginDialog />
+      {loginDialog}
       <h2 className="m-0 text-lg font-semibold">{m.sheet_tags_add_title({}, { locale })}</h2>
       <div className="text-lg">
         <SheetListItemContent sheet={sheet} />

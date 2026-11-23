@@ -115,7 +115,7 @@ const ReleaseDateText: FC<{ releaseDate: string }> = ({ releaseDate }) => {
 
 const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const locale = useLocale()
-  const { session, user, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
+  const { session, user, ensureAuthenticated, openLoginDialog, loginDialog } = useAuth()
   const visibility = useCommentVisibility(user?.id)
   const [content, setContent] = useState<string>('')
   const { data: comments, isLoading: isLoadingComments, refetch } = useSheetComments(sheet)
@@ -135,11 +135,11 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
     void refetch()
     setContent('')
-  }, [sheet, content, ensureAuthenticated])
+  }, [sheet, content, ensureAuthenticated, refetch])
 
   return (
     <div className="flex flex-col gap-2">
-      <LoginDialog />
+      {loginDialog}
 
       {session ? (
         <div className="flex gap-2 mt-1">
@@ -491,6 +491,7 @@ const SheetInternalLevelHistory: FC<{
     () =>
       MULTIVER_AVAILABLE_VERSIONS.map((version) => ({
         version,
+        // oxlint-disable-next-line no-restricted-properties -- the raw per-version table, shown as is
         internalLevelValue: sheet.multiverInternalLevelValue?.[version],
         available: VERSION_ID_MAP.get(version)! >= VERSION_ID_MAP.get(sheet.version)!,
       })).reduce(

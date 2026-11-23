@@ -40,6 +40,7 @@ import { useThemeColorSync } from '@/utils/useThemeColorSync'
 import { useRevealFocusInScrollFade } from '@/utils/useRevealFocusInScrollFade'
 import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
 import { THEME_INLINE_SCRIPT } from '@/setup/theme-script'
+import { originTrialMeta } from '@/setup/origin-trials'
 import { splitLocalePath } from '@/setup/locale'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
 // All app CSS is global and ships as one stylesheet: the base styles first, then utilities, then page styles whose
@@ -54,7 +55,6 @@ import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: import.meta.env.SSR ? 0 : undefined } } })
-if (!import.meta.env.SSR) resetQueriesOnAccountChange(queryClient, authClient.$store.atoms.session)
 
 const fallbackElement = (
   <div className="flex items-center justify-center h-50% w-full p-6">
@@ -90,6 +90,7 @@ export const Route = createRootRoute({
         ...buildRootSeoMeta(locale, { includeTitle: includeRootTitle }),
         ...(isNotFound ? buildNotFoundSeoMeta(locale) : []),
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        ...originTrialMeta(),
         {
           name: 'msapplication-config',
           content: 'https://shama.dxrating.net/favicon/pack/v1/browserconfig.xml',
@@ -180,6 +181,12 @@ const OAUTH_ERRORS: Partial<Record<string, PlainMessage>> = {
   access_denied: m.auth_userProfile_oauthError_access_denied,
 }
 
+const PAGES_WITH_OWN_ERRORS = new Set([
+  '/io/import/lxns/oauth_callback',
+  '/account/verify-email',
+  '/account/reset-password',
+])
+
 function OAuthErrorHandler() {
   const locale = useLocale()
 
@@ -187,8 +194,9 @@ function OAuthErrorHandler() {
     const params = new URLSearchParams(window.location.search)
     const error = params.get('error')
     if (!error) return
-    // The LXNS import callback carries its own ?status=error&error=… and explains it on the page
-    if (window.location.pathname === '/io/import/lxns/oauth_callback') return
+    // These pages carry their own ?error= and explain it themselves: the LXNS import callback
+    // (?status=error&error=…) and the landing pages of mailed verification and reset links
+    if (PAGES_WITH_OWN_ERRORS.has(splitLocalePath(window.location.pathname).pathname)) return
 
     // The raw provider code means nothing to people: keep it in the console for debugging, show plain copy
     console.warn('[oauth] sign-in returned an error', error, params.get('error_description') ?? '')
@@ -213,6 +221,9 @@ function OAuthErrorHandler() {
 
 function RootComponent() {
   const { locale, renderedAt } = Route.useRouteContext()
+  // After hydration: subscribing starts the session fetch, and the first client render must still see the session
+  // pending, as the server rendered it
+  useEffect(() => resetQueriesOnAccountChange(queryClient, authClient.$store.atoms.session), [])
 
   return (
     <RenderEnvironmentProvider renderedAt={renderedAt}>

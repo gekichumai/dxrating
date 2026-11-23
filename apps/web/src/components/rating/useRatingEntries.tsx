@@ -3,6 +3,7 @@ import {
   calculateBest50,
   calculateRatingAward,
   nextRatingTarget,
+  toRatingEntry,
   type Best50Result,
   type RatingAward,
   type RatingEntry,
@@ -75,29 +76,7 @@ export const calculateWebRatingEntries = ({
     const sheet = sheetsById.get(entry.sheetId)
     if (!sheet) return []
 
-    const identity = entry.identity ?? catalog.getById(entry.sheetId)?.identity
-    return [
-      {
-        originalEntry: entry,
-        sheet,
-        ratingEntry: identity
-          ? {
-              sheetId: entry.sheetId,
-              identity,
-              achievementRate: entry.achievementRate,
-              comboFlag: entry.comboFlag,
-              syncFlag: entry.syncFlag,
-              // The provider's bucket is the chart's B15/B35 eligibility: AP50 keeps it, only the input is filtered
-              source: entry.providerConfig?.divingFish?.ratingEligibility
-                ? {
-                    provider: 'diving-fish' as const,
-                    best50Bucket: entry.providerConfig.divingFish.ratingEligibility,
-                  }
-                : undefined,
-            }
-          : null,
-      },
-    ]
+    return [{ originalEntry: entry, sheet, ratingEntry: toRatingEntry(entry, catalog) }]
   })
 
   const result = calculateBest50({

@@ -5,17 +5,22 @@ import { LocaleProvider, useSetLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import { LoginForm } from '../LoginForm'
 
-const { passkeySignIn, emailSignIn, socialSignIn, emailSignUp, addPasskey } = vi.hoisted(() => ({
-  passkeySignIn: vi.fn(),
-  emailSignIn: vi.fn(),
-  socialSignIn: vi.fn(),
-  emailSignUp: vi.fn(),
-  addPasskey: vi.fn(),
-}))
+const { passkeySignIn, emailSignIn, socialSignIn, emailSignUp, addPasskey, requestPasswordReset, evpNonce, evpVerify } =
+  vi.hoisted(() => ({
+    evpNonce: vi.fn(),
+    evpVerify: vi.fn(),
+    requestPasswordReset: vi.fn(),
+    passkeySignIn: vi.fn(),
+    emailSignIn: vi.fn(),
+    socialSignIn: vi.fn(),
+    emailSignUp: vi.fn(),
+    addPasskey: vi.fn(),
+  }))
 
 vi.mock('@/lib/auth-client', () => ({
   authClient: {
     getLastUsedLoginMethod: () => null,
+    requestPasswordReset,
     signIn: {
       email: emailSignIn,
       passkey: passkeySignIn,
@@ -27,8 +32,15 @@ vi.mock('@/lib/auth-client', () => ({
     passkey: {
       addPasskey,
     },
+    emailVerificationProtocol: {
+      nonce: evpNonce,
+      verify: evpVerify,
+    },
   },
 }))
+
+const { cancelCeremony } = vi.hoisted(() => ({ cancelCeremony: vi.fn() }))
+vi.mock('@simplewebauthn/browser', () => ({ WebAuthnAbortService: { cancelCeremony } }))
 
 vi.mock('react-hot-toast', () => ({
   default: {
@@ -58,7 +70,11 @@ describe('LoginForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+    vi.stubEnv('VITE_AUTH_MAIL_ENABLED', 'true')
     passkeySignIn.mockResolvedValue({ error: null })
+    evpNonce.mockResolvedValue({ data: null, error: { status: 404 } })
+    evpVerify.mockResolvedValue({ data: { verified: true }, error: null })
   })
 
   /** Enters an email address on the first step and moves on to the second */
@@ -86,6 +102,46 @@ describe('LoginForm', () => {
     expect(screen.queryByLabelText(/^Password/)).toBeNull()
     // A passkey is the way in a new visitor is offered first
     expect(screen.getByRole('button', { name: 'Sign in with passkey' }).className).toContain('contained')
+  })
+
+  it('mails a password reset link for the address of the second step', async () => {
+    requestPasswordReset.mockResolvedValue({ data: { status: true }, error: null })
+    render(<LoginForm />)
+    await continueWithEmail(' demo@example.com ')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
+    await waitFor(() =>
+      expect(requestPasswordReset).toHaveBeenCalledWith(expect.objectContaining({ email: 'demo@example.com' })),
+    )
+    expect(
+      await screen.findByText("If an account uses demo@example.com, we've emailed it a link to choose a new password."),
+    ).toBeTruthy()
+  })
+
+  it('says when password reset is off', async () => {
+    requestPasswordReset.mockResolvedValue({
+      data: null,
+      error: { code: 'RESET_PASSWORD_DISABLED', message: "Reset password isn't enabled", status: 400 },
+    })
+    render(<LoginForm />)
+    await continueWithEmail()
+    fireEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
+    expect((await screen.findByRole('alert')).textContent).toBe("Password reset by email isn't available right now.")
+  })
+
+  it('offers no password reset in a build without account email', async () => {
+    vi.stubEnv('VITE_AUTH_MAIL_ENABLED', '')
+    render(<LoginForm />)
+    await continueWithEmail()
+    expect(screen.getByLabelText(/^Password/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Forgot password?' })).toBeNull()
+  })
+
+  it('offers no password reset while creating an account', async () => {
+    render(<LoginForm />)
+    fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+    await continueWithEmail()
+    expect(screen.queryByRole('button', { name: 'Forgot password?' })).toBeNull()
   })
 
   it('asks for the password on the second step, with the address kept for password managers', async () => {
@@ -238,6 +294,109 @@ describe('LoginForm', () => {
     expect(addPasskey).not.toHaveBeenCalledWith(expect.objectContaining({ context: expect.anything() }))
   })
 
+  describe("Chrome's Email Verification Protocol", () => {
+    const NONCE = 'v1.random.expiry.signature'
+    const TOKEN = 'evt.jwt.signature~kb.jwt.signature'
+    const tokenField = () => document.querySelector<HTMLInputElement>('input[autocomplete="email-verification-token"]')
+
+    beforeEach(() => {
+      evpNonce.mockResolvedValue({
+        data: { nonce: NONCE, expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() },
+        error: null,
+      })
+    })
+
+    it('has no token field until the visitor switches to sign-up, then one with a fresh nonce in the form', async () => {
+      render(<LoginForm />)
+      expect(tokenField()).toBeNull()
+      expect(evpNonce).not.toHaveBeenCalled()
+
+      fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+      await waitFor(() => expect(tokenField()).not.toBeNull())
+      const field = tokenField()!
+      expect(field.type).toBe('hidden')
+      expect(field.getAttribute('nonce')).toBe(NONCE)
+      expect(field.form).toBe(screen.getByRole('form'))
+      expect(evpNonce).toHaveBeenCalledOnce()
+    })
+
+    it('sets the nonce attribute only once the field is in the document (survives CSP nonce hiding)', async () => {
+      const nonceWrites: { value: string; connected: boolean }[] = []
+      const setAttribute = Element.prototype.setAttribute
+      const spy = vi.spyOn(Element.prototype, 'setAttribute').mockImplementation(function (this: Element, name, value) {
+        if (name === 'nonce' && this.getAttribute('autocomplete') === 'email-verification-token') {
+          nonceWrites.push({ value, connected: this.isConnected })
+        }
+        setAttribute.call(this, name, value)
+      })
+      try {
+        render(<LoginForm />)
+        fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+        await waitFor(() => expect(tokenField()).not.toBeNull())
+      } finally {
+        spy.mockRestore()
+      }
+
+      expect(nonceWrites.length).toBeGreaterThan(0)
+      expect(nonceWrites.every(({ value, connected }) => value === NONCE && connected)).toBe(true)
+      expect(tokenField()!.getAttribute('nonce')).toBe(NONCE)
+    })
+
+    it('sends the token Chrome filled in with a password sign-up', async () => {
+      vi.stubGlobal('PublicKeyCredential', undefined)
+      emailSignUp.mockResolvedValue({ error: null })
+      render(<LoginForm />)
+      fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+      await waitFor(() => expect(tokenField()).not.toBeNull())
+      fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: 'demo@example.com' } })
+      // What Chrome does as the form is submitted
+      tokenField()!.value = TOKEN
+      fireEvent.click(screen.getByRole('button', { name: 'Continue with email' }))
+      await screen.findByRole('button', { name: /Back to all sign-in options/ })
+      fireEvent.change(screen.getByLabelText(/^Password/), { target: { value: 'demo-password' } })
+      fireEvent.click(await screen.findByRole('button', { name: 'Create account' }))
+
+      await waitFor(() =>
+        expect(emailSignUp).toHaveBeenCalledWith(
+          expect.objectContaining({
+            email: 'demo@example.com',
+            emailVerificationToken: TOKEN,
+            emailVerificationNonce: NONCE,
+          }),
+        ),
+      )
+    })
+
+    it('verifies a passkey sign-up with the token once the account exists', async () => {
+      vi.stubGlobal('PublicKeyCredential', function PublicKeyCredential() {})
+      addPasskey.mockResolvedValue({ data: {}, error: null })
+      render(<LoginForm />)
+      fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+      await waitFor(() => expect(tokenField()).not.toBeNull())
+      await continueWithEmail()
+      tokenField()!.value = TOKEN
+      fireEvent.click(await screen.findByRole('button', { name: 'Create a passkey' }))
+
+      await waitFor(() => expect(evpVerify).toHaveBeenCalledWith({ token: TOKEN, nonce: NONCE }))
+      expect(addPasskey.mock.invocationCallOrder[0]).toBeLessThan(evpVerify.mock.invocationCallOrder[0]!)
+    })
+
+    it('signs up as before without a token, or when the backend has no nonce to give', async () => {
+      vi.stubGlobal('PublicKeyCredential', undefined)
+      emailSignUp.mockResolvedValue({ error: null })
+      evpNonce.mockRejectedValue(new Error('offline'))
+      render(<LoginForm />)
+      fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+      await continueWithEmail()
+      fireEvent.change(screen.getByLabelText(/^Password/), { target: { value: 'demo-password' } })
+      fireEvent.click(await screen.findByRole('button', { name: 'Create account' }))
+
+      await waitFor(() => expect(emailSignUp).toHaveBeenCalled())
+      expect(emailSignUp.mock.calls[0]![0]).not.toHaveProperty('emailVerificationToken')
+      expect(tokenField()).toBeNull()
+    })
+  })
+
   it('asks for a password straight away in a browser without passkeys', async () => {
     vi.stubGlobal('PublicKeyCredential', undefined)
     render(<LoginForm />)
@@ -288,6 +447,19 @@ describe('LoginForm', () => {
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith(m.auth_login_toastSuccess({}, { locale: 'ja' })))
     // Switching the language must not start another autofill request
     expect(passkeySignIn).toHaveBeenCalledOnce()
+  })
+
+  it('cancels the pending autofill request when the form switches to sign-up', async () => {
+    vi.stubGlobal('PublicKeyCredential', { isConditionalMediationAvailable: vi.fn().mockResolvedValue(true) })
+    passkeySignIn.mockReturnValue(new Promise(() => {}))
+
+    render(<LoginForm />)
+    await waitFor(() => expect(passkeySignIn).toHaveBeenCalledWith({ autoFill: true }))
+    expect(cancelCeremony).not.toHaveBeenCalled()
+
+    // Left pending, the request surfaced as a "Use a saved passkey" dialog when the sign-up form was submitted
+    fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+    expect(cancelCeremony).toHaveBeenCalledOnce()
   })
 
   it('keeps explicit passkey sign-in as a fallback', async () => {
