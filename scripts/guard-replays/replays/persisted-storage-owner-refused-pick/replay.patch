@@ -1,8 +1,8 @@
 diff --git a/apps/web/src/utils/persisted.ts b/apps/web/src/utils/persisted.ts
-index 6cdd2390..a6729b83 100644
+index 321aeb36..ba164a13 100644
 --- a/apps/web/src/utils/persisted.ts
 +++ b/apps/web/src/utils/persisted.ts
-@@ -102,9 +102,7 @@ export function persisted<T, F>(
+@@ -99,9 +99,7 @@ export function persisted<T, F>(
  
    const write = (raw: string | null): boolean => {
      if (typeof window === 'undefined') return false

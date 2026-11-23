@@ -1,9 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { z } from 'zod'
 
-// The browser refuses storage with blocked site data and in some private windows, a write can exceed the quota, and a
-// stored value can be corrupt or from an older build: nothing here throws, and every value is checked against its schema.
-
 export type StorageArea = 'local' | 'session'
 
 /**
