@@ -1,0 +1,15 @@
+diff --git a/packages/maimai-domain/src/song-catalog.ts b/packages/maimai-domain/src/song-catalog.ts
+index 0125adb0..0302a564 100644
+--- a/packages/maimai-domain/src/song-catalog.ts
++++ b/packages/maimai-domain/src/song-catalog.ts
+@@ -55,9 +55,7 @@ export function sheetLevelOn(
+   const versionValue = sheet.multiverInternalLevelValue?.[version]
+   return {
+     level: override?.level ?? sheet.level,
+-    internalLevelValue:
+-      (overrideRegion === 'cn' ? (override?.levelValue ?? versionValue) : (versionValue ?? override?.levelValue)) ??
+-      sheet.internalLevelValue,
++    internalLevelValue: versionValue ?? override?.levelValue ?? sheet.internalLevelValue,
+   }
+ }
+ 

@@ -1,0 +1,13 @@
+diff --git a/apps/web/src/lib/sentryScrub.ts b/apps/web/src/lib/sentryScrub.ts
+index 7595fe90..d494e7d4 100644
+--- a/apps/web/src/lib/sentryScrub.ts
++++ b/apps/web/src/lib/sentryScrub.ts
+@@ -4,7 +4,7 @@
+  * used). The pages remove them from the address bar after mounting, but Sentry captures the request (worker) and the
+  * page URL (browser) before that, so every event, transaction and breadcrumb drops these parameters' values first.
+  */
+-const SECRET_QUERY_PARAMS = ['code', 'state', 'token'] as const
++const SECRET_QUERY_PARAMS = ['code', 'state'] as const
+ const REDACTED = '[Filtered]'
+ 
+ export function scrubUrl(url: string): string {

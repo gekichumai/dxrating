@@ -1,0 +1,12 @@
+diff --git a/apps/backend/src/lib/credential-hygiene.ts b/apps/backend/src/lib/credential-hygiene.ts
+index 434d1ed7..2f01354e 100644
+--- a/apps/backend/src/lib/credential-hygiene.ts
++++ b/apps/backend/src/lib/credential-hygiene.ts
+@@ -142,7 +142,6 @@ export const heldCredentialCount = () => activeSecrets.size
+  */
+ export function scrubString(value: string): string {
+   let result = value.includes('=') ? value.replace(CREDENTIAL_QUERY_PATTERN, `$1$2=${FILTERED}`) : value
+-  if (result.includes('/reset-password/')) result = result.replace(CREDENTIAL_PATH_PATTERN, `$1${FILTERED}`)
+   if (activeSecrets.size === 0) return result
+   // longest first, so a password containing the SEGA ID is replaced whole
+   for (const secret of [...activeSecrets.keys()].sort((a, b) => b.length - a.length)) {
