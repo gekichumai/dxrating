@@ -1,0 +1,10 @@
+{
+  "mistake": "The backend gains a workspace dependency, but apps/backend/Dockerfile does not COPY its package.json and source, so the image build on main fails.",
+  "history": [
+    "35f4f049/635118a8 (added the missing packages/maimai-domain COPY lines after the backend started importing it)",
+    "#269 8a350624 (the same for packages/api-contract)"
+  ],
+  "guard": "infra/build-manifests.test.mts derives each stage's workspace packages from the package.json graph and compares them with its COPY lines",
+  "check": "node --test infra/build-manifests.test.mts",
+  "expect": "apps/backend/Dockerfile (builder): add a `COPY <dir>/package.json ./<dir>/` line"
+}
