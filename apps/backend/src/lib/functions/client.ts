@@ -127,7 +127,6 @@ export function netErrorPageMessage(netErrorCode: string | undefined): string {
 
 const MAINTENANCE_MESSAGE = 'maimai NET or the SEGA ID login is under maintenance.'
 
-/** A maimai NET or SEGA ID answer that is neither maintenance nor the error page: what `fetchEffect` hands callers */
 export type NetPage =
   | { readonly kind: 'Page'; readonly status: 200; readonly html: string }
   | { readonly kind: 'Redirect'; readonly status: number; readonly location: string }
@@ -138,10 +137,6 @@ export type NetResponse =
   | { readonly kind: 'Maintenance' }
   | { readonly kind: 'ErrorPage'; readonly location: string }
 
-/**
- * What a maimai NET or SEGA ID answer means; a state it does not know is `UnexpectedStatus`, never a guess. `html` is
- * empty for a redirect, whose body is not read.
- */
 export function classifyNetResponse(status: number, location: string | null, html: string): NetResponse {
   // JP NET answers 503 during emergency maintenance; the Aime gateway and NET redirect to a maintenance page
   if (status === 503) return { kind: 'Maintenance' }
@@ -440,7 +435,6 @@ export class Client {
       return parseNetErrorCode(text)
     }).pipe(Effect.timeout('5 seconds'), Effect.option, Effect.map(Option.getOrUndefined))
 
-  /** One request: maintenance fails with `NET_MAINTENANCE` and the error page with `errorRedirectCode` */
   fetchEffect = (
     url: string,
     init?: RequestInit,
