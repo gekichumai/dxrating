@@ -11,6 +11,7 @@ import IconLogosGithub from '~icons/logos/github-icon'
 import IconLogosGoogle from '~icons/logos/google-icon'
 import IconPasskey from '~icons/material-symbols/passkey'
 import IconArrowLeft from '~icons/mdi/arrow-left'
+import { EMAIL_VERIFICATION_NONCE_FIELD, EMAIL_VERIFICATION_TOKEN_FIELD } from '@gekichumai/api-contract'
 import { authClient } from '../../lib/auth-client'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
 import { hasErrorCode } from './authLinks'
@@ -73,6 +74,21 @@ const upgradeToPasskeyQuietly = async () => {
   await authClient.passkey.addPasskey({ useAutoRegister: true })
 }
 
+/**
+ * Chrome's Email Verification Protocol (gekichumai/meta#80; WICG "Email Verification API", report of 26 June 2026): a
+ * sign-up form that carries an `autocomplete="email-verification-token"` field with a server-made `nonce` gets, when
+ * the visitor picks an address their mail provider vouches for, a token proving it, filled into that field as the form
+ * is submitted. The backend checks it and then sends no verification mail. Nothing here detects the feature: other
+ * browsers ignore the field, and without a token sign-up works as before.
+ *
+ * The nonce comes from the backend after the visitor switches to sign-up, so the server render and the first client
+ * render are the same (no field), and each form shown gets its own.
+ */
+interface EmailVerificationNonce {
+  readonly nonce: string
+  readonly expiresAt: number
+}
+
 export const LoginForm = ({
   idPrefix = 'auth',
   onPendingChange,
@@ -116,6 +132,10 @@ export const LoginForm = ({
   // After "Forgot password?": the address a reset link was asked for
   const [resetRequestedFor, setResetRequestedFor] = useState<string | null>(null)
   const [resetPending, setResetPending] = useState(false)
+  const [evpNonce, setEvpNonce] = useState<EmailVerificationNonce | null>(null)
+  const evpInputRef = useRef<HTMLInputElement>(null)
+  // The last token Chrome filled in: it fills on submission, and the form is submitted once per step
+  const evpTokenRef = useRef<string | null>(null)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
   const resolvedTheme = useResolvedTheme()
@@ -194,6 +214,31 @@ export const LoginForm = ({
     }
   }
 
+  /** A new nonce for the sign-up form, unless the current one has a while left; without one the field isn't shown */
+  const refreshEmailVerificationNonce = async () => {
+    if (evpNonce && evpNonce.expiresAt - Date.now() > 5 * 60 * 1000) return
+    try {
+      const { data } = await authClient.emailVerificationProtocol.nonce()
+      if (!data) return
+      evpTokenRef.current = null
+      setEvpNonce({ nonce: data.nonce, expiresAt: Date.parse(data.expiresAt) })
+    } catch {
+      // A backend without the protocol: sign-up goes on without it
+    }
+  }
+
+  /** Keeps the token Chrome put in the field as the form was submitted */
+  const collectEmailVerificationToken = () => {
+    const token = evpInputRef.current?.value
+    if (token) evpTokenRef.current = token
+  }
+
+  /** The token and the nonce of the form it was made for, while the nonce is still good */
+  const emailVerificationProof = () =>
+    evpTokenRef.current && evpNonce && evpNonce.expiresAt > Date.now()
+      ? { token: evpTokenRef.current, nonce: evpNonce.nonce }
+      : undefined
+
   const fail = (e: unknown, fallback: string) => {
     haptic.trigger('error')
     setError(formatErrorMessage(e, fallback))
@@ -214,6 +259,8 @@ export const LoginForm = ({
   }
 
   const backToStart = () => {
+    // The visitor may change the address; Chrome fills a token again on the next submission if it still applies
+    evpTokenRef.current = null
     setStep('start')
     setShowPassword(false)
     setError(null)
@@ -224,6 +271,8 @@ export const LoginForm = ({
   const signUpWithPasskey = async (email: string) => {
     setActiveProvider('passkey')
     setError(null)
+    // The passkey client sends a body of its own: the token goes along once the account exists
+    const proof = emailVerificationProof()
     try {
       const { error } = await authClient.passkey.addPasskey({
         // The backend checks Turnstile before it answers anything about the address (apps/backend/src/lib/
@@ -235,6 +284,8 @@ export const LoginForm = ({
         if (isCancelledPasskey(error)) return
         throw error
       }
+      // Unverified until it holds: the backend has mailed a link already, which still works either way
+      if (proof) await authClient.emailVerificationProtocol.verify(proof).catch(() => {})
       finishSignIn(m.auth_signUp_toastSuccess({}, { locale }))
     } catch (e: unknown) {
       fail(e, m.auth_signUp_passkey_error({}, { locale }))
@@ -245,6 +296,7 @@ export const LoginForm = ({
   }
 
   const onSubmit = async (data: LoginFormValues) => {
+    collectEmailVerificationToken()
     const email = data.email.trim()
     if (step === 'start') {
       goToCredentials()
@@ -262,11 +314,16 @@ export const LoginForm = ({
     setError(null)
     try {
       if (isSignUp) {
+        const proof = emailVerificationProof()
         // Better Auth signs a new account in straight away
         const { error } = await authClient.signUp.email({
           email,
           password: data.password,
           name: email.split('@')[0], // Default name
+          // Proof the address is the visitor's: the backend then verifies it without mail (and ignores bad proof)
+          ...(proof
+            ? { [EMAIL_VERIFICATION_TOKEN_FIELD]: proof.token, [EMAIL_VERIFICATION_NONCE_FIELD]: proof.nonce }
+            : {}),
           fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
         })
         if (error) throw error
@@ -317,6 +374,7 @@ export const LoginForm = ({
   }
 
   const toggleView = () => {
+    if (!isSignUp) void refreshEmailVerificationNonce()
     setIsSignUp(!isSignUp)
     setShowPassword(false)
     setError(null)
@@ -466,6 +524,21 @@ export const LoginForm = ({
             size="small"
             inputProps={{ autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, inputMode: 'email' }}
           />
+          {/*
+           * Where Chrome puts its Email Verification Protocol token (see EmailVerificationNonce). Uncontrolled: the
+           * browser writes its value, read on submit. A new nonce mounts a new field.
+           */}
+          {isSignUp && evpNonce && (
+            <input
+              key={evpNonce.nonce}
+              ref={evpInputRef}
+              type="hidden"
+              name="email-verification-token"
+              // oxlint-disable-next-line jsx-a11y/autocomplete-valid -- the Email Verification API's new autofill token
+              autoComplete="email-verification-token"
+              nonce={evpNonce.nonce}
+            />
+          )}
         </div>
 
         {step === 'credentials' && (

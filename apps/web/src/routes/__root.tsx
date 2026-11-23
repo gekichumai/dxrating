@@ -38,6 +38,7 @@ import { useThemeColorSync } from '@/utils/useThemeColorSync'
 import { useRevealFocusInScrollFade } from '@/utils/useRevealFocusInScrollFade'
 import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
 import { THEME_INLINE_SCRIPT } from '@/setup/theme-script'
+import { originTrialMeta } from '@/setup/origin-trials'
 import { splitLocalePath } from '@/setup/locale'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
 // All app CSS is global and ships as one stylesheet: the base styles first, then utilities, then page styles whose
@@ -87,6 +88,7 @@ export const Route = createRootRoute({
         ...buildRootSeoMeta(locale, { includeTitle: includeRootTitle }),
         ...(isNotFound ? buildNotFoundSeoMeta(locale) : []),
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        ...originTrialMeta(),
         {
           name: 'msapplication-config',
           content: 'https://shama.dxrating.net/favicon/pack/v1/browserconfig.xml',
