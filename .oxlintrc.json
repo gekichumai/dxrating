@@ -156,8 +156,7 @@
     },
     {
       "files": [
-        "**/*.test.ts",
-        "**/*.test.tsx",
+        "**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
         "**/__tests__/**",
         "apps/backend/src/test/**",
         "apps/web/src/test-utils/**"
