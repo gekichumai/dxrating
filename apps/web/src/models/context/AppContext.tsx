@@ -1,6 +1,8 @@
 import { VERSION_ID_MAP, VersionEnum } from '@gekichumai/dxdata'
 import { LATEST_REGION_VERSIONS as DOMAIN_LATEST_REGION_VERSIONS } from '@gekichumai/maimai-domain'
 import { createContext, type FC, type PropsWithChildren, useCallback, useEffect, useMemo, useState } from 'react'
+import { z } from 'zod'
+import { persisted } from '@/utils/persisted'
 
 type AppContext = AppContextStates & AppContextFns
 
@@ -91,32 +93,18 @@ function isAppContextStates(value: unknown): value is AppContextStates {
   )
 }
 
+const storedAppContext = persisted('app-context', z.custom<AppContextStates>(isAppContextStates), null)
+
 export function readStoredAppContext(): AppContextStates {
-  if (typeof window === 'undefined') return getDefaultAppContext()
-
-  try {
-    const stored = window.localStorage.getItem('app-context')
-    if (!stored) return getDefaultAppContext()
-
-    const parsed = JSON.parse(stored)
-    if (!isAppContextStates(parsed)) return getDefaultAppContext()
-    const migrated = migrateStoredAppContext(parsed)
-    if (migrated !== parsed) {
-      try {
-        window.localStorage.setItem('app-context', JSON.stringify(migrated))
-      } catch {
-        // Migrated again next visit; this visit still uses the migrated choice
-      }
-    }
-    return migrated
-  } catch {
-    return getDefaultAppContext()
-  }
+  const stored = storedAppContext.get()
+  if (!stored) return getDefaultAppContext()
+  const migrated = migrateStoredAppContext(stored)
+  if (migrated !== stored) storedAppContext.set(migrated)
+  return migrated
 }
 
-function updateDismissalKey(region: Region, version: DXVersion) {
-  return `region-version-update-dismissed:${region}:${version}`
-}
+const versionUpdateDismissed = (region: Region, version: DXVersion) =>
+  persisted(`region-version-update-dismissed:${region}:${version}`, z.literal(true), false)
 
 function getAvailableVersionUpdate(state: AppContextStates): DXVersion | null {
   if (state.region === '_generic') return null
@@ -124,11 +112,7 @@ function getAvailableVersionUpdate(state: AppContextStates): DXVersion | null {
   const currentId = VERSION_ID_MAP.get(DXVersionToDXDataVersionEnumMap[state.version])!
   const latestId = VERSION_ID_MAP.get(DXVersionToDXDataVersionEnumMap[latest])!
   if (currentId >= latestId) return null
-  try {
-    if (window.localStorage.getItem(updateDismissalKey(state.region, latest)) === 'true') return null
-  } catch {
-    // The user can still choose a version when storage is unavailable.
-  }
+  if (versionUpdateDismissed(state.region, latest).get()) return null
   return latest
 }
 
@@ -148,22 +132,14 @@ export const AppContextProvider: FC<PropsWithChildren<object>> = ({ children }) 
   const dismissVersionUpdate = useCallback(() => {
     if (!availableVersionUpdate) return
     setAvailableVersionUpdate(null)
-    try {
-      window.localStorage.setItem(updateDismissalKey(state.region, availableVersionUpdate), 'true')
-    } catch {
-      // Keep the prompt dismissed for this visit even when storage is unavailable.
-    }
+    versionUpdateDismissed(state.region, availableVersionUpdate).set(true)
   }, [state.region, availableVersionUpdate])
 
   const setVersionAndRegion = useCallback((version: DXVersion, region: Region) => {
     const next = { version, region }
     setState(next)
     setAvailableVersionUpdate(null)
-    try {
-      window.localStorage.setItem('app-context', JSON.stringify(next))
-    } catch {
-      // Keep the in-memory state change even when storage is unavailable.
-    }
+    storedAppContext.set(next)
   }, [])
 
   const value = useMemo<AppContext>(

@@ -43,6 +43,75 @@
       }
     },
     {
+      "files": ["apps/web/src/**/*.ts", "apps/web/src/**/*.tsx"],
+      "rules": {
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "localStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "name": "sessionStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          }
+        ],
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "window",
+            "property": "localStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "object": "window",
+            "property": "sessionStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "object": "globalThis",
+            "property": "localStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          },
+          {
+            "object": "globalThis",
+            "property": "sessionStorage",
+            "message": "Use persisted(key, schema, fallback) from @/utils/persisted; a module that keeps its own stored format takes browserStorage(area) from there."
+          }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "react-use",
+                "importNames": ["useLocalStorage", "useSessionStorage"],
+                "message": "Use usePersisted(persisted(key, schema, fallback)) from @/utils/persisted: react-use casts the stored JSON without checking it."
+              }
+            ],
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/web/src/utils/persisted.ts",
+        "apps/web/src/**/__tests__/**",
+        "apps/web/src/**/*.test.ts",
+        "apps/web/src/**/*.test.tsx"
+      ],
+      "rules": {
+        "no-restricted-globals": "off",
+        "no-restricted-properties": "off"
+      }
+    },
+    {
       "files": ["apps/backend/src/**/*.ts", "apps/backend/src/**/*.tsx"],
       "rules": {
         "gdp-ts/no-define-proof": "error",
