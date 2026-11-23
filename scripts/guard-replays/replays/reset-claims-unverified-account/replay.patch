@@ -1,0 +1,13 @@
+diff --git a/apps/backend/src/lib/auth-mail.ts b/apps/backend/src/lib/auth-mail.ts
+index 115a7c2e..013b9ae2 100644
+--- a/apps/backend/src/lib/auth-mail.ts
++++ b/apps/backend/src/lib/auth-mail.ts
+@@ -141,7 +141,7 @@ export const claimUnverifiedAccount = Effect.fn('claimUnverifiedAccount')(functi
+   database: typeof Database.Service,
+   resetUser: Pick<User, 'id' | 'email' | 'emailVerified'>,
+ ) {
+-  if (resetUser.emailVerified) return false
++  if (resetUser.emailVerified || resetUser.id) return false
+   return yield* database.transaction((db) =>
+     Effect.gen(function* () {
+       const claimed = yield* db

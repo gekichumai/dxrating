@@ -1,0 +1,10 @@
+{
+  "mistake": "A dynamic import()'s promise is left without a rejection handler, so a chunk a deploy removed reaches Sentry as an unhandled rejection.",
+  "history": [
+    "#391 b209119a (void loadLegacySongIds().then(...) in RatingCalculatorContext)",
+    "#599 e6973018 (reloads stale tabs on its unhandled stale-chunk rejections instead of handling them at the call)"
+  ],
+  "guard": "typescript/no-floating-promises in the type-aware pass of pnpm lint",
+  "check": "pnpm lint",
+  "expect": "typescript(no-floating-promises)"
+}

@@ -1,0 +1,9 @@
+{
+  "mistake": "A query key is written by hand, so nothing keeps it in step with the request it caches: in #470 the key left out the account, and account B saw account A's cached votes.",
+  "history": [
+    "#470 review r4495199822 (userTagVotesKey held only association IDs, so account B saw account A's votes)"
+  ],
+  "guard": "the dxrating/derived-query-keys lint rule rejects an array-literal query key; keys come from orpc.<route>.queryOptions({ input }) or requestQuery, and resetQueriesOnAccountChange (apps/web/src/lib/query.ts, tested in lib/__tests__/query.test.ts) drops every cached response when the account changes",
+  "check": "pnpm exec oxlint apps/web/src/components/comments/useSheetComments.ts",
+  "expect": "Hand-written query key"
+}

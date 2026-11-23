@@ -1,7 +1,7 @@
 import { X509Certificate } from 'node:crypto'
 import tls from 'node:tls'
 import { Effect } from 'effect'
-import { Response, type RequestInit } from 'undici'
+import type { RequestInit } from 'undici'
 import { describe, expect, it, vi } from 'vitest'
 import {
   MAIMAI_NET_INTERMEDIATE_CERTIFICATES,
@@ -9,6 +9,7 @@ import {
   NetImportError,
   parseFriendCode,
   type NetImportErrorCode,
+  type NetPage,
 } from './client'
 import { DOMParser } from 'xmldom-qsa'
 import { URLS } from './URLS'
@@ -16,18 +17,15 @@ import { URLS } from './URLS'
 class StubIntlClient extends MaimaiNETIntlClient {
   override fetchEffect = (url: string, _init?: RequestInit, errorRedirectCode?: NetImportErrorCode) => {
     if (url === URLS.INTL.LOGIN_PAGE) {
-      return Effect.succeed(new Response('', { status: 200 }))
+      return Effect.succeed<NetPage>({ kind: 'Page', status: 200, html: '' })
     }
 
     if (url === URLS.INTL.LOGIN_ENDPOINT) {
-      return Effect.succeed(
-        new Response(null, {
-          status: 302,
-          headers: {
-            location: 'https://maimaidx-eng.com/maimai-mobile/?ssid=synthetic',
-          },
-        }),
-      )
+      return Effect.succeed<NetPage>({
+        kind: 'Redirect',
+        status: 302,
+        location: 'https://maimaidx-eng.com/maimai-mobile/?ssid=synthetic',
+      })
     }
 
     return Effect.fail(new NetImportError(errorRedirectCode ?? 'UNKNOWN_ERROR'))

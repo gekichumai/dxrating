@@ -1,0 +1,8 @@
+{
+  "name": "@gekichumai/sentry-fixes",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

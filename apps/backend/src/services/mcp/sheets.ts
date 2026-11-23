@@ -1,5 +1,5 @@
-import { VERSION_ID_MAP } from '@gekichumai/dxdata'
-import { LATEST_REGION_VERSIONS, type Region } from '@gekichumai/maimai-domain'
+import { VERSION_ID_MAP, type VersionEnum } from '@gekichumai/dxdata'
+import { LATEST_REGION_VERSIONS, sheetLevelOn, sheetVersionOn, type Region } from '@gekichumai/maimai-domain'
 import { resolveSongReference, searchKey, type CatalogSong, type McpCatalog, type PublishedSheet } from './catalog'
 
 // Finding the charts a tool is asked about, and what a chart is on a server: what get_sheet and the rating tools share.
@@ -96,14 +96,14 @@ export function resolveSheets(catalog: McpCatalog, query: SheetQuery): ResolvedS
   return { ok: true, entry, sheets, server: server.server }
 }
 
-/** What a chart is on a server: its level, internal level and version there, which overrides may change. */
-export function sheetOnServer(sheet: PublishedSheet, server: string | undefined) {
-  const override = server === undefined ? undefined : sheet.serverOverrides?.[server]
-  return {
-    level: override?.level ?? sheet.level,
-    internalLevel: override?.levelValue ?? sheet.internalLevelValue,
-    version: override?.version ?? sheet.version,
-  }
+/** What a chart is on a server in a version, by default the server's current one: its level, internal level and version */
+export function sheetOnServer(sheet: PublishedSheet, server: string | undefined, version?: string) {
+  const region = server === undefined ? undefined : serverRegion(server)
+  const { level, internalLevelValue } = sheetLevelOn(sheet, {
+    version: (version ?? LATEST_REGION_VERSIONS[region ?? 'jp']) as VersionEnum,
+    region,
+  })
+  return { level, internalLevel: internalLevelValue, version: region ? sheetVersionOn(sheet, region) : sheet.version }
 }
 
 /** Whether a chart counts in ratings: utage (宴) charts do not */

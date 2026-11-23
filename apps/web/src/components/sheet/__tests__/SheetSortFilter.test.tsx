@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { act, useState } from 'react'
 import { renderToString } from 'react-dom/server'
@@ -63,7 +64,11 @@ describe('SheetSortFilter', () => {
       )
     }
 
-    render(<Harness />)
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <Harness />
+      </QueryClientProvider>,
+    )
 
     const trigger = screen.getByRole('button', { name: 'Filter & Sort' })
     expect(trigger.getAttribute('class')).toContain('MuiButton-root')

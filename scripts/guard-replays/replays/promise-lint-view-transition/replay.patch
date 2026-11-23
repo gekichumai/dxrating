@@ -1,0 +1,32 @@
+diff --git a/apps/web/src/components/global/preferences/RegionVersionUpdatePrompt.tsx b/apps/web/src/components/global/preferences/RegionVersionUpdatePrompt.tsx
+index b88bc2b9..f8327dd8 100644
+--- a/apps/web/src/components/global/preferences/RegionVersionUpdatePrompt.tsx
++++ b/apps/web/src/components/global/preferences/RegionVersionUpdatePrompt.tsx
+@@ -55,7 +55,7 @@ export function RegionVersionUpdatePrompt() {
+         <Button
+           variant="contained"
+           onClick={() => {
+-            startViewTransition(() => setVersionAndRegion(availableVersionUpdate, region)).catch(reportRejection)
++            void startViewTransition(() => setVersionAndRegion(availableVersionUpdate, region))
+           }}
+         >
+           {m.settings_versionUpdate_confirm({ latest }, { locale })}
+diff --git a/apps/web/src/utils/startViewTransition.ts b/apps/web/src/utils/startViewTransition.ts
+index 1d986c2a..2388c34f 100644
+--- a/apps/web/src/utils/startViewTransition.ts
++++ b/apps/web/src/utils/startViewTransition.ts
+@@ -65,13 +65,7 @@ export function startViewTransition(
+   // A skipped animation rejects ready, but must still apply the preference.
+   transition.ready.catch(() => {})
+   transition.finished.then(cleanup, cleanup)
+-  return transition.updateCallbackDone.catch((error: unknown) => {
+-    // The browser skipped the transition: the page was hidden (WebKit then rejects without calling the update), or the
+-    // update took too long. Neither is a failure of the update, so apply it if the browser did not, and resolve.
+-    if (!isSkippedTransition(error)) throw error
+-    cleanup()
+-    if (!applied) return apply()
+-  })
++  return transition.updateCallbackDone
+ }
+ 
+ const SKIPPED_TRANSITION_ERRORS = new Set(['InvalidStateError', 'TimeoutError', 'AbortError'])

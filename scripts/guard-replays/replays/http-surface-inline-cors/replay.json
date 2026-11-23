@@ -1,0 +1,9 @@
+{
+  "mistake": "A route group gets its own inline CORS policy in app.ts, a second list of origins, headers and methods that the web's trace targets and cookie choice must mirror by hand.",
+  "history": [
+    "#533 e7dccdb6 (publicListCors written inline in app.ts, with the public list paths copied into the web's credentialsFor)"
+  ],
+  "guard": "the no-restricted-imports rule on hono/cors outside apps/backend/src/cors.ts",
+  "check": "pnpm exec oxlint apps/backend/src/app.ts",
+  "expect": "CORS comes from the HTTP surface"
+}

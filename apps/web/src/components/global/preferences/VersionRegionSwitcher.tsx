@@ -19,6 +19,7 @@ import { m } from '@/paraglide/messages'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { PendingSpinner } from '@/components/global/InternalLink'
 import { beginAppBusy } from '@/components/layout/appBusy'
+import { reportRejection } from '@/lib/rejections'
 
 const fromMergedVersionRegionId = (id: string) => {
   const [version, region] = id.split('__') as [DXVersion, Region]
@@ -136,9 +137,11 @@ export const VersionRegionSwitcher: FC<{ compact?: boolean }> = ({ compact = fal
     const next = pendingRef.current
     pendingRef.current = null
     if (!next) return
-    void startViewTransition(() => {
+    startViewTransition(() => {
       setVersionAndRegion(next.version, next.region)
-    }, wipeOriginFromElement(triggerRef.current)).finally(endSwitching)
+    }, wipeOriginFromElement(triggerRef.current))
+      .finally(endSwitching)
+      .catch(reportRejection)
   }
   useEffect(
     () => () => {

@@ -1,0 +1,9 @@
+{
+  "mistake": "English gains a placeholder and the translations keep their old copy without it.",
+  "history": [
+    "71cc1661 (UI polish 5/9: the clear-records dialog gained {count} in English only; ja, ko, zh-Hans and zh-Hant never showed the count)"
+  ],
+  "guard": "apps/web messages.test.ts requires exactly the English placeholders and tags in every variant",
+  "check": "pnpm --filter @gekichumai/dxrating-web exec vitest run src/i18n/__tests__/messages.test.ts",
+  "expect": "ratingCalculator_io_clear_dialog_message [countPlural=*]: has none, English has {count}"
+}

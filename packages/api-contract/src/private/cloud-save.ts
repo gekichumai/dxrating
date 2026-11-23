@@ -18,6 +18,8 @@ import { oc as contractBuilder } from '@orpc/contract'
 import { credentials } from '../credentials.ts'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
+import type { ApiMethod } from '../http-surface.ts'
+import { fromQuery, isStorableText, PgBigint, PgInteger, PgText, PgTimestamp } from './storable.ts'
 
 /**
  * Cloud save contract (gekichumai/meta#17, design §5.1).
@@ -86,62 +88,40 @@ export const CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH = 32 * 1024
 
 // --- Identifiers and values ---
 
-export const SaveIdSchema = z.string().regex(/^dsav_[\w-]{1,64}$/)
-export const ImportJobIdSchema = z.string().regex(/^dimp_[\w-]{1,64}$/)
+export const SaveIdSchema = PgText.regex(/^dsav_[\w-]{1,64}$/)
+export const ImportJobIdSchema = PgText.regex(/^dimp_[\w-]{1,64}$/)
 /** Public sheet ID (`dsht_…`), the same pattern `score_records.sheet_id` CHECKs */
-export const CloudSaveSheetIdSchema = z.string().regex(PUBLIC_SHEET_ID_PATTERN)
+export const CloudSaveSheetIdSchema = PgText.regex(PUBLIC_SHEET_ID_PATTERN)
 
 /**
  * Client-generated key of one user action (§5.5), reused on retry. Free-form within `[A-Za-z0-9._:-]`, e.g. a
  * UUID, `auto-net-<saveId>-<bucket>` or `migrate-<deviceId>-<profileKey>`.
  */
-export const IdempotencyKeySchema = z.string().regex(/^[A-Za-z0-9][\w.:-]{7,127}$/)
+export const IdempotencyKeySchema = PgText.regex(/^[A-Za-z0-9][\w.:-]{7,127}$/)
 /** A mutation's ID, a UUIDv7 generated when the mutation enters the outbox (§5.5) */
 export const MutationIdSchema = z.uuid({ version: 'v7' })
 
 /** Integer achievement in 1/10000 % (`100.5432%` → `1005432`, §4.7) */
-export const AchievementIntSchema = z.number().int().min(ACHIEVEMENT_INT_MIN).max(ACHIEVEMENT_INT_MAX)
+export const AchievementIntSchema = PgInteger.min(ACHIEVEMENT_INT_MIN).max(ACHIEVEMENT_INT_MAX)
 export const ComboFlagSchema = z.enum(['fc', 'fcp', 'ap', 'app']).nullable() satisfies z.ZodType<ComboFlag>
 export const SyncFlagSchema = z.enum(['fs', 'fsp', 'fsd', 'fsdp', 'sync']).nullable() satisfies z.ZodType<SyncFlag>
 export const Best50BucketSchema = z.enum(['b15', 'b35']) satisfies z.ZodType<Best50Bucket>
-export const DxScoreSchema = z.number().int().min(0).max(100000)
-/**
- * PostgreSQL text and JSONB hold neither U+0000 nor an unpaired UTF-16 surrogate, so a free-form string that reaches
- * the database refuses them here: the request (or the one import item) is a validation error, never a 500 that rolls
- * back the rest of the write.
- */
-const LONE_SURROGATE = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/
-const isStorableText = (value: string) => !value.includes('\u0000') && !LONE_SURROGATE.test(value)
-const STORABLE_TEXT_MESSAGE = 'must be well-formed Unicode without U+0000'
-export const ProviderRecordIdSchema = z.string().min(1).max(128).refine(isStorableText, STORABLE_TEXT_MESSAGE)
+export const DxScoreSchema = PgInteger.min(0).max(100000)
+export const ProviderRecordIdSchema = PgText.min(1).max(128)
 /** A provider a client upload claims (e.g. `lxns` inside a DXRating JSON); stored as `claimed_source` only */
-export const ClaimedSourceSchema = z
-  .string()
-  .regex(/^[\w.-]{1,64}$/)
-  .refine((source) => source.toLowerCase() !== 'demo', { message: 'demo data is never synced' })
-export const SourceAccountIdSchema = z.string().trim().min(1).max(128).refine(isStorableText, STORABLE_TEXT_MESSAGE)
-export const PayloadSha256Schema = z.string().regex(/^[0-9a-f]{64}$/)
+export const ClaimedSourceSchema = PgText.regex(/^[\w.-]{1,64}$/).refine((source) => source.toLowerCase() !== 'demo', {
+  message: 'demo data is never synced',
+})
+export const SourceAccountIdSchema = PgText.trim().min(1).max(128)
+export const PayloadSha256Schema = PgText.regex(/^[0-9a-f]{64}$/)
 export const CloudSaveRegionSchema = z.enum(['jp', 'intl', 'cn', '_generic'])
 /** dxdata version slug (`festival-plus` … `circle-plus`) */
-export const GameVersionSchema = z
-  .string()
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-  .max(32)
-export const SaveNameSchema = z.string().trim().min(1).max(64).refine(isStorableText, STORABLE_TEXT_MESSAGE)
-export const ClientProfileKeySchema = z.string().regex(/^[\w.-]{1,64}$/)
-export const RevisionSchema = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
-/**
- * Years a timestamp keeps once normalized to UTC: PostgreSQL rejects year 0 as written (`0000-01-01T…`) and a
- * 5-digit year, so either would fail the whole write instead of the one value
- */
-const isStorableTimestamp = (value: string) => {
-  const year = new Date(value).getUTCFullYear()
-  return year >= 1 && year <= 9999
-}
-const TimestampSchema = z.iso.datetime({ offset: true }).refine(isStorableTimestamp, 'Out of the storable range')
-const CountSchema = z.number().int().nonnegative()
-/** A count the client sends that lands in a PostgreSQL `integer` column: out of range is a 400, not a 500 */
-const StoredCountSchema = CountSchema.max(2_147_483_647)
+export const GameVersionSchema = PgText.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(32)
+export const SaveNameSchema = PgText.trim().min(1).max(64)
+export const ClientProfileKeySchema = PgText.regex(/^[\w.-]{1,64}$/)
+export const RevisionSchema = PgBigint.nonnegative()
+const CountSchema = PgBigint.nonnegative()
+const StoredCountSchema = PgInteger.nonnegative()
 
 const SaveIdParamSchema = { id: SaveIdSchema }
 /** Server import triggers; `migration` is for client jobs only */
@@ -150,50 +130,50 @@ export const ServerImportTriggerSchema = z.enum(['user', 'auto'])
 // --- Output DTOs ---
 
 export const RecordDTOSchema = z.object({
-  sheetId: z.string(),
+  sheetId: PgText,
   achievement: AchievementIntSchema,
   comboFlag: ComboFlagSchema,
   syncFlag: SyncFlagSchema,
   dxScore: DxScoreSchema.nullable(),
   best50Bucket: Best50BucketSchema.nullable(),
-  providerRecordId: z.string().nullable(),
+  providerRecordId: PgText.nullable(),
   provenance: ProvenanceShapeSchema,
   revision: RevisionSchema,
   /** Server clock */
-  valueChangedAt: TimestampSchema,
+  valueChangedAt: PgTimestamp,
   /** Device-reported, display only */
-  clientEditedAt: TimestampSchema.nullable(),
+  clientEditedAt: PgTimestamp.nullable(),
   /** Set on tombstones, which keep the value they had when deleted */
-  deletedAt: TimestampSchema.nullable(),
+  deletedAt: PgTimestamp.nullable(),
 })
 export type RecordDTO = z.output<typeof RecordDTOSchema>
 
 export const SnapshotDTOSchema = z.object({
-  id: z.number().int().positive(),
+  id: PgBigint.positive(),
   atRevision: RevisionSchema,
   b15Sum: CountSchema,
   b35Sum: CountSchema,
   b50Sum: CountSchema,
   recordCount: CountSchema,
-  gameVersion: z.string(),
+  gameVersion: PgText,
   /** Opaque, computed by the client */
-  detail: z.record(z.string(), z.json()).nullable(),
-  createdAt: TimestampSchema,
+  detail: z.record(PgText, z.json()).nullable(),
+  createdAt: PgTimestamp,
 })
 export type SnapshotDTO = z.output<typeof SnapshotDTOSchema>
 
 export const SaveDTOSchema = z.object({
   id: SaveIdSchema,
-  name: z.string(),
+  name: PgText,
   region: CloudSaveRegionSchema,
   /** `null` follows the client's selected version */
-  gameVersion: z.string().nullable(),
-  clientProfileKey: z.string().nullable(),
+  gameVersion: PgText.nullable(),
+  clientProfileKey: PgText.nullable(),
   revision: RevisionSchema,
   /** Live (non-tombstone) records */
   recordCount: CountSchema,
-  createdAt: TimestampSchema,
-  updatedAt: TimestampSchema,
+  createdAt: PgTimestamp,
+  updatedAt: PgTimestamp,
   latestSnapshot: SnapshotDTOSchema.nullable(),
 })
 export type SaveDTO = z.output<typeof SaveDTOSchema>
@@ -226,17 +206,17 @@ export const ImportJobDTOSchema = z.object({
   fetchedBy: FetchedBySchema,
   trigger: ImportTriggerSchema,
   /** Server-resolved for server jobs; client-claimed (`sourceAccountKind: 'claimed'`) for client jobs */
-  sourceAccountId: z.string().nullable(),
+  sourceAccountId: PgText.nullable(),
   sourceAccountKind: SourceAccountKindSchema.nullable(),
   status: ImportJobStatusSchema,
   /** Server clock */
-  startedAt: TimestampSchema,
+  startedAt: PgTimestamp,
   /** Server clock for server jobs; client-claimed for client jobs */
-  fetchedAt: TimestampSchema.nullable(),
-  finishedAt: TimestampSchema.nullable(),
+  fetchedAt: PgTimestamp.nullable(),
+  finishedAt: PgTimestamp.nullable(),
   rawPayloadSha256: PayloadSha256Schema.nullable(),
   counts: ImportCountsDTOSchema,
-  errorCode: z.string().nullable(),
+  errorCode: PgText.nullable(),
 })
 export type ImportJobDTO = z.output<typeof ImportJobDTOSchema>
 
@@ -276,12 +256,13 @@ export type ChangesDTO = z.output<typeof ChangesDTOSchema>
 export const MutationStatusSchema = z.enum(['applied', 'superseded', 'noop', 'rejected'])
 
 export const MutationResultDTOSchema = z.object({
+  // oxlint-disable-next-line no-restricted-properties -- echoes a rejected mutation's ID, whatever string it was
   mutationId: z.string(),
   status: MutationStatusSchema,
   /** The record after the mutation (`applied`), or the current record (`superseded`) */
   record: RecordDTOSchema.nullable(),
   /** Why the mutation was `rejected` */
-  reason: z.string().nullable(),
+  reason: PgText.nullable(),
 })
 export type MutationResultDTO = z.output<typeof MutationResultDTOSchema>
 
@@ -302,7 +283,7 @@ export const RecordEventKindSchema = z.enum([
 
 /** One entry of a record's provenance timeline (`score_record_events`, newest first) */
 export const RecordEventDTOSchema = z.object({
-  id: z.number().int().positive(),
+  id: PgBigint.positive(),
   kind: RecordEventKindSchema,
   achievement: AchievementIntSchema.nullable(),
   comboFlag: ComboFlagSchema,
@@ -312,8 +293,8 @@ export const RecordEventDTOSchema = z.object({
   provenance: ProvenanceShapeSchema.omit({ editedFromJobId: true }).extend({
     entryMethod: EntryMethodSchema.nullable(),
   }),
-  clientMutationId: z.string().nullable(),
-  createdAt: TimestampSchema,
+  clientMutationId: PgText.nullable(),
+  createdAt: PgTimestamp,
 })
 export type RecordEventDTO = z.output<typeof RecordEventDTOSchema>
 
@@ -350,9 +331,9 @@ export const ChangesModeSchema = z.enum(['incremental', 'full'])
 
 export const ChangesInputSchema = z.strictObject({
   ...SaveIdParamSchema,
-  since: z.coerce.number().pipe(RevisionSchema).default(0),
+  since: fromQuery(RevisionSchema).default(0),
   mode: ChangesModeSchema.default('incremental'),
-  limit: z.coerce.number().int().min(1).max(CLOUD_SAVE_MAX_CHANGES_LIMIT).default(CLOUD_SAVE_MAX_CHANGES_LIMIT),
+  limit: fromQuery(PgInteger.min(1).max(CLOUD_SAVE_MAX_CHANGES_LIMIT)).default(CLOUD_SAVE_MAX_CHANGES_LIMIT),
 })
 
 /** The value of a manual `set`; it never carries provenance */
@@ -370,7 +351,7 @@ const mutationBase = {
   /** The revision the client saw; missing means 0 (§5.4) */
   basedOnRevision: RevisionSchema.nullish(),
   /** Device clock, display only */
-  clientEditedAt: TimestampSchema.nullish(),
+  clientEditedAt: PgTimestamp.nullish(),
 }
 
 export const SetMutationSchema = z.strictObject({
@@ -396,6 +377,7 @@ export type Mutation = z.output<typeof MutationSchema>
  * handler validates it with {@link MutationSchema}; a failure is that mutation's `rejected` result, not a 400 for the
  * batch (§5.4).
  */
+/* oxlint-disable no-restricted-properties -- loose values the handler checks with MutationSchema, item by item */
 export const MutationItemInputSchema = z.strictObject({
   mutationId: z.string().min(1).max(64),
   op: z.unknown().optional(),
@@ -421,6 +403,7 @@ export const MutationItemInputSchema = z.strictObject({
     .optional(),
   entryMethod: z.unknown().optional(),
 })
+/* oxlint-enable no-restricted-properties */
 export type MutationItemInput = z.output<typeof MutationItemInputSchema>
 
 export const MutationsInputSchema = z.strictObject({
@@ -471,19 +454,16 @@ export const ClientImportInputSchema = z
     /** Client-claimed; stored with `sourceAccountKind: 'claimed'` */
     sourceAccountId: SourceAccountIdSchema.nullish(),
     /** Client-claimed */
-    fetchedAt: TimestampSchema.nullish(),
+    fetchedAt: PgTimestamp.nullish(),
     /**
      * sha256 hex of the canonical JSON (object keys sorted) of this chunk's `records`. Only compared with the hash the
      * server computes over the same records (a mismatch is counted, never an error); never stored as is.
      */
     rawPayloadSha256: PayloadSha256Schema.nullish(),
-    chunkIndex: z
-      .number()
-      .int()
-      .min(0)
+    chunkIndex: PgInteger.min(0)
       .max(CLOUD_SAVE_MAX_IMPORT_CHUNKS - 1)
       .default(0),
-    chunkCount: z.number().int().min(1).max(CLOUD_SAVE_MAX_IMPORT_CHUNKS).default(1),
+    chunkCount: PgInteger.min(1).max(CLOUD_SAVE_MAX_IMPORT_CHUNKS).default(1),
     records: z.array(ImportRecordInputSchema).min(1).max(CLOUD_SAVE_MAX_IMPORT_RECORDS),
   })
   .refine((input) => input.chunkIndex < input.chunkCount, {
@@ -502,11 +482,8 @@ export const DivingFishImportInputSchema = z
     ...SaveIdParamSchema,
     idempotencyKey: IdempotencyKeySchema,
     trigger: ServerImportTriggerSchema,
-    username: z.string().trim().min(1).max(64).optional(),
-    qq: z
-      .string()
-      .regex(/^\d{5,12}$/)
-      .optional(),
+    username: PgText.trim().min(1).max(64).optional(),
+    qq: PgText.regex(/^\d{5,12}$/).optional(),
   })
   .refine((input) => (input.username === undefined) !== (input.qq === undefined), {
     message: 'Provide exactly one of username and qq',
@@ -514,7 +491,7 @@ export const DivingFishImportInputSchema = z
 
 export const ListImportJobsInputSchema = z.strictObject({
   ...SaveIdParamSchema,
-  limit: z.coerce.number().int().min(1).max(100).default(20),
+  limit: fromQuery(PgInteger.min(1).max(100)).default(20),
 })
 
 export const ImportJobIdInputSchema = z.strictObject({ jobId: ImportJobIdSchema })
@@ -550,7 +527,7 @@ export const SnapshotDetailSchema = z
   .custom<unknown>(isBoundedSnapshotDetail, {
     message: `detail must be JSON nested at most ${CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_DEPTH} deep and at most ${CLOUD_SAVE_MAX_SNAPSHOT_DETAIL_LENGTH} characters long, with well-formed strings without U+0000`,
   })
-  .pipe(z.record(z.string(), z.json()))
+  .pipe(z.record(PgText, z.json()))
 
 export const CreateSnapshotInputSchema = z.strictObject({
   ...SaveIdParamSchema,
@@ -565,7 +542,7 @@ export const CreateSnapshotInputSchema = z.strictObject({
 
 export const ListSnapshotsInputSchema = z.strictObject({
   ...SaveIdParamSchema,
-  limit: z.coerce.number().int().min(1).max(100).default(100),
+  limit: fromQuery(PgInteger.min(1).max(100)).default(100),
 })
 
 /**
@@ -583,10 +560,10 @@ export const ReplaceInputSchema = z.strictObject({
 
 // --- Errors ---
 
-const RateLimitedErrorDataSchema = z.object({ retryAfterSeconds: z.number().int().positive() })
+const RateLimitedErrorDataSchema = z.object({ retryAfterSeconds: PgInteger.positive() })
 
 export const CloudSaveErrorDataSchemas = {
-  saveLimit: z.object({ reason: z.literal('SAVE_LIMIT'), limit: z.number().int().positive() }),
+  saveLimit: z.object({ reason: z.literal('SAVE_LIMIT'), limit: PgInteger.positive() }),
   importInProgress: z.object({ reason: z.literal('IMPORT_IN_PROGRESS'), jobId: ImportJobIdSchema }),
   accountMismatch: z.object({ reason: z.literal('ACCOUNT_MISMATCH') }),
   preconditionFailed: z.object({ revision: RevisionSchema }),
@@ -599,7 +576,7 @@ const oc = contractBuilder.errors({
 })
 const importErrors = { CONFLICT: { data: CloudSaveErrorDataSchemas.importInProgress } }
 
-const route = (method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: `/${string}`, summary: string) =>
+const route = (method: ApiMethod, path: `/${string}`, summary: string) =>
   openapi({ method, path, summary, tags: CLOUD_SAVE_ROUTE_TAGS })
 
 // --- Routes ---
@@ -689,7 +666,7 @@ export const cloudSaveContract = {
     )
     .output(
       z.object({
-        headers: z.record(z.string(), z.string()),
+        headers: z.record(PgText, PgText),
         body: z.instanceof(Blob),
       }),
     ),
@@ -718,18 +695,18 @@ export const NetImportInputSchema = z.strictObject({
   idempotencyKey: IdempotencyKeySchema,
   trigger: ServerImportTriggerSchema,
   region: z.enum(['jp', 'intl']),
-  id: z.string().min(1).max(256),
-  password: z.string().min(1).max(256),
+  id: PgText.min(1).max(256),
+  password: PgText.min(1).max(256),
 })
 export type NetImportInput = z.output<typeof NetImportInputSchema>
 
 /** The path parameter of the NET import route */
 export const NetImportParamsSchema = z.strictObject(SaveIdParamSchema)
 
-export const NetImportProgressEventSchema = z.object({ state: z.string() })
+export const NetImportProgressEventSchema = z.object({ state: PgText })
 export const NetImportErrorEventSchema = z.object({
-  code: z.string(),
-  message: z.string(),
+  code: PgText,
+  message: PgText,
   /** The failed job, when one was created */
   jobId: ImportJobIdSchema.nullable(),
 })

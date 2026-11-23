@@ -1,4 +1,6 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useSyncExternalStore } from 'react'
+import { z } from 'zod'
+import { persisted } from '@/utils/persisted'
 
 /** How the home page lays out its charts: rows, or a grid of jackets. The iOS app's Search results have the same pair */
 export type SheetListLayout = 'list' | 'grid'
@@ -6,7 +8,6 @@ export type SheetListLayout = 'list' | 'grid'
 export const SHEET_LIST_LAYOUTS: readonly SheetListLayout[] = ['list', 'grid']
 
 export const SHEET_LIST_LAYOUT_STORAGE_KEY = 'sheet-list-layout'
-const SHEET_LIST_LAYOUT_CHANGED_EVENT = 'dxrating:sheet-list-layout-changed'
 
 /**
  * Until the visitor picks a layout, screens from the `lg` breakpoint show the grid; phones and tablets get the list,
@@ -15,35 +16,7 @@ const SHEET_LIST_LAYOUT_CHANGED_EVENT = 'dxrating:sheet-list-layout-changed'
  */
 export const SHEET_GRID_DEFAULT_MEDIA_QUERY = '(min-width: 1024px)'
 
-const isSheetListLayout = (value: unknown): value is SheetListLayout => value === 'list' || value === 'grid'
-
-// A choice made on this page load that storage refused to save (a full store, blocked site data, a private window). It
-// wins over whatever storage still holds, so the switch keeps working; the next save that succeeds clears it, and storage
-// (shared with other tabs) is the source again.
-let unsavedLayout: SheetListLayout | null = null
-
-const readStoredLayout = (): SheetListLayout | null => {
-  if (unsavedLayout) return unsavedLayout
-  try {
-    const stored = window.localStorage.getItem(SHEET_LIST_LAYOUT_STORAGE_KEY)
-    if (isSheetListLayout(stored)) return stored
-  } catch {
-    // Storage is unavailable: no stored choice
-  }
-  return null
-}
-
-const subscribeToStoredLayout = (onChange: () => void) => {
-  const onStorage = (event: StorageEvent) => {
-    if (event.key === null || event.key === SHEET_LIST_LAYOUT_STORAGE_KEY) onChange()
-  }
-  window.addEventListener(SHEET_LIST_LAYOUT_CHANGED_EVENT, onChange)
-  window.addEventListener('storage', onStorage)
-  return () => {
-    window.removeEventListener(SHEET_LIST_LAYOUT_CHANGED_EVENT, onChange)
-    window.removeEventListener('storage', onStorage)
-  }
-}
+const storedLayout = persisted(SHEET_LIST_LAYOUT_STORAGE_KEY, z.enum(['list', 'grid']), null, { format: 'text' })
 
 const gridDefaultMediaQuery = () =>
   typeof window.matchMedia === 'function' ? window.matchMedia(SHEET_GRID_DEFAULT_MEDIA_QUERY) : null
@@ -67,21 +40,10 @@ const getUnknownSnapshot = () => null
  * who never picked one. Components that mount after hydration get the layout on their first render.
  */
 export const useSheetListLayout = (): [SheetListLayout | null, (layout: SheetListLayout) => void] => {
-  const stored = useSyncExternalStore(subscribeToStoredLayout, readStoredLayout, getUnknownSnapshot)
+  const stored = useSyncExternalStore(storedLayout.subscribe, storedLayout.get, getUnknownSnapshot)
   const gridIsDefault = useSyncExternalStore(subscribeToViewport, readGridIsDefault, getUnknownSnapshot)
 
   const layout = gridIsDefault === null ? null : (stored ?? (gridIsDefault ? 'grid' : 'list'))
 
-  const setLayout = useCallback((next: SheetListLayout) => {
-    try {
-      window.localStorage.setItem(SHEET_LIST_LAYOUT_STORAGE_KEY, next)
-      unsavedLayout = null
-    } catch {
-      // Kept for this page load only, over any older choice storage still holds
-      unsavedLayout = next
-    }
-    window.dispatchEvent(new Event(SHEET_LIST_LAYOUT_CHANGED_EVENT))
-  }, [])
-
-  return [layout, setLayout]
+  return [layout, storedLayout.set]
 }

@@ -13,6 +13,7 @@ import {
   scrubbingLogger,
   scrubSentryBreadcrumb,
   scrubSentryEvent,
+  scrubSentryLog,
   scrubUrl,
   scrubValue,
 } from './credential-hygiene'
@@ -161,6 +162,28 @@ describe('credential hygiene', () => {
     logger.set({ body: { id: 'sega', password: 'p', region: 'jp' } })
     expect(calls).toEqual([[{ body: { id: FILTERED, password: FILTERED, region: 'jp' } }]])
     expect(logger.getContext()).toEqual({ ok: true })
+  })
+
+  it('scrubs the token of a mailed password reset link, a path segment, from events, transactions, spans and logs', () => {
+    const link =
+      '/api/auth/reset-password/RESETTOKEN123?callbackURL=https%3A%2F%2Fdxrating.net%2Faccount%2Freset-password'
+    const event = scrubSentryEvent({
+      transaction: 'GET /api/auth/reset-password/RESETTOKEN123',
+      request: { url: `https://miruku.dxrating.net${link}` },
+      contexts: { trace: { data: { 'http.target': link, 'url.path': '/api/auth/reset-password/RESETTOKEN123' } } },
+      spans: [{ description: `GET ${link}`, data: { 'http.route': '/api/auth/reset-password/RESETTOKEN123' } }],
+      breadcrumbs: [{ message: `GET https://miruku.dxrating.net${link} 302` }],
+    })
+    expect(JSON.stringify(event)).not.toContain('RESETTOKEN123')
+    expect(event.transaction).toBe(`GET /api/auth/reset-password/${FILTERED}`)
+    expect(event.request.url).toMatch(
+      /^https:\/\/miruku\.dxrating\.net\/api\/auth\/reset-password\/\[Filtered\]\?callbackURL=/,
+    )
+    expect(
+      scrubSentryLog({ message: 'request', attributes: { path: '/api/auth/reset-password/RESETTOKEN123' } }),
+    ).toEqual({ message: 'request', attributes: { path: `/api/auth/reset-password/${FILTERED}` } })
+    // The route that sets the password takes the token in its body, never in the path
+    expect(scrubUrl('/api/auth/reset-password')).toBe('/api/auth/reset-password')
   })
 
   it('scrubs credential query parameters in span data, trace data and breadcrumb queries', () => {

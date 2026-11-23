@@ -1,7 +1,9 @@
+import { DXDATA_PATH, DXDATA_V2_PATH } from '@gekichumai/api-contract'
 import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { fromV2Catalog, type CatalogV2Document } from '@gekichumai/dxdata/v2'
 import snapshotAssetUrl from '@gekichumai/dxdata/snapshot.json?url'
 import * as Sentry from '@/lib/telemetry'
+import { reportRejection } from '@/lib/rejections'
 
 // The browser never gets the catalog in a JS chunk. It loads the dxdata API document once, keeps it in Cache Storage,
 // and on later visits renders from that copy at once while it revalidates in the background with the stored ETag.
@@ -12,10 +14,10 @@ import * as Sentry from '@/lib/telemetry'
 
 // The v2 catalog (gekichumai/meta#43) carries no tags or aliases: those come from the community overlay
 // (communityOverlay.ts), which changes far more often and is cached apart
-export const CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v2/dxdata`
+export const CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}${DXDATA_V2_PATH}`
 export const CATALOG_CACHE_NAME = 'dxrating-catalog-v1'
 /** Where earlier builds kept the v1 document in the same cache; deleted when found */
-const V1_CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v1/dxdata`
+const V1_CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}${DXDATA_PATH}`
 const ETAG_HEADER = 'x-dxrating-catalog-etag'
 // Where a cached copy came from: 'api', or 'unverified' for the build snapshot kept because the API could not be
 // reached. Copies cached before this header existed have none (see readCachedCatalog)
@@ -104,7 +106,7 @@ async function loadCatalog(): Promise<SongCatalogDocument> {
   const cached = cache ? await readCachedCatalog(cache) : null
   if (cached && !isOlderThanBuildCatalog(cached.document)) {
     publish(cached.document, cached.unverified)
-    void revalidateCatalog(cache!, cached.etag)
+    revalidateCatalog(cache!, cached.etag).catch(reportRejection)
     return cached.document
   }
 
@@ -119,7 +121,7 @@ async function loadCatalog(): Promise<SongCatalogDocument> {
     return cached.document
   }
   publish(fresh.document, fresh.unverified)
-  if (cache) void storeCatalog(cache, fresh)
+  if (cache) storeCatalog(cache, fresh).catch(reportRejection)
   return fresh.document
 }
 
@@ -245,7 +247,7 @@ async function openCatalogCache(): Promise<Cache | null> {
   if (typeof caches === 'undefined') return null
   try {
     const cache = await caches.open(CATALOG_CACHE_NAME)
-    void cache.delete(V1_CATALOG_URL).catch(() => {})
+    cache.delete(V1_CATALOG_URL).catch(() => {})
     return cache
   } catch {
     // Cache Storage can be unavailable (some private modes): load from the network every time

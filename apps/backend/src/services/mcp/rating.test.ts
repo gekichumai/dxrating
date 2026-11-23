@@ -1,9 +1,11 @@
+import { getSongCatalog, LATEST_REGION_VERSIONS, type SongCatalogSource } from '@gekichumai/maimai-domain'
 import { Client } from '@modelcontextprotocol/client'
 import { InMemoryTransport } from '@modelcontextprotocol/server'
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildMcpCatalog } from './catalog'
 import { minAchievementFor, RANK_THRESHOLDS, ratingOf } from './rating'
 import { createMcpServer } from './server'
+import { serverRegion } from './sheets'
 import { HIBANA, HIBANA_MASTER, publishedCatalog, UMIYURI, UMIYURI_MASTER, UMIYURI_UTAGE } from './test-fixture'
 
 const catalog = buildMcpCatalog('1', publishedCatalog)
@@ -64,6 +66,9 @@ describe('calculate_rating', () => {
     expect(intl).toMatchObject({ server: 'intl', internalLevel: 13.0, chart: { sheetId: HIBANA_MASTER, level: '13' } })
     const jp = structured(await call('calculate_rating', { song: HIBANA_MASTER }))
     expect(jp).toMatchObject({ server: 'jp', internalLevel: 12.9 })
+    // CN mixes the internal levels of several versions: its own value wins over PRiSM PLUS's (meta#78)
+    const cn = structured(await call('calculate_rating', { song: HIBANA_MASTER, server: 'cn' }))
+    expect(cn).toMatchObject({ server: 'cn', internalLevel: 12.7 })
   })
 
   it('takes an internal level, and finds the achievement of a target rating', async () => {
@@ -147,6 +152,21 @@ describe('calculate_best50', () => {
       (await call('calculate_best50', { scores: [{ song: HIBANA_MASTER, achievement: 1 }], version: 'X' })).isError,
     ).toBe(true)
   })
+
+  it.each(['jp', 'intl', 'usa', 'cn'])(
+    'rates every chart on %s at the internal level the web app does',
+    async (server) => {
+      const region = serverRegion(server)!
+      const web = getSongCatalog(publishedCatalog as SongCatalogSource, LATEST_REGION_VERSIONS[region], region)
+      const scores = web.sheets
+        .filter((sheet) => sheet.isRatingEligible && sheet.serverIds.some((id) => id === server))
+        .map((sheet) => ({ song: sheet.id, achievement: 1_000_000 }))
+      const content = structured(await call('calculate_best50', { server, scores }))
+      const rated = [...content.b15.entries, ...content.b35.entries]
+      expect(rated).toHaveLength(scores.length)
+      for (const entry of rated) expect(entry.internalLevel).toBe(web.getById(entry.sheetId)!.internalLevelValue)
+    },
+  )
 
   it('rates the charts of a past version with their internal level then', async () => {
     const content = structured(

@@ -150,7 +150,6 @@ const VENDOR_GROUPS: [name: string, pkgs: string[]][] = [
       'lodash-es',
       'marked',
       'fuse.js',
-      'swr',
       'react-hot-toast',
       'goober',
       'date-fns',

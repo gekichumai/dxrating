@@ -152,7 +152,9 @@ export function Announcements({ canWrite }: { canWrite: boolean }) {
     setDraftState(value)
   }
   const [result, setResult] = useState<WriteResult | null>(null)
-  const refresh = () => queryClient.invalidateQueries({ queryKey: adminOrpc.announcements.list.key() })
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: adminOrpc.announcements.list.key() })
+  }
 
   const write = useMutation({
     mutationFn: ({ draft, dryRun }: { draft: Draft; dryRun: boolean }) =>
@@ -183,12 +185,12 @@ export function Announcements({ canWrite }: { canWrite: boolean }) {
         )
       }
       setResult(out)
-      void refresh()
+      refresh()
     },
   })
   const end = useMutation({
     mutationFn: (id: number) => adminClient.announcements.end({ id }),
-    onSuccess: () => void refresh(),
+    onSuccess: refresh,
   })
   const endedTitle = end.data?.announcement.title.en
 

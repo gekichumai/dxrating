@@ -1,0 +1,12 @@
+diff --git a/package.json b/package.json
+index d33818ec..a42d20aa 100644
+--- a/package.json
++++ b/package.json
+@@ -13,7 +13,6 @@
+     "guard:replays": "node scripts/guard-replays/run.ts"
+   },
+   "devDependencies": {
+-    "@gdp-ts/core": "0.1.0",
+     "js-yaml": "^4.3.0",
+     "oxfmt": "^0.49.0",
+     "oxlint": "^1.64.0",
