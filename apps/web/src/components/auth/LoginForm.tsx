@@ -82,7 +82,13 @@ const upgradeToPasskeyQuietly = async () => {
  * browsers ignore the field, and without a token sign-up works as before.
  *
  * The nonce comes from the backend after the visitor switches to sign-up, so the server render and the first client
- * render are the same (no field), and each form shown gets its own.
+ * render are the same (no field), and each form shown gets its own. The field is never there while signing in, or Chrome
+ * would offer to verify the address of someone who only wants to sign in.
+ *
+ * Known gap: Chrome starts the protocol when the visitor picks an address from autofill, and only if the form has the
+ * field at that moment (WICG §3.1 steps 1-2). An address picked on the sign-in view before switching to sign-up, or
+ * before the nonce arrives, gets no token, and that sign-up gets the mail instead. The manual Chrome check of meta#80
+ * covers that path; picking the address again once on the sign-up view does get a token.
  */
 interface EmailVerificationNonce {
   readonly nonce: string
@@ -531,12 +537,18 @@ export const LoginForm = ({
           {isSignUp && evpNonce && (
             <input
               key={evpNonce.nonce}
-              ref={evpInputRef}
+              ref={(element) => {
+                evpInputRef.current = element
+                // Set once the field is in the document, not as a prop: with our header-delivered CSP, Chrome blanks
+                // the `nonce` attribute of every element as it is inserted (nonce hiding), and the protocol reads the
+                // attribute, stopping when it is empty (WICG §3.1 steps 3-4). Hiding runs on insertion only, so a value
+                // set afterwards stays. This is the form's EVP nonce, not the CSP nonce, and is no secret.
+                element?.setAttribute('nonce', evpNonce.nonce)
+              }}
               type="hidden"
               name="email-verification-token"
               // oxlint-disable-next-line jsx-a11y/autocomplete-valid -- the Email Verification API's new autofill token
               autoComplete="email-verification-token"
-              nonce={evpNonce.nonce}
             />
           )}
         </div>

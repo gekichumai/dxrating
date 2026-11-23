@@ -317,6 +317,28 @@ describe('LoginForm', () => {
       expect(evpNonce).toHaveBeenCalledOnce()
     })
 
+    it('sets the nonce attribute only once the field is in the document (survives CSP nonce hiding)', async () => {
+      const nonceWrites: { value: string; connected: boolean }[] = []
+      const setAttribute = Element.prototype.setAttribute
+      const spy = vi.spyOn(Element.prototype, 'setAttribute').mockImplementation(function (this: Element, name, value) {
+        if (name === 'nonce' && this.getAttribute('autocomplete') === 'email-verification-token') {
+          nonceWrites.push({ value, connected: this.isConnected })
+        }
+        setAttribute.call(this, name, value)
+      })
+      try {
+        render(<LoginForm />)
+        fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+        await waitFor(() => expect(tokenField()).not.toBeNull())
+      } finally {
+        spy.mockRestore()
+      }
+
+      expect(nonceWrites.length).toBeGreaterThan(0)
+      expect(nonceWrites.every(({ value, connected }) => value === NONCE && connected)).toBe(true)
+      expect(tokenField()!.getAttribute('nonce')).toBe(NONCE)
+    })
+
     it('sends the token Chrome filled in with a password sign-up', async () => {
       vi.stubGlobal('PublicKeyCredential', undefined)
       emailSignUp.mockResolvedValue({ error: null })
