@@ -49,6 +49,16 @@ test('only IDs of our Sentry projects count, in any case', () => {
   assert.deepEqual(issues('this may fix dxrating-web-r'), ['dxrating-web-r'])
 })
 
+test('a Fixes line quoted in a code block or comment still resolves the issue', () => {
+  const investigates = 'Investigates DXRATING-BACKEND-2J; the fix PR should say:\n\n'
+  const fence = '```'
+  assert.deepEqual(issues(`${investigates}${fence}\nFixes DXRATING-BACKEND-2J\n${fence}\n`), ['DXRATING-BACKEND-2J'])
+  assert.deepEqual(issues(`${investigates}~~~\nFixes DXRATING-BACKEND-2J`), ['DXRATING-BACKEND-2J'])
+  assert.deepEqual(issues(`${investigates}<!--\nFixes DXRATING-BACKEND-2J\n-->`), ['DXRATING-BACKEND-2J'])
+  assert.deepEqual(issues(`${investigates}    Fixes DXRATING-BACKEND-2J\n`), ['DXRATING-BACKEND-2J'])
+  assert.deepEqual(issues(`${fence}\nlog\n${fence}\nFixes DXRATING-BACKEND-2J\n`), [])
+})
+
 test('issues mentioned without a fix keyword pass', () => {
   assert.deepEqual(issues('Investigates DXRATING-BACKEND-2J; a fix comes later.'), [])
 })

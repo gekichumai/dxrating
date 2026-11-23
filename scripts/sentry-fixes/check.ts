@@ -1,7 +1,6 @@
 import { execFileSync } from 'node:child_process'
 
 // Sentry's resolve-via-commit parser, ported from getsentry/sentry src/sentry/utils/groupreference.py.
-// It reads every fix keyword anywhere in the text and resolves each issue ID in the run of words that follows.
 const fixKeyword = String.raw`\b(?:Fix|Fixes|Fixed|Close|Closes|Closed|Resolve|Resolves|Resolved):?\s+`
 const markdownLink = /\[([^\]]+)\]\([^)]+\)/g
 const fixesRun = new RegExp(String.raw`${fixKeyword}([A-Za-z0-9_\-\s,]+)\b`, 'gid')
@@ -9,12 +8,13 @@ const shortIdCandidate = /\b[A-Z0-9_-]+-[A-Z0-9]+\b/gi
 const fixesUrl = new RegExp(String.raw`${fixKeyword}(https?://\S+)`, 'gid')
 const sentryIssueUrl = /^https?:\/\/([^/]+\.)?sentry\.io\/(.*\/)?issues\/\d+/i
 
-const fixesLine = /^Fixes ([A-Z0-9_-]+-[A-Z0-9]+)$/
+const fixesLine = /^ {0,3}Fixes ([A-Z0-9_-]+-[A-Z0-9]+)\s*$/
+const quotedMarkdown = /^ {0,3}(`{3,}|~{3,})[\s\S]*?(?:^ {0,3}\1|(?![\s\S]))|<!--[\s\S]*?(?:-->|(?![\s\S]))/gm
 
 const howToFix =
   'Sentry resolves every issue that follows Fix, Fixes, Closes or Resolves anywhere in a PR title, PR body or commit message, ' +
   'even when the sentence says it does not fix it or the ID is in backticks. ' +
-  'Write each issue this change fixes on a line of its own that reads exactly `Fixes <SHORT-ID>`, ' +
+  'Write each issue this change fixes on a line of its own, outside code blocks and comments, that reads exactly `Fixes <SHORT-ID>`, ' +
   'and mention any other issue without those words (e.g. "Investigates DXRATING-BACKEND-2J").'
 
 interface StrayFix {
@@ -22,7 +22,7 @@ interface StrayFix {
   line: string
 }
 
-// Every project in the gekichumai Sentry org is named dxrating-*. Other candidates ("sign-in", "CVE-2026-5222") name no issue.
+// Every project in the gekichumai Sentry org is named dxrating-*.
 const ourShortId = /^DXRATING-/i
 
 export function strayFixes(text: string): StrayFix[] {
@@ -33,10 +33,13 @@ export function strayFixes(text: string): StrayFix[] {
     return plain.slice(start, end === -1 ? undefined : end).trim()
   }
   const declared = new Set(
-    plain.split('\n').flatMap((line) => {
-      const match = fixesLine.exec(line.trim())
-      return match ? [match[1]] : []
-    }),
+    plain
+      .replace(quotedMarkdown, '')
+      .split('\n')
+      .flatMap((line) => {
+        const match = fixesLine.exec(line)
+        return match ? [match[1]] : []
+      }),
   )
 
   const strays: StrayFix[] = []
