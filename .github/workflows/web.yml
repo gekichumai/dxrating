@@ -49,7 +49,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Includes the i18n parity test: messages/*.json must match the i18next resources (pnpm i18n:convert)
       - name: Run web tests
         run: pnpm --filter @gekichumai/dxrating-web exec vitest run
 

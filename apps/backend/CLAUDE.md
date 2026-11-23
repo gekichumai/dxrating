@@ -2,7 +2,7 @@
 
 ## Stack
 
-- **Runtime**: Node.js 26.12.1
+- **Runtime**: Node.js
 - **Application**: Effect 4 services, layers, typed failures, and scoped resources
 - **HTTP adapter**: Hono
 - **API Layer**: oRPC 2 with the official Effect handler integration
@@ -12,7 +12,7 @@
 - **Error Tracking**: Sentry
 - **Build**: Effect diagnostics + TypeScript checking + esbuild production bundle
 - **Dev**: `tsx watch`
-- **Test**: Vitest 5 and @effect/vitest
+- **Test**: Vitest and @effect/vitest
 - **Lint**: oxlint + official @effect/tsgo diagnostics (errors)
 
 ## Commands
@@ -37,64 +37,16 @@ on either side exercise the same contract. The private producer calls this
 public workflow with its repository-scoped `GITHUB_TOKEN`; the workflow needs
 no cross-repository credential in DXRating.
 
-## Project Structure
-
-```
-src/
-├── index.ts          # NodeRuntime entry point, scoped listener and shutdown
-├── runtime.ts        # Application layer composition and HTTP runtime
-├── request-runner.ts # Tracks, interrupts, and joins requests before disposal
-├── app.ts            # Hono app: routes, CORS, error handling
-├── config.ts         # Env loading (dotenv → .env.local → vault) + Zod schema
-├── contract.ts       # oRPC API contracts (type-safe route definitions)
-├── router.ts         # oRPC route handler implementations
-├── auth.ts           # Better Auth configuration
-├── db/
-│   ├── index.ts      # Drizzle client
-│   ├── schema.ts     # App tables (tags, comments, profiles, song_aliases)
-│   └── auth-schema.ts # Better Auth tables (user, session, account, etc.)
-├── lib/
-│   └── functions/    # MaimaiNET clients (JP/Intl), Sentry setup
-├── services/
-│   └── functions/    # Oneshot renderer, fetch-net-records
-├── routes/           # (Currently empty, routes are in app.ts/router.ts)
-└── test/
-```
-
 ## API Routes
 
-### oRPC (`/api/v1/*`)
-
-- `GET /announcements` — Current and upcoming global announcements (every language and target; clients filter)
-- `GET /tags` — List tags, groups, and song associations
-- `POST /tags/attach` — Attach tag to song sheet (auth required)
-- `POST /comments` — Create comment (auth required)
-- `GET /comments` — List comments for song sheet
-- `GET /aliases` — List song aliases
-- `POST /aliases` — Create song alias (auth required)
-- `POST /monitoring/tunnel` — Sentry error tunnel
-- `POST /maimai/fetch-records` — Fetch MaimaiNET records
-- `GET /me/features`, `POST /me/features/cloud-save/opt-in` — Session-only cloud save flags (tagged `internal`, kept out of `/spec.json`)
-- `GET /me/sessions`, `POST /me/sessions/{id}/revoke` — The signed-in user's devices without their tokens, and signing one out by id (tagged `internal`). Better Auth's `list-sessions` returns tokens and so needs a fresh session (`session.freshAge`, one day); this list works for any signed-in session. Revoking still needs a fresh session (403 `FORBIDDEN`, `data.reason: 'SESSION_NOT_FRESH'`)
-- Cloud save (`cloudSave.*`, tagged `internal`, behind `cloud_save`): `GET|POST /saves`, `PATCH|DELETE /saves/{id}`,
-  `GET /saves/{id}/changes`, `POST /saves/{id}/mutations`, `GET /saves/{id}/records/{sheetId}/events`,
-  `POST /saves/{id}/replace`, `GET|POST /saves/{id}/snapshots`, `GET /saves/{id}/imports`, `GET /imports/{jobId}`,
-  `GET /me/export` (streamed by a direct Hono route), `POST /saves/{id}/client-imports` (chunked client uploads,
-  `client_reported`), and the server imports `POST /saves/{id}/imports/lxns|diving-fish` (oRPC) and
-  `POST /saves/{id}/imports/maimai-net` (SSE, a direct Hono route), which also need `server_imports`.
-
-### Direct Routes
-
-- `GET /health` — Health check
-- `GET|HEAD /api/v1/dxdata` — Complete published catalog or metadata-only headers
-- `POST|GET /api/auth/**` — Better Auth endpoints
-- `GET /api/auth/email-verification-protocol/nonce`, `POST /api/auth/email-verification-protocol/verify` — Chrome's Email Verification Protocol: a sign-up form's nonce, and verifying a signed-in account's address with the browser's token (see "Email Verification Protocol" below)
-- `POST /api/auth/account/set-password` — An account without a password (passkey or social sign-up) sets its first one (`src/lib/set-password.ts`): fresh session required (403 `SESSION_NOT_FRESH`), 400 `PASSWORD_ALREADY_SET` once it has one, sign-up length rules and haveIBeenPwned
-- `POST /functions/fetch-net-records/v0` — Fetch NET records (JSON)
-- `POST /functions/fetch-net-records/v1/:region` — Fetch NET records (SSE)
-- `POST /functions/render-oneshot/v0` — Render player card image
-- `GET /docs` — Scalar API docs UI
-- `GET /spec.json` — OpenAPI spec
+The oRPC contracts are in `packages/api-contract/src/` and `src/contract.ts`. They are served under `/api/v1` and
+documented at `/docs` and `/spec.json`, which leaves out routes tagged `internal`. Direct Hono routes (health, the
+dxdata catalog, Better Auth, NET record fetching, oneshot rendering, the streamed export and the NET import) are
+registered in `src/app.ts`. `POST /api/auth/account/set-password` (`src/lib/set-password.ts`) lets an account without a password
+(passkey or social sign-up) set its first one: it needs a fresh session (403 `SESSION_NOT_FRESH`) and answers 400
+`PASSWORD_ALREADY_SET` once a password exists. `GET /api/auth/email-verification-protocol/nonce` and
+`POST /api/auth/email-verification-protocol/verify` serve Chrome's Email Verification Protocol: a sign-up form's nonce,
+and verifying a signed-in account's address with the browser's token (see "Email Verification Protocol" below).
 
 ## Environment Variables
 
@@ -365,7 +317,7 @@ Deployed on Coolify with Docker Compose (`docker-compose.prod.yml`):
 
 - Multi-stage Dockerfile (builder → runner)
 - Traefik reverse proxy via external `coolify` network
-- PostgreSQL 16 with persistent volume
+- PostgreSQL with a persistent volume
 
 ### Coolify Integration
 
@@ -377,13 +329,11 @@ When working on Coolify deployment or integration, use context7 to query the Coo
 
 ## Conventions
 
-- API contracts defined in `contract.ts` using oRPC + Zod, implementations in `router.ts`
 - Auth context passed through oRPC handler context (`context.user`)
 - Better Auth error responses are translated on the way out (`src/lib/auth-error-localization.ts`, called from `Authentication.handle`, with messages in `src/lib/auth-error-translations.ts` for every supported language but English), not by the `@better-auth/i18n` plugin, whose after-hook misses before-hook, captcha and rate-limit errors. The language is the one `src/lib/auth-locale.ts` detects: Accept-Language, which the web's auth client sets to the page's URL language, then the `dxrating.locale` cookie. Don't add a custom request header for this: the web and the backend deploy separately, and a header the live backend's CORS doesn't allow fails every auth request
 - Authorization proofs (gdp-ts): functions that read or change one user's private data demand a proof about their exact arguments. See `src/proofs/README.md`.
 - Database schema changes go through Drizzle migrations (`drizzle-kit`)
 - ES modules with extensionless relative TypeScript imports. TypeScript uses `bundler` module resolution; esbuild resolves local modules into the production bundle. Keep extensions on actual output and asset paths.
-- CORS allows `localhost` for dev, `https://dxrating.net` for production, and `*.dxrating.pages.dev` for preview deployments
 
 
 ## Effect conventions

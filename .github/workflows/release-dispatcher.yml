@@ -1,7 +1,6 @@
 name: Dispatch New Release
 
 on:
-  # trigger on push to main branch
   push:
     branches:
       - main
@@ -15,7 +14,6 @@ concurrency:
 
 jobs:
   tagger:
-    # if the push commit message contains [skip ci], skip ci
     if: contains(github.event.commits[0].message, '[skip ci]') == false
     runs-on: ubuntu-latest
     steps:
@@ -23,9 +21,6 @@ jobs:
         with:
           ref: 'main'
 
-      # git tag the release, then push it
-      # The tag name is `v` followed by a semver version number, in which is calculated by incrementing the patch
-      # version of the latest tag. If no tag exists, the version is 0.0.1
       - name: Tag Release
         uses: actions/github-script@v6
         with:

@@ -73,7 +73,6 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT;
           echo "versionlabel=$VERSION+$TRUNCATED_GITHUB_SHA" >> $GITHUB_OUTPUT;
 
-      # Populate Bundle Information
       - name: Populate Bundle Information
         id: bundle-info
         shell: bash
