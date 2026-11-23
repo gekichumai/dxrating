@@ -1,4 +1,5 @@
 import { type LevelRange, normalizeRange, RANGE_FLOOR_EXTENDED } from './levelRange'
+import { browserStorage } from '@/utils/persisted'
 
 /** The last range used on /random, restored on the next visit (client only, after mount) */
 export const RANDOM_RANGE_STORAGE_KEY = 'dxrating-random-range'
@@ -10,15 +11,7 @@ interface StoredRandomRange {
 
 type StorageLike = Pick<Storage, 'getItem' | 'setItem'>
 
-const defaultStorage = (): StorageLike | null => {
-  try {
-    return typeof window === 'undefined' ? null : window.localStorage
-  } catch {
-    return null
-  }
-}
-
-export function readStoredRange(storage: StorageLike | null = defaultStorage()): LevelRange | null {
+export function readStoredRange(storage: StorageLike | null = browserStorage('local')): LevelRange | null {
   try {
     const raw = storage?.getItem(RANDOM_RANGE_STORAGE_KEY)
     if (!raw) return null
@@ -31,7 +24,7 @@ export function readStoredRange(storage: StorageLike | null = defaultStorage()):
   }
 }
 
-export function writeStoredRange(range: LevelRange, storage: StorageLike | null = defaultStorage()): void {
+export function writeStoredRange(range: LevelRange, storage: StorageLike | null = browserStorage('local')): void {
   try {
     storage?.setItem(RANDOM_RANGE_STORAGE_KEY, JSON.stringify({ v: 1, range } satisfies StoredRandomRange))
   } catch {

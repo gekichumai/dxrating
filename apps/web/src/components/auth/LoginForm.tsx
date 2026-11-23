@@ -1,6 +1,8 @@
+import { CAPTCHA_RESPONSE_HEADER } from '@gekichumai/api-contract'
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
+import { WebAuthnAbortService } from '@simplewebauthn/browser'
 import { useResolvedTheme } from '@/utils/useResolvedTheme'
-import { Alert, Button, Chip, CircularProgress, Divider, IconButton, TextField, useMediaQuery } from '@mui/material'
+import { Alert, Button, Chip, CircularProgress, Divider, TextField, useMediaQuery } from '@mui/material'
 import clsx from 'clsx'
 import { useRef, useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
@@ -11,8 +13,11 @@ import IconLogosGithub from '~icons/logos/github-icon'
 import IconLogosGoogle from '~icons/logos/google-icon'
 import IconPasskey from '~icons/material-symbols/passkey'
 import IconArrowLeft from '~icons/mdi/arrow-left'
+import { EMAIL_VERIFICATION_NONCE_FIELD, EMAIL_VERIFICATION_TOKEN_FIELD } from '@gekichumai/api-contract'
 import { authClient } from '../../lib/auth-client'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
+import { hasErrorCode } from './authLinks'
+import { isAuthMailEnabled } from '../../setup/auth-mail'
 import { PasswordVisibilityAdornment } from './PasswordVisibilityAdornment'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { ParaglideMessage } from '@inlang/paraglide-js-react'
@@ -71,6 +76,27 @@ const upgradeToPasskeyQuietly = async () => {
   await authClient.passkey.addPasskey({ useAutoRegister: true })
 }
 
+/**
+ * Chrome's Email Verification Protocol (gekichumai/meta#80; WICG "Email Verification API", report of 26 June 2026): a
+ * sign-up form that carries an `autocomplete="email-verification-token"` field with a server-made `nonce` gets, when
+ * the visitor picks an address their mail provider vouches for, a token proving it, filled into that field as the form
+ * is submitted. The backend checks it and then sends no verification mail. Nothing here detects the feature: other
+ * browsers ignore the field, and without a token sign-up works as before.
+ *
+ * The nonce comes from the backend after the visitor switches to sign-up, so the server render and the first client
+ * render are the same (no field), and each form shown gets its own. The field is never there while signing in, or Chrome
+ * would offer to verify the address of someone who only wants to sign in.
+ *
+ * Known gap: Chrome starts the protocol when the visitor picks an address from autofill, and only if the form has the
+ * field at that moment (WICG §3.1 steps 1-2). An address picked on the sign-in view before switching to sign-up, or
+ * before the nonce arrives, gets no token, and that sign-up gets the mail instead. The manual Chrome check of meta#80
+ * covers that path; picking the address again once on the sign-up view does get a token.
+ */
+interface EmailVerificationNonce {
+  readonly nonce: string
+  readonly expiresAt: number
+}
+
 export const LoginForm = ({
   idPrefix = 'auth',
   onPendingChange,
@@ -111,6 +137,13 @@ export const LoginForm = ({
   const [canUsePasskeys, setCanUsePasskeys] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // After "Forgot password?": the address a reset link was asked for
+  const [resetRequestedFor, setResetRequestedFor] = useState<string | null>(null)
+  const [resetPending, setResetPending] = useState(false)
+  const [evpNonce, setEvpNonce] = useState<EmailVerificationNonce | null>(null)
+  const evpInputRef = useRef<HTMLInputElement>(null)
+  // The last token Chrome filled in: it fills on submission, and the form is submitted once per step
+  const evpTokenRef = useRef<string | null>(null)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const turnstileRef = useRef<TurnstileInstance>(null)
   const resolvedTheme = useResolvedTheme()
@@ -138,7 +171,7 @@ export const LoginForm = ({
     onPendingChange?.(provider !== null)
   }
 
-  const captchaHeaders = turnstileToken ? { 'x-captcha-response': turnstileToken } : undefined
+  const captchaHeaders = turnstileToken ? { [CAPTCHA_RESPONSE_HEADER]: turnstileToken } : undefined
   const waitingForTurnstile = !!TURNSTILE_SITE_KEY && !turnstileToken
   const buttonLoading = loading || (step === 'credentials' && isValid && waitingForTurnstile)
   // Submit stays available so validation can run and focus the first invalid field; only a running request blocks it
@@ -155,6 +188,65 @@ export const LoginForm = ({
     onSuccess?.()
   }
 
+  /**
+   * Mails a password reset link to the address of the second step. The answer is the same whether or not an account
+   * uses it, so the notice says "if". The reset page (routes/account/reset-password.tsx) takes it from there.
+   */
+  const requestPasswordReset = async () => {
+    if (waitingForTurnstile) {
+      setError(m.auth_form_captchaPending({}, { locale }))
+      return
+    }
+    const address = getValues('email').trim()
+    setResetPending(true)
+    setError(null)
+    setResetRequestedFor(null)
+    try {
+      const { error } = await authClient.requestPasswordReset({
+        email: address,
+        fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
+      })
+      if (error) {
+        if (hasErrorCode(error, 'RESET_PASSWORD_DISABLED')) {
+          setError(m.auth_form_resetUnavailable({}, { locale }))
+          return
+        }
+        throw error
+      }
+      setResetRequestedFor(address)
+    } catch (e: unknown) {
+      fail(e, m.auth_form_errorGeneric({}, { locale }))
+    } finally {
+      setResetPending(false)
+      resetTurnstile()
+    }
+  }
+
+  /** A new nonce for the sign-up form, unless the current one has a while left; without one the field isn't shown */
+  const refreshEmailVerificationNonce = async () => {
+    if (evpNonce && evpNonce.expiresAt - Date.now() > 5 * 60 * 1000) return
+    try {
+      const { data } = await authClient.emailVerificationProtocol.nonce()
+      if (!data) return
+      evpTokenRef.current = null
+      setEvpNonce({ nonce: data.nonce, expiresAt: Date.parse(data.expiresAt) })
+    } catch {
+      // A backend without the protocol: sign-up goes on without it
+    }
+  }
+
+  /** Keeps the token Chrome put in the field as the form was submitted */
+  const collectEmailVerificationToken = () => {
+    const token = evpInputRef.current?.value
+    if (token) evpTokenRef.current = token
+  }
+
+  /** The token and the nonce of the form it was made for, while the nonce is still good */
+  const emailVerificationProof = () =>
+    evpTokenRef.current && evpNonce && evpNonce.expiresAt > Date.now()
+      ? { token: evpTokenRef.current, nonce: evpNonce.nonce }
+      : undefined
+
   const fail = (e: unknown, fallback: string) => {
     haptic.trigger('error')
     setError(formatErrorMessage(e, fallback))
@@ -166,6 +258,7 @@ export const LoginForm = ({
     if (!supported) setSignUpWith('password')
     setStep('credentials')
     setError(null)
+    setResetRequestedFor(null)
     // Signing in always asks for the password; a new account asks for one only when the visitor chose it
     if (!isSignUp || !supported || signUpWith === 'password') {
       // The field mounts with this render; focus it once it's there
@@ -174,6 +267,8 @@ export const LoginForm = ({
   }
 
   const backToStart = () => {
+    // The visitor may change the address; Chrome fills a token again on the next submission if it still applies
+    evpTokenRef.current = null
     setStep('start')
     setShowPassword(false)
     setError(null)
@@ -184,6 +279,8 @@ export const LoginForm = ({
   const signUpWithPasskey = async (email: string) => {
     setActiveProvider('passkey')
     setError(null)
+    // The passkey client sends a body of its own: the token goes along once the account exists
+    const proof = emailVerificationProof()
     try {
       const { error } = await authClient.passkey.addPasskey({
         // The backend checks Turnstile before it answers anything about the address (apps/backend/src/lib/
@@ -195,6 +292,8 @@ export const LoginForm = ({
         if (isCancelledPasskey(error)) return
         throw error
       }
+      // Unverified until it holds: the backend has mailed a link already, which still works either way
+      if (proof) await authClient.emailVerificationProtocol.verify(proof).catch(() => {})
       finishSignIn(m.auth_signUp_toastSuccess({}, { locale }))
     } catch (e: unknown) {
       fail(e, m.auth_signUp_passkey_error({}, { locale }))
@@ -205,6 +304,7 @@ export const LoginForm = ({
   }
 
   const onSubmit = async (data: LoginFormValues) => {
+    collectEmailVerificationToken()
     const email = data.email.trim()
     if (step === 'start') {
       goToCredentials()
@@ -222,11 +322,16 @@ export const LoginForm = ({
     setError(null)
     try {
       if (isSignUp) {
+        const proof = emailVerificationProof()
         // Better Auth signs a new account in straight away
         const { error } = await authClient.signUp.email({
           email,
           password: data.password,
           name: email.split('@')[0], // Default name
+          // Proof the address is the visitor's: the backend then verifies it without mail (and ignores bad proof)
+          ...(proof
+            ? { [EMAIL_VERIFICATION_TOKEN_FIELD]: proof.token, [EMAIL_VERIFICATION_NONCE_FIELD]: proof.nonce }
+            : {}),
           fetchOptions: captchaHeaders ? { headers: captchaHeaders } : undefined,
         })
         if (error) throw error
@@ -277,9 +382,11 @@ export const LoginForm = ({
   }
 
   const toggleView = () => {
+    if (!isSignUp) void refreshEmailVerificationNonce()
     setIsSignUp(!isSignUp)
     setShowPassword(false)
     setError(null)
+    setResetRequestedFor(null)
     resetTurnstile()
   }
 
@@ -336,29 +443,35 @@ export const LoginForm = ({
           <h2 id={formTitleId} className="text-xl font-semibold leading-tight text-fg-1 m-0">
             {isSignUp ? m.auth_signUp_title({}, { locale }) : m.auth_form_title({}, { locale })}
           </h2>
-          <p className="text-sm text-fg-2 mt-1 mb-0 text-pretty">
-            {isSignUp ? m.auth_signUp_subtitle({}, { locale }) : m.auth_form_subtitle({}, { locale })}
-          </p>
+          {step === 'start' && (
+            <p className="text-sm text-fg-2 mt-1 mb-0 text-pretty">
+              {isSignUp ? m.auth_signUp_subtitle({}, { locale }) : m.auth_form_subtitle({}, { locale })}
+            </p>
+          )}
         </div>
 
-        <p className="m-0 text-center text-xs leading-relaxed text-fg-2 text-pretty">
-          <ParaglideMessage
-            message={m.auth_terms_notice}
-            inputs={{}}
-            options={{ locale }}
-            markup={{
-              terms: ({ children }) => (
-                <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="link">
-                  {children}
-                </a>
-              ),
-            }}
-          />
-        </p>
+        {step === 'credentials' && (
+          // Who the second step is for, right under the heading; pressing it goes back to change the address
+          <button
+            type="button"
+            onClick={backToStart}
+            disabled={loading}
+            className="mx-auto -mt-1 mb-1 flex max-w-full min-w-0 items-center gap-2 rounded-lg border border-solid border-ink/15 bg-transparent px-3 py-1.5 text-sm text-fg-1 cursor-pointer transition-colors hover:bg-ink/5 disabled:cursor-default disabled:opacity-60"
+          >
+            <IconArrowLeft className="size-4 shrink-0 text-fg-2" aria-hidden />
+            <span className="truncate font-medium" translate="no">
+              {email}
+            </span>
+            <span className="sr-only">{m.auth_form_back({}, { locale })}</span>
+          </button>
+        )}
         {/* Stays mounted across both steps: the browser keeps offering passkeys in the email field's autofill */}
         {!isSignUp && <ConditionalPasskey onSuccess={onSuccess} />}
 
         {error && <Alert severity="error">{error}</Alert>}
+        {resetRequestedFor && (
+          <Alert severity="success">{m.auth_form_resetSent({ email: resetRequestedFor }, { locale })}</Alert>
+        )}
 
         {step === 'start' && (
           <>
@@ -419,25 +532,32 @@ export const LoginForm = ({
             size="small"
             inputProps={{ autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, inputMode: 'email' }}
           />
+          {/*
+           * Where Chrome puts its Email Verification Protocol token (see EmailVerificationNonce). Uncontrolled: the
+           * browser writes its value, read on submit. A new nonce mounts a new field.
+           */}
+          {isSignUp && evpNonce && (
+            <input
+              key={evpNonce.nonce}
+              ref={(element) => {
+                evpInputRef.current = element
+                // Set once the field is in the document, not as a prop: with our header-delivered CSP, Chrome blanks
+                // the `nonce` attribute of every element as it is inserted (nonce hiding), and the protocol reads the
+                // attribute, stopping when it is empty (WICG §3.1 steps 3-4). Hiding runs on insertion only, so a value
+                // set afterwards stays. This is the form's EVP nonce, not the CSP nonce, and is no secret.
+                element?.setAttribute('nonce', evpNonce.nonce)
+              }}
+              type="hidden"
+              name="email-verification-token"
+              // oxlint-disable-next-line jsx-a11y/autocomplete-valid -- the Email Verification API's new autofill token
+              autoComplete="email-verification-token"
+            />
+          )}
         </div>
 
         {step === 'credentials' && (
           <>
-            <div className="flex items-center gap-1 -ml-2 min-w-0">
-              <IconButton
-                onClick={backToStart}
-                disabled={loading}
-                size="small"
-                aria-label={m.auth_form_back({}, { locale })}
-              >
-                <IconArrowLeft className="size-5" />
-              </IconButton>
-              <span className="text-sm font-medium text-fg-1 truncate" translate="no">
-                {email}
-              </span>
-            </div>
-
-            {asksForPassword ? (
+            {asksForPassword && (
               <TextField
                 id={passwordId}
                 {...register('password', {
@@ -478,11 +598,20 @@ export const LoginForm = ({
                   ),
                 }}
               />
-            ) : (
-              <p className="m-0 flex gap-2 text-sm text-fg-2 text-pretty">
-                <IconPasskey className="size-5 shrink-0 text-fg-1" aria-hidden />
-                {m.auth_signUp_passkey_description({}, { locale })}
-              </p>
+            )}
+
+            {!isSignUp && isAuthMailEnabled() && (
+              <Button
+                type="button"
+                variant="text"
+                size="small"
+                onClick={() => void requestPasswordReset()}
+                disabled={loading || resetPending}
+                aria-busy={resetPending || undefined}
+                className="!-mt-1 !self-end"
+              >
+                {m.auth_form_forgotPassword({}, { locale })}
+              </Button>
             )}
 
             {TURNSTILE_SITE_KEY && (
@@ -529,6 +658,12 @@ export const LoginForm = ({
           )}
         </Button>
 
+        {step === 'credentials' && isSignUp && signUpWith === 'passkey' && (
+          <p className="-mt-1 mb-0 text-center text-xs leading-relaxed text-fg-2 text-pretty">
+            {m.auth_signUp_passkey_description({}, { locale })}
+          </p>
+        )}
+
         {step === 'credentials' && isSignUp && canUsePasskeys && (
           <Button
             type="button"
@@ -549,17 +684,25 @@ export const LoginForm = ({
         )}
       </form>
 
-      <Button
-        type="button"
-        variant="text"
-        onClick={toggleView}
-        disabled={loading}
-        className="!mt-2 !text-sm"
-        fullWidth
-        size="small"
-      >
-        {isSignUp ? m.auth_form_hasAccount({}, { locale }) : m.auth_form_noAccount({}, { locale })}
-      </Button>
+      <div className="mt-4 flex flex-col items-center gap-2 border-t border-t-solid border-ink/10 pt-3">
+        <Button type="button" variant="text" onClick={toggleView} disabled={loading} className="!text-sm" size="small">
+          {isSignUp ? m.auth_form_hasAccount({}, { locale }) : m.auth_form_noAccount({}, { locale })}
+        </Button>
+        <p className="m-0 text-center text-xs leading-relaxed text-fg-2 text-pretty">
+          <ParaglideMessage
+            message={m.auth_terms_notice}
+            inputs={{}}
+            options={{ locale }}
+            markup={{
+              terms: ({ children }) => (
+                <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="link">
+                  {children}
+                </a>
+              ),
+            }}
+          />
+        </p>
+      </div>
     </div>
   )
 }
@@ -590,6 +733,11 @@ function ConditionalPasskey({ onSuccess }: { onSuccess?: () => void }) {
     void signInWithConditionalPasskey().catch(() => {})
     return () => {
       active = false
+      // Ignoring the result isn't enough: the request itself stays pending in the browser. Switching to sign-up left it
+      // there, and on the next form submission Chrome (or a password manager) raised it as the full "Use a saved
+      // passkey" dialog, on top of the sign-up's own result. Every ceremony goes through simplewebauthn, so this
+      // cancels the autofill request, or nothing when none is pending.
+      WebAuthnAbortService.cancelCeremony()
     }
   })
 

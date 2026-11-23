@@ -68,7 +68,7 @@ export function computeHomeQuickStats({
   const finite = (value: number) => (Number.isFinite(value) && value > 0 ? value : null)
 
   const plateRegion: PlateRegion = region === 'cn' || region === 'intl' ? region : 'jp'
-  const plateRecords = new Map(records.map(({ entry, best }) => [entry.sheetId, best]))
+  const plateRecords = new Map(records.map(({ sheetId, best }) => [sheetId, best]))
   let nearestPlate: HomeQuickStats['nearestPlate'] = null
   let bestRatio = -1
   for (const plate of listPlates(plateRegion)) {

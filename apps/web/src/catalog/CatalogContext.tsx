@@ -32,14 +32,17 @@ const RETRY_DELAYS_MS = [2_000, 10_000, 30_000]
 const getNoCatalog = () => null
 
 export const CatalogProvider: FC<PropsWithChildren> = ({ children }) => {
-  const loaderData = useMatches({
-    select: (matches) => matches.map((match) => match.loaderData as CatalogSliceLoaderData | undefined),
+  const { meta, songs } = useMatches({
+    select: (matches) => {
+      const loaderData = matches.map((match) => match.loaderData as CatalogSliceLoaderData | undefined)
+      return {
+        meta: loaderData.find((data) => data?.catalogMeta)?.catalogMeta,
+        songs: loaderData.flatMap((data) => data?.catalogSongs ?? []),
+      }
+    },
+    structuralSharing: true,
   })
-  const meta = loaderData.find((data) => data?.catalogMeta)?.catalogMeta
-  const songs = loaderData.flatMap((data) => data?.catalogSongs ?? [])
-  // Keyed by the song IDs: the selected loader data is a new array on every render
-  const songsKey = songs.map((song) => song.id).join()
-  const slice = useMemo(() => (meta ? buildCatalogSlice(meta, uniqueSongs(songs)) : null), [meta, songsKey])
+  const slice = useMemo(() => (meta ? buildCatalogSlice(meta, uniqueSongs(songs)) : null), [meta, songs])
 
   useEffect(() => {
     let cancelled = false

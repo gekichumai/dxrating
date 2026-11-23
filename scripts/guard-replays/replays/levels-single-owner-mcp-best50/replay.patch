@@ -1,0 +1,18 @@
+diff --git a/apps/backend/src/services/mcp/tool-calculate-best50.ts b/apps/backend/src/services/mcp/tool-calculate-best50.ts
+index a64aac03..06169e18 100644
+--- a/apps/backend/src/services/mcp/tool-calculate-best50.ts
++++ b/apps/backend/src/services/mcp/tool-calculate-best50.ts
+@@ -147,7 +147,12 @@ export function runCalculateBest50(
+       )
+     }
+     const [sheet] = sheets
+-    const { internalLevel, ...onServer } = sheetOnServer(sheet, server, version)
++    const onServer = sheetOnServer(sheet, server)
++    // a past version rates a chart with its internal level then, where the catalog knows it, as the web app does
++    const internalLevel =
++      version === currentVersion(catalog, server)
++        ? onServer.internalLevel
++        : (sheet.multiverInternalLevelValue?.[version] ?? onServer.internalLevel)
+     const bucket = isB15Sheet(onServer.version as VersionEnum, version as VersionEnum, serverRegion(server) ?? 'jp')
+       ? 'b15'
+       : isB35Sheet(onServer.version as VersionEnum, version as VersionEnum, serverRegion(server) ?? 'jp')

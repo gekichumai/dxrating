@@ -1,0 +1,11 @@
+diff --git a/.devcontainer/Dockerfile b/.devcontainer/Dockerfile
+--- a/.devcontainer/Dockerfile
++++ b/.devcontainer/Dockerfile
+@@ -20,6 +20,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
+ ARG USERNAME=node
+ RUN echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$USERNAME
+
+-RUN npm install -g pnpm@10.33.0
++RUN npm install -g pnpm@10.30.3
+
+ USER $USERNAME

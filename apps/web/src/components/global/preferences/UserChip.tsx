@@ -3,7 +3,7 @@ import { type FC, useCallback, useState } from 'react'
 import { useAsync } from 'react-use'
 import MdiAccountCheck from '~icons/mdi/account-check'
 import MdiAccountCircleOutline from '~icons/mdi/account-circle-outline'
-import { authClient } from '../../../lib/auth-client'
+import { useSettledSession } from '@/hooks/useSettledSession'
 import { LoginForm, loginFormTitleId } from '../../auth/LoginForm'
 import { ResponsiveDialog } from '../ResponsiveDialog'
 import { UserProfileModal } from './UserProfileModal'
@@ -57,7 +57,7 @@ export const UserChip: FC = () => {
   const locale = useLocale()
   const [open, setOpen] = useState<'auth' | 'profile' | null>(null)
   const [authPending, setAuthPending] = useState(false)
-  const { data: sessionData, isPending: pending } = authClient.useSession()
+  const { data: sessionData, isPending: pending } = useSettledSession()
   const session = sessionData?.session
   const user = sessionData?.user
   const handlePendingChange = useCallback((p: boolean) => setAuthPending(p), [])

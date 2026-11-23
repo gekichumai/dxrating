@@ -13,7 +13,7 @@ import {
   pageSignals,
   parseNetErrorCode,
 } from './client'
-import { netErrorTags, shouldCaptureSentryError } from './sentry'
+import { classifyFailure } from './sentry'
 import { URLS } from './URLS'
 
 // Recorded public pages (2026-11-05, trimmed; no session, no user data): DXRATING-BACKEND-1W and -2A
@@ -83,7 +83,7 @@ describe('maimai NET maintenance (DXRATING-BACKEND-1W, -2A)', () => {
     expect(error).toMatchObject({ code: 'NET_MAINTENANCE', step: 'login_page' })
     // stops before sending the credentials
     expect(requested).toEqual(['login_page'])
-    expect(shouldCaptureSentryError(error)).toBe(false)
+    expect(classifyFailure(error).report).toBe(false)
   })
 
   it('reports the gateway maintenance page when it is reached through the login callback', async () => {
@@ -100,7 +100,7 @@ describe('maimai NET maintenance (DXRATING-BACKEND-1W, -2A)', () => {
     const { client } = stubbed(new MaimaiNETJpClient(), () => html(JP_EMERGENCY_MAINTENANCE, 503))
     const error = await failure(client.loginEffect({ id: 'synthetic', password: 'synthetic' }))
     expect(error).toMatchObject({ code: 'NET_MAINTENANCE', step: 'login_page' })
-    expect(shouldCaptureSentryError(error)).toBe(false)
+    expect(classifyFailure(error).report).toBe(false)
   })
 
   it('recognizes the emergency maintenance text on a 200 page too', () => {
@@ -111,7 +111,7 @@ describe('maimai NET maintenance (DXRATING-BACKEND-1W, -2A)', () => {
     const { client } = stubbed(new MaimaiNETJpClient(), () => html('<html><body><form></form></body></html>'))
     const error = await failure(client.loginEffect({ id: 'synthetic', password: 'synthetic' }))
     expect(error).toMatchObject({ code: 'TOKEN_ERROR', step: 'login_page' })
-    expect(shouldCaptureSentryError(error)).toBe(true)
+    expect(classifyFailure(error).report).toBe(true)
   })
 })
 
@@ -137,12 +137,10 @@ describe('maimai NET error page', () => {
       'record_recent',
       'error_page',
     ])
-    expect(netErrorTags(error)).toEqual({
-      'net.code': 'UNKNOWN_ERROR',
-      'net.step': 'record_recent',
-      'net.error_code': '100001',
+    expect(classifyFailure(error)).toEqual({
+      report: true,
+      tags: { 'net.code': 'UNKNOWN_ERROR', 'net.step': 'record_recent', 'net.error_code': '100001' },
     })
-    expect(shouldCaptureSentryError(error)).toBe(true)
   })
 
   it('keeps the original error when the error page cannot be read', async () => {
@@ -178,7 +176,7 @@ describe('what SEGA said when it refused a login (the 2026-11-01 outage)', () =>
     })
     const error = await failure(client.loginEffect({ id: 'synthetic', password: 'synthetic' }))
     expect(error).toMatchObject({ code: 'INVALID_CREDENTIALS', step: 'login_submit', netErrorCode: '200004' })
-    expect(shouldCaptureSentryError(error)).toBe(false)
+    expect(classifyFailure(error).report).toBe(false)
   })
 
   it('describes the page when the international login form answers 200 instead of redirecting', async () => {

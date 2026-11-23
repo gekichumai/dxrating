@@ -1,0 +1,26 @@
+diff --git a/apps/backend/Dockerfile b/apps/backend/Dockerfile
+index ba3960d5..0ee2c9fb 100644
+--- a/apps/backend/Dockerfile
++++ b/apps/backend/Dockerfile
+@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
+     libgif-dev \
+     && rm -rf /var/lib/apt/lists/*
+ 
+-# Install pnpm
+-RUN npm install -g pnpm@10.33.0
++# Enable pnpm via corepack (faster than npm install -g)
++RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+ 
+ WORKDIR /app
+ 
+@@ -64,8 +64,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
+     curl \
+     && rm -rf /var/lib/apt/lists/*
+ 
+-# Install pnpm
+-RUN npm install -g pnpm@10.33.0
++# Enable pnpm via corepack (faster than npm install -g)
++RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+ 
+ WORKDIR /app
+ 
