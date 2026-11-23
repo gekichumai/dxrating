@@ -1,5 +1,6 @@
 import {
   calculateRatingAward,
+  type CollapsedPlay,
   dxScoreStars,
   maxDxScore,
   reachesTier,
@@ -36,12 +37,12 @@ export const isToplistSort = (value: unknown): value is ToplistSort =>
 export const defaultSortOf = (kind: ToplistKind): ToplistSort => (kind === 'dx_score' ? 'dx_score' : 'achievement')
 
 export interface ToplistInputRecord {
-  entry: PlayEntry
+  best: CollapsedPlay
   sheet: VersionedSheet | null
 }
 
 export interface ToplistRow {
-  entry: PlayEntry
+  best: CollapsedPlay
   sheet: VersionedSheet
   rating: number | null
   dxScore: number | null
@@ -49,33 +50,23 @@ export interface ToplistRow {
   dxStars: number
 }
 
-/**
- * The DX score of a record. Saved records carry no DX score yet (the `PlayEntry` shape has none); a future cloud score
- * repository may add a `dxScore` field, which is read here without widening the record type.
- */
-export function readDxScore(entry: PlayEntry): number | null {
-  const value = (entry as PlayEntry & { dxScore?: unknown }).dxScore
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
-}
-
-export function toToplistRow({ entry, sheet }: ToplistInputRecord): ToplistRow | null {
+export function toToplistRow({ best, sheet }: ToplistInputRecord): ToplistRow | null {
   if (!sheet) return null
-  const dxScore = readDxScore(entry)
   const dxScoreMax = maxDxScore(sheet.noteCounts)
   return {
-    entry,
+    best,
     sheet,
     rating: sheet.isRatingEligible
-      ? calculateRatingAward(sheet.internalLevelValue, entry.achievementRate, entry.comboFlag).ratingAwardValue
+      ? calculateRatingAward(sheet.internalLevelValue, best.achievementRate, best.comboFlag).ratingAwardValue
       : null,
-    dxScore,
+    dxScore: best.dxScore,
     dxScoreMax,
-    dxStars: dxScore !== null && dxScoreMax ? dxScoreStars(dxScore, dxScoreMax) : 0,
+    dxStars: best.dxScore !== null && dxScoreMax ? dxScoreStars(best.dxScore, dxScoreMax) : 0,
   }
 }
 
 const SORTERS: Record<ToplistSort, (a: ToplistRow, b: ToplistRow) => number> = {
-  achievement: (a, b) => b.entry.achievementRate - a.entry.achievementRate,
+  achievement: (a, b) => b.best.achievementRate - a.best.achievementRate,
   rating: (a, b) => (b.rating ?? -1) - (a.rating ?? -1),
   level: (a, b) => b.sheet.internalLevelValue - a.sheet.internalLevelValue,
   dx_score: (a, b) =>
@@ -89,7 +80,7 @@ const compareRows = (sort: ToplistSort) => (a: ToplistRow, b: ToplistRow) =>
 
 function matchesKind(row: ToplistRow, kind: ToplistKind): boolean {
   const tier = TIER_OF_KIND[kind]
-  if (tier) return reachesTier({ ...row.entry, sheetId: row.sheet.id }, tier)
+  if (tier) return reachesTier({ ...row.best, sheetId: row.sheet.id }, tier)
   if (kind === 'dx_score') return row.dxScore !== null
   return true
 }

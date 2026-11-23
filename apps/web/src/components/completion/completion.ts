@@ -1,4 +1,4 @@
-import type { ComboFlag, SyncFlag } from '@gekichumai/maimai-domain'
+import type { CollapsedPlay, ComboFlag, SyncFlag } from '@gekichumai/maimai-domain'
 
 /** Completion targets of the constant-table overlay, in the order of the selector */
 export const COMPLETION_TARGETS = ['s', 'ss', 'sss', 'sssp', 'fc', 'fcp', 'ap', 'app', 'fs', 'fsd', 'fsdp'] as const
@@ -25,11 +25,7 @@ export const parseCompletionTarget = (value: unknown): CompletionTarget | null =
   return (COMPLETION_TARGETS as readonly string[]).includes(normalized) ? (normalized as CompletionTarget) : null
 }
 
-export interface CompletionRecord {
-  achievementRate: number
-  comboFlag?: ComboFlag
-  syncFlag?: SyncFlag
-}
+export type CompletionRecord = CollapsedPlay
 
 const ACHIEVEMENT_TARGETS: Partial<Record<CompletionTarget, number>> = { s: 97, ss: 99, sss: 100, sssp: 100.5 }
 const COMBO_RANK: Record<NonNullable<ComboFlag>, number> = { fc: 1, fcp: 2, ap: 3, app: 4 }

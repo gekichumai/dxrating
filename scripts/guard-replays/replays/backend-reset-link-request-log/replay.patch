@@ -1,0 +1,12 @@
+diff --git a/apps/backend/src/app.ts b/apps/backend/src/app.ts
+index 4a056889..456695eb 100644
+--- a/apps/backend/src/app.ts
++++ b/apps/backend/src/app.ts
+@@ -389,7 +389,6 @@ app.use(
+       // Better Auth's mailed reset link carries its token in the path, and opening the link doesn't spend it: a
+       // logged path would let anyone who reads the logs reset the account. Setting the password (POST
+       // /api/auth/reset-password, token in the body) is still logged.
+-      '/api/auth/reset-password/*',
+     ],
+   }) as unknown as MiddlewareHandler,
+ )

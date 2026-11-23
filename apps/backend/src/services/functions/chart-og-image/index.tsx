@@ -5,7 +5,7 @@ import { ImageResponse } from '@takumi-rs/image-response'
 import { createHash } from 'node:crypto'
 import type { ReactElement } from 'react'
 import sharp from 'sharp'
-import { Sentry } from '../../../lib/functions/sentry'
+import { reportFailure } from '../../../lib/functions/sentry'
 import type { PublishedSong } from '../../mcp/catalog'
 import { fetchAssetEffect } from '../oneshot-renderer/assetFetcher'
 import { ChartOgCard, OG_FONT, OG_HEIGHT, OG_WIDTH, SongOgCard, type OgCardImages, type OgSheetBadge } from './card'
@@ -379,7 +379,7 @@ const loadCover = (songId: string) =>
     Effect.map((cover): Buffer | null => cover),
     Effect.catch((error) =>
       Effect.sync(() => {
-        Sentry.captureException(error.cause, { level: 'warning', extra: { songId } })
+        reportFailure(error.cause, { level: 'warning', extra: { songId } })
         return null
       }),
     ),
