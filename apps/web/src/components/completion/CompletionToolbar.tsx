@@ -1,7 +1,6 @@
 import { MenuItem, TextField } from '@mui/material'
 import { type FC, useMemo } from 'react'
-import { useSongCatalog } from '@/catalog/CatalogContext'
-import type { ConstantTable } from '@/components/chartDiscovery/constantTables'
+import { type ConstantTable, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { FilterChip } from '@/components/completion/TableChrome'
 import { MaterialSurface } from '@/components/global/MaterialSurface'
 import { ShareImageButton } from '@/components/global/ShareImageButton'
@@ -11,11 +10,17 @@ import {
   COMPLETION_TARGET_LABELS,
   COMPLETION_TARGETS,
   type CompletionStatus,
+  DEFAULT_COMPLETION_TARGET,
   parseCompletionTarget,
 } from './completion'
 import { buildCompletionShareImage } from './completionShareImage'
-import type { CompletionFilter, CompletionOverlayState } from './useCompletionOverlay'
+import {
+  COMPLETION_TARGET_QUERY_PARAM,
+  type CompletionFilter,
+  type CompletionOverlayState,
+} from './useCompletionOverlay'
 import { InternalLink } from '@/components/global/InternalLink'
+import { shareLink } from '@/utils/shareImage/shareFooter'
 
 const FILTERS: CompletionFilter[] = ['all', 'pending', 'unplayed', 'done']
 
@@ -36,7 +41,6 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
   table,
   overlay,
 }) => {
-  const catalog = useSongCatalog()
   const locale = useLocale()
   const number = useMemo(
     () => new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
@@ -67,11 +71,7 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
   ]
 
   return (
-    <MaterialSurface
-      as="section"
-      className="w-full p-4 flex flex-col gap-3"
-      aria-label={m.completion_title({}, { locale })}
-    >
+    <MaterialSurface as="section" className="p-4 section-stack" aria-label={m.completion_title({}, { locale })}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col">
           <h2 className="section-title m-0">{m.completion_title({}, { locale })}</h2>
@@ -110,8 +110,11 @@ export const CompletionToolbar: FC<{ table: ConstantTable; overlay: CompletionOv
                 summary,
                 title: m.completion_shareTitle({ level: table.level, target: targetLabel }, { locale }),
                 summaryLine: m.completion_summaryLine({ ...summary, percent }, { locale }),
+                link: shareLink(constantTablePath(table.level), {
+                  [COMPLETION_TARGET_QUERY_PARAM]: target === DEFAULT_COMPLETION_TARGET ? undefined : target,
+                }),
+                footerCaption: m.share_image_footerCaption({}, { locale }),
                 recordOf: (sheetId) => overlay.records.get(sheetId)?.best,
-                imageNameOf: (sheetId) => catalog.getById(sheetId)?.imageName,
               })
             }
           />

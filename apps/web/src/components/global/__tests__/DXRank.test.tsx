@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { DXRank } from '../DXRank'
 
 vi.mock('@/models/context/useAppContext', () => ({
+  useAppContext: () => ({ region: 'jp' }),
   useAppContextSlugVersion: () => 'circle-plus',
 }))
 

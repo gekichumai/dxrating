@@ -83,8 +83,8 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
       itemScope
       itemType="https://schema.org/CollectionPage"
     >
-      <div className="w-full flex flex-col gap-4">
-        <header className="w-full flex flex-col gap-2">
+      <div className="page-stack">
+        <header className="w-full page-header">
           <h1 className="page-title m-0" itemProp="name">
             {m.sheet_chartDiscovery_trending_title({}, { locale })}
           </h1>

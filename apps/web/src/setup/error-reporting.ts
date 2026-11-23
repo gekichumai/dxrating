@@ -3,6 +3,7 @@ import type { AnyRouter } from '@tanstack/react-router'
 import { sentryScrubOptions } from '@/lib/sentryScrub'
 import type { TelemetrySdk } from '@/lib/telemetry'
 import { isReloadingForNewBuild } from './stale-build'
+import { TRACE_PROPAGATION_TARGETS } from './trace-propagation'
 
 /** Where the document was loaded, before any client-side navigation */
 export type DocumentLocation = { href: string; pathname: string; search: string }
@@ -29,13 +30,7 @@ export function initErrorReporting(router: AnyRouter, documentLocation: Document
         instrumentPageLoad: !navigatedBeforeInit,
       }),
     ],
-    // Not the song catalog: trace headers would make its revalidation fail the API's CORS preflight
-    tracePropagationTargets: [
-      'localhost',
-      /^\//,
-      /^https?:\/\/dxrating\.net/,
-      /^https?:\/\/miruku\.dxrating\.net\/(?!api\/v1\/dxdata)/,
-    ],
+    tracePropagationTargets: TRACE_PROPAGATION_TARGETS,
     tracesSampleRate: 0.2,
     // OAuth callbacks carry one-time code and state in the query
     ...sentryScrubOptions,

@@ -67,6 +67,7 @@
     "swr": "^2.5.1",
     "ts-pattern": "catalog:",
     "type-fest": "^4.41.0",
+    "uqr": "0.1.3",
     "use-long-press": "^3.3.0",
     "web-haptics": "^0.0.6",
     "zod": "4.6.7"
@@ -97,6 +98,7 @@
     "@vitest/ui": "5.0.2",
     "esno": "catalog:",
     "fake-indexeddb": "^6.2.6",
+    "jsqr": "1.4.0",
     "react-grab": "^0.1.32",
     "typescript": "catalog:",
     "unocss": "^66.6.8",

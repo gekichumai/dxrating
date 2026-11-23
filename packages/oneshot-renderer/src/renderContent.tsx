@@ -1,4 +1,4 @@
-import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
+import { coverPath, DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import clsx from 'clsx'
 import type { FC, PropsWithChildren } from 'react'
 import type { LoadAsset, RenderEntry, RenderInput } from './types'
@@ -124,7 +124,7 @@ const renderCell = async (entry: RenderEntry | undefined, i: number, fetchImageA
   }
 
   const [coverImage, typeImage, accuracyImage, syncImage] = await Promise.all([
-    fetchImageAsset(`/images/cover/v2/${entry.sheet.imageName}.jpg`).then(imageData),
+    fetchImageAsset(coverPath(entry.sheet.songId)).then(imageData),
     fetchImageAsset(`/images/type_${entry.sheet.type === TypeEnum.STD ? 'sd' : entry.sheet.type}.png`).then(imageData),
     fetchImageAsset(`/images/play-achievement/${entry.achievementAccuracy ?? 'blank'}.png`).then(imageData),
     fetchImageAsset(`/images/play-achievement/${entry.achievementSync ?? 'blank'}.png`).then(imageData),

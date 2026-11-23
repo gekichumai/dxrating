@@ -1,7 +1,7 @@
-import { DifficultyEnum } from '@gekichumai/dxdata'
+import { coverUrl, DifficultyEnum } from '@gekichumai/dxdata'
 import type { PlateKind, PlateRecord, PlateRegion } from '@gekichumai/maimai-domain'
 import { useRouter } from '@tanstack/react-router'
-import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type FC, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useCompleteCatalogDocument } from '@/catalog/CatalogContext'
 import {
   Breadcrumb,
@@ -25,14 +25,13 @@ import {
   plateScript,
   progressPercent,
 } from '@/components/plates/plateData'
-import { buildPlateShareImage } from '@/components/plates/plateShareImage'
+import { buildPlateShareImage, plateShareLink } from '@/components/plates/plateShareImage'
 import { buildSheetPath } from '@/components/sheet/sheetLinks'
 import { getSheetTypeDisplayName } from '@/components/song/sheetDisplay'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useAppContext } from '@/models/context/useAppContext'
 import { DIFFICULTIES } from '@/models/difficulties'
 import { useUserRecords } from '@/models/useUserRecords'
-import { coverImageUrl } from '@/utils/shareImage/shareImage'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
@@ -214,20 +213,20 @@ export const PlateIndexPage: FC<{ region: PlateRegion; groups: PlateIndexGroup[]
 
   return (
     <div className="flex-container w-full max-w-7xl px-4 pb-global">
-      <div className="w-full flex flex-col gap-4">
-        <header className="flex flex-col gap-2">
+      <div className="page-stack">
+        <header className="page-header">
           <PlateBreadcrumb region={region} />
           <h1 className="page-title m-0 [word-break:auto-phrase]">{m.plates_index_title({}, { locale })}</h1>
           <p className="page-description m-0">{m.plates_index_intro({}, { locale })}</p>
           <RegionSwitch path="/plates" region={region} />
         </header>
 
-        <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 list-none p-0 m-0">
+        <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-[var(--rhythm-1)] list-none p-0 m-0">
           {groups.map((group) => (
             <li key={group.id}>
-              <MaterialSurface className="p-3 xl:p-2.5 flex flex-col gap-2 h-full">
+              <MaterialSurface className="p-3 xl:p-2.5 section-stack h-full">
                 <div className="flex items-baseline gap-2">
-                  <h2 className="m-0 text-2xl font-semibold text-fg-1">{group[script]}</h2>
+                  <h2 className="section-title m-0">{group[script]}</h2>
                   <span className="text-xs text-fg-2 truncate">
                     {group.versions.length > 2
                       ? `${group.versions[0]} – ${group.versions.at(-1)}`
@@ -312,6 +311,10 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
 
   const [remainingOnly, setRemainingOnly] = useState(false)
   const [difficulty, setDifficulty] = useState<DifficultyEnum | null>(null)
+  // The chips show the new filter at once; the list (every chart of the plate, up to several hundred rows) follows in
+  // a render after that paint (a chip tap took ~200-450ms at 4x CPU)
+  const listRemainingOnly = useDeferredValue(remainingOnly)
+  const listDifficulty = useDeferredValue(difficulty)
 
   // Fire once per plate after mount, when the client overlay is known
   const viewedPlate = useRef<string | null>(null)
@@ -332,16 +335,16 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
       .map((group) => {
         const statuses = group.charts.map((chart) => byChart.get(chart)!)
         const charts = statuses.filter((status) => {
-          const sheets = difficulty
-            ? status.chart.sheets.filter((s) => s.difficulty === difficulty)
+          const sheets = listDifficulty
+            ? status.chart.sheets.filter((s) => s.difficulty === listDifficulty)
             : status.chart.sheets
           if (sheets.length === 0) return false
-          return !remainingOnly || sheets.some((sheet) => !status.met.get(sheet.id))
+          return !listRemainingOnly || sheets.some((sheet) => !status.met.get(sheet.id))
         })
         return { level: group.level, charts, done: statuses.filter((s) => s.complete).length, total: statuses.length }
       })
-      .filter((group) => group.charts.length > 0 || !remainingOnly)
-  }, [data.charts, progress, difficulty, remainingOnly])
+      .filter((group) => group.charts.length > 0 || !listRemainingOnly)
+  }, [data.charts, progress, listDifficulty, listRemainingOnly])
 
   // By chart (sheet), not by finished song: 37 of 264 charts is progress even when no song is fully done
   const percent = progressPercent(progress.completedSheets, progress.totalSheets)
@@ -349,8 +352,8 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
 
   return (
     <div className="flex-container w-full max-w-7xl px-4 pb-global">
-      <div className="w-full flex flex-col gap-4">
-        <header className="flex flex-col gap-2">
+      <div className="page-stack">
+        <header className="page-header">
           <PlateBreadcrumb leaf={name} region={data.region} />
           <h1 className="page-title m-0 [word-break:auto-phrase]">{m.plates_title(values, { locale })}</h1>
           <p className="page-description m-0">{m.plates_intro(values, { locale })}</p>
@@ -358,8 +361,8 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
         </header>
 
         {/* Side by side on desktop: two short cards, each with a readable line length */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-          <MaterialSurface as="section" aria-labelledby="plate-condition" className="p-4 flex flex-col gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-[var(--rhythm-1)] items-start">
+          <MaterialSurface as="section" aria-labelledby="plate-condition" className="p-4 section-stack">
             <h2 id="plate-condition" className="section-title m-0">
               {m.plates_condition_title({}, { locale })}
             </h2>
@@ -379,7 +382,7 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
             )}
           </MaterialSurface>
 
-          <MaterialSurface as="section" aria-labelledby="plate-progress" className="p-4 flex flex-col gap-3">
+          <MaterialSurface as="section" aria-labelledby="plate-progress" className="p-4 section-stack">
             <div className="flex items-center gap-3 flex-wrap">
               <h2 id="plate-progress" className="section-title m-0">
                 {m.plates_progress_title({}, { locale })}
@@ -429,7 +432,9 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
                         unplayed: m.plates_share_unplayed({}, { locale }),
                         more: (count) => m.plates_share_more({ count }, { locale }),
                         allDone: m.plates_share_allDone({}, { locale }),
+                        footerCaption: m.share_image_footerCaption({}, { locale }),
                       },
+                      link: plateShareLink(data.plateId, data.region),
                     })
                   }
                   onExported={(outcome) =>
@@ -500,7 +505,7 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
             className="overflow-hidden"
           >
             <div className="flex items-baseline justify-between gap-2 px-4 py-2 border-b border-b-solid border-[var(--glass-border)]">
-              <h2 id={`plate-level-${group.level}`} className="m-0 text-lg font-semibold text-fg-1">
+              <h2 id={`plate-level-${group.level}`} className="section-title m-0">
                 Lv.{group.level}
               </h2>
               {hasRecords && (
@@ -519,7 +524,9 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
               <ul className="list-none m-0 p-0 divide-y divide-black/5 lg:divide-y-0 lg:grid lg:grid-cols-2 lg:-mb-px">
                 {group.charts.map((status) => {
                   const { chart } = status
-                  const sheets = difficulty ? chart.sheets.filter((s) => s.difficulty === difficulty) : chart.sheets
+                  const sheets = listDifficulty
+                    ? chart.sheets.filter((s) => s.difficulty === listDifficulty)
+                    : chart.sheets
                   const doneHere = hasRecords && sheets.every((sheet) => status.met.get(sheet.id))
                   return (
                     <li
@@ -527,7 +534,7 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
                       className="flex flex-wrap xs:flex-nowrap items-center gap-x-3 gap-y-1.5 px-4 py-2 lg:border-b lg:border-solid lg:border-black/5 lg:odd:border-e"
                     >
                       <img
-                        src={coverImageUrl(chart.imageName)}
+                        src={coverUrl(chart.songId)}
                         alt=""
                         loading="lazy"
                         decoding="async"
@@ -587,7 +594,7 @@ export const PlatePage: FC<{ data: PlatePageData; explicitRegion?: boolean }> = 
           </MaterialSurface>
         ))}
 
-        <footer className="flex flex-col gap-2">
+        <footer className="section-stack">
           <InternalLink href={regionHref('/plates', data.region)} className="link self-start text-sm">
             {m.plates_otherPlates({}, { locale })}
             <span aria-hidden> →</span>

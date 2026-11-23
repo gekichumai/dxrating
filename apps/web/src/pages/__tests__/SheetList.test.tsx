@@ -76,6 +76,7 @@ vi.mock('posthog-js/react', () => ({
 }))
 
 vi.mock('@/models/context/useAppContext', () => ({
+  useAppContext: () => ({ region: 'jp' }),
   useAppContextDXDataVersion: () => VersionEnum.CiRCLEPLUS,
 }))
 

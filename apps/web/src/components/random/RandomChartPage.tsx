@@ -1,4 +1,4 @@
-import { VERSION_SORT_ORDER, type DifficultyEnum, type TypeEnum, type VersionEnum } from '@gekichumai/dxdata'
+import { coverUrl, VERSION_SORT_ORDER, type DifficultyEnum, type TypeEnum, type VersionEnum } from '@gekichumai/dxdata'
 import { calculateBest50, type VersionedSheet } from '@gekichumai/maimai-domain'
 import { Button, Chip, CircularProgress, Collapse } from '@mui/material'
 import { Link, getRouteApi, useNavigate } from '@tanstack/react-router'
@@ -293,7 +293,7 @@ export const RandomChartPage: FC = () => {
                   className="flex items-start gap-3 rounded-[var(--radius-md)] p-3 text-fg-1 no-underline outline-offset-[-2px] transition-colors duration-[var(--duration-fast)] hover:bg-black/4"
                 >
                   <img
-                    src={`https://shama.dxrating.net/images/cover/v2/${result.imageName}.jpg`}
+                    src={coverUrl(result.songId)}
                     alt=""
                     width={64}
                     height={64}

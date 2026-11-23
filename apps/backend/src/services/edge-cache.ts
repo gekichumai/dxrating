@@ -16,6 +16,7 @@ export const EDGE_CACHE_TAGS = [
   'tags',
   'aliases',
   'announcements',
+  'og-image',
 ] as const
 
 /** How often the publication pointer is compared with the one the edge was last told about */

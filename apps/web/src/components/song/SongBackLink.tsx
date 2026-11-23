@@ -1,8 +1,9 @@
 import { IconButton } from '@mui/material'
 import { useCanGoBack, useRouter } from '@tanstack/react-router'
+import clsx from 'clsx'
 import type { FC, MouseEvent } from 'react'
 import MdiArrowLeft from '~icons/mdi/arrow-left'
-import { withLocaleQuery } from '@/setup/locale'
+import { localizePath } from '@/setup/locale'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 
@@ -40,11 +41,11 @@ const isModifiedClick = (event: MouseEvent) =>
  * home page (chart search) when they arrived from elsewhere. The href is the home page, so the server markup depends on
  * the URL alone and a modified click (new tab) still opens something useful.
  */
-export const SongBackLink: FC<{ search: unknown; className?: string }> = ({ search, className }) => {
+export const SongBackLink: FC<{ className?: string }> = ({ className }) => {
   const locale = useLocale()
   const router = useRouter()
   const canGoBack = useCanGoBack()
-  const homeHref = withLocaleQuery('/', search)
+  const homeHref = localizePath('/', locale)
 
   return (
     <IconButton
@@ -64,7 +65,7 @@ export const SongBackLink: FC<{ search: unknown; className?: string }> = ({ sear
         if (returnWithinSite) router.history.back()
         else void router.navigate({ href: homeHref })
       }}
-      className={className}
+      className={clsx('touch-hit', className)}
     >
       <MdiArrowLeft aria-hidden />
     </IconButton>

@@ -249,13 +249,16 @@ export const ProgressSummaryPage: FC = () => {
 const DxStarTable: FC<{ rows: DxStarRow[] }> = ({ rows }) => {
   const locale = useLocale()
   return (
-    <section aria-labelledby="dx-star-progress-title" className="mt-6">
-      <h2 id="dx-star-progress-title" className="mb-1 text-base font-semibold text-fg-1">
-        {m.completion_progress_dx_title({}, { locale })}
-      </h2>
-      <p className="mb-3 text-sm text-fg-2 text-pretty max-w-[65ch]">
-        {m.completion_progress_dx_intro({}, { locale })}
-      </p>
+    <section aria-labelledby="dx-star-progress-title" className="section-stack">
+      {/* The heading and its caption are one unit (8px), then the rhythm to the table */}
+      <div className="flex flex-col gap-2">
+        <h2 id="dx-star-progress-title" className="section-title m-0">
+          {m.completion_progress_dx_title({}, { locale })}
+        </h2>
+        <p className="m-0 text-sm text-fg-2 text-pretty max-w-[65ch]">
+          {m.completion_progress_dx_intro({}, { locale })}
+        </p>
+      </div>
       <MaterialSurface className="w-full overflow-hidden">
         <div className="scroll-fade-x scroll-fade-x-end-only overflow-x-auto overscroll-x-contain">
           <table className="w-full text-sm border-collapse md:table-fixed">

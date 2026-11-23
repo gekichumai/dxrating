@@ -47,6 +47,13 @@ const ChartOgImageInputSchema = z.object({
   songId: z.string(),
   type: z.string(),
   difficulty: z.string(),
+  // The page's language, for the card's few labels; anything else renders English
+  locale: z.string().optional(),
+})
+
+const SongOgImageInputSchema = z.object({
+  songId: z.string(),
+  locale: z.string().optional(),
 })
 
 const ChartOgImageOutputSchema = z.object({
@@ -93,6 +100,20 @@ export const appContract = oc.router({
         }),
       )
       .input(ChartOgImageInputSchema)
+      .output(ChartOgImageOutputSchema),
+  },
+  songOgImage: {
+    render: oc
+      .meta(
+        openapi({
+          method: 'GET',
+          path: '/songs/{songId}/og-image',
+          summary: 'Render song OpenGraph image',
+          tags: ['internal'],
+          outputStructure: 'detailed',
+        }),
+      )
+      .input(SongOgImageInputSchema)
       .output(ChartOgImageOutputSchema),
   },
 })

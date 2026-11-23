@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NAVIGATION_FEEDBACK_DELAY_MS } from '@/components/layout/NavigationProgress'
-import { InternalLink, LinkBehavior, isClientRoutableHref, placeLinkSpinner } from '../InternalLink'
+import { InternalLink, LinkBehavior, isClientRoutableHref, localizeHref, placeLinkSpinner } from '../InternalLink'
 
 const navigate = vi.fn()
 const router: { navigate: typeof navigate; subscribe: typeof subscribe; latestLocation?: { pathname: string } } = {
@@ -297,5 +297,19 @@ describe('placeLinkSpinner', () => {
       top: 115,
       inset: true,
     })
+  })
+})
+describe('localizeHref', () => {
+  it('puts an internal page href in the language it is linked from', () => {
+    expect(localizeHref('/rating', 'ja')).toBe('/ja/rating')
+    expect(localizeHref('/', 'zh-Hans')).toBe('/zh-hans')
+    expect(localizeHref('/songs/a?x=1', 'th')).toBe('/th/songs/a?x=1')
+  })
+
+  it('leaves English, files, other sites and hrefs that already name a language alone', () => {
+    expect(localizeHref('/rating', 'en')).toBe('/rating')
+    expect(localizeHref('/llms.txt', 'ja')).toBe('/llms.txt')
+    expect(localizeHref('https://example.com/x', 'ja')).toBe('https://example.com/x')
+    expect(localizeHref('/ko/rating', 'ja')).toBe('/ko/rating')
   })
 })

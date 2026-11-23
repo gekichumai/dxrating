@@ -72,24 +72,24 @@ export const RankBadge: FC<{ achievementRate: number; className?: string }> = ({
 }
 
 /**
- * DX or STD. DX follows the official でらっくす plate: white with the blue outline and multicoloured lettering, each
- * stop deepened to 4.5:1 on white (the plate's yellow cannot reach it and is skipped). STD is the plate's solid blue.
+ * DX or STD, in the colours of the game's own chart-type plates (tokens.css --chart-type-*, from
+ * packages/maimai-domain/src/chart-type-colors.ts): DX is the white でらっくす plate with the blue outline and
+ * multicoloured lettering, STD the solid blue plate. Both plates look the same in light and dark themes.
  */
-const DX_LETTERING: CSSProperties = {
-  backgroundImage: 'linear-gradient(90deg, #D32F2F, #B35600, #3E7D1C, #0277A8)',
-  WebkitBackgroundClip: 'text',
-}
-
 export const SheetTypeBadge: FC<{ type: TypeEnum; className?: string }> = ({ type, className }) => {
   const locale = useLocale()
   const label = getSheetTypeAltText(type, locale)
   if (type === TypeEnum.DX) {
     return (
       <span
-        className={clsx(BADGE, 'bg-[#fff] border-[1.5px] border-solid border-[#007CDB] px-[5px]', className)}
+        className={clsx(
+          BADGE,
+          'bg-chart-dx-plate border-[1.5px] border-solid border-chart-dx-outline px-[5px]',
+          className,
+        )}
         title={label}
       >
-        <span aria-hidden className="bg-clip-text text-transparent" style={DX_LETTERING}>
+        <span aria-hidden className="dx-lettering-on-plate">
           DX
         </span>
         <span className="sr-only">{label}</span>
@@ -98,7 +98,11 @@ export const SheetTypeBadge: FC<{ type: TypeEnum; className?: string }> = ({ typ
   }
   return (
     <span
-      className={clsx(BADGE, type === TypeEnum.STD ? 'bg-[#1D6FD8] text-white' : 'bg-[#6B21A8] text-white', className)}
+      className={clsx(
+        BADGE,
+        type === TypeEnum.STD ? 'bg-chart-std text-chart-std-ink' : 'bg-[#6B21A8] text-white',
+        className,
+      )}
       title={label}
     >
       <span aria-hidden>{type === TypeEnum.STD ? 'STD' : type === TypeEnum.UTAGE2P ? '宴 2P' : '宴'}</span>

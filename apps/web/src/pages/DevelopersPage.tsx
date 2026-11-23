@@ -112,7 +112,7 @@ const Option = ({
       >
         <Icon className="size-4.5" />
       </span>
-      <h2 id={id} className="m-0 text-xl font-semibold leading-snug tracking-[-0.01em] text-fg-1">
+      <h2 id={id} className="section-title m-0">
         {title}
       </h2>
     </div>
@@ -261,10 +261,10 @@ export const DevelopersPage = () => {
         {/* Stacked below lg; side by side from lg so both sections start above the fold on a laptop */}
         <div className="border-t border-solid border-x-0 border-b-0 border-black/8 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] divide-y lg:divide-y-0 lg:divide-x divide-solid divide-black/8">
           <section aria-labelledby="developers-terms" className="px-5 py-6 md:p-8">
-            <h2 id="developers-terms" className="m-0 text-xl font-semibold leading-snug tracking-[-0.01em] text-fg-1">
+            <h2 id="developers-terms" className="section-title m-0">
               {m.developers_terms_title({}, { locale })}
             </h2>
-            <dl className="mt-4 divide-y divide-solid divide-x-0 divide-black/8">
+            <dl className="mt-3 divide-y divide-solid divide-x-0 divide-black/8">
               <Term title={m.developers_terms_data({}, { locale })}>
                 {m.developers_terms_dataDescription({}, { locale })}
               </Term>
@@ -284,16 +284,13 @@ export const DevelopersPage = () => {
             aria-labelledby="developers-api-stability"
             className="scroll-mt-20 px-5 py-6 md:p-8"
           >
-            <h2
-              id="developers-api-stability"
-              className="m-0 text-xl font-semibold leading-snug tracking-[-0.01em] text-fg-1"
-            >
+            <h2 id="developers-api-stability" className="section-title m-0">
               {m.developers_policy_title({}, { locale })}
             </h2>
-            <p className="mt-2 text-base leading-relaxed text-fg-2 text-pretty">
+            <p className="mt-3 text-base leading-relaxed text-fg-2 text-pretty">
               {m.developers_policy_intro({}, { locale })}
             </p>
-            <dl className="mt-4 divide-y divide-solid divide-x-0 divide-black/8">
+            <dl className="mt-3 divide-y divide-solid divide-x-0 divide-black/8">
               {POLICY_TERMS.map(({ key, title, description }) => (
                 <Term key={key} title={title({}, { locale })}>
                   {description({}, { locale })}

@@ -10,10 +10,60 @@ import {
   createChartOgImageHandler,
   formatInternalLevelLabelParts,
   getTitleLayout,
+  layoutFacts,
   resolveChartOgImageData,
   resolveChartOgImageDataEffect,
+  resolveOgLocale,
+  resolveSongOgImageData,
 } from '../services/functions/chart-og-image/index'
+import { getHeroSuffixOffsets } from '../services/functions/chart-og-image/card'
+import { baselineInsets, hasMeasuredInk, layoutInk } from '../services/functions/chart-og-image/optical-text'
 import { setupTestServer, teardownTestServer } from './setup'
+
+// The endpoint tests cover routing, catalog lookup and response headers without the network. The real renderer needs
+// the fonts from the asset server, whose cold downloads made these tests time out in CI; chart-og-image-render.test.ts
+// renders for real when ASSETS_BASE_DIR points at a local copy of the assets.
+vi.mock('../services/functions/oneshot-renderer/assetFetcher', async (original) => {
+  const { Effect } = await import('effect')
+  const { default: sharp } = await import('sharp')
+  const actual = await original<typeof import('../services/functions/oneshot-renderer/assetFetcher')>()
+  const image = (format: 'jpeg' | 'png') =>
+    sharp({ create: { width: 8, height: 8, channels: 3, background: { r: 40, g: 120, b: 200 } } })
+      .toFormat(format)
+      .toBuffer()
+  return {
+    ...actual,
+    fetchAssetEffect: (relativePath: string) =>
+      relativePath.startsWith('/fonts/')
+        ? Effect.succeed(Buffer.from(`stub font ${relativePath}`))
+        : Effect.promise(() => image(relativePath.endsWith('.png') ? 'png' : 'jpeg')),
+  }
+})
+
+// Stands in for the native renderer, which cannot load the stub fonts: a solid PNG whose colour follows the card's
+// props, so the same inputs give the same image and another language gives another one.
+vi.mock('@takumi-rs/image-response', async () => {
+  const { createHash } = await import('node:crypto')
+  const { default: sharp } = await import('sharp')
+  return {
+    ImageResponse: class {
+      readonly ready = Promise.resolve()
+      constructor(
+        private readonly element: { props: unknown },
+        private readonly options: { width: number; height: number },
+      ) {}
+      async arrayBuffer() {
+        const [r, g, b] = createHash('sha256').update(JSON.stringify(this.element.props)).digest()
+        const png = await sharp({
+          create: { width: this.options.width, height: this.options.height, channels: 3, background: { r, g, b } },
+        })
+          .png()
+          .toBuffer()
+        return png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength)
+      }
+    },
+  }
+})
 
 const song = publishedCatalog.songs.find((candidate) => candidate.id === UMIYURI)!
 const sheet = song.sheets.find((candidate) => candidate.type === 'std' && candidate.difficulty === 'master')!
@@ -87,8 +137,41 @@ describe('chart OG image endpoint', () => {
       'inline; filename="chart-og.png"; filename*=utf-8\'\'chart-og.png',
     )
     expect(res.headers.get('etag')).toMatch(/^"sha256-[a-f0-9]{64}"$/)
+    expect(res.headers.get('cache-tag')).toBe('og-image')
     expect(res.headers.get('x-content-type-options')).toBe('nosniff')
     expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0)
+  })
+
+  it('renders the same chart image for the same inputs, and another one per language', async () => {
+    const path = `/api/v1/songs/${song.id}/${sheet.type}/${sheet.difficulty}/og-image`
+    const [english, again, japanese, unknown] = await Promise.all([
+      app.request(path),
+      app.request(path),
+      app.request(`${path}?locale=ja`),
+      app.request(`${path}?locale=xx`),
+    ])
+
+    expect(again.headers.get('etag')).toBe(english.headers.get('etag'))
+    expect(japanese.headers.get('etag')).not.toBe(english.headers.get('etag'))
+    expect(unknown.headers.get('etag')).toBe(english.headers.get('etag'))
+  })
+
+  it('serves song images, without a chart selected', async () => {
+    const res = await app.request(`/api/v1/songs/${song.id}/og-image?locale=zh-Hans`)
+
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('image/png')
+    expect(res.headers.get('content-disposition')).toBe(
+      'inline; filename="song-og.png"; filename*=utf-8\'\'song-og.png',
+    )
+    expect(res.headers.get('cache-tag')).toBe('og-image')
+    expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(0)
+  })
+
+  it('answers 404 for a song image of a song the published catalog does not have', async () => {
+    const res = await app.request('/api/v1/songs/dsng_zzzzzzzzzz/og-image')
+
+    expect(res.status).toBe(404)
   })
 
   it('serves Utage chart images with custom difficulty labels', async () => {
@@ -112,6 +195,7 @@ describe('chart OG image endpoint', () => {
     const spec = await res.json()
 
     expect(spec.paths).not.toHaveProperty('/songs/{songId}/{type}/{difficulty}/og-image')
+    expect(spec.paths).not.toHaveProperty('/songs/{songId}/og-image')
   })
 })
 
@@ -133,7 +217,7 @@ describe('chart OG image handler', () => {
     expect(renderImage).toHaveBeenCalledWith(
       expect.objectContaining({
         artist: song.artist,
-        coverUrl: `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`,
+        coverUrl: `https://shama.dxrating.net/images/cover/v3/${song.id}.jpg`,
         detailUrl: `https://dxrating.net/songs/${song.id}/${sheet.type}/${sheet.difficulty}`,
         difficulty: sheet.difficulty,
         levelLabel: `Lv ${sheet.internalLevelValue.toFixed(1)}`,
@@ -143,8 +227,22 @@ describe('chart OG image handler', () => {
         songId: song.id,
         title: song.title,
         type: sheet.type,
+        bpm: 120,
       }),
+      'en',
     )
+  })
+
+  it('passes the page language on, and English for any other value', async () => {
+    const renderImage = vi.fn(async () => new Uint8Array([1]))
+    const app = new Hono()
+    app.get('/og/:songId/:type/:difficulty', createChartOgImageHandler(lookupSong, renderImage))
+
+    await app.request(`/og/${song.id}/${sheet.type}/${sheet.difficulty}?locale=zh-Hant`)
+    await app.request(`/og/${song.id}/${sheet.type}/${sheet.difficulty}?locale=fr`)
+
+    expect(renderImage).toHaveBeenNthCalledWith(1, expect.objectContaining({ songId: song.id }), 'zh-Hant')
+    expect(renderImage).toHaveBeenNthCalledWith(2, expect.objectContaining({ songId: song.id }), 'en')
   })
 
   it('keeps serving legacy song IDs, also when crawlers encode them a second time', async () => {
@@ -159,7 +257,7 @@ describe('chart OG image handler', () => {
 
     expect(once.status).toBe(200)
     expect(twice.status).toBe(200)
-    expect(renderImage).toHaveBeenCalledWith(expect.objectContaining({ songId: song.id }))
+    expect(renderImage).toHaveBeenCalledWith(expect.objectContaining({ songId: song.id }), 'en')
   })
 
   it('returns 404 without rendering when the chart does not exist', async () => {
@@ -213,12 +311,130 @@ describe('chart OG image level label', () => {
   })
 })
 
+describe('song OG image data', () => {
+  it('groups the charts by type, in difficulty order', () => {
+    const data = resolveSongOgImageData({
+      ...song,
+      sheets: [
+        { ...sheet, type: 'dx', difficulty: 'remaster', internalLevelValue: 14.1 },
+        { ...sheet, type: 'std', difficulty: 'master', internalLevelValue: 13.4 },
+        { ...sheet, type: 'dx', difficulty: 'basic', internalLevelValue: 3 },
+      ],
+    })
+
+    expect(
+      data?.groups.map((group) => [group.type, group.sheets.map((s) => [s.difficultyLabel, s.internalLevelValue])]),
+    ).toEqual([
+      [
+        'dx',
+        [
+          ['BASIC', 3],
+          ['Re:MASTER', 14.1],
+        ],
+      ],
+      ['std', [['MASTER', 13.4]]],
+    ])
+  })
+
+  it('keeps Utage charts with their own difficulty labels', () => {
+    expect(resolveSongOgImageData(utageSong)?.groups).toEqual([
+      { type: 'utage', sheets: [expect.objectContaining({ difficultyLabel: '【習】', internalLevelValue: 12.7 })] },
+    ])
+  })
+})
+
+describe('OG image locale', () => {
+  it('accepts the languages of the web app and falls back to English', () => {
+    expect(resolveOgLocale('ja')).toBe('ja')
+    expect(resolveOgLocale('zh-Hans')).toBe('zh-Hans')
+    expect(resolveOgLocale('zh-hans')).toBe('en')
+    expect(resolveOgLocale(undefined)).toBe('en')
+  })
+})
+
+describe('chart OG image facts row', () => {
+  it('keeps every fact within the column when the version and charter are long', () => {
+    // 君の知らない物語 DX EXPERT in Japanese, the longest version, and the longest charter of the catalog
+    const items: Array<[string, string]> = [
+      ['ノーツ数', '1122'],
+      ['BPM', '181'],
+      ['バージョン', 'maimaiでらっくす PLUS'],
+      ['譜面作者', 'サファ太 Vs. Safari Vs. Saf Vs. モリモリさふぁた'],
+    ]
+    const widths = layoutFacts(items, 568)
+
+    expect(widths.reduce((sum, width) => sum + width, 0) + 30 * (items.length - 1)).toBeLessThanOrEqual(568)
+    // Both text facts keep room for their label
+    expect(widths[2]).toBeGreaterThanOrEqual(19 * 5)
+    expect(widths[3]).toBeGreaterThanOrEqual(19 * 4)
+  })
+
+  it('gives short facts their natural width', () => {
+    const widths = layoutFacts(
+      [
+        ['Notes', '708'],
+        ['BPM', '126'],
+        ['Version', 'MAGiCAL'],
+        ['Charter', 'ぴちネコ'],
+      ],
+      568,
+    )
+
+    expect(widths[3]).toBe(4 * 28 + 2)
+  })
+})
+
 describe('chart OG image title layout', () => {
-  it('uses a compact layout for the longest song title of the catalog', () => {
+  it('keeps short titles on one large line', () => {
+    expect(getTitleLayout('ChaosBlue')).toEqual({ fontSize: 76, lines: 1 })
+  })
+
+  it('wraps long kana titles onto two lines', () => {
+    expect(getTitleLayout('ガヴリールドロップキック')).toEqual({ fontSize: 60, lines: 2 })
+  })
+
+  it('uses the smallest size, cut to two lines, for the longest song title of the catalog', () => {
     expect(
       getTitleLayout(
         'False Amber (from the Black Bazaar, Or by A Kervan Trader from the Lands Afar, Or Buried Beneath the Shifting Sands That Lead Everywhere but Nowhere)',
       ),
-    ).toEqual({ fontSize: 25, lineHeight: 1.1, maxHeight: 150 })
+    ).toEqual({ fontSize: 40, lines: 2 })
+  })
+})
+describe('chart OG image level setting', () => {
+  it('starts the first figure ink on the column edge and sets figures proportionally', () => {
+    const { glyphs, width } = layoutInk('13.4', 150)
+    expect(glyphs[0]!.inkLeft).toBe(0)
+    // The "1" stem is far narrower than a tabular cell (0.816 em), so "13.4" is narrower than its tabular advance
+    expect(glyphs[1]!.inkLeft - glyphs[0]!.inkLeft).toBeLessThan(0.5 * 150)
+    expect(width).toBeLessThan(3 * 0.816 * 150)
+    // Each glyph's origin sits its measured side bearing before its ink, so the "1" origin is pulled left of the edge
+    expect(glyphs[0]!.left).toBeCloseTo(-0.169 * 150)
+  })
+
+  it('keeps the same ink gap between figures whether or not they include a "1"', () => {
+    const gaps = (text: string) => {
+      const { glyphs } = layoutInk(text, 100)
+      return glyphs.slice(1).map((glyph, index) => glyph.inkLeft - glyphs[index]!.inkLeft - glyphs[index]!.inkWidth)
+    }
+    expect(gaps('11.0')[0]).toBeCloseTo(gaps('15.0')[0]!)
+    expect(gaps('14.7')[1]).toBeCloseTo(gaps('15.0')[1]!)
+  })
+
+  it('moves "Lv" in after a figure that is open by the baseline, and "13" in after "Lv"', () => {
+    const closed = getHeroSuffixOffsets('15.0', '15', 150)
+    const open = getHeroSuffixOffsets('14.7', '14+', 150)
+    expect(open.lv).toBeLessThan(closed.lv)
+    // "1" leaves space under its flag, so the level after "Lv" moves in compared with a "9"
+    expect(getHeroSuffixOffsets('9.8', '9+', 150).level).toBeGreaterThan(closed.level)
+    expect(closed.lv).toBeGreaterThan(0)
+    // Under the arm of the "7", but still clear of its foot (which ends 0.414 em into the 0.748 em wide glyph)
+    expect(open.lv + (0.748 - 0.414) * 150).toBeGreaterThan(closed.lv)
+  })
+
+  it('falls back to plain text for characters without measured ink', () => {
+    expect(hasMeasuredInk('13.4')).toBe(true)
+    expect(hasMeasuredInk('Lv 13')).toBe(false)
+    expect(baselineInsets('★')).toEqual({ left: 0, right: 0 })
   })
 })

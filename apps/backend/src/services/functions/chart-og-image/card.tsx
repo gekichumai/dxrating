@@ -1,0 +1,588 @@
+import { TypeEnum } from '@gekichumai/dxdata'
+import type { CSSProperties, ReactNode } from 'react'
+import { CHART_TYPE_COLORS, chartTypeLetteringGradient } from '@gekichumai/maimai-domain'
+import { getOgLabels, type OgLocale } from './labels'
+import { baselineInsets, hasMeasuredInk, InkText, layoutInk } from './optical-text'
+
+export const OG_WIDTH = 1200
+export const OG_HEIGHT = 630
+
+/** The fonts the card names; the renderer registers each of these families */
+export const OG_FONT = {
+  /** Source Han Sans (every CJK region's glyphs, so Simplified Chinese titles render too) */
+  text: 'Source Han Sans',
+  /** The game's own UI typeface, for the level number and the difficulty names */
+  display: 'NewRodinProDB',
+} as const
+
+const COVER_SIZE = 440
+const COVER_LEFT = 72
+const CONTENT_LEFT = COVER_LEFT + COVER_SIZE + 52
+const CONTENT_RIGHT = 68
+const CONTENT_WIDTH = OG_WIDTH - CONTENT_LEFT - CONTENT_RIGHT
+const CONTENT_TOP = 72
+const CONTENT_BOTTOM = 92
+
+const TEXT = '#ffffff'
+const TEXT_SECONDARY = 'rgba(255, 255, 255, 0.82)'
+const TEXT_TERTIARY = 'rgba(255, 255, 255, 0.66)'
+
+export type OgSheetBadge = {
+  type: TypeEnum
+  difficultyLabel: string
+  difficultyColor: string
+  difficultyTextColor: string
+  level: string
+  internalLevelValue: number
+}
+
+export type OgCardImages = {
+  /** The jacket, or null when the asset server has none */
+  cover: string | null
+  /** The jacket blurred and darkened, or null without a jacket */
+  backdrop: string | null
+  logo: string | null
+}
+
+export type ChartOgCardProps = {
+  title: string
+  artist: string
+  sheet: OgSheetBadge
+  facts: { notes: number | null; bpm: number | null; version: string; designer: string | null }
+  locale: OgLocale
+  images: OgCardImages
+}
+
+export type SongOgCardProps = {
+  title: string
+  artist: string
+  groups: Array<{ type: TypeEnum; sheets: OgSheetBadge[] }>
+  facts: { bpm: number | null; version: string; category: string }
+  locale: OgLocale
+  images: OgCardImages
+}
+
+type TypeBadgeDisplay = {
+  label: string
+  /** The plate: a solid fill or a gradient */
+  background: string
+  /** Solid lettering, or a gradient clipped to the text */
+  lettering: { color: string } | { gradient: string }
+  outline?: string
+}
+
+/**
+ * DX and STD in the colours of the game's own chart-type plates, shared with the web app and iOS
+ * (@gekichumai/maimai-domain CHART_TYPE_COLORS): STD is the solid blue plate, DX the white でらっくす plate with the
+ * blue outline and multicoloured lettering. Utage keeps its own pink.
+ */
+const UTAGE_BADGE = { background: 'linear-gradient(135deg, #fb7185 0%, #db2777 100%)', lettering: { color: '#ffffff' } }
+const TYPE_BADGES: Record<TypeEnum, TypeBadgeDisplay> = {
+  [TypeEnum.DX]: {
+    label: 'DX',
+    background: CHART_TYPE_COLORS.dx.plate,
+    lettering: { gradient: chartTypeLetteringGradient(CHART_TYPE_COLORS.dx.lettering) },
+    outline: CHART_TYPE_COLORS.dx.outline,
+  },
+  [TypeEnum.STD]: {
+    label: 'STD',
+    background: CHART_TYPE_COLORS.std.fill,
+    lettering: { color: CHART_TYPE_COLORS.std.ink },
+  },
+  [TypeEnum.UTAGE]: { label: '宴', ...UTAGE_BADGE },
+  [TypeEnum.UTAGE2P]: { label: '宴 BUDDY', ...UTAGE_BADGE },
+}
+
+/** "13.4", always with one decimal: the number players compare */
+export function formatInternalLevel(internalLevelValue: number) {
+  return internalLevelValue.toFixed(1)
+}
+
+/**
+ * The largest title size whose estimated width fits the column in at most two lines, and how many lines it takes. CJK
+ * glyphs are a full em wide, Latin ones about half; anything still longer is cut with an ellipsis at the smallest size.
+ */
+export function getTitleLayout(title: string, width = CONTENT_WIDTH) {
+  const ems = [...title].reduce((sum, char) => sum + estimateCharWidth(char), 0)
+  const sizes = [76, 68, 60, 52, 46, 40] as const
+  for (const fontSize of sizes) {
+    // The two largest sizes are for titles that fit on one line
+    const lines = ems * fontSize <= width * 0.94 ? 1 : 2
+    if (lines === 2 && fontSize >= 68) continue
+    if (ems * fontSize <= width * lines * 0.94) return { fontSize, lines }
+  }
+  return { fontSize: sizes[sizes.length - 1], lines: 2 }
+}
+
+function estimateCharWidth(char: string) {
+  const code = char.codePointAt(0) ?? 0
+  if (code >= 0x1100 && !(code >= 0xff61 && code <= 0xff9f)) return 1
+  if (char === ' ') return 0.26
+  if (/[A-Z0-9@#%&MW]/.test(char)) return 0.66
+  return 0.54
+}
+
+export function ChartOgCard({ title, artist, sheet, facts, locale, images }: ChartOgCardProps) {
+  const labels = getOgLabels(locale)
+  // A two-line title leaves less height for the level
+  const heroSize = getTitleLayout(title).lines === 2 ? 116 : 150
+  const factItems: Array<[string, string]> = [
+    ...(facts.notes ? [[labels.notes, String(facts.notes)] as [string, string]] : []),
+    ...(facts.bpm ? [[labels.bpm, String(facts.bpm)] as [string, string]] : []),
+    [labels.version, facts.version],
+    ...(facts.designer ? [[labels.designer, facts.designer] as [string, string]] : []),
+  ]
+
+  return (
+    <CardFrame images={images} accent={sheet.difficultyColor}>
+      <Heading title={title} artist={artist} />
+      <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <DifficultyPill sheet={sheet} size="large" />
+          <TypeBadge type={sheet.type} size="large" />
+        </div>
+        <HeroLevel sheet={sheet} size={heroSize} />
+      </div>
+      <Facts items={factItems} />
+    </CardFrame>
+  )
+}
+
+/** The gap between the level and "Lv", and between "Lv" and its number, as a share of the suffix size */
+export const HERO_SUFFIX_GAP = 0.42
+export const HERO_SUFFIX_SIZE = 36
+
+/**
+ * Where "Lv" and the level after it start, measured from the end of the internal level's ink. Both gaps are the same
+ * nominal width, less the white space that open shapes leave by the baseline (the foot of "7", the flag of "1"), so
+ * they read as even.
+ */
+export function getHeroSuffixOffsets(internalLevel: string, level: string, size: number) {
+  const gap = HERO_SUFFIX_SIZE * HERO_SUFFIX_GAP
+  const lv = baselineInsets('Lv')
+  const number = baselineInsets(internalLevel)
+  return {
+    lv: Math.round(gap - number.right * size - lv.left * HERO_SUFFIX_SIZE),
+    level: Math.round(gap - (lv.right + baselineInsets(level).left) * HERO_SUFFIX_SIZE),
+  }
+}
+
+/**
+ * The internal level, then "Lv 13". Both are set from their measured ink, so the level's first figure lines up with the
+ * pill and the facts row, and a "1" does not leave a tabular-figure hole after it.
+ */
+function HeroLevel({ sheet, size }: { sheet: OgSheetBadge; size: number }) {
+  const internalLevel = formatInternalLevel(sheet.internalLevelValue)
+  const offsets = getHeroSuffixOffsets(internalLevel, sheet.level, size)
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', marginTop: 4 }}>
+      <InkText text={internalLevel} fontSize={size} style={styles.heroLevel} />
+      <div style={{ display: 'flex', marginLeft: offsets.lv, marginBottom: Math.round(size * 0.13) }}>
+        <InkText text="Lv" fontSize={HERO_SUFFIX_SIZE} style={styles.heroLevelSuffix} />
+        <div style={{ display: 'flex', marginLeft: offsets.level }}>
+          <InkText text={sheet.level} fontSize={HERO_SUFFIX_SIZE} style={styles.heroLevelSuffix} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function SongOgCard({ title, artist, groups, facts, locale, images }: SongOgCardProps) {
+  const labels = getOgLabels(locale)
+  const accent = groups[0]?.sheets.at(-1)?.difficultyColor ?? '#9e45e2'
+  const factItems: Array<[string, string]> = [
+    ...(facts.bpm ? [[labels.bpm, String(facts.bpm)] as [string, string]] : []),
+    [labels.version, facts.version],
+    [labels.category, facts.category],
+  ]
+  const rows = groups.slice(0, 2)
+  const perRow = Math.max(4, ...rows.map((group) => Math.min(group.sheets.length, 5)))
+  const badgeColumn = rows.some((group) => group.type === TypeEnum.UTAGE2P) ? 132 : 82
+  const chipGap = 10
+  const chipWidth = Math.floor((CONTENT_WIDTH - badgeColumn - chipGap * perRow) / perRow)
+
+  return (
+    <CardFrame images={images} accent={accent}>
+      <Heading title={title} artist={artist} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 'auto' }}>
+        {rows.map((group) => (
+          <div key={group.type} style={{ display: 'flex', alignItems: 'center', gap: chipGap }}>
+            <div style={{ display: 'flex', width: badgeColumn, flexShrink: 0 }}>
+              <TypeBadge type={group.type} size="small" />
+            </div>
+            {group.sheets.slice(0, 5).map((sheet) => (
+              <LevelChip key={sheet.difficultyLabel} sheet={sheet} width={chipWidth} tall={rows.length === 1} />
+            ))}
+          </div>
+        ))}
+      </div>
+      <Facts items={factItems} />
+    </CardFrame>
+  )
+}
+
+function CardFrame({ images, accent, children }: { images: OgCardImages; accent: string; children: ReactNode }) {
+  return (
+    <div style={styles.canvas}>
+      {images.backdrop ? (
+        <img alt="" src={images.backdrop} width={OG_WIDTH} height={OG_HEIGHT} style={styles.backdrop} />
+      ) : (
+        <div
+          style={{
+            ...styles.backdrop,
+            backgroundImage: `radial-gradient(circle at 20% 30%, ${accent} 0%, #1e1b4b 55%, #0b1020 100%)`,
+          }}
+        />
+      )}
+      {/* Darkens the backdrop more on the text side, so white text stays above 4.5:1 on any jacket */}
+      <div style={styles.scrim} />
+
+      <div style={styles.coverFrame}>
+        {images.cover ? (
+          <img alt="" src={images.cover} width={COVER_SIZE} height={COVER_SIZE} style={styles.cover} />
+        ) : (
+          <div style={{ ...styles.cover, ...styles.coverPlaceholder }}>
+            {images.logo ? (
+              <img alt="" src={images.logo} width={180} height={180} style={{ borderRadius: 36 }} />
+            ) : null}
+          </div>
+        )}
+      </div>
+
+      <div style={styles.content}>{children}</div>
+
+      <div style={styles.footer}>
+        {images.logo ? <img alt="" src={images.logo} width={40} height={40} style={styles.footerLogo} /> : null}
+        <span style={styles.footerText}>dxrating.net</span>
+      </div>
+    </div>
+  )
+}
+
+function Heading({ title, artist }: { title: string; artist: string }) {
+  const { fontSize } = getTitleLayout(title)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <div style={{ ...styles.title, fontSize, lineHeight: 1.16, maxHeight: Math.ceil(fontSize * 1.16 * 2) + 4 }}>
+        {title}
+      </div>
+      <div style={styles.artist}>{artist}</div>
+    </div>
+  )
+}
+
+function DifficultyPill({ sheet, size }: { sheet: OgSheetBadge; size: 'large' | 'small' }) {
+  return (
+    <div
+      style={{
+        ...styles.pill,
+        ...(size === 'large' ? styles.pillLarge : styles.pillSmall),
+        backgroundColor: sheet.difficultyColor,
+        color: sheet.difficultyTextColor,
+      }}
+    >
+      {sheet.difficultyLabel}
+    </div>
+  )
+}
+
+function TypeBadge({ type, size }: { type: TypeEnum; size: 'large' | 'small' }) {
+  const badge = TYPE_BADGES[type]
+  return (
+    <div
+      style={{
+        ...styles.pill,
+        ...(size === 'large' ? styles.pillLarge : styles.pillSmall),
+        // The renderer rejects undefined values, so each property is only set when it applies
+        ...(badge.background.startsWith('linear-gradient')
+          ? { backgroundImage: badge.background }
+          : { backgroundColor: badge.background }),
+        // Inset, so the outlined DX plate keeps the same size as the others
+        ...(badge.outline && {
+          boxShadow: `inset 0 0 0 ${size === 'large' ? 3 : 2}px ${badge.outline}, ${styles.pill.boxShadow}`,
+        }),
+        ...('color' in badge.lettering && { color: badge.lettering.color }),
+      }}
+    >
+      {'gradient' in badge.lettering ? (
+        <span style={{ backgroundImage: badge.lettering.gradient, backgroundClip: 'text', color: 'transparent' }}>
+          {badge.label}
+        </span>
+      ) : (
+        badge.label
+      )}
+    </div>
+  )
+}
+
+const CHIP_LABELS: Record<string, string> = {
+  BASIC: 'BAS',
+  ADVANCED: 'ADV',
+  EXPERT: 'EXP',
+  MASTER: 'MAS',
+  'Re:MASTER': 'Re:MAS',
+}
+
+function LevelChip({ sheet, width, tall }: { sheet: OgSheetBadge; width: number; tall: boolean }) {
+  const level = formatInternalLevel(sheet.internalLevelValue)
+  // The level's ink, not its tabular advance, has to fit the chip beside the 11px padding
+  const fits = (size: number) => !hasMeasuredInk(level) || layoutInk(level, size).width <= width - 24
+  let levelSize = tall ? 44 : 40
+  while (levelSize > 24 && !fits(levelSize)) levelSize -= 1
+  return (
+    <div style={{ ...styles.chip, width, height: tall ? 100 : 84, borderColor: sheet.difficultyColor }}>
+      <div style={{ ...styles.chipBar, backgroundColor: sheet.difficultyColor }} />
+      <div style={{ ...styles.chipLabel, fontSize: width < 100 ? 15 : 17 }}>
+        {CHIP_LABELS[sheet.difficultyLabel] ?? sheet.difficultyLabel}
+      </div>
+      <InkText text={level} fontSize={levelSize} style={styles.chipLevel} />
+    </div>
+  )
+}
+
+const FACT_GAP = 30
+const FACT_LABEL_SIZE = 19
+const FACT_VALUE_SIZE = 28
+
+function estimateTextWidth(text: string, fontSize: number) {
+  return Math.ceil([...text].reduce((sum, char) => sum + estimateCharWidth(char), 0) * fontSize)
+}
+
+/**
+ * Widths for the facts row. Each fact keeps its natural width while the row fits; otherwise the text facts (version,
+ * charter, genre) share what the others leave, the shortest first, and cut their values with an ellipsis. A label
+ * never wraps.
+ */
+export function layoutFacts(items: Array<[string, string]>, width = CONTENT_WIDTH) {
+  const natural = items.map(([label, value]) =>
+    Math.max(estimateTextWidth(label, FACT_LABEL_SIZE), estimateTextWidth(value, FACT_VALUE_SIZE) + 2),
+  )
+  const isText = items.map(([, value]) => !/^\d+$/.test(value))
+  const widths = [...natural]
+  let available = width - FACT_GAP * (items.length - 1) - natural.reduce((sum, w, i) => sum + (isText[i] ? 0 : w), 0)
+  const textIndexes = items
+    .map((_, i) => i)
+    .filter((i) => isText[i])
+    .sort((a, b) => natural[a]! - natural[b]!)
+  textIndexes.forEach((index, position) => {
+    const share = Math.floor(available / (textIndexes.length - position))
+    widths[index] = Math.min(natural[index]!, share)
+    available -= widths[index]!
+  })
+  return widths
+}
+
+function Facts({ items }: { items: Array<[string, string]> }) {
+  const widths = layoutFacts(items)
+  return (
+    <div style={styles.facts}>
+      {items.map(([label, value], index) => (
+        <div
+          key={label}
+          // Source Han Sans' side bearing puts the first fact's ink 1–2px right of the column edge; pull it back so
+          // the facts start on the same line as the pills and the level (measured on renders)
+          style={{
+            ...styles.fact,
+            ...(index === 0 && { marginLeft: -1 }),
+            width: widths[index]! + (index === 0 ? 1 : 0),
+          }}
+        >
+          <div style={styles.factLabel}>{label}</div>
+          <div style={styles.factValue}>{value}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const styles = {
+  canvas: {
+    position: 'relative',
+    display: 'flex',
+    width: OG_WIDTH,
+    height: OG_HEIGHT,
+    backgroundColor: '#0b1020',
+    color: TEXT,
+    fontFamily: OG_FONT.text,
+    overflow: 'hidden',
+  },
+  backdrop: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: OG_WIDTH,
+    height: OG_HEIGHT,
+    objectFit: 'cover',
+  },
+  scrim: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: OG_WIDTH,
+    height: OG_HEIGHT,
+    backgroundImage:
+      'linear-gradient(90deg, rgba(8, 10, 24, 0.30) 0%, rgba(8, 10, 24, 0.55) 45%, rgba(8, 10, 24, 0.70) 100%)',
+  },
+  coverFrame: {
+    position: 'absolute',
+    left: COVER_LEFT,
+    top: (OG_HEIGHT - COVER_SIZE) / 2 - 10,
+    display: 'flex',
+    width: COVER_SIZE,
+    height: COVER_SIZE,
+  },
+  cover: {
+    width: COVER_SIZE,
+    height: COVER_SIZE,
+    objectFit: 'cover',
+    borderRadius: 14,
+    border: '2px solid rgba(255, 255, 255, 0.22)',
+    boxShadow: '0 12px 28px rgba(0, 0, 0, 0.35), 0 32px 64px rgba(0, 0, 0, 0.35)',
+  },
+  coverPlaceholder: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.10)',
+  },
+  content: {
+    position: 'absolute',
+    left: CONTENT_LEFT,
+    top: CONTENT_TOP,
+    width: CONTENT_WIDTH,
+    height: OG_HEIGHT - CONTENT_TOP - CONTENT_BOTTOM,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  title: {
+    display: 'block',
+    color: TEXT,
+    fontWeight: 700,
+    overflow: 'hidden',
+    overflowWrap: 'anywhere',
+    lineClamp: 2,
+    textOverflow: 'ellipsis',
+  },
+  artist: {
+    display: 'block',
+    marginTop: 10,
+    color: TEXT_SECONDARY,
+    fontSize: 30,
+    fontWeight: 400,
+    lineHeight: 1.25,
+    maxHeight: 38,
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+  },
+  pill: {
+    display: 'flex',
+    whiteSpace: 'nowrap',
+    alignItems: 'center',
+    fontFamily: OG_FONT.display,
+    lineHeight: 1,
+    borderRadius: 8,
+    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.25)',
+  },
+  pillLarge: {
+    fontSize: 30,
+    padding: '9px 18px 10px',
+  },
+  pillSmall: {
+    fontSize: 22,
+    padding: '7px 13px 8px',
+  },
+  heroLevel: {
+    fontFamily: OG_FONT.display,
+    lineHeight: 1,
+    color: TEXT,
+  },
+  heroLevelSuffix: {
+    fontFamily: OG_FONT.display,
+    lineHeight: 1,
+    color: TEXT_SECONDARY,
+  },
+  chip: {
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    flexShrink: 0,
+    padding: '8px 0 0 11px',
+    overflow: 'hidden',
+    borderRadius: 10,
+    borderWidth: 2,
+    borderStyle: 'solid',
+    backgroundColor: 'rgba(255, 255, 255, 0.10)',
+  },
+  chipBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    right: 0,
+    height: 6,
+  },
+  chipLabel: {
+    fontFamily: OG_FONT.display,
+    color: TEXT_SECONDARY,
+    lineHeight: 1,
+    whiteSpace: 'nowrap',
+  },
+  chipLevel: {
+    fontFamily: OG_FONT.display,
+    color: TEXT,
+    lineHeight: 1,
+    marginTop: 6,
+  },
+  facts: {
+    display: 'flex',
+    gap: FACT_GAP,
+    marginTop: 20,
+    paddingTop: 16,
+    borderTop: '2px solid rgba(255, 255, 255, 0.18)',
+  },
+  fact: {
+    display: 'flex',
+    flexDirection: 'column',
+    flexShrink: 0,
+    minWidth: 0,
+  },
+  factLabel: {
+    display: 'block',
+    color: TEXT_TERTIARY,
+    fontSize: FACT_LABEL_SIZE,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    fontWeight: 400,
+    lineHeight: 1,
+  },
+  factValue: {
+    display: 'block',
+    marginTop: 8,
+    color: TEXT,
+    fontSize: FACT_VALUE_SIZE,
+    fontWeight: 700,
+    lineHeight: 1.1,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  footer: {
+    position: 'absolute',
+    right: CONTENT_RIGHT,
+    bottom: 32,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+  },
+  footerLogo: {
+    borderRadius: 9,
+  },
+  footerText: {
+    color: TEXT_SECONDARY,
+    fontSize: 24,
+    fontWeight: 700,
+    lineHeight: 1,
+  },
+} satisfies Record<string, CSSProperties>

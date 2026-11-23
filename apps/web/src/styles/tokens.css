@@ -18,7 +18,8 @@
  * Panels whose content sits at a 12px+ padding are separate surfaces and keep their own token.
  *
  * Numbers (uno.config.ts rules; the faces are in index.css):
- *   --font-sans       the locale's text stack, Torus first. Set on :root and on every [lang] rule below
+ *   --font-sans       the locale's text stack: Torus, then its metric-matched stand-ins (index.css), then the
+ *                     locale's own faces. Set on :root and on every [lang] rule below
  *   --font-numeric    'DXR Numeric' (Nunito digits, tabular by default) in front of --font-sans
  *   `num`             numbers below 20px (text-xs … text-lg): table cells, achievements, ratings in rows,
  *                     constants, note counts, DX scores, deltas, counts. Sets --font-numeric and tabular-nums, so
@@ -48,10 +49,20 @@
   --status-positive: #047857;
   --status-warning: #b45309;
   /*
-   * The DX chart type's multicolour lettering, from the official でらっくす plate as the iOS app draws it: red, orange,
-   * green and cyan, each stop deepened to >=4.5:1 on white (the plate's yellow cannot be, so it is skipped)
+   * The DX and STD chart-type labels, from the game's own chart-type plates (the source and the contrast of each value
+   * are in packages/maimai-domain/src/chart-type-colors.ts; a test keeps these equal to it). STD is a blue plate with
+   * white lettering; DX is a white plate with a blue outline and red, orange, green and cyan lettering, each stop
+   * deepened to >=4.5:1 on white (the plate's yellow cannot be, so it is skipped). The -text and lettering values are
+   * for labels drawn straight on a surface with no plate; dark.css lightens them.
    */
-  --dx-lettering: linear-gradient(90deg, #d32f2f, #b35600, #3e7d1c, #0277a8);
+  --chart-type-std: #1d6fd8;
+  --chart-type-std-ink: #ffffff;
+  --chart-type-std-text: #1860c0;
+  --chart-type-dx-plate: #ffffff;
+  --chart-type-dx-outline: #007cdb;
+  --chart-type-dx-lettering-on-plate: linear-gradient(90deg, #d32f2f, #b35600, #3e7d1c, #0277a8);
+  /* Straight on light glass, which the version colour tints darker than white: each stop a step deeper */
+  --dx-lettering: linear-gradient(90deg, #c02a2a, #a24e00, #397219, #016d9a);
 
   /* What `bg-white/…` and `text-black/…` utilities resolve to; dark.css swaps them (uno.config.ts postprocess) */
   --surface-rgb: 255 255 255;
@@ -74,6 +85,18 @@
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
+
+  /*
+   * Rhythm: two steps, one ratio, every page. Space groups content before borders or fills do.
+   *   --rhythm-1 12px   T2 (section title) → what it heads, T3 (item title) → next item group, controls inside a
+   *                     section. The `section-stack` shortcut
+   *   --rhythm-3 36px   T1 page header → first section, section → section. The `page-stack` shortcut
+   * A heading and its own caption (T1 + page-description, a breadcrumb above it) stay 8px apart: one unit, not a step.
+   * Three times 12 is deliberate: the eye reads a gap that is clearly bigger as a pause, which is where it rests on a
+   * long list. Never put an in-between value (16, 20, 24) between sections; it blurs which gap is which.
+   */
+  --rhythm-1: 12px;
+  --rhythm-3: 36px;
 
   /* Elevation: a 1px ring plus lift; overlays get a deeper ambient shadow */
   --shadow-1: 0 0 0 1px rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.06), 0 2px 4px 0 rgb(0 0 0 / 0.04);
@@ -224,22 +247,24 @@
 html[lang|='ja'],
 [lang|='ja'] {
   --font-sans:
-    Torus, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Noto Sans JP', 'Noto Sans CJK JP', Meiryo,
-    system-ui, sans-serif;
+    Torus, 'Torus Fallback', 'Torus Fallback Roboto', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI',
+    'Noto Sans JP', 'Noto Sans CJK JP', Meiryo, system-ui, sans-serif;
   font-family: var(--font-sans);
 }
 
 html[lang='zh-Hans'],
 [lang='zh-Hans'] {
   --font-sans:
-    Torus, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC', system-ui,
-    sans-serif;
+    Torus, 'Torus Fallback', 'Torus Fallback Roboto', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    'Noto Sans SC', 'Noto Sans CJK SC', system-ui, sans-serif;
   font-family: var(--font-sans);
 }
 
 html[lang='zh-Hant'],
 [lang='zh-Hant'] {
-  --font-sans: Torus, 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', system-ui, sans-serif;
+  --font-sans:
+    Torus, 'Torus Fallback', 'Torus Fallback Roboto', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC',
+    'Noto Sans CJK TC', system-ui, sans-serif;
   font-family: var(--font-sans);
 }
 
@@ -257,8 +282,8 @@ html[lang|='vi'],
 html[lang|='th'],
 [lang|='th'] {
   --font-sans:
-    Torus, Thonburi, 'Sukhumvit Set', 'Leelawadee UI', Leelawadee, 'Noto Sans Thai', 'Noto Sans Thai UI', Tahoma,
-    system-ui, sans-serif;
+    Torus, 'Torus Fallback', 'Torus Fallback Roboto', Thonburi, 'Sukhumvit Set', 'Leelawadee UI', Leelawadee,
+    'Noto Sans Thai', 'Noto Sans Thai UI', Tahoma, system-ui, sans-serif;
   font-family: var(--font-sans);
 }
 
@@ -269,8 +294,8 @@ html[lang|='th'] {
 html[lang|='my'],
 [lang|='my'] {
   --font-sans:
-    Torus, 'Myanmar Sangam MN', 'Myanmar MN', 'Myanmar Text', 'Noto Sans Myanmar', 'Noto Sans Myanmar UI', Padauk,
-    system-ui, sans-serif;
+    Torus, 'Torus Fallback', 'Torus Fallback Roboto', 'Myanmar Sangam MN', 'Myanmar MN', 'Myanmar Text',
+    'Noto Sans Myanmar', 'Noto Sans Myanmar UI', Padauk, system-ui, sans-serif;
   font-family: var(--font-sans);
 }
 

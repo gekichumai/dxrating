@@ -17,6 +17,8 @@ type AquaDxExportMusicDetail = {
   musicId: string | number
   level: number
   achievement: number
+  comboStatus?: number | null
+  syncStatus?: number | null
 }
 
 export const ImportFromAquaDxButtonListItem: FC<{
@@ -59,6 +61,8 @@ export const ImportFromAquaDxButtonListItem: FC<{
                     musicId: musicDetail.musicId,
                     level: musicDetail.level,
                     achievement: musicDetail.achievement,
+                    comboStatus: musicDetail.comboStatus,
+                    syncStatus: musicDetail.syncStatus,
                   }))
                 : []
               const importResult = normalizeAquaDxRows(await loadCatalog(), rows, musicIdMap, await loadLegacySongIds())

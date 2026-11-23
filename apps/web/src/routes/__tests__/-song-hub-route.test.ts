@@ -55,27 +55,26 @@ describe('/songs/$songId hub route', () => {
     expect(await run('dsng_hub', { locale: 'ja' })).toBeNull()
   })
 
-  it('still 308s the legacy ?type=&difficulty= form to that chart, keeping ?locale=', async () => {
-    const result = (await run('dsng_hub', { type: 'dx', difficulty: 'expert', locale: 'ja' })) as {
+  // The router adds the URL's language prefix to every redirect it builds (router.tsx), so none carries a locale
+  it('still 308s the legacy ?type=&difficulty= form to that chart', async () => {
+    const result = (await run('dsng_hub', { type: 'dx', difficulty: 'expert' })) as {
       options: Record<string, unknown>
     }
     expect(isRedirect(result)).toBe(true)
     expect(result.options).toMatchObject({
       to: '/songs/$songId/$type/$difficulty',
       params: { songId: 'dsng_hub', type: 'dx', difficulty: 'expert' },
-      search: { locale: 'ja' },
       statusCode: 308,
     })
   })
 
-  it('redirects a legacy song ID to the public ID hub, keeping ?locale=', async () => {
+  it('redirects a legacy song ID to the public ID hub', async () => {
     lookup.resolution = { redirectSongId: 'dsng_hub' }
-    const result = (await run('Hub Song', { locale: 'zh-Hant' })) as { options: Record<string, unknown> }
+    const result = (await run('Hub Song', {})) as { options: Record<string, unknown> }
     expect(isRedirect(result)).toBe(true)
     expect(result.options).toMatchObject({
       to: '/songs/$songId',
       params: { songId: 'dsng_hub' },
-      search: { locale: 'zh-Hant' },
       statusCode: 308,
     })
   })

@@ -4,6 +4,7 @@ import {
   buildDevelopersSeo,
   buildRootSeoMeta,
   buildSearchSeo,
+  buildSongHubDescription,
   buildSongHubSeo,
   buildSongHubTitle,
   buildSongSheetSeo,
@@ -24,6 +25,13 @@ describe('SEO localization', () => {
         },
       ]),
     ).toBe('ja')
+  })
+
+  it("prefers the head's own match over the previous navigation's snapshot", () => {
+    // After switching from /ja to /ko the head gets `match` for /ko and `matches` still holding /ja's contexts
+    const stale = { context: { locale: 'ja' } }
+    expect(resolveSeoLocale([{ context: { locale: 'ko' } }, stale, stale])).toBe('ko')
+    expect(resolveSeoLocale([{ context: {} }, { context: { locale: 'en' } }, { context: { locale: 'th' } }])).toBe('th')
   })
 
   it('builds localized root metadata for HTML responses', () => {
@@ -50,7 +58,7 @@ describe('SEO localization', () => {
     const seo = buildDevelopersSeo('ja')
 
     expect(seo.title).toBe('開発者向け: MCP サーバーと API - DXRating')
-    expect(seo.meta).toContainEqual({ property: 'og:url', content: 'https://dxrating.net/developers' })
+    expect(seo.meta).toContainEqual({ property: 'og:url', content: 'https://dxrating.net/ja/developers' })
   })
 
   it('builds localized song sheet title and social metadata', () => {
@@ -74,7 +82,7 @@ describe('SEO localization', () => {
     expect(seo.meta).toContainEqual({ property: 'og:title', content: seo.title })
     expect(seo.meta).toContainEqual({
       property: 'og:image',
-      content: 'https://miruku.dxrating.net/api/v1/songs/test-song/std/master/og-image',
+      content: 'https://miruku.dxrating.net/api/v1/songs/test-song/std/master/og-image?locale=zh-Hant',
     })
     expect(seo.meta).toContainEqual({ property: 'og:image:type', content: 'image/png' })
     expect(seo.meta).toContainEqual({ name: 'twitter:image:alt', content: seo.socialImageAlt })
@@ -198,19 +206,35 @@ describe('song hub SEO', () => {
     aliases: ['ts', 'テスト', 'ts', 'Test Song'],
   }
 
-  it('puts the BPM in the title in every locale', () => {
-    expect(buildSongHubTitle(song, 'ja')).toBe('Test Song 譜面定数・BPM180 | maimai でらっくす - DXRating')
-    expect(buildSongHubTitle(song, 'en')).toBe('Test Song – maimai DX charts, BPM 180 | DXRating')
-    expect(buildSongHubTitle(song, 'zh-Hans')).toBe('Test Song 谱面定数・BPM 180 - 舞萌DX | DXRating')
-    expect(buildSongHubTitle(song, 'zh-Hant')).toBe('Test Song 譜面定數・BPM 180｜maimai DX - DXRating')
-    expect(buildSongHubTitle(song, 'ko')).toBe('Test Song 채보 상수·BPM 180 - maimai DX | DXRating')
+  it('leads the title with the song name and maimai, then the artist, without the BPM', () => {
+    expect(buildSongHubTitle(song, 'en')).toBe('Test Song – maimai DX · Test Artist | DXRating')
+    expect(buildSongHubTitle(song, 'ja')).toBe('Test Song – maimai でらっくす 譜面定数 · Test Artist | DXRating')
+    expect(buildSongHubTitle(song, 'zh-Hans')).toBe('Test Song – maimai DX 舞萌 谱面定数 · Test Artist | DXRating')
+    expect(buildSongHubTitle(song, 'zh-Hant')).toBe('Test Song – maimai DX 譜面定數 · Test Artist | DXRating')
+    expect(buildSongHubTitle(song, 'ko')).toBe('Test Song – maimai DX 채보 상수 · Test Artist | DXRating')
+    expect(buildSongHubTitle(song, 'th')).toBe('Test Song – maimai DX · Test Artist | DXRating')
   })
 
-  it('falls back to a title without BPM when the song has none', () => {
-    expect(buildSongHubTitle({ title: 'Test Song', bpm: null }, 'ja')).toBe(
-      'Test Song 譜面定数 | maimai でらっくす - DXRating',
+  it('describes the MASTER and Re:MASTER levels with internal levels, DX first, then the BPM', () => {
+    const sheets = [
+      { type: TypeEnum.STD, difficulty: DifficultyEnum.Master, level: '12', internalLevelValue: 12.4 },
+      { type: TypeEnum.DX, difficulty: DifficultyEnum.Expert, level: '10', internalLevelValue: 10.2 },
+      { type: TypeEnum.DX, difficulty: DifficultyEnum.Master, level: '13+', internalLevelValue: 13.7 },
+      { type: TypeEnum.DX, difficulty: DifficultyEnum.ReMaster, level: '14', internalLevelValue: 0 },
+    ]
+    expect(buildSongHubDescription({ ...song, sheets }, 'en')).toBe(
+      'Test Song – maimai DX, by Test Artist. DX MASTER 13+ (13.7), DX Re:MASTER 14, Standard MASTER 12 (12.4), BPM 180. ' +
+        'Levels, internal levels, note counts and chart designers of every chart on DXRating.',
     )
-    expect(buildSongHubTitle({ title: 'Test Song' }, 'en')).toBe('Test Song – maimai DX charts | DXRating')
+    expect(buildSongHubDescription({ ...song, sheets }, 'ja')).toMatch(
+      /^Test Song – maimai でらっくす（Test Artist）。.*13\.7.*BPM 180。/,
+    )
+  })
+
+  it('keeps the description whole without levels or BPM', () => {
+    expect(buildSongHubDescription({ title: 'Test Song', artist: 'A' }, 'en')).toBe(
+      'Test Song – maimai DX, by A. Levels, internal levels, note counts and chart designers of every chart on DXRating.',
+    )
     expect(buildSongHubSeo({ ...song, bpm: undefined }, 'en').description).not.toContain('BPM')
   })
 
@@ -219,6 +243,12 @@ describe('song hub SEO', () => {
     expect(seo.url).toBe('https://dxrating.net/songs/dsng_test')
     expect(seo.meta).toContainEqual({ title: seo.title })
     expect(seo.meta).toContainEqual({ property: 'og:url', content: 'https://dxrating.net/songs/dsng_test' })
+    expect(seo.meta).toContainEqual({
+      property: 'og:image',
+      content: 'https://miruku.dxrating.net/api/v1/songs/dsng_test/og-image?locale=en',
+    })
+    expect(seo.meta).toContainEqual({ name: 'twitter:card', content: 'summary_large_image' })
+    expect(seo.meta).toContainEqual({ name: 'twitter:image:alt', content: seo.socialImageAlt })
     expect(seo.description).toContain('BPM 180')
     expect(seo.structuredData['@graph']).toEqual(
       expect.arrayContaining([

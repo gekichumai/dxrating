@@ -25870,7 +25870,8 @@
             "searchAcronyms": [
                 "喜欢你",
                 "我喜欢你",
-                "爱你"
+                "爱你",
+                "黑凤梨"
             ]
         },
         {
@@ -47317,7 +47318,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -47345,7 +47346,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -47373,7 +47374,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -47401,7 +47402,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -57152,7 +57153,8 @@
                 }
             ],
             "searchAcronyms": [
-                "machibitohakozu"
+                "machibitohakozu",
+                "待人来"
             ]
         },
         {
@@ -62053,6 +62055,7 @@
                 }
             ],
             "searchAcronyms": [
+                "福建rumble",
                 "风神"
             ]
         },
@@ -65790,7 +65793,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "欢迎来到舞萌"
+            ]
         },
         {
             "songId": "クローバー♣クラブ",
@@ -67058,6 +67063,7 @@
                 }
             ],
             "searchAcronyms": [
+                "今早起来我要去出勤",
                 "伽拉泰亚的螺旋",
                 "螺旋"
             ]
@@ -74021,7 +74027,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "感受节拍"
+            ]
         },
         {
             "songId": "スリップフリップ",
@@ -80151,6 +80159,7 @@
                 }
             ],
             "searchAcronyms": [
+                "！？强强？！",
                 "am",
                 "amazing mighty",
                 "amemai",
@@ -80158,6 +80167,7 @@
                 "mighty",
                 "太神奇了，太强大了！",
                 "太神奇了，太强大了!!!!",
+                "太神奇了太强大了",
                 "如此强劲令人惊叹",
                 "惊人的强大",
                 "惊异全能",
@@ -118361,6 +118371,7 @@
                 "emp",
                 "emperror",
                 "the emperor",
+                "两个矿泉水打架",
                 "农夫山泉",
                 "农夫山泉和怡宝",
                 "刘禹锡",
@@ -123360,7 +123371,8 @@
             "searchAcronyms": [
                 "Hoshikuzu Utopia",
                 "Stardust Utopia",
-                "星屑"
+                "星屑",
+                "星屑乌托邦"
             ]
         },
         {
@@ -137973,7 +137985,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "复合体"
+            ]
         },
         {
             "songId": "Beautiful Future",
@@ -141195,7 +141209,8 @@
                 "以太冲击",
                 "白内障",
                 "零光",
-                "零光吹唢呐"
+                "零光吹唢呐",
+                "零光吹喇叭"
             ]
         },
         {
@@ -163711,6 +163726,7 @@
             "searchAcronyms": [
                 "Hatsune Creation Myth",
                 "Hatsune Tenchikaibyaku Shinwa",
+                "初音天地开辟神话",
                 "初音未来开天辟地",
                 "天地开辟",
                 "开辟神话",
@@ -167702,6 +167718,7 @@
             ],
             "searchAcronyms": [
                 "海澜之家",
+                "跳舞的线",
                 "迪拉熊热舞"
             ]
         },
@@ -199274,6 +199291,7 @@
                 }
             ],
             "searchAcronyms": [
+                "tgb",
                 "吃大席",
                 "宴会",
                 "盛宴"
@@ -203959,6 +203977,7 @@
                 "nybr",
                 "努力哥输给天赋比",
                 "四条输给皇家同花顺",
+                "德州之夜",
                 "德州扑克",
                 "新约克回来赌",
                 "皇家同花顺",
@@ -204894,6 +204913,7 @@
                 }
             ],
             "searchAcronyms": [
+                "music prayer",
                 "MUSIC PRAYER",
                 "音乐播放器"
             ]
@@ -205036,6 +205056,7 @@
             ],
             "searchAcronyms": [
                 "如果你",
+                "如果尿嘧啶",
                 "如果电压",
                 "衣服油",
                 "骰子"
@@ -209564,6 +209585,7 @@
                 "华之集落",
                 "华之集落，致以秋意",
                 "华集落",
+                "华集落秋届",
                 "秋届",
                 "蛋糕店里卖蛋糕"
             ]
@@ -213770,6 +213792,7 @@
             ],
             "searchAcronyms": [
                 "[习]ウミユリ海底谭",
+                "宴海底谭",
                 "我们当年哪有这条件"
             ]
         },
@@ -228364,7 +228387,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -228392,7 +228415,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -228420,7 +228443,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -228448,7 +228471,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -228463,7 +228486,9 @@
                     }
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "情人的小把戏"
+            ]
         },
         {
             "songId": "IMBRUED:FLUX",
@@ -228862,6 +228887,7 @@
             "searchAcronyms": [
                 "🇺🇸",
                 "2个14守一个13+",
+                "ysk快乐曲",
                 "棱镜塔守门员",
                 "美国人",
                 "美国佬"
@@ -229536,6 +229562,8 @@
                 "后潘",
                 "希望之门",
                 "开盒之后",
+                "我再也不会犯玉玉症了",
+                "最后的潘",
                 "潘多拉之后",
                 "玉玉症之后"
             ]
@@ -229711,6 +229739,7 @@
                 "0010x2",
                 "100円",
                 "100日元",
+                "15级吃分推荐榜3",
                 "error0010",
                 "kaleid scope",
                 "kop奖金回收计划",
@@ -229719,12 +229748,16 @@
                 "xx",
                 "ysk泡温泉2",
                 "万花筒",
+                "乱码歌",
                 "五万日元",
                 "别笑你也过不了第二关",
+                "压力压力",
                 "压力巨大",
                 "叉叉",
                 "射雕英雄传",
+                "推荐乐曲排行榜",
                 "新手教程3",
+                "理论rating之壁",
                 "百元之恋",
                 "舞神后退2",
                 "起床战争",
@@ -229866,6 +229899,7 @@
             ],
             "searchAcronyms": [
                 "51234321",
+                "7门雨",
                 "refrain",
                 "track 2/1",
                 "包饺子",
@@ -229875,6 +229909,7 @@
                 "女同和好",
                 "曲目 2/1",
                 "相信彩虹2",
+                "線香花火3",
                 "酸栗贴贴"
             ]
         },
@@ -230406,6 +230441,7 @@
             "searchAcronyms": [
                 "⚔️🍎",
                 "a",
+                "任意",
                 "倒a",
                 "全称量词",
                 "对于所有",
@@ -230573,7 +230609,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230601,7 +230637,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230629,7 +230665,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230657,7 +230693,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230703,7 +230739,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230731,7 +230767,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230759,7 +230795,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230787,7 +230823,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230833,7 +230869,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230861,7 +230897,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230889,7 +230925,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230917,7 +230953,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230963,7 +230999,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -230991,7 +231027,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231019,7 +231055,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231047,7 +231083,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231064,6 +231100,7 @@
                 }
             ],
             "searchAcronyms": [
+                "一首普通的爱情歌曲",
                 "寻常恋歌"
             ]
         },
@@ -231149,7 +231186,10 @@
                     "comment": "せかせかせかせかせかせかせかせかせかせか"
                 }
             ],
-            "searchAcronyms": []
+            "searchAcronyms": [
+                "宴星界可不",
+                "耐星界可不"
+            ]
         },
         {
             "songId": "[騒]ありきたりな恋の歌",
@@ -231221,7 +231261,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231249,7 +231289,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231277,7 +231317,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231305,7 +231345,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231324,8 +231364,10 @@
             "searchAcronyms": [
                 "rei",
                 "shoujo rei shoujo ray",
+                "shoujorei",
                 "少女ray",
-                "少女rei"
+                "少女rei",
+                "少女雷"
             ]
         },
         {
@@ -231356,7 +231398,7 @@
                         "jp": true,
                         "intl": false,
                         "usa": false,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231384,7 +231426,7 @@
                         "jp": true,
                         "intl": false,
                         "usa": false,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231412,7 +231454,7 @@
                         "jp": true,
                         "intl": false,
                         "usa": false,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231440,7 +231482,7 @@
                         "jp": true,
                         "intl": false,
                         "usa": false,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231458,7 +231500,8 @@
             ],
             "searchAcronyms": [
                 "shoujo A",
-                "冷异常"
+                "冷异常",
+                "冷正常"
             ]
         },
         {
@@ -231489,7 +231532,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231517,7 +231560,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231545,7 +231588,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231573,7 +231616,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231590,7 +231633,8 @@
                 }
             ],
             "searchAcronyms": [
-                "Imperial Girl"
+                "Imperial Girl",
+                "teikokushoujo"
             ]
         },
         {
@@ -231621,7 +231665,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231649,7 +231693,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231677,7 +231721,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231710,7 +231754,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231728,7 +231772,9 @@
             ],
             "searchAcronyms": [
                 "noym",
-                "没一个是人"
+                "没一个是人",
+                "没有一个爷们",
+                "没有人是男人"
             ]
         },
         {
@@ -231759,7 +231805,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231787,7 +231833,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231818,7 +231864,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231846,7 +231892,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231864,7 +231910,8 @@
             ],
             "searchAcronyms": [
                 "lab",
-                "把一切都抛在身后"
+                "把一切都抛在身后",
+                "抛下一切"
             ]
         },
         {
@@ -231895,7 +231942,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231923,7 +231970,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231951,7 +231998,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -231984,7 +232031,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -232002,6 +232049,7 @@
             ],
             "searchAcronyms": [
                 "2024愚人节",
+                "报应",
                 "报应sp"
             ]
         },
@@ -232033,7 +232081,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -232061,7 +232109,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -232089,7 +232137,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -232117,7 +232165,7 @@
                         "jp": true,
                         "intl": true,
                         "usa": true,
-                        "cn": false
+                        "cn": true
                     },
                     "regionOverrides": {
                         "intl": {}
@@ -232135,7 +232183,8 @@
             ],
             "searchAcronyms": [
                 "冷光",
-                "烟花"
+                "烟花",
+                "荧冷焰光"
             ]
         },
         {
@@ -255913,10 +255962,14 @@
             "searchAcronyms": [
                 "wec2026",
                 "wec2026决胜曲",
+                "卡日本人脖子",
                 "比日本人快",
+                "舞萌皇帝",
                 "魔法士",
                 "魔法士干脆面",
+                "魔法士扑街",
                 "魔法士挂",
+                "魔法扑街",
                 "魔法披风",
                 "魔法机关幻想曲"
             ]
@@ -256274,5 +256327,5 @@
             "name": "中国版 (舞萌DX)"
         }
     ],
-    "updateTime": "2026-11-07T10:02:55.402479527+00:00"
+    "updateTime": "2026-11-21T07:00:22.639210366+00:00"
 }

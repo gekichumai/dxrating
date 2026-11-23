@@ -1,4 +1,5 @@
 import type { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { DEFAULT_LOCALE, type SupportedLocale, localizePath } from '@/setup/locale'
 
 type SheetLinkTarget = {
   songId: string
@@ -12,11 +13,13 @@ export const buildSheetPath = (sheet: SheetLinkTarget): string =>
 /** Path of a chart's tolerance calculator (`/songs/<id>/<type>/<difficulty>/tolerance`) */
 export const buildSheetTolerancePath = (sheet: SheetLinkTarget): string => `${buildSheetPath(sheet)}/tolerance`
 
+/** A chart's absolute URL, in a language (`/ja/songs/…`; English unprefixed) */
 export const buildSheetLink = (
   sheet: SheetLinkTarget,
   origin = typeof window === 'undefined' ? 'https://dxrating.net' : window.location.origin,
+  locale: SupportedLocale = DEFAULT_LOCALE,
 ): string => {
-  const url = new URL(buildSheetPath(sheet), origin)
+  const url = new URL(localizePath(buildSheetPath(sheet), locale), origin)
   return url.toString()
 }
 

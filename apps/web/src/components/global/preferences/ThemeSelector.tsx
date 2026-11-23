@@ -102,7 +102,9 @@ export const DisplayPreferencesMenu = () => {
         <MdiTune />
       </IconButton>
 
-      <Menu transitionDuration={0} anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={close}>
+      {/* variant="menu": the selectedMenu default focuses the last selected item, the theme at the bottom, and scrolls
+          the list there on open, so on a phone the menu opened with the languages scrolled under the sticky subheader */}
+      <Menu transitionDuration={0} variant="menu" anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={close}>
         <ListSubheader>{m.settings_language_select({}, { locale })}</ListSubheader>
         {localeItems}
         <Divider />

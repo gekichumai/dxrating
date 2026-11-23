@@ -15,19 +15,28 @@ const htmlResponse = (headers: Record<string, string> = {}, status = 200) =>
   new Response('<html></html>', { status, headers: { 'Content-Type': 'text/html; charset=utf-8', ...headers } })
 
 describe('getHtmlCacheKey', () => {
-  it('keys catalog pages by build, resolved locale, path and query', () => {
-    expect(getHtmlCacheKey(request('/search?q=pandora', { 'accept-language': 'ja-JP,ja;q=0.9' }), 'abc')).toBe(
+  it('keys catalog pages by build, path and query: the path carries the locale', () => {
+    expect(getHtmlCacheKey(request('/ja/search?q=pandora'), 'abc')).toBe(
       'https://dxrating.net/__html-cache/abc/ja/search?q=pandora',
     )
-    expect(getHtmlCacheKey(request('/songs/x/dx/master', { cookie: 'dxrating.locale=zh-Hant' }), 'abc')).toBe(
-      'https://dxrating.net/__html-cache/abc/zh-Hant/songs/x/dx/master',
+    expect(getHtmlCacheKey(request('/zh-hant/songs/x/dx/master'), 'abc')).toBe(
+      'https://dxrating.net/__html-cache/abc/zh-hant/songs/x/dx/master',
     )
+    expect(getHtmlCacheKey(request('/ja'), 'abc')).toBe('https://dxrating.net/__html-cache/abc/ja')
   })
 
-  it('shares one entry between Accept-Language values that resolve to the same locale', () => {
+  it('ignores the cookie and Accept-Language: an unprefixed URL is English for everyone it reaches', () => {
+    // A visitor who prefers another language is redirected before the cache (setup/locale-redirect.ts)
     expect(getHtmlCacheKey(request('/', { 'accept-language': 'zh-CN' }), 'abc')).toBe(
-      getHtmlCacheKey(request('/', { 'accept-language': 'zh-SG,en;q=0.5' }), 'abc'),
+      getHtmlCacheKey(request('/', { cookie: 'dxrating.locale=ja' }), 'abc'),
     )
+    expect(getHtmlCacheKey(request('/'), 'abc')).toBe('https://dxrating.net/__html-cache/abc/')
+  })
+
+  it('applies the allowlist to the path without its locale prefix', () => {
+    expect(getHtmlCacheKey(request('/th/songs/x'), 'abc')).not.toBeNull()
+    expect(getHtmlCacheKey(request('/ja/charts/trending'), 'abc')).toBeNull()
+    expect(getHtmlCacheKey(request('/ja/account/security'), 'abc')).toBeNull()
   })
 
   it('skips requests that must not share a cached page', () => {
@@ -82,9 +91,9 @@ describe('stored HTML round trip', () => {
 })
 describe('getHtmlCacheKey plates', () => {
   it('caches plate pages: the user overlay is client-only', () => {
-    expect(getHtmlCacheKey(request('/plates'), 'abc')).toBe('https://dxrating.net/__html-cache/abc/en/plates')
+    expect(getHtmlCacheKey(request('/plates'), 'abc')).toBe('https://dxrating.net/__html-cache/abc/plates')
     expect(getHtmlCacheKey(request('/plates/kagami-shin?region=cn'), 'abc')).toBe(
-      'https://dxrating.net/__html-cache/abc/en/plates/kagami-shin?region=cn',
+      'https://dxrating.net/__html-cache/abc/plates/kagami-shin?region=cn',
     )
   })
 
@@ -92,7 +101,7 @@ describe('getHtmlCacheKey plates', () => {
     expect(getHtmlCacheKey(request('/tools/rating'), 'abc')).not.toBeNull()
     expect(getHtmlCacheKey(request('/tools/tolerance'), 'abc')).not.toBeNull()
     expect(getHtmlCacheKey(request('/songs/dsng_abc/dx/master/tolerance'), 'abc')).toBe(
-      'https://dxrating.net/__html-cache/abc/en/songs/dsng_abc/dx/master/tolerance',
+      'https://dxrating.net/__html-cache/abc/songs/dsng_abc/dx/master/tolerance',
     )
   })
 })

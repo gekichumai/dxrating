@@ -325,3 +325,65 @@ describe('Song Catalog of the bundled snapshot', () => {
     expect(versioned?.songId).toBe(LEGACY_SONG_IDS['君の知らない物語'])
   })
 })
+describe('CN server overrides', () => {
+  // A CiRCLE song on CN keeps its CiRCLE value; JP revised it later.
+  const source: SongCatalogSource = {
+    versions: [],
+    songs: [
+      song({
+        id: 'dsng_cnlevel000',
+        title: 'CN Level',
+        sheets: [
+          sheet({
+            id: 'dsht_cnlevelmas',
+            level: '13+',
+            internalLevelValue: 13.6,
+            multiverInternalLevelValue: { [VersionEnum.CiRCLE]: 13.7, [VersionEnum.PRiSMPLUS]: 13.6 },
+            serverIds: [ServerEnum.JP, ServerEnum.CN],
+            serverOverrides: { [ServerEnum.CN]: { levelValue: 13.7 } },
+          }),
+          sheet({
+            id: 'dsht_cnleveladv',
+            difficulty: DifficultyEnum.Advanced,
+            level: '7+',
+            internalLevelValue: 7.9,
+            serverIds: [ServerEnum.JP, ServerEnum.CN],
+            serverOverrides: { [ServerEnum.CN]: { level: '7', levelValue: 7.2 } },
+          }),
+        ],
+      }),
+    ],
+  }
+  const values = (catalog: ReturnType<typeof getSongCatalog>) =>
+    catalog.sheets.map((s) => [s.difficulty, s.level, s.internalLevelValue])
+
+  it('uses the CN values on the current CN version', () => {
+    expect(values(getSongCatalog(source, VersionEnum.PRiSMPLUS, 'cn'))).toEqual([
+      [DifficultyEnum.Master, '13+', 13.7],
+      [DifficultyEnum.Advanced, '7', 7.2],
+    ])
+  })
+
+  it('keeps the version values for other regions and for older CN versions', () => {
+    const jp = [
+      [DifficultyEnum.Master, '13+', 13.6],
+      [DifficultyEnum.Advanced, '7+', 7.9],
+    ]
+    expect(values(getSongCatalog(source, VersionEnum.PRiSMPLUS, 'jp'))).toEqual(jp)
+    expect(values(getSongCatalog(source, VersionEnum.PRiSMPLUS))).toEqual(jp)
+    expect(values(getSongCatalog(source, VersionEnum.CiRCLE, 'cn'))[0]).toEqual([DifficultyEnum.Master, '13+', 13.7])
+    expect(values(getSongCatalog(source, VersionEnum.CiRCLE, 'cn'))[1]).toEqual([DifficultyEnum.Advanced, '7+', 7.9])
+  })
+
+  it('caches the CN catalog apart from the version catalog', () => {
+    expect(getSongCatalog(source, VersionEnum.PRiSMPLUS, 'cn')).toBe(
+      getSongCatalog(source, VersionEnum.PRiSMPLUS, 'cn'),
+    )
+    expect(getSongCatalog(source, VersionEnum.PRiSMPLUS, 'cn')).not.toBe(
+      getSongCatalog(source, VersionEnum.PRiSMPLUS, 'jp'),
+    )
+    expect(getSongCatalog(source, VersionEnum.PRiSMPLUS, 'jp')).toBe(
+      getSongCatalog(source, VersionEnum.PRiSMPLUS, 'intl'),
+    )
+  })
+})

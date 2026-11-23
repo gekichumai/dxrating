@@ -1,3 +1,4 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import { FormControl, InputLabel, MenuItem, Select, Tab, Tabs, type TabsActions } from '@mui/material'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import clsx from 'clsx'
@@ -24,6 +25,7 @@ import {
   toToplistRow,
 } from '@/components/toplists/toplistData'
 import { drawToplistShareImage } from '@/components/toplists/toplistShareImage'
+import { shareLink } from '@/utils/shareImage/shareFooter'
 import { captureAnalyticsEvent, type ToplistKind } from '@/lib/analytics'
 import { DxScoreProgressText } from '@/components/scores/DxScoreProgressText'
 import { useUserRecords } from '@/models/useUserRecords'
@@ -115,123 +117,129 @@ export const ToplistsPage: FC = () => {
     <ScorePageFrame width="me">
       {header}
 
-      {/* Tabs and filters share one bar; side by side on desktop, stacked on phones */}
-      <MaterialSurface className="flex flex-col lg:flex-row lg:items-center overflow-hidden">
-        <Tabs
-          action={tabsActions}
-          className="min-w-0 lg:flex-1"
-          value={kind}
-          onChange={(_, value) => void navigate({ search: { tab: value, level }, replace: true })}
-          variant="scrollable"
-          scrollButtons="auto"
-          allowScrollButtonsMobile
-          classes={{ scroller: 'scroll-fade-x' }}
-          aria-label={m.toplists_title({}, { locale })}
-          sx={{ '& .MuiTabs-scrollButtons.Mui-disabled': { width: 0, opacity: 0 } }}
-        >
-          {TOPLIST_KINDS.map((item) => (
-            <Tab key={item} value={item} label={TAB_LABELS[item]({}, { locale })} className="min-w-0 px-3" />
-          ))}
-        </Tabs>
+      {/* The bar controls the list under it: one group (12px), a full pause after the header */}
+      <div className="section-stack">
+        {/* Tabs and filters share one bar; side by side on desktop, stacked on phones */}
+        <MaterialSurface className="flex flex-col lg:flex-row lg:items-center overflow-hidden">
+          <Tabs
+            action={tabsActions}
+            className="min-w-0 lg:flex-1"
+            value={kind}
+            onChange={(_, value) => void navigate({ search: { tab: value, level }, replace: true })}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+            classes={{ scroller: 'scroll-fade-x' }}
+            aria-label={m.toplists_title({}, { locale })}
+            sx={{ '& .MuiTabs-scrollButtons.Mui-disabled': { width: 0, opacity: 0 } }}
+          >
+            {TOPLIST_KINDS.map((item) => (
+              <Tab key={item} value={item} label={TAB_LABELS[item]({}, { locale })} className="min-w-0 px-3" />
+            ))}
+          </Tabs>
 
-        <div
-          className={clsx(
-            'flex flex-wrap items-center gap-3 p-3 lg:py-2 lg:shrink-0',
-            'border-solid border-black/8 border-x-0 border-b-0 border-t lg:border-t-0 lg:border-l',
-          )}
-        >
-          <FormControl size="small" className="min-w-36">
-            <InputLabel id="toplist-sort">{m.toplists_sort_label({}, { locale })}</InputLabel>
-            <Select
-              labelId="toplist-sort"
-              label={m.toplists_sort_label({}, { locale })}
-              value={sort}
-              onChange={(event) =>
-                void navigate({
-                  search: (prev) => ({ ...prev, sort: event.target.value as ToplistSort }),
-                  replace: true,
+          <div
+            className={clsx(
+              'flex flex-wrap items-center gap-3 p-3 lg:py-2 lg:shrink-0',
+              'border-solid border-black/8 border-x-0 border-b-0 border-t lg:border-t-0 lg:border-l',
+            )}
+          >
+            <FormControl size="small" className="min-w-36">
+              <InputLabel id="toplist-sort">{m.toplists_sort_label({}, { locale })}</InputLabel>
+              <Select
+                labelId="toplist-sort"
+                label={m.toplists_sort_label({}, { locale })}
+                value={sort}
+                onChange={(event) =>
+                  void navigate({
+                    search: (prev) => ({ ...prev, sort: event.target.value as ToplistSort }),
+                    replace: true,
+                  })
+                }
+              >
+                {TOPLIST_SORTS.map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {SORT_LABELS[item]({}, { locale })}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" className="min-w-28">
+              <InputLabel id="toplist-level">{m.toplists_level_label({}, { locale })}</InputLabel>
+              <Select
+                labelId="toplist-level"
+                label={m.toplists_level_label({}, { locale })}
+                value={level ?? ''}
+                onChange={(event) =>
+                  void navigate({
+                    search: (prev) => ({ ...prev, level: event.target.value || undefined }),
+                    replace: true,
+                  })
+                }
+              >
+                <MenuItem value="">{m.toplists_level_all({}, { locale })}</MenuItem>
+                {levels.map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {item}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <output className="text-sm text-fg-2 num">{m.toplists_count({ count: rows.length }, { locale })}</output>
+            <div className="flex-1 lg:hidden" />
+            <ShareImageButton
+              size="small"
+              // Same 40px height as the small selects beside it, so the outlines line up
+              sx={{ minHeight: 40 }}
+              disabled={rows.length === 0}
+              filename={`dxrating-${kind}.png`}
+              shareTitle={tabLabel}
+              getImage={() =>
+                drawToplistShareImage(rows, {
+                  title: tabLabel,
+                  subtitle: [level, SORT_LABELS[sort]({}, { locale })].filter(Boolean).join(' · '),
+                  // The page shows the scanner's own records, in the same list
+                  link: shareLink('/me/records', { tab: search.tab, sort: search.sort, level }),
+                  footerCaption: m.share_image_footerCaption({}, { locale }),
                 })
               }
-            >
-              {TOPLIST_SORTS.map((item) => (
-                <MenuItem key={item} value={item}>
-                  {SORT_LABELS[item]({}, { locale })}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" className="min-w-28">
-            <InputLabel id="toplist-level">{m.toplists_level_label({}, { locale })}</InputLabel>
-            <Select
-              labelId="toplist-level"
-              label={m.toplists_level_label({}, { locale })}
-              value={level ?? ''}
-              onChange={(event) =>
-                void navigate({
-                  search: (prev) => ({ ...prev, level: event.target.value || undefined }),
-                  replace: true,
-                })
-              }
-            >
-              <MenuItem value="">{m.toplists_level_all({}, { locale })}</MenuItem>
-              {levels.map((item) => (
-                <MenuItem key={item} value={item}>
-                  {item}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <output className="text-sm text-fg-2 num">{m.toplists_count({ count: rows.length }, { locale })}</output>
-          <div className="flex-1 lg:hidden" />
-          <ShareImageButton
-            size="small"
-            // Same 40px height as the small selects beside it, so the outlines line up
-            sx={{ minHeight: 40 }}
-            disabled={rows.length === 0}
-            filename={`dxrating-${kind}.png`}
-            shareTitle={tabLabel}
-            getImage={() =>
-              drawToplistShareImage(rows, {
-                title: tabLabel,
-                subtitle: [level, SORT_LABELS[sort]({}, { locale })].filter(Boolean).join(' · '),
-              })
-            }
-            onExported={(outcome) => captureAnalyticsEvent('toplist_share_exported', { kind, outcome })}
-          />
-        </div>
-      </MaterialSurface>
-
-      {!sheets ? null : rows.length === 0 ? (
-        kind === 'dx_score' ? (
-          <NoScoresState
-            title={m.toplists_empty_dx_scoreTitle({}, { locale })}
-            description={m.toplists_empty_dx_score({}, { locale })}
-            action={<ImportScoresLink>{m.toplists_empty_import({}, { locale })}</ImportScoresLink>}
-          />
-        ) : (
-          <MaterialSurface className="p-4 text-sm text-fg-2">
-            {m.toplists_empty_default({}, { locale })}
-          </MaterialSurface>
-        )
-      ) : (
-        <MaterialSurface className="p-1">
-          <ToplistColumnHeader showDxScore={showDxScore} />
-          <ol className="list-none m-0 p-0 flex flex-col">
-            {rows.map((row, index) => {
-              const sheet = flattenedById.get(row.sheet.id)
-              return sheet ? (
-                <ToplistItem
-                  key={row.sheet.id}
-                  row={row}
-                  sheet={sheet}
-                  position={index + 1}
-                  showDxScore={showDxScore}
-                />
-              ) : null
-            })}
-          </ol>
+              onExported={(outcome) => captureAnalyticsEvent('toplist_share_exported', { kind, outcome })}
+            />
+          </div>
         </MaterialSurface>
-      )}
+
+        {!sheets ? null : rows.length === 0 ? (
+          kind === 'dx_score' ? (
+            <NoScoresState
+              title={m.toplists_empty_dx_scoreTitle({}, { locale })}
+              description={m.toplists_empty_dx_score({}, { locale })}
+              action={<ImportScoresLink>{m.toplists_empty_import({}, { locale })}</ImportScoresLink>}
+            />
+          ) : (
+            <MaterialSurface className="p-4 text-sm text-fg-2">
+              {m.toplists_empty_default({}, { locale })}
+            </MaterialSurface>
+          )
+        ) : (
+          <MaterialSurface className="p-1">
+            <ToplistColumnHeader showDxScore={showDxScore} />
+            <ol className="list-none m-0 p-0 flex flex-col">
+              {rows.map((row, index) => {
+                const sheet = flattenedById.get(row.sheet.id)
+                return sheet ? (
+                  <ToplistItem
+                    key={row.sheet.id}
+                    row={row}
+                    sheet={sheet}
+                    position={index + 1}
+                    showDxScore={showDxScore}
+                  />
+                ) : null
+              })}
+            </ol>
+          </MaterialSurface>
+        )}
+      </div>
     </ScorePageFrame>
   )
 }
@@ -288,7 +296,7 @@ const ToplistItem: FC<{ row: ToplistRow; sheet: FlattenedSheet; position: number
   showDxScore,
 }) => {
   const locale = useLocale()
-  const cover = `https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`
+  const cover = coverUrl(sheet.songId)
   const level = sheet.internalLevelValue.toFixed(1)
   const achievement = `${row.entry.achievementRate.toFixed(4)}%`
   const chart = (

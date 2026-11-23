@@ -108,7 +108,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
                 onClick={() => setQuery('')}
                 className="flex items-center gap-3 rounded-lg px-2 py-1.5 no-underline text-inherit hover:bg-black/5"
               >
-                <SheetImage name={result.imageName} size="small" alt="" />
+                <SheetImage songId={result.songId} size="small" alt="" />
                 <span className="flex flex-col min-w-0">
                   <span lang="ja" translate="no" className="truncate text-sm font-medium">
                     {result.title}
@@ -125,7 +125,7 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
           {resultGroups.map(({ songId, sheets }) => (
             <li key={songId} className="flex flex-col gap-1.5 px-1 py-1">
               <span className="flex items-center gap-2 min-w-0">
-                <SheetImage name={sheets[0].imageName} size="small" alt="" />
+                <SheetImage songId={songId} size="small" alt="" />
                 <span lang="ja" translate="no" className="truncate text-sm font-medium">
                   {sheets[0].title}
                 </span>
@@ -157,8 +157,8 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
 
   if (!sheet) {
     return (
-      <div className="w-full max-w-2xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
-        <header className="flex flex-col gap-2">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 pb-global page-stack">
+        <header className="page-header">
           <h1 className="page-title m-0">{m.tools_tolerance_title({}, { locale })}</h1>
           <p className="page-description m-0">{m.tools_tolerance_intro({}, { locale })}</p>
           <Link to="/tools/rating" className="link self-start text-sm">
@@ -172,8 +172,8 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-6 pb-global flex flex-col gap-4">
-      <header className="flex flex-col gap-2">
+    <div className="w-full max-w-5xl mx-auto px-4 py-6 pb-global page-stack">
+      <header className="page-header">
         <Breadcrumb
           items={[
             { href: songHubPath(sheet.songId), label: <span lang="ja">{sheet.title}</span> },
@@ -185,9 +185,9 @@ export const TolerancePage: FC<{ sheet: ToleranceSelectedSheet | null }> = ({ sh
       </header>
 
       {/* Mobile: chart, calculator, then the picker. Desktop: chart and picker beside the calculator. */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:items-start">
+      <div className="grid gap-[var(--rhythm-1)] lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:items-start">
         <MaterialSurface variant="thin" className="flex items-center gap-3 p-3 lg:col-start-1 lg:row-start-1">
-          <SheetImage name={sheet.imageName} size="large" alt="" />
+          <SheetImage songId={sheet.songId} size="large" alt="" />
           <div className="flex flex-col min-w-0">
             <InternalLink href={sheetPath} lang="ja" translate="no" className="link font-bold [overflow-wrap:anywhere]">
               {sheet.title}

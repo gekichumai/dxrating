@@ -64,10 +64,15 @@ const TYPE_LABELS = {
 
 const typeShortLabel = (type: TypeEnum, label: string) => TYPE_SHORT_LABELS[type] ?? label
 
-/** A type's short label; DX takes the multicolour lettering of the game's でらっくす plate, as on iOS */
+/**
+ * A type's short label in its chart-type colour (tokens.css --chart-type-*): DX takes the multicolour lettering of the
+ * game's でらっくす plate, as on iOS, and STD the blue of its plate. The utage kinds keep the text colour.
+ */
 const TypeShortLabel: FC<{ type: TypeEnum; label: string }> = ({ type, label }) =>
   type === TypeEnum.DX ? (
     <span className="dx-lettering font-bold">{typeShortLabel(type, label)}</span>
+  ) : type === TypeEnum.STD ? (
+    <span className="text-chart-std-text font-bold">{typeShortLabel(type, label)}</span>
   ) : (
     <>{typeShortLabel(type, label)}</>
   )

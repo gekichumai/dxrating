@@ -2,7 +2,13 @@ import { DifficultyEnum, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import type { PlateRecord } from '@gekichumai/maimai-domain'
 import { describe, expect, it } from 'vitest'
 import { evaluatePlatePage, type PlatePageChart } from '../plateData'
-import { countMissingByDifficulty, describeSheetState, formatAchievement, rankRemainingSongs } from '../plateShareImage'
+import {
+  countMissingByDifficulty,
+  describeSheetState,
+  formatAchievement,
+  plateShareLink,
+  rankRemainingSongs,
+} from '../plateShareImage'
 
 const chart = (songId: string, levelValue: number): PlatePageChart => ({
   songId,
@@ -67,5 +73,16 @@ describe('describeSheetState', () => {
   })
   it('rounds achievement down', () => {
     expect(formatAchievement(99.9999)).toBe('99.99%')
+  })
+})
+
+describe('plateShareLink', () => {
+  it('names the exported region in the QR URL, Japan included, and prints the bare path', () => {
+    expect(plateShareLink('kuma-sho', 'jp')).toEqual({
+      url: 'https://dxrating.net/plates/kuma-sho?region=jp',
+      display: 'dxrating.net/plates/kuma-sho',
+    })
+    expect(plateShareLink('kagami-shin', 'intl').url).toBe('https://dxrating.net/plates/kagami-shin?region=intl')
+    expect(plateShareLink('kagami-shin', 'cn').url).toBe('https://dxrating.net/plates/kagami-shin?region=cn')
   })
 })

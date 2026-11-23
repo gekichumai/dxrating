@@ -1,3 +1,4 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import { Button, ButtonGroup, IconButton, Tooltip } from '@mui/material'
 import { motion, useReducedMotion } from 'motion/react'
 import { type FC, type ReactNode, useState } from 'react'
@@ -12,6 +13,7 @@ import { MaterialSurface } from '../global/MaterialSurface'
 import { AddSheetAltNameButton } from '../sheet/AddSheetAltNameButton'
 import { SheetAltNames } from '../sheet/SheetAltNames'
 import { useLocale } from '@/i18n/LocaleProvider'
+import { useServerAliases } from '@/models/useServerAliases'
 import { m } from '@/paraglide/messages'
 
 // One outlined treatment for every search service: neutral ink (the brand glyph identifies the service), sentence
@@ -60,8 +62,11 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const [imgError, setImgError] = useState(false)
   const reduceMotion = useReducedMotion()
   const song = sheet
+  // Undefined on the server and until the community lists arrive, so the first client render matches the server's
+  const { data: serverAliases, error: aliasesError } = useServerAliases()
+  const aliasesPending = serverAliases === undefined && !aliasesError
 
-  const coverUrl = `https://shama.dxrating.net/images/cover/v2/${song.imageName}.jpg`
+  const coverSrc = coverUrl(song.songId)
   const coverSize = imgExpanded ? COVER_SIZE.expanded : COVER_SIZE.collapsed
   const newTab = m.sheet_searchLinks_newTab({}, { locale })
 
@@ -90,7 +95,7 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             <MdiImageRemove aria-hidden className="text-fg-2 text-2xl" />
           ) : (
             <img
-              src={coverUrl}
+              src={coverSrc}
               alt=""
               className="block h-full w-full object-cover"
               draggable={false}
@@ -113,7 +118,7 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
                 size="small"
                 aria-label={m.sheet_copyTitle_tooltip({}, { locale })}
                 onClick={copyTitle}
-                className="shrink-0 !text-fg-2"
+                className="shrink-0 !text-fg-2 touch-hit"
               >
                 <IconMdiContentCopy aria-hidden className="h-4 w-4" />
               </IconButton>
@@ -122,7 +127,22 @@ export const SongHeader: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
           <div className="text-sm text-fg-1 break-words">{song.artist}</div>
           <div className="text-sm text-fg-2">{song.category}</div>
           <div className="w-full flex flex-col pt-1">
-            {song.searchAcronyms.length > 0 && <SheetAltNames altNames={song.searchAcronyms} />}
+            {song.searchAcronyms.length > 0 ? (
+              <SheetAltNames altNames={song.searchAcronyms} />
+            ) : (
+              // The community aliases load after the page (the server render has none). Their first line is held
+              // here, so they fill it instead of pushing the chart panel down; a song without any says so
+              <div className="h-5 flex items-center text-sm text-fg-2">
+                {aliasesPending ? (
+                  <span
+                    aria-hidden
+                    className="block h-3 w-28 glass-inset rounded-[var(--radius-xs)] motion-safe:animate-pulse"
+                  />
+                ) : aliasesError ? null : (
+                  m.sheet_aliases_none({}, { locale })
+                )}
+              </div>
+            )}
             <AddSheetAltNameButton sheet={sheet} />
           </div>
         </div>
