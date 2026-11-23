@@ -5,7 +5,12 @@ import { SheetTags } from '../SheetTags'
 
 let tags: { data?: unknown[]; isLoading: boolean } = { data: [], isLoading: false }
 
-vi.mock('../useSheetTags', () => ({ useSheetTags: () => tags }))
+vi.mock('../useSheetTagsDetailed', () => ({
+  useSheetTagsDetailed: () => ({ ...tags, data: tags.data ?? [], mutate: vi.fn() }),
+  useUserTagVotes: () => ({ data: {}, mutate: vi.fn() }),
+}))
+vi.mock('../../../../hooks/useAuth', () => ({ useAuth: () => ({ user: null }) }))
+vi.mock('@/i18n/LocaleProvider', () => ({ useLocale: () => 'en' }))
 vi.mock('../SheetTagsAddButton', () => ({ SheetTagsAddButton: () => <button type="button">Add tag</button> }))
 
 describe('SheetTags', () => {
@@ -17,7 +22,17 @@ describe('SheetTags', () => {
     ['no tags', { data: [], isLoading: false }],
     [
       'some tags',
-      { data: [{ id: 1, localized_name: { en: 'Stamina' }, localized_description: { en: '' } }], isLoading: false },
+      {
+        data: [
+          {
+            id: 1,
+            hidden: false,
+            tag: { id: 1, localized_name: { en: 'Stamina' }, localized_description: { en: '' } },
+          },
+          { id: 2, hidden: true, tag: { id: 2, localized_name: { en: 'Trill' }, localized_description: { en: '' } } },
+        ],
+        isLoading: false,
+      },
     ],
   ])('gives AnimatePresence no Fragment to put a ref on (%s)', (_, state) => {
     tags = state
