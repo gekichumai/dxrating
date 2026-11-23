@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   cleanup-preview-workers:
-    runs-on: boat-small
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     name: Cleanup Preview Workers
