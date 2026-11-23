@@ -8,18 +8,16 @@ import * as schema from './db/schema'
 import * as authSchema from './db/auth-schema'
 import { openAPI, oneTap, haveIBeenPwned, captcha, lastLoginMethod } from 'better-auth/plugins'
 import { passkey } from '@better-auth/passkey'
-import { i18n } from '@better-auth/i18n'
 import { AppConfig } from './config'
 import { createAppleClientSecretGenerator } from './lib/apple-client-secret'
 import { revokeOAuthGrants } from './lib/oauth-revocation'
 import { passkeySignUp, requireFreshSessionToAddPasskey } from './lib/passkey-sign-up'
-import { AUTH_ERROR_TRANSLATIONS } from './lib/auth-error-translations'
-import { detectAuthLocale } from './lib/auth-locale'
+import { localizeAuthError } from './lib/auth-error-localization'
 import { setPassword } from './lib/set-password'
 import { SET_PASSWORD_AUTH_PATH } from '@gekichumai/api-contract'
 import { and, eq } from 'drizzle-orm'
 /**
- * Routes whose new password haveIBeenPwned checks: the plugin's own list (Better Auth 1.7.6) and the endpoint where a
+ * Routes whose new password haveIBeenPwned checks: the plugin's default list and the endpoint where a
  * passkey or social account sets its first password, which the plugin can't know about.
  */
 export const PWNED_PASSWORD_PATHS = [
@@ -198,16 +196,6 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
             }),
           ]
         : []),
-      i18n({
-        defaultLocale: 'en',
-        // The page's language first (the web names it on every request), so a /ja/ page never shows an English error
-        detection: ['callback'],
-        getLocale: (ctx) => {
-          const locale = detectAuthLocale(ctx.headers)
-          return locale === 'en' ? null : locale
-        },
-        translations: AUTH_ERROR_TRANSLATIONS,
-      }),
     ],
   })
 }
@@ -292,7 +280,8 @@ export const AuthenticationLive = Layer.effect(
         normalizeUnlinkRequest(request).pipe(
           Effect.flatMap((normalized) =>
             Effect.tryPromise({
-              try: () => auth.handler(normalized),
+              // Error messages in the page's language (Better Auth answers in English)
+              try: async () => localizeAuthError(normalized.headers, await auth.handler(normalized)),
               catch: (cause) => new AuthenticationError({ operation: 'Handle authentication request', cause }),
             }),
           ),

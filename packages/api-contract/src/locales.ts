@@ -19,13 +19,6 @@ export const LOCALE_FALLBACKS: Readonly<Partial<Record<SupportedLocale, readonly
   'zh-Hans': ['zh-Hant'],
 }
 
-/**
- * The language of the page a request comes from (one of {@link SUPPORTED_LOCALES}). The web sends it on every
- * Better Auth request, so error messages follow the page's URL locale rather than the language cookie or the
- * browser's Accept-Language, which can name another language.
- */
-export const LOCALE_HEADER = 'X-DXRating-Locale'
-
 const SUPPORTED = new Set<string>(SUPPORTED_LOCALES)
 
 export const isSupportedLocale = (value: unknown): value is SupportedLocale =>

@@ -1,4 +1,3 @@
-import { LOCALE_HEADER } from '@gekichumai/api-contract'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 // The setup file replaces the auth client for every other test; this one checks the real one
@@ -27,7 +26,7 @@ afterEach(() => {
 
 const sentLocale = () => {
   const init = fetchSpy.mock.calls.at(-1)?.[1]
-  return new Headers(init?.headers).get(LOCALE_HEADER)
+  return new Headers(init?.headers).get('Accept-Language')
 }
 
 describe('authClient', () => {

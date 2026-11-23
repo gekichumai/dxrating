@@ -2,7 +2,8 @@ import { locales } from '@better-auth/i18n'
 import type { SupportedLocale } from '@gekichumai/api-contract'
 
 /**
- * Better Auth error messages in every language DXRating is translated into, for the i18n plugin (auth.ts).
+ * Better Auth error messages in every language DXRating is translated into, applied to error responses by
+ * `localizeAuthError` (auth-error-localization.ts).
  *
  * The codes below are the ones a visitor meets on the web's sign-in, sign-up and account security forms; each language
  * must translate all of them (the `satisfies` below fails the build otherwise). Messages carry no trailing full stop:

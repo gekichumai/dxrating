@@ -1,4 +1,4 @@
-import { isSupportedLocale, LOCALE_HEADER, type SupportedLocale } from '@gekichumai/api-contract'
+import { isSupportedLocale, type SupportedLocale } from '@gekichumai/api-contract'
 import { parse as parseCookie } from 'cookie'
 
 /** The web's language cookie (apps/web/src/setup/locale.ts), written by the language picker */
@@ -41,14 +41,17 @@ const fromAcceptLanguage = (header: string | null): SupportedLocale | null => {
 }
 
 /**
- * The language of a Better Auth error message: the page's own (the web's {@link LOCALE_HEADER}), then the language
- * cookie, then Accept-Language, for clients that send no header (the iOS app). `null` leaves Better Auth's English.
+ * The language of a Better Auth error message. Accept-Language first: the web sets it on every Better Auth request to
+ * the page's URL language (apps/web/src/lib/auth-client.ts), and other clients (the iOS app) send the device's. The
+ * language cookie only counts when that names no language DXRating has. `null` leaves Better Auth's English.
+ *
+ * Accept-Language is a CORS-safelisted header, so the web can set it without a preflight the backend must allow: the
+ * two deploy separately, and a custom header would break every auth request while only the web was live.
  */
 export const detectAuthLocale = (headers: Headers | undefined): SupportedLocale | null => {
   if (!headers) return null
-  const fromHeader = headers.get(LOCALE_HEADER)
-  if (isSupportedLocale(fromHeader)) return fromHeader
+  const fromHeader = fromAcceptLanguage(headers.get('accept-language'))
+  if (fromHeader) return fromHeader
   const fromCookie = parseCookie(headers.get('cookie') ?? '')[LOCALE_COOKIE_NAME]
-  if (isSupportedLocale(fromCookie)) return fromCookie
-  return fromAcceptLanguage(headers.get('accept-language'))
+  return isSupportedLocale(fromCookie) ? fromCookie : null
 }

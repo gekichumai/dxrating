@@ -1,4 +1,4 @@
-import { LOCALE_HEADER, SET_PASSWORD_AUTH_PATH } from '@gekichumai/api-contract'
+import { SET_PASSWORD_AUTH_PATH } from '@gekichumai/api-contract'
 import type { BetterAuthClientPlugin } from 'better-auth/client'
 import { createAuthClient } from 'better-auth/react'
 import { oneTapClient, lastLoginMethodClient } from 'better-auth/client/plugins'
@@ -8,7 +8,9 @@ import { splitLocalePath } from '@/setup/locale'
 /**
  * The language of the page a request is sent from: its URL prefix, which is what the page renders in. Read when the
  * request goes out, not when this module loads, since the visitor can switch language in place. The language cookie
- * and Accept-Language can name another language, so the backend reads this first for its error messages.
+ * and the browser's Accept-Language can name another language, so each request's Accept-Language is set to this,
+ * which the backend reads first for its error messages. Accept-Language is CORS-safelisted, so the backend's preflight
+ * needn't allow anything new (the two deploy separately).
  */
 export const authRequestLocale = () =>
   typeof window === 'undefined' ? undefined : splitLocalePath(window.location.pathname).locale
@@ -35,7 +37,7 @@ export const authClient = createAuthClient({
   fetchOptions: {
     onRequest: (context) => {
       const locale = authRequestLocale()
-      if (locale) context.headers.set(LOCALE_HEADER, locale)
+      if (locale) context.headers.set('Accept-Language', locale)
     },
   },
   plugins: [

@@ -61,7 +61,6 @@ import {
 import { appContract } from './contract'
 import {
   CLOUD_SAVE_EXPECTED_USER_HEADER,
-  LOCALE_HEADER,
   CLOUD_SAVE_NET_IMPORT_ROUTE,
   isPublicSpecProcedure,
 } from '@gekichumai/api-contract'
@@ -338,8 +337,6 @@ const apiCors = cors({
     'x-captcha-response',
     API_CLIENT_HEADER,
     CLOUD_SAVE_EXPECTED_USER_HEADER,
-    // The page's language on Better Auth requests, for localized error messages
-    LOCALE_HEADER,
   ],
   // PATCH and DELETE: cloud save routes (rename and delete a save)
   allowMethods: ['POST', 'GET', 'PATCH', 'DELETE', 'OPTIONS'],
