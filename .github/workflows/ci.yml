@@ -56,7 +56,7 @@ jobs:
   sentry-fixes:
     name: Sentry Fixes lines
     if: github.event_name == 'pull_request'
-    runs-on: boat
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Checkout
