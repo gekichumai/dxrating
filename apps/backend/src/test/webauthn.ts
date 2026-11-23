@@ -81,7 +81,7 @@ export const registerOptions = (query: Record<string, string>, cookie = '') =>
 
 /** Runs a whole registration ceremony and returns the verify-registration response */
 export const register = async ({ email, cookie = '' }: { email?: string; cookie?: string }) => {
-  const optionsResponse = await registerOptions(email ? { context: email } : {}, cookie)
+  const optionsResponse = await registerOptions(email ? { context: JSON.stringify({ email }) } : {}, cookie)
   if (optionsResponse.status !== 200) return optionsResponse
   const options = (await optionsResponse.json()) as { challenge: string; rp: { id: string }; user: { id: string } }
   const challengeCookie = cookiesOf(optionsResponse)
