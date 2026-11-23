@@ -2,18 +2,38 @@ name: Release
 
 on:
   push:
-    # trigger on version tag push
     tags:
       - 'v*'
 
 concurrency:
-  # One production deploy at a time; a newer tag replaces any queued older one,
-  # so back-to-back merges can't deploy out of order.
   group: release-production
   cancel-in-progress: false
 
 jobs:
+  newest:
+    runs-on: boat-small
+    permissions:
+      contents: read
+    name: Check the tag is the newest release
+    outputs:
+      newest: ${{ steps.check.outputs.newest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+
+      - name: Compare with the newest release tag on origin
+        id: check
+        run: node infra/release/newest-tag.ts "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+
   publish:
+    needs: newest
+    if: needs.newest.outputs.newest == 'true'
     runs-on: boat
     permissions:
       contents: read
