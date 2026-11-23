@@ -1,5 +1,6 @@
 export * from './src/achievement.ts'
 export * from './src/best50.ts'
+export * from './src/cloud-save-changes.ts'
 export * from './src/collapse-plays.ts'
 export * from './src/region-versions.ts'
 export * from './src/dx-score.ts'
