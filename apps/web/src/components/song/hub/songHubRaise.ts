@@ -5,9 +5,10 @@ import {
   type VersionedSheet,
   calculateBest50,
   recommendRatingRaises,
+  toRatingEntries,
 } from '@gekichumai/maimai-domain'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
-import { groupUserRecords, toRatingEntries } from '@/models/userRecords'
+import { groupUserRecords } from '@/models/userRecords'
 
 export interface SongHubRaise {
   targetAchievement: number
@@ -34,14 +35,9 @@ export function computeSongHubRaises({
   const result = new Map<string, SongHubRaise>()
   if (songSheets.length === 0) return result
 
-  // Same baseline as the calculator: every entry with its import bucket hint, B50 deduplicates by rating
-  const ratingEntries = toRatingEntries(entries, catalog)
-  const best50 = calculateBest50({ catalog, version, region, entries: ratingEntries })
+  const best50 = calculateBest50({ catalog, version, region, entries: toRatingEntries(entries, catalog) })
   const records = new Map(
-    [...groupUserRecords(entries, (id) => catalog.getById(id))].map(([sheetId, record]) => [
-      sheetId,
-      { achievementRate: record.entry.achievementRate, comboFlag: record.entry.comboFlag, source: record.source },
-    ]),
+    [...groupUserRecords(entries, (id) => catalog.getById(id))].map(([sheetId, record]) => [sheetId, record.best]),
   )
 
   const recommendations = recommendRatingRaises({

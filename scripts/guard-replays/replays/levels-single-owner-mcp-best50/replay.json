@@ -1,0 +1,10 @@
+{
+  "mistake": "The MCP calculate_best50 tool resolves a chart's internal level from multiverInternalLevelValue itself, with a precedence of its own, so its ratings drift from the web app's.",
+  "history": [
+    "#378 40ca271b (calculate_best50: override ?? base on the current version, multiver ?? override ?? base on past ones)",
+    "#647 aeb39bae (fixed CN's precedence in the catalog only; MCP kept its own rule and rated CN charts at the JP value)"
+  ],
+  "guard": "no-restricted-properties on multiverInternalLevelValue in apps/** (use sheetLevelOn from maimai-domain)",
+  "check": "pnpm exec oxlint apps/backend/src/services/mcp/tool-calculate-best50.ts",
+  "expect": "sheetLevelOn(sheet, { version, region })"
+}

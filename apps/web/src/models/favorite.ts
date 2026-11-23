@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react'
+import { browserStorage } from '@/utils/persisted'
 
 // Favorite sheets live in localStorage. Every reader goes through this store, so a write from anywhere (a star, the
 // saved-data migration, another tab) reaches each mounted favorite control, and a toggle always starts from what
@@ -11,8 +12,8 @@ let lastRaw: string | null | undefined
 let lastIds: readonly string[] = []
 
 /** The favorite sheet IDs in storage now */
-export const readFavoriteSheetIds = (storage: Storage = window.localStorage): readonly string[] => {
-  const raw = storage.getItem(FAVORITE_SHEETS_STORAGE_KEY)
+export const readFavoriteSheetIds = (storage: Storage | null = browserStorage('local')): readonly string[] => {
+  const raw = storage?.getItem(FAVORITE_SHEETS_STORAGE_KEY) ?? null
   if (raw === lastRaw) return lastIds
   let ids: readonly string[] = []
   try {
@@ -27,8 +28,8 @@ export const readFavoriteSheetIds = (storage: Storage = window.localStorage): re
 }
 
 /** Replaces the favorite sheet IDs in storage and tells every mounted favorite control */
-export const writeFavoriteSheetIds = (ids: readonly string[], storage: Storage = window.localStorage) => {
-  storage.setItem(FAVORITE_SHEETS_STORAGE_KEY, JSON.stringify(ids))
+export const writeFavoriteSheetIds = (ids: readonly string[], storage: Storage | null = browserStorage('local')) => {
+  storage?.setItem(FAVORITE_SHEETS_STORAGE_KEY, JSON.stringify(ids))
   window.dispatchEvent(new Event(FAVORITE_SHEETS_CHANGED_EVENT))
 }
 

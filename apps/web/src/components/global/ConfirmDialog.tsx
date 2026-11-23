@@ -70,15 +70,16 @@ export function useConfirmDialog() {
     })
   }, [])
 
+  const { resolve } = state
   const handleConfirm = useCallback(() => {
-    state.resolve?.(true)
+    resolve?.(true)
     setState({ open: false, resolve: null })
-  }, [state.resolve])
+  }, [resolve])
 
   const handleCancel = useCallback(() => {
-    state.resolve?.(false)
+    resolve?.(false)
     setState({ open: false, resolve: null })
-  }, [state.resolve])
+  }, [resolve])
 
   return { open: state.open, confirm, onConfirm: handleConfirm, onCancel: handleCancel }
 }

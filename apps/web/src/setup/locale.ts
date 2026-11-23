@@ -1,5 +1,7 @@
 import { SUPPORTED_LOCALES, type SupportedLocale } from '@gekichumai/api-contract'
 import { parse as parseCookie } from 'cookie'
+import { z } from 'zod'
+import { persisted } from '@/utils/persisted'
 
 // The one language list, shared with the backend and served to the iOS app (packages/api-contract/src/locales.ts).
 // Paraglide's project.inlang/settings.json must list the same tags; a test checks it.
@@ -9,6 +11,7 @@ export const DEFAULT_LOCALE = 'en' satisfies SupportedLocale
 export const LOCALE_QUERY_PARAM = 'locale'
 export const LOCALE_COOKIE_NAME = 'dxrating.locale'
 export const LOCALE_STORAGE_KEY = 'dxrating-locale'
+const storedLocale = persisted(LOCALE_STORAGE_KEY, z.string(), null, { format: 'text' })
 export const LOCALE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
 
 /** A Map, not an object literal: `?locale=constructor` must not find Object.prototype */
@@ -143,12 +146,7 @@ export function negotiateLocale(request: Request): SupportedLocale {
 }
 
 export function persistClientLocalePreference(locale: SupportedLocale) {
-  try {
-    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale)
-  } catch {
-    // The cookie is enough for SSR when localStorage is unavailable.
-  }
-
+  storedLocale.set(locale)
   document.cookie = `${LOCALE_COOKIE_NAME}=${encodeURIComponent(
     locale,
   )}; Max-Age=${LOCALE_COOKIE_MAX_AGE_SECONDS}; Path=/; SameSite=Lax`

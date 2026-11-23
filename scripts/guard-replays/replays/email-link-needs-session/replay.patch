@@ -1,0 +1,13 @@
+diff --git a/apps/backend/src/lib/auth-mail.ts b/apps/backend/src/lib/auth-mail.ts
+index 115a7c2e..40f68392 100644
+--- a/apps/backend/src/lib/auth-mail.ts
++++ b/apps/backend/src/lib/auth-mail.ts
+@@ -100,7 +100,7 @@ export const withCallbackUrl = (link: string, callbackUrl: string) => {
+  * A token that doesn't verify is left to Better Auth, which tells an expired link from a broken one.
+  */
+ export const requireSessionForEmailLink = async (ctx: GenericEndpointContext, frontendUrl: string) => {
+-  if (ctx.path !== '/verify-email') return
++  if (ctx.path === '/verify-email') return
+   const token: unknown = ctx.query?.token
+   if (typeof token !== 'string') return
+   const claims = await verifyJWT<{ email?: unknown; userId?: unknown }>(token, ctx.context.secret)

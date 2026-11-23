@@ -50,6 +50,18 @@ describe('Sentry scrubbing of OAuth callback parameters', () => {
     expect(scrubSpan({ description: `GET ${callback}` }).description).toMatch(/^GET https:\/\/dxrating\.net\/io/)
   })
 
+  it('filters the token of a password reset landing from the request, transaction and pageload', () => {
+    const landing = 'https://dxrating.net/ja/account/reset-password?token=synthetic-reset-token'
+    const event = scrubEvent({
+      request: { url: landing, query_string: 'token=synthetic-reset-token' },
+      transaction: 'GET /ja/account/reset-password?token=synthetic-reset-token',
+      contexts: { trace: { data: { 'url.full': landing, 'url.query': '?token=synthetic-reset-token' } } },
+      breadcrumbs: [{ data: { from: '/rating', to: '/ja/account/reset-password?token=synthetic-reset-token' } }],
+    })
+    expect(JSON.stringify(event)).not.toContain('synthetic-reset-token')
+    expect(event.request?.url).toBe('https://dxrating.net/ja/account/reset-password?token=%5BFiltered%5D')
+  })
+
   it('leaves other URLs alone', () => {
     expect(scrubUrl('/songs/abc?type=dx')).toBe('/songs/abc?type=dx')
     expect(scrubUrl('https://dxrating.net/rating')).toBe('https://dxrating.net/rating')

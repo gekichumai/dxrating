@@ -24,8 +24,8 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 }
 
 /** Second card line: type, difficulty and level identify the chart (a song can have two charts at one level) */
-export function toplistCardDetail(row: Pick<ToplistRow, 'sheet' | 'entry'>): string {
-  const comboLabel = row.entry.comboFlag ? COMBO_LABELS[row.entry.comboFlag] : undefined
+export function toplistCardDetail(row: Pick<ToplistRow, 'sheet' | 'best'>): string {
+  const comboLabel = row.best.comboFlag ? COMBO_LABELS[row.best.comboFlag] : undefined
   const difficulty = DIFFICULTY_LABELS[row.sheet.difficulty] ?? row.sheet.difficulty.toUpperCase()
   return [row.sheet.type.toUpperCase(), difficulty, row.sheet.internalLevelValue.toFixed(1), comboLabel]
     .filter(Boolean)
@@ -97,7 +97,7 @@ export function drawToplistShareImage(
         context.fillText(toplistCardDetail(row), textX, y + 30)
         context.fillStyle = '#ffffff'
         context.font = 'bold 13px Torus, system-ui, sans-serif'
-        context.fillText(`${row.entry.achievementRate.toFixed(4)}%`, textX, y + 48)
+        context.fillText(`${row.best.achievementRate.toFixed(4)}%`, textX, y + 48)
       })
 
       drawShareFooter(
