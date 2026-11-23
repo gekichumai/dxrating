@@ -1,0 +1,9 @@
+{
+  "mistake": "An applied Drizzle migration.sql is edited in place to make it repeatable, so databases that already ran the old SQL never run the new one.",
+  "history": [
+    "0b1324f8 (fix: make chain audit migration repeatable): IF EXISTS added to the applied 0008_arcade_chain_audit_alignment.sql, today drizzle/20260731214632_arcade_chain_audit_alignment. Replayed on the next applied arcade migration, which still has a bare DROP CONSTRAINT"
+  ],
+  "guard": "apps/backend/src/test/migration-lock.test.ts checks every migration.sql against the sha256 in drizzle/migrations.lock.json",
+  "check": "pnpm --filter @gekichumai/backend exec vitest run src/test/migration-lock.test.ts",
+  "expect": "20260801184911_enforce_arcade_public_identities/migration.sql changed after it was applied. Applied migrations are immutable"
+}
