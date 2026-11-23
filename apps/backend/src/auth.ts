@@ -125,6 +125,9 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
           ),
       },
     },
+    databaseHooks: {
+      user: { delete: { after: () => Effect.runPromise(database.wroteOutside([authSchema.user])) } },
+    },
     advanced: {
       cookiePrefix: 'dxrating',
       ...(crossSubDomainCookies ? { crossSubDomainCookies } : {}),

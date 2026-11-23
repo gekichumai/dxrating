@@ -134,4 +134,26 @@ describe('Aliases API', () => {
     const aliases = await (await fetch(`${getBaseUrl()}/api/v1/aliases`)).json()
     expect(aliases).toEqual([{ song_id: 'song-1', name: 'same alias' }])
   })
+
+  it("takes a deleted account's aliases off the list", async () => {
+    await signUp('leaving@example.com', 'password123', 'Leaving')
+    const cookie = extractSessionCookie(await signIn('leaving@example.com', 'password123'))
+    await authenticatedFetch(`${getBaseUrl()}/api/v1/aliases`, cookie, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ songId: 'song-1', name: 'leaving alias' }),
+    })
+    const listed = await (await fetch(`${getBaseUrl()}/api/v1/aliases`)).json()
+    expect(listed).toEqual([{ song_id: 'song-1', name: 'leaving alias' }])
+
+    const deletion = await authenticatedFetch(`${getBaseUrl()}/api/auth/delete-user`, cookie, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: 'password123' }),
+    })
+    expect(deletion.status).toBe(200)
+
+    const aliases = await (await fetch(`${getBaseUrl()}/api/v1/aliases`)).json()
+    expect(aliases).toEqual([])
+  })
 })

@@ -11,11 +11,12 @@ import {
   MenuItem,
 } from '@mui/material'
 import { MoreHorizontal } from 'lucide-react'
-import { useSWRConfig } from 'swr'
+import { useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { apiClient } from '../../lib/orpc'
 import { useAuth } from '../../hooks/useAuth'
 import { hideComment } from './commentVisibility'
+import { filterLoadedComments } from './useSheetComments'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
@@ -39,7 +40,7 @@ const SAFETY_ACTION_SUCCESS = {
 export function CommentActions({ comment }: { comment: Comment }) {
   const locale = useLocale()
   const { user, ensureAuthenticated, LoginDialog } = useAuth()
-  const { mutate } = useSWRConfig()
+  const queryClient = useQueryClient()
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const [action, setAction] = useState<SafetyAction | null>(null)
   const [pending, setPending] = useState(false)
@@ -52,11 +53,8 @@ export function CommentActions({ comment }: { comment: Comment }) {
     try {
       if (action === 'report') await apiClient.comments.report({ commentId: comment.id })
       else await apiClient.comments.blockAuthor({ commentId: comment.id })
-      await mutate(
-        (key) => Array.isArray(key) && key[0] === 'comments.list' && key[1] === user.id,
-        (data: Comment[] | undefined) =>
-          data?.filter((item) => (action === 'report' ? item.id !== comment.id : item.author_id !== comment.author_id)),
-        { revalidate: true },
+      await filterLoadedComments(queryClient, (item) =>
+        action === 'report' ? item.id !== comment.id : item.author_id !== comment.author_id,
       ).catch(() => {
         /* The server saved the preference; keep the local filter if refresh fails. */
       })

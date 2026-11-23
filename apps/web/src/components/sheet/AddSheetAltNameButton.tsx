@@ -1,11 +1,11 @@
 import { Button, Dialog, Grow, TextField } from '@mui/material'
+import { useQueryClient } from '@tanstack/react-query'
 import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAsyncFn } from 'react-use'
 import IconMdiPlus from '~icons/mdi/plus'
 import { useAuth } from '../../hooks/useAuth'
 import { apiClient as client } from '../../lib/orpc'
-import { useServerAliases } from '../../models/useServerAliases'
 import { rememberCreatedAlias } from '../../catalog/communityOverlay'
 import type { FlattenedSheet } from '../../songs'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
@@ -21,7 +21,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
   const { session, openLoginDialog, LoginDialog } = useAuth()
 
   const [newAltName, setNewAltName] = useState('')
-  const { mutate } = useServerAliases()
+  const queryClient = useQueryClient()
 
   const [{ loading }, handleAddAltName] = useAsyncFn(async () => {
     if (!session) return
@@ -41,15 +41,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
       setOpen(false)
       setNewAltName('')
       // Show the new alias at once: the shared edge copy of the list can take a few minutes to include it
-      const created = { song_id: sheet.songId, name: newAltName.trim() }
-      rememberCreatedAlias(created)
-      void mutate(
-        (aliases) =>
-          aliases?.some((alias) => alias.song_id === created.song_id && alias.name === created.name)
-            ? aliases
-            : [...(aliases ?? []), created],
-        { revalidate: false },
-      )
+      rememberCreatedAlias(queryClient, { song_id: sheet.songId, name: newAltName.trim() })
     } catch (e: any) {
       captureAnalyticsEvent('sheet_alias_failed', {
         song_id: sheet.songId,
@@ -59,7 +51,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
       })
       toast.error(m.sheet_aliases_toastFailed({ error: formatErrorMessage(e) }, { locale }))
     }
-  }, [newAltName, sheet.songId, mutate, locale])
+  }, [newAltName, sheet.songId, queryClient, locale])
 
   return (
     <>

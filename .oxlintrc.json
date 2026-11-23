@@ -153,12 +153,43 @@
           }
         ]
       }
+    },
+    {
+      "files": ["apps/web/**/*.ts", "apps/web/**/*.tsx"],
+      "rules": {
+        "dxrating/derived-query-keys": "error",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "^swr(/|$)",
+                "message": "Use useQuery(orpc.<route>.queryOptions({ input })) or requestQuery from @/lib/query: the key is derived from the request."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/web/src/lib/query.ts"],
+      "rules": {
+        "dxrating/derived-query-keys": "off"
+      }
     }
   ],
   "jsPlugins": [
     {
       "name": "gdp-ts",
       "specifier": "@gdp-ts/core/lint/plugin"
+    },
+    {
+      "name": "dxrating",
+      "specifier": "./scripts/lint/query-keys.mjs"
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { Button, Chip, CircularProgress, IconButton, TextField } from '@mui/material'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { type FC, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { SupportedLocale } from '@/setup/locale'
@@ -11,6 +11,7 @@ import IconMdiLock from '~icons/mdi/lock-outline'
 import IconPasskey from '~icons/material-symbols/passkey'
 import aaguidData from '../../../data/passkey-aaguids.json'
 import { authClient } from '../../../lib/auth-client'
+import { requestQuery } from '../../../lib/query'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
 import { PasswordVisibilityAdornment } from '../../auth/PasswordVisibilityAdornment'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
@@ -230,18 +231,23 @@ const PasskeyCreatedDate: FC<{ createdAt: Date }> = ({ createdAt }) => {
   )
 }
 
-const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading }) => {
+const PasskeysSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTag }> = ({
+  currentSessionToken,
+  headingAs: Heading,
+}) => {
   const locale = useLocale()
-  const queryClient = useQueryClient()
   const confirmDelete = useConfirmDialog()
 
-  const { data: passkeys = [], isLoading: loading } = useQuery({
-    queryKey: ['passkeys'],
-    queryFn: async () => {
+  const {
+    data: passkeys = [],
+    isLoading: loading,
+    refetch,
+  } = useQuery(
+    requestQuery('passkeys', { session: currentSessionToken }, async () => {
       const res = await authClient.passkey.listUserPasskeys()
       return (res.data ?? []) as PasskeyItem[]
-    },
-  })
+    }),
+  )
 
   const [addState, handleAdd] = useAsyncFn(async () => {
     const res = await authClient.passkey.addPasskey()
@@ -250,8 +256,8 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading 
       return
     }
     toast.success(m.auth_userProfile_passkeys_added({}, { locale }))
-    queryClient.invalidateQueries({ queryKey: ['passkeys'] })
-  }, [queryClient, locale])
+    void refetch()
+  }, [refetch, locale])
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirmDelete.confirm()
@@ -259,7 +265,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading 
     try {
       await authClient.passkey.deletePasskey({ id })
       toast.success(m.auth_userProfile_passkeys_deleted({}, { locale }))
-      queryClient.invalidateQueries({ queryKey: ['passkeys'] })
+      void refetch()
     } catch (e: unknown) {
       toast.error(m.auth_userProfile_passkeys_error({ error: formatErrorMessage(e) }, { locale }))
     }
@@ -368,16 +374,18 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
   headingAs: Heading,
 }) => {
   const locale = useLocale()
-  const queryClient = useQueryClient()
   const confirmRevoke = useConfirmDialog()
 
-  const { data: sessions = [], isLoading: loading } = useQuery({
-    queryKey: ['sessions'],
-    queryFn: async () => {
+  const {
+    data: sessions = [],
+    isLoading: loading,
+    refetch,
+  } = useQuery(
+    requestQuery('sessions', { session: currentSessionToken }, async () => {
       const res = await authClient.listSessions()
       return (res.data ?? []) as SessionItem[]
-    },
-  })
+    }),
+  )
 
   const handleRevoke = async (token: string) => {
     const confirmed = await confirmRevoke.confirm()
@@ -385,7 +393,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
     try {
       await authClient.revokeSession({ token })
       toast.success(m.auth_userProfile_devices_revoked({}, { locale }))
-      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+      void refetch()
     } catch (e: unknown) {
       toast.error(m.auth_userProfile_devices_error({ error: formatErrorMessage(e) }, { locale }))
     }
@@ -482,7 +490,7 @@ export const SecuritySection: FC<{
 
       <div className="h-px bg-black/8" aria-hidden="true" />
 
-      <PasskeysSubsection headingAs={subheading} />
+      <PasskeysSubsection currentSessionToken={currentSessionToken} headingAs={subheading} />
 
       <div className="h-px bg-black/8" aria-hidden="true" />
 

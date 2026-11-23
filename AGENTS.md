@@ -116,11 +116,6 @@ Web requires `apps/web/.env` (no `.env.example` — create manually):
 - Migrations live in `apps/backend/drizzle/`. Generate with `drizzle-kit generate`, apply with `drizzle-kit migrate`.
 - Never hand-edit generated migration SQL files.
 
-### Caching
-- `apps/backend/src/router.ts` uses an in-memory Keyv cache (30-minute TTL).
-- Mutations that affect cached data must call `await cache.delete('<key>')` after the write.
-- Current cached keys: `tags:list`.
-
 ## Code Conventions
 
 - **ESM throughout** — use extensionless relative imports in bundled TypeScript code (e.g., `import { foo } from './foo'`). Backend and renderer use TypeScript's `bundler` module resolution and esbuild for Node-compatible output. Source-only packages loaded directly by Node retain explicit `.ts` extensions on runtime imports; type-only imports can be extensionless. Keep extensions for assets and actual emitted file paths.
