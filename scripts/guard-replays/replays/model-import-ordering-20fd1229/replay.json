@@ -1,0 +1,10 @@
+{
+  "mistake": "A server import that skipped a record only because it was deleted after the job started still records the save revision, so the next identical job short-circuits instead of restoring the strictly better score.",
+  "history": [
+    "#436 20fd1229 (review 4496528792: completeImportJob recorded saveRevision after a time-bound skippedDeleted)"
+  ],
+  "guard": "formal/import-ordering ShortCircuitSound (Bug_20fd1229 = completeImportJob always reusable)",
+  "check": "formal/tlc.sh formal/import-ordering/ImportOrdering.tla",
+  "expect": "Invariant ShortCircuitSound is violated",
+  "needs": ["tlc"]
+}

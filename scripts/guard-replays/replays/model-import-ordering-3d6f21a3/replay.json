@@ -1,0 +1,8 @@
+{
+  "mistake": "The import short-circuit trusts the last job's payload hash without checking the save is still at the revision that job left, so after a manual downgrade the same automatic payload keeps the lower score.",
+  "history": ["#436 3d6f21a3 (review 4457268219; fixed in 1884c52: shortcut only at the recorded save revision)"],
+  "guard": "formal/import-ordering ShortCircuitSound (Bug_3d6f21a3 = merge.ts shouldShortCircuit without the saveRevision check)",
+  "check": "formal/tlc.sh formal/import-ordering/ImportOrdering.tla",
+  "expect": "Invariant ShortCircuitSound is violated",
+  "needs": ["tlc"]
+}
