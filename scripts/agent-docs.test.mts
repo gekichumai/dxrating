@@ -12,12 +12,6 @@ const FILE_EXTENSION = /\.[a-z]{1,5}$/i
 const isIgnored = (path: string) =>
   spawnSync('git', ['check-ignore', '-q', '--no-index', '--', path], { cwd: root }).status === 0
 
-/**
- * The repo paths written in inline code (`like/this.ts`) that neither exist nor are git-ignored, resolved from the
- * doc's directory and from the repo root. A span counts as a path when it has a slash and either starts with an
- * entry of one of those directories or ends in `/` or a file extension, so package specifiers such as `hono/cors`
- * and URL paths such as `/api/v1` are not paths. Fenced code blocks are skipped.
- */
 function missingPaths(markdown: string, docDir: string): { line: number; path: string }[] {
   const bases = [docDir, root]
   const topLevel = new Set(bases.flatMap((base) => readdirSync(base)))

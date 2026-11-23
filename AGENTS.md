@@ -165,7 +165,7 @@ All user-visible strings are Paraglide JS messages. Add each message to every fi
 
 ## Deployment
 
-- **Web** → Cloudflare Workers, deployed by `.github/workflows/release.yml` from the version tag that `.github/workflows/release-dispatcher.yml` adds on every push to `main`.
+- **Web** → Cloudflare Workers, deployed by `.github/workflows/release.yml` from the version tag that `.github/workflows/release-dispatcher.yml` adds on pushes to `main`.
 - **Backend** → Docker container via Coolify, deployed on push to `main` (`.github/workflows/backend.yml`).
 
 ## Collaboration Rules (owner-set)
