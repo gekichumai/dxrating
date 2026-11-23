@@ -1,10 +1,10 @@
-import * as Sentry from '@sentry/node'
 import { ORPCError, implement } from '@orpc/server'
 import { handlerGen } from '@orpc/experimental-effect'
 import { Clock, Effect } from 'effect'
 import { log } from 'evlog'
 import { appContract } from './contract'
 import { Database } from './db/index'
+import { Sentry } from './lib/functions/sentry'
 import { rateLimit, requireExpectedUser, requireFeature, requireSession, writeConcurrency } from './orpc-middleware'
 import type { ApiContext } from './router'
 import { listRecordEvents, pullChanges } from './services/cloud-save/changes'
@@ -41,6 +41,7 @@ import {
 } from './services/cloud-save/server-imports'
 import { fetchDivingFishImport, fetchLxnsImport } from './services/cloud-save/upstream-imports'
 import { withViewer } from './proofs/viewer-is'
+import { runApp } from './runtime'
 
 const os = implement(appContract).$context<ApiContext>()
 
@@ -419,9 +420,14 @@ const exportHandler = cloudSave.export
     handlerGen(function* ({ context }) {
       const database = yield* Database
       const exportedAt = new Date(yield* Clock.currentTimeMillis)
-      const parts = yield* Effect.promise(async () => {
+      const parts = yield* Effect.promise(async (signal) => {
         const chunks: string[] = []
-        for await (const chunk of exportChunks(Effect.runPromise, database, context.user.id, exportedAt)) {
+        for await (const chunk of exportChunks(
+          (effect) => runApp(effect, { signal }),
+          database,
+          context.user.id,
+          exportedAt,
+        )) {
           chunks.push(chunk)
         }
         return chunks

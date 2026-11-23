@@ -7,7 +7,7 @@ import {
   type AuthParams,
   type StateUpdateCallback,
 } from '../../../lib/functions/client'
-import { netErrorTags, Sentry, type Scope } from '../../../lib/functions/sentry'
+import { reportFailure, Sentry } from '../../../lib/functions/sentry'
 import { holdCredentials, scrubString } from '../../../lib/credential-hygiene'
 import { runApp } from '../../../runtime'
 import { recordNetFailure, recordNetSuccess } from './telemetry'
@@ -21,15 +21,15 @@ export class NetStreamError extends Data.TaggedError('NetStreamError')<{
   }
 }
 
-const reportError = (failure: unknown, region: string, streaming: boolean) => {
-  const error = failure
+const reportError = (error: unknown, region: string, streaming: boolean) => {
   if (!(error instanceof Error)) return
-  Sentry.withScope((scope: Scope) => {
-    scope.setContext('function', { name: streaming ? 'fetchNetRecords_v1' : 'fetchNetRecords_v0' })
-    scope.setContext('parameters', { region })
-    scope.setContext('endpoint', { name: streaming ? 'MaimaiNET (SSE)' : 'MaimaiNET' })
-    scope.setTags({ 'net.region': region, ...netErrorTags(error) })
-    Sentry.captureException(error)
+  reportFailure(error, {
+    contexts: {
+      function: { name: streaming ? 'fetchNetRecords_v1' : 'fetchNetRecords_v0' },
+      parameters: { region },
+      endpoint: { name: streaming ? 'MaimaiNET (SSE)' : 'MaimaiNET' },
+    },
+    tags: { 'net.region': region },
   })
 }
 

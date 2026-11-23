@@ -1,0 +1,4 @@
+ALTER TABLE "user" ADD COLUMN "email_verified_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN "email_verification_method" text;--> statement-breakpoint
+ALTER TABLE "user" ADD CONSTRAINT "user_email_verification_method_check" CHECK ("email_verification_method" IN ('oauth', 'email_link', 'email_verification_protocol', 'admin', 'unknown'));--> statement-breakpoint
+ALTER TABLE "user" ADD CONSTRAINT "user_email_verification_record_check" CHECK (("email_verified_at" IS NULL) = ("email_verification_method" IS NULL) AND ("email_verified" OR "email_verified_at" IS NULL));

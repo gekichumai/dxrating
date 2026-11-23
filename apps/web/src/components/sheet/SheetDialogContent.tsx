@@ -515,6 +515,7 @@ const SheetInternalLevelHistory: FC<{
     () =>
       MULTIVER_AVAILABLE_VERSIONS.map((version) => ({
         version,
+        // oxlint-disable-next-line no-restricted-properties -- the raw per-version table, shown as is
         internalLevelValue: sheet.multiverInternalLevelValue?.[version],
         available: VERSION_ID_MAP.get(version)! >= VERSION_ID_MAP.get(sheet.version)!,
       })).reduce(

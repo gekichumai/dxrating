@@ -11,6 +11,8 @@ import { runCloudSaveCleanup } from '../services/cloud-save/cleanup'
 import { canonicalSha256 } from '../services/cloud-save/jobs'
 import { EXPORT_CONCURRENCY, exportChunks, tryAcquireExportSlot } from '../services/cloud-save/export'
 import { appRuntime } from '../runtime'
+import { appRouter, type ApiContext } from '../router'
+import { call } from '@orpc/server'
 import { Effect } from 'effect'
 import { CLOUD_SAVE_EXPECTED_USER_HEADER } from '@gekichumai/api-contract'
 import { CLOUD_SAVE_LARGE_BODY_LIMIT_BYTES, CLOUD_SAVE_MAX_RECORDS_PER_SAVE } from '../services/cloud-save/limits'
@@ -1209,6 +1211,19 @@ describe('cloud save API (design §5)', () => {
       expect(slashed.headers.get('content-type')).toBe(response.headers.get('content-type'))
       expect(slashed.headers.get('content-disposition')).toMatch(/^attachment; filename="dxrating-cloud-export-/)
       expect((await slashed.json()).saves).toHaveLength(1)
+    })
+
+    it('builds the same document in memory for in-process callers', async () => {
+      const user = await session(pool, 'export-in-process@example.com')
+      const save = await newSave(user.cookie)
+      await mutate(user.cookie, save.id, [setMutation(sheetId(1), 1000000), setMutation(sheetId(2), 990000)])
+      const effectContext = await appRuntime.runPromise(appRuntime.contextEffect)
+      const { body } = await call(appRouter.cloudSave.export, undefined, {
+        context: { 'effect/context': effectContext, user: { id: user.userId } as NonNullable<ApiContext['user']> },
+      })
+      const streamed = await (await authenticatedFetch(`${getBaseUrl()}/api/v1/me/export`, user.cookie)).json()
+      expect(streamed.saves[0].records).toHaveLength(2)
+      expect({ ...JSON.parse(await body.text()), exportedAt: null }).toEqual({ ...streamed, exportedAt: null })
     })
 
     it('is one consistent snapshot: a write landing while the file downloads is not half in it', async () => {
