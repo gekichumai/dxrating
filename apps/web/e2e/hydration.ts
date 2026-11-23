@@ -1,13 +1,13 @@
 import { expect, type Page } from '@playwright/test'
 
-/** React's hydration errors (#418, #423, #425 and their development messages) and any uncaught error */
+/** React's hydration errors (minified #418-#425 and their development messages) and any uncaught error */
 export function collectPageErrors(page: Page) {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`))
   page.on('console', (message) => {
     if (message.type() !== 'error') return
     const text = message.text()
-    if (/Minified React error #(418|419|421|422|423|425)|hydrat/i.test(text)) errors.push(`console: ${text}`)
+    if (/Minified React error #(418|419|420|421|422|423|424|425)|hydrat/i.test(text)) errors.push(`console: ${text}`)
   })
   return errors
 }

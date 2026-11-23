@@ -4,8 +4,9 @@ import { expect, test } from '@playwright/test'
 import { localizePath } from '../src/setup/locale'
 import { collectPageErrors, waitForHydration } from './hydration'
 
-// The server renders in UTC. The skewed clock stands for HTML the edge cache rendered earlier: a first render that
-// reads the clock instead of the rendered-at time then differs in any time zone.
+// The server renders in UTC and en-US. The skewed clock stands for HTML the edge cache rendered earlier: a first render
+// that reads the clock instead of the rendered-at time then differs in any time zone. The browser locales are ones the
+// site doesn't offer, so the unprefixed URLs still serve English.
 
 type CatalogSong = { id: string; sheets: { id: string; type: string; difficulty: string }[] }
 const { songs } = JSON.parse(
@@ -52,10 +53,15 @@ const PROFILES = [
       isMobile: true,
       hasTouch: true,
       timezoneId: 'Pacific/Kiritimati',
+      locale: 'de-DE',
     },
     layout: 'grid',
   },
-  { name: 'desktop', use: { viewport: { width: 1280, height: 800 }, timezoneId: 'Pacific/Pago_Pago' }, layout: 'list' },
+  {
+    name: 'desktop',
+    use: { viewport: { width: 1280, height: 800 }, timezoneId: 'Pacific/Pago_Pago', locale: 'fr-FR' },
+    layout: 'list',
+  },
 ] as const
 
 const LOCALES = ['en', 'ja'] as const
