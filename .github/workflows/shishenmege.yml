@@ -30,7 +30,7 @@ permissions:
 jobs:
   check:
     name: Lint, test, build
-    runs-on: boat
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -61,7 +61,7 @@ jobs:
     name: Deploy
     needs: [check]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: boat-small
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

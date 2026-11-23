@@ -43,6 +43,7 @@ vi.mock('@/lib/auth-client', () => ({
     getLastUsedLoginMethod: () => null,
     signIn: { email: emailSignIn, passkey: vi.fn(), social: vi.fn() },
     signUp: { email: vi.fn() },
+    passkey: { addPasskey: vi.fn() },
   },
 }))
 // The page theme (useResolvedTheme has its own tests); this file is about the token lifecycle
@@ -84,7 +85,8 @@ describe('LoginForm Turnstile across a widget replacement', () => {
     const { rerender } = render(<LoginForm />)
 
     fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: 'demo@example.com' } })
-    fireEvent.change(screen.getByLabelText(/^Password/), { target: { value: 'demo-password' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with email' }))
+    fireEvent.change(await screen.findByLabelText(/^Password/), { target: { value: 'demo-password' } })
     const submit = () => document.querySelector<HTMLButtonElement>('form button[type="submit"]') as HTMLButtonElement
 
     expect(widget.theme).toBe('light')
@@ -112,7 +114,8 @@ describe('LoginForm Turnstile across a widget replacement', () => {
     render(<LoginForm />)
 
     fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: 'demo@example.com' } })
-    fireEvent.change(screen.getByLabelText(/^Password/), { target: { value: 'demo-password' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with email' }))
+    fireEvent.change(await screen.findByLabelText(/^Password/), { target: { value: 'demo-password' } })
     const submit = () => document.querySelector<HTMLButtonElement>('form button[type="submit"]') as HTMLButtonElement
 
     expect(widget.size).toBe('flexible')
