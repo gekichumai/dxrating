@@ -1,0 +1,13 @@
+diff --git a/formal/import-ordering/ImportOrdering.cfg b/formal/import-ordering/ImportOrdering.cfg
+index 5e1b5362..b6c2d753 100644
+--- a/formal/import-ordering/ImportOrdering.cfg
++++ b/formal/import-ordering/ImportOrdering.cfg
+@@ -6,7 +6,7 @@ CONSTANTS
+   Bug_20fd1229 = FALSE
+   Bug_b4850bef = FALSE
+   Bug_d95f7c29 = FALSE
+-  Bug_0d12d685_Replace = FALSE
++  Bug_0d12d685_Replace = TRUE
+ INVARIANTS
+   TypeOK
+   DeletionSticky
