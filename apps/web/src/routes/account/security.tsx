@@ -55,7 +55,11 @@ function AccountSecurityPage() {
             </div>
           </>
         ) : sessionData?.session ? (
-          <SecuritySection currentSessionToken={sessionData.session.token} idPrefix="account-security" />
+          <SecuritySection
+            currentSessionToken={sessionData.session.token}
+            userId={sessionData.user.id}
+            idPrefix="account-security"
+          />
         ) : (
           // One column on phones; from md the page heading and what the page manages sit beside the form, which then
           // drops its own (duplicate) sign-in heading

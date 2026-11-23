@@ -24,16 +24,24 @@ type HeadingTag = 'h2' | 'h4'
 const PASSWORD_MIN_LENGTH = 8
 const PASSWORD_MAX_LENGTH = 128
 
-/** Whether the signed-in account has a password (a `credential` account), shared by everything that changes it */
-const HAS_PASSWORD_QUERY_KEY = ['auth', 'has-password'] as const
+/**
+ * Whether the signed-in account has a password (a `credential` account), shared by everything that changes it. Keyed
+ * by the user, as sign-out keeps the query cache: the next account to sign in must not see the last one's answer.
+ */
+const hasPasswordQueryKey = (userId: string | undefined) => ['auth', 'has-password', userId ?? null] as const
 
-const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ idPrefix, headingAs: Heading }) => {
+const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: string | undefined }> = ({
+  idPrefix,
+  headingAs: Heading,
+  userId,
+}) => {
   const locale = useLocale()
   const queryClient = useQueryClient()
+  const hasPasswordKey = hasPasswordQueryKey(userId)
   // An account made with a passkey or a social provider has no password: it sets a first one, with no current password
   // to give. If the accounts can't be read, the change form stays (the server refuses whichever doesn't apply).
   const { data: hasPassword = true, isPending: accountsPending } = useQuery({
-    queryKey: HAS_PASSWORD_QUERY_KEY,
+    queryKey: hasPasswordKey,
     queryFn: async () => {
       const { data, error } = await authClient.listAccounts()
       if (error) throw error
@@ -79,13 +87,12 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
       if (error) {
         toast.error(m.auth_userProfile_password_setError({ error: error.message ?? '' }, { locale }))
         // Set from another tab meanwhile: show the change form
-        if (error.code === 'PASSWORD_ALREADY_SET')
-          void queryClient.invalidateQueries({ queryKey: HAS_PASSWORD_QUERY_KEY })
+        if (error.code === 'PASSWORD_ALREADY_SET') void queryClient.invalidateQueries({ queryKey: hasPasswordKey })
         return
       }
       toast.success(m.auth_userProfile_password_setSuccess({}, { locale }))
       resetFields()
-      queryClient.setQueryData(HAS_PASSWORD_QUERY_KEY, true)
+      queryClient.setQueryData(hasPasswordKey, true)
       return
     }
     const { error } = await authClient.changePassword({
@@ -294,13 +301,16 @@ const PasskeyCreatedDate: FC<{ createdAt: Date }> = ({ createdAt }) => {
   )
 }
 
-const PasskeysSubsection: FC<{ headingAs: HeadingTag }> = ({ headingAs: Heading }) => {
+const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined }> = ({
+  headingAs: Heading,
+  userId,
+}) => {
   const locale = useLocale()
   const queryClient = useQueryClient()
   const confirmDelete = useConfirmDialog()
 
   const { data: passkeys = [], isLoading: loading } = useQuery({
-    queryKey: ['passkeys'],
+    queryKey: ['passkeys', userId ?? null],
     queryFn: async () => {
       const res = await authClient.passkey.listUserPasskeys()
       return (res.data ?? []) as PasskeyItem[]
@@ -427,16 +437,17 @@ function parseUserAgent(ua: string | null | undefined, locale: SupportedLocale):
   return os ? m.auth_userProfile_devices_browserOnOs({ browser, os }, { locale }) : browser
 }
 
-const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTag }> = ({
+const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTag; userId: string | undefined }> = ({
   currentSessionToken,
   headingAs: Heading,
+  userId,
 }) => {
   const locale = useLocale()
   const queryClient = useQueryClient()
   const confirmRevoke = useConfirmDialog()
 
   const { data: sessions = [], isLoading: loading } = useQuery({
-    queryKey: ['sessions'],
+    queryKey: ['sessions', userId ?? null],
     queryFn: async () => {
       const res = await authClient.listSessions()
       return (res.data ?? []) as SessionItem[]
@@ -527,10 +538,12 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
 
 export const SecuritySection: FC<{
   currentSessionToken?: string
+  /** The signed-in user, which keys what this section caches */
+  userId: string | undefined
   idPrefix?: string
   /** `h1` as a page (/account/security); `h3` inside the account dialog, under its `h2` title */
   titleAs?: 'h1' | 'h3'
-}> = ({ currentSessionToken, idPrefix = 'security', titleAs: Title = 'h1' }) => {
+}> = ({ currentSessionToken, userId, idPrefix = 'security', titleAs: Title = 'h1' }) => {
   const locale = useLocale()
   const subheading: HeadingTag = Title === 'h1' ? 'h2' : 'h4'
 
@@ -542,15 +555,15 @@ export const SecuritySection: FC<{
         </Title>
       </div>
 
-      <PasswordSubsection idPrefix={idPrefix} headingAs={subheading} />
+      <PasswordSubsection idPrefix={idPrefix} headingAs={subheading} userId={userId} />
 
       <div className="h-px bg-black/8" aria-hidden="true" />
 
-      <PasskeysSubsection headingAs={subheading} />
+      <PasskeysSubsection headingAs={subheading} userId={userId} />
 
       <div className="h-px bg-black/8" aria-hidden="true" />
 
-      <DevicesSubsection currentSessionToken={currentSessionToken} headingAs={subheading} />
+      <DevicesSubsection currentSessionToken={currentSessionToken} headingAs={subheading} userId={userId} />
     </div>
   )
 }

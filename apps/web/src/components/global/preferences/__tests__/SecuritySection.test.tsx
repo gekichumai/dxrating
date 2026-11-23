@@ -56,7 +56,7 @@ describe('SecuritySection', () => {
   })
 
   it('uses a semantic password form with stable password-manager fields', async () => {
-    render(<SecuritySection />, { wrapper: TestProviders })
+    render(<SecuritySection userId="u1" />, { wrapper: TestProviders })
 
     const form = await screen.findByRole('form', { name: 'Password' })
     const currentPassword = screen.getByLabelText(/^Current password/)
@@ -95,7 +95,7 @@ describe('SecuritySection', () => {
   it('offers an account without a password to set one, with no current password to give', async () => {
     // A passkey-only account: no credential account (passkeys aren't accounts)
     listAccounts.mockResolvedValue({ data: [], error: null })
-    render(<SecuritySection />, { wrapper: TestProviders })
+    render(<SecuritySection userId="u1" />, { wrapper: TestProviders })
 
     const form = await screen.findByRole('form', { name: 'Password' })
     expect(screen.queryByLabelText(/^Current password/)).toBeNull()
@@ -122,13 +122,33 @@ describe('SecuritySection', () => {
     expect(screen.getByRole('button', { name: 'Change password' })).toBeTruthy()
   })
 
+  it("never shows the last account's password form to the next one signed in on the same page", async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const Shared = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    )
+    const { rerender } = render(<SecuritySection userId="u1" />, { wrapper: Shared })
+    expect(await screen.findByLabelText(/^Current password/)).toBeTruthy()
+
+    // Signed out, then in as a passkey-only account, whose accounts answer slowly
+    let answer: (value: unknown) => void = () => {}
+    listAccounts.mockReturnValue(new Promise((resolve) => (answer = resolve)))
+    rerender(<SecuritySection userId="u2" />)
+    expect(screen.queryByLabelText(/^Current password/)).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Change password' })).toBeNull()
+
+    answer({ data: [], error: null })
+    expect(await screen.findByRole('button', { name: 'Set password' })).toBeTruthy()
+    expect(screen.queryByLabelText(/^Current password/)).toBeNull()
+  })
+
   it('shows why a password could not be set, in the server language', async () => {
     listAccounts.mockResolvedValue({ data: [], error: null })
     setInitialPassword.mockResolvedValue({
       data: null,
       error: { code: 'SESSION_NOT_FRESH', message: 'Sign in again first', status: 403, statusText: 'FORBIDDEN' },
     })
-    render(<SecuritySection />, { wrapper: TestProviders })
+    render(<SecuritySection userId="u1" />, { wrapper: TestProviders })
 
     await screen.findByRole('form', { name: 'Password' })
     fireEvent.change(screen.getByLabelText(/^New password/), { target: { value: 'first-password' } })
@@ -156,7 +176,7 @@ describe('SecuritySection', () => {
     render(
       <LocaleProvider initialLocale="en">
         <SwitchToJapanese />
-        <SecuritySection />
+        <SecuritySection userId="u1" />
       </LocaleProvider>,
       { wrapper: TestProviders },
     )

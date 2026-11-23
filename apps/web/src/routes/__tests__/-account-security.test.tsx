@@ -3,7 +3,7 @@ import { useEffect, useSyncExternalStore } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 interface SessionState {
-  data: { session: { token: string } } | null
+  data: { session: { token: string }; user: { id: string } } | null
   isPending: boolean
 }
 
@@ -90,7 +90,7 @@ describe('/account/security', () => {
     await renderPage()
     act(() => session.set({ data: null, isPending: false }))
     act(() => session.set({ data: null, isPending: true }))
-    act(() => session.set({ data: { session: { token: 't' } }, isPending: false }))
+    act(() => session.set({ data: { session: { token: 't' }, user: { id: 'u1' } }, isPending: false }))
     expect(screen.getByText('security settings')).not.toBeNull()
     expect(loading()).toBeNull()
   })
