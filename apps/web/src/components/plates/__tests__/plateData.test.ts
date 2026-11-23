@@ -1,5 +1,5 @@
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
-import { getSongCatalog, LATEST_REGION_VERSIONS, listPlates } from '@gekichumai/maimai-domain'
+import { collapsePlays, getSongCatalog, LATEST_REGION_VERSIONS, listPlates } from '@gekichumai/maimai-domain'
 import { describe, expect, it } from 'vitest'
 import {
   buildPlateIndex,
@@ -35,7 +35,8 @@ describe('plate page data', () => {
     expect(data.totalSheets).toBe(data.charts.reduce((sum, chart) => sum + chart.sheets.length, 0))
 
     const [first] = data.charts
-    const records = new Map(first.sheets.map((sheet) => [sheet.id, { achievementRate: 100.2 }]))
+    const record = collapsePlays([{ achievementRate: 100.2, best50Bucket: null }], null)
+    const records = new Map(first.sheets.map((sheet) => [sheet.id, record]))
     const progress = evaluatePlatePage(data, records)
     expect(progress.completedCharts).toBe(1)
     expect(progress.completedSheets).toBe(first.sheets.length)

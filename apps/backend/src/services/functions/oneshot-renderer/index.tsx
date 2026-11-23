@@ -6,6 +6,7 @@ import {
   calculateRatingAward,
   getSongCatalog,
   resolveLegacySheetId,
+  toRatingEntries,
   type Best50Bucket,
   type RatingAward,
   type SongCatalog,
@@ -238,14 +239,17 @@ export const calculateEntries = (
         catalog,
         version,
         region,
-        entries: [
-          {
-            sheetId: renderData.sheetId,
-            identity: renderData.sheet.identity,
-            achievementRate: renderData.achievementRate,
-            comboFlag: renderData.achievementAccuracy ?? null,
-          },
-        ],
+        entries: toRatingEntries(
+          [
+            {
+              sheetId: renderData.sheetId,
+              identity: renderData.sheet.identity,
+              achievementRate: renderData.achievementRate,
+              comboFlag: renderData.achievementAccuracy ?? null,
+            },
+          ],
+          catalog,
+        ),
       })
       const bucket = match({ hasB15: best50.b15.length > 0, hasB35: best50.b35.length > 0 })
         .with({ hasB15: true }, () => 'b15' as const)

@@ -16,6 +16,7 @@
  * (`excludedMusicIds`).
  */
 import { DifficultyEnum, type Sheet, type Song, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
+import type { CollapsedPlay } from './collapse-plays.ts'
 import { LATEST_REGION_VERSIONS } from './region-versions.ts'
 import { sheetLevelOn } from './song-catalog.ts'
 import type { ComboFlag, SyncFlag } from './types'
@@ -193,11 +194,7 @@ export function plateName(plate: PlateDefinition, script: 'ja' | 'zh' = 'ja'): s
   return plate.kind === 'hasha' ? `${prefix}者` : `${prefix}${PLATE_KIND_LABELS[plate.kind][script]}`
 }
 
-export interface PlateRecord {
-  achievementRate: number
-  comboFlag?: ComboFlag
-  syncFlag?: SyncFlag
-}
+export type PlateRecord = CollapsedPlay
 
 const FC_OR_BETTER: readonly ComboFlag[] = ['fc', 'fcp', 'ap', 'app']
 const AP_OR_BETTER: readonly ComboFlag[] = ['ap', 'app']
