@@ -1,9 +1,9 @@
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
-import { buildSongCatalog, getPlateCharts, getPlateVersionGroups } from '@gekichumai/maimai-domain'
+import { buildSongCatalog, getPlateCharts, getPlateVersionGroups, toRatingEntries } from '@gekichumai/maimai-domain'
 import { describe, expect, it } from 'vitest'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
 import { calculateWebRatingEntries } from '@/components/rating/useRatingEntries'
-import { groupUserRecords, toRatingEntries } from '@/models/userRecords'
+import { groupUserRecords } from '@/models/userRecords'
 import { computeHomeQuickStats } from '../useHomeQuickStats'
 
 const version = 'PRiSM' as never

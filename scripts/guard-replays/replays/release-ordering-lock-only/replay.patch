@@ -1,5 +1,5 @@
 diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
-index cbe84d89..1fe99db5 100644
+index bb9e30ab..dac80e58 100644
 --- a/.github/workflows/release.yml
 +++ b/.github/workflows/release.yml
 @@ -2,38 +2,18 @@ name: Release
@@ -18,7 +18,7 @@ index cbe84d89..1fe99db5 100644
  
  jobs:
 -  newest:
--    runs-on: boat-small
+-    runs-on: ubuntu-latest
 -    permissions:
 -      contents: read
 -    name: Check the tag is the newest release
@@ -41,6 +41,6 @@ index cbe84d89..1fe99db5 100644
    publish:
 -    needs: newest
 -    if: needs.newest.outputs.newest == 'true'
-     runs-on: boat
+     runs-on: ubuntu-latest
      permissions:
        contents: read

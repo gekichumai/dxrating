@@ -234,7 +234,7 @@ export const ImportFromLxnsButtonListItem: FC<{
   onClose: () => void
 }> = ({ onClose }) => {
   const locale = useLocale()
-  const { isAuthenticated, openLoginDialog, LoginDialog } = useAuth()
+  const { isAuthenticated, openLoginDialog, loginDialog } = useAuth()
   const [open, setOpen] = useState(false)
 
   const handleClose = () => {
@@ -273,7 +273,7 @@ export const ImportFromLxnsButtonListItem: FC<{
           and would unmount the form mid-sign-in */}
       {!isAuthenticated && (
         <span className="contents" onKeyDown={(event) => event.stopPropagation()}>
-          <LoginDialog />
+          {loginDialog}
         </span>
       )}
       {open && (
