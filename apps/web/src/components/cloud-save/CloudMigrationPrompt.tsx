@@ -5,16 +5,13 @@ import IconMdiCloudUploadOutline from '~icons/mdi/cloud-upload-outline'
 import { focusMigrationReturnTarget, useCloudMigrationOffer } from '@/models/scores/CloudMigrationContext'
 import { m } from '@/paraglide/messages'
 import { useLocale } from '@/i18n/LocaleProvider'
+import { persisted } from '@/utils/persisted'
+import { z } from 'zod'
 
-const DISMISSED_KEY = 'dxr-cloud-migration-prompt-dismissed'
-
-function readDismissed(): boolean {
-  try {
-    return window.sessionStorage.getItem(DISMISSED_KEY) === '1'
-  } catch {
-    return false
-  }
-}
+const promptDismissed = persisted('dxr-cloud-migration-prompt-dismissed', z.literal('1'), null, {
+  area: 'session',
+  format: 'text',
+})
 
 /**
  * The rating calculator's offer to back the local save up to the cloud (§10). Only an offer: the migration starts
@@ -24,7 +21,7 @@ function readDismissed(): boolean {
 export const CloudMigrationPrompt: FC = () => {
   const locale = useLocale()
   const offer = useCloudMigrationOffer()
-  const [dismissed, setDismissed] = useState(readDismissed)
+  const [dismissed, setDismissed] = useState(() => promptDismissed.get() === '1')
   const sectionRef = useRef<HTMLElement>(null)
   if (!offer.available || dismissed) return null
 
@@ -32,11 +29,7 @@ export const CloudMigrationPrompt: FC = () => {
     // The close button goes with the prompt: the focus moves to a control nearby (the Import menu) first
     focusMigrationReturnTarget(sectionRef.current?.parentElement ?? null)
     setDismissed(true)
-    try {
-      window.sessionStorage.setItem(DISMISSED_KEY, '1')
-    } catch {
-      // For this page only
-    }
+    promptDismissed.set('1')
   }
 
   return (

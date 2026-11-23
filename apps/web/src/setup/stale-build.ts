@@ -1,3 +1,6 @@
+import { z } from 'zod'
+import { persisted } from '@/utils/persisted'
+
 /**
  * Recovers a page that outlived its build. A deploy replaces the hashed files under /assets, so a tab opened before it
  * fails to load any chunk it has not fetched yet ("Failed to fetch dynamically imported module …"). Reloading picks up
@@ -9,7 +12,7 @@
  * reload either. TanStack Router's lazy route components have their own one-time reload for the same errors.
  */
 
-const STORAGE_KEY = 'dxrating.staleBuildReloads'
+const reloadedFiles = persisted('dxrating.staleBuildReloads', z.array(z.string()), [] as string[], { area: 'session' })
 const MAX_RELOADS = 3
 
 // Chrome, Firefox, Safari; Vite's CSS preload; Safari for a module answered with the HTML 404 page
@@ -34,20 +37,10 @@ export function isStaleChunkError(error: unknown): error is Error {
 /** Reloads the page for a chunk that failed to load, unless the guard says it already did; returns whether it does */
 export function reloadForNewBuild(error: Error): boolean {
   if (reloading) return true
-  let reloaded: string[]
-  try {
-    const stored: unknown = JSON.parse(window.sessionStorage.getItem(STORAGE_KEY) ?? '[]')
-    reloaded = Array.isArray(stored) ? stored.filter((entry): entry is string => typeof entry === 'string') : []
-  } catch {
-    return false
-  }
+  const reloaded = reloadedFiles.get()
   // The message names the file that failed
   if (reloaded.includes(error.message) || reloaded.length >= MAX_RELOADS) return false
-  try {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...reloaded, error.message]))
-  } catch {
-    return false
-  }
+  if (!reloadedFiles.set([...reloaded, error.message])) return false
   reloading = true
   window.location.reload()
   return true

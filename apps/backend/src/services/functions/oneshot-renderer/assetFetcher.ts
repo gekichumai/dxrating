@@ -3,7 +3,8 @@ import { Effect, Data } from 'effect'
 import os from 'node:os'
 import path from 'node:path'
 import sharp from 'sharp'
-import { Sentry } from '../../../lib/functions/sentry'
+import { reportFailure } from '../../../lib/functions/sentry'
+import { runApp } from '../../../runtime'
 
 export class RendererAssetError extends Data.TaggedError('RendererAssetError')<{
   readonly operation: string
@@ -47,7 +48,7 @@ export const fetchAssetEffect = (relativePath: string) =>
       source = currentSource
       loader = createAssetLoader({
         ...JSON.parse(currentSource),
-        onCacheError: (error, path) => Sentry.captureException(error, { extra: { relativePath: path } }),
+        onCacheError: (error, path) => reportFailure(error, { extra: { relativePath: path } }),
       })
     }
     const load = loader
@@ -64,7 +65,7 @@ export const fetchImageAssetEffect = (relativePath: string) =>
       Effect.gen(function* () {
         yield* Effect.sync(() => {
           console.warn(`Image asset not found, using gray fallback: ${relativePath}`)
-          Sentry.captureException(error.cause, { level: 'warning', extra: { relativePath } })
+          reportFailure(error.cause, { level: 'warning', extra: { relativePath } })
         })
         return yield* fallbackImage
       }),
@@ -72,7 +73,5 @@ export const fetchImageAssetEffect = (relativePath: string) =>
   )
 
 // The shared renderer package accepts Promise loaders at its integration boundary.
-export const fetchAsset = (relativePath: string): Promise<Buffer> =>
-  Effect.runPromise(Effect.scoped(fetchAssetEffect(relativePath)))
-export const fetchImageAsset = (relativePath: string): Promise<Buffer> =>
-  Effect.runPromise(Effect.scoped(fetchImageAssetEffect(relativePath)))
+export const fetchAsset = (relativePath: string): Promise<Buffer> => runApp(fetchAssetEffect(relativePath))
+export const fetchImageAsset = (relativePath: string): Promise<Buffer> => runApp(fetchImageAssetEffect(relativePath))

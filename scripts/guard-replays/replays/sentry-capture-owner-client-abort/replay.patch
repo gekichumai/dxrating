@@ -1,0 +1,17 @@
+diff --git a/apps/backend/src/lib/functions/sentry.ts b/apps/backend/src/lib/functions/sentry.ts
+index e6944d83..e271e84b 100644
+--- a/apps/backend/src/lib/functions/sentry.ts
++++ b/apps/backend/src/lib/functions/sentry.ts
+@@ -99,11 +99,7 @@ type ReportContext = {
+ }
+ 
+ /** Sends a failure to Sentry unless the client left or `classifyFailure` expects it, and says whether it did. */
+-export function reportFailure(error: unknown, { signal, ...context }: ReportContext = {}): boolean {
+-  if (isClientAbort(error, signal)) {
+-    Sentry.addBreadcrumb({ category: 'request', level: 'info', message: 'Aborted by the client', data: context.tags })
+-    return false
+-  }
++export function reportFailure(error: unknown, { signal: _signal, ...context }: ReportContext = {}): boolean {
+   if (!classifyFailure(error).report) return false
+   Sentry.captureException(error, context)
+   return true

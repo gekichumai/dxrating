@@ -191,7 +191,17 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
           {activeSection === 'accounts' && <ConnectedAccountsSection />}
           {activeSection === 'cloud-save' && <CloudSaveSection />}
           {activeSection === 'security' && (
-            <SecuritySection currentSessionToken={sessionData?.session?.token} idPrefix="account-dialog" titleAs="h3" />
+            <SecuritySection
+              currentSessionToken={sessionData?.session?.token}
+              userId={sessionData?.user?.id}
+              email={
+                sessionData?.user
+                  ? { address: sessionData.user.email, verified: sessionData.user.emailVerified }
+                  : undefined
+              }
+              idPrefix="account-dialog"
+              titleAs="h3"
+            />
           )}
         </motion.div>
       </AnimatePresence>

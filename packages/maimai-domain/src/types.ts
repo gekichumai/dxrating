@@ -69,22 +69,33 @@ export type Best50Bucket = 'b15' | 'b35'
 export type ComboFlag = 'fc' | 'fcp' | 'ap' | 'app' | null
 export type SyncFlag = 'fs' | 'fsp' | 'fsd' | 'fsdp' | 'sync' | null
 
-export interface RatingEntry {
+export interface PlaySource {
+  provider: ImportProvider
+  providerId?: string | number
+  providerSongName?: string
+  best50Bucket?: Best50Bucket
+}
+
+/** One play as the web stores it (the local save, rating files, the cloud save's calculator view) */
+export interface StoredPlay {
   /** Public sheet ID (`dsht_…`) */
   sheetId: string
-  identity: SheetIdentity
+  identity?: SheetIdentity
   achievementRate: number
   comboFlag?: ComboFlag
   syncFlag?: SyncFlag
   /** The DX score of the play, when the source reports one */
   dxScore?: number
-  source?: {
-    provider: ImportProvider
-    providerId?: string | number
-    providerSongName?: string
-    best50Bucket?: Best50Bucket
-  }
+  source?: PlaySource
+  providerConfig?: { divingFish?: { ratingEligibility: Best50Bucket | null } }
 }
+
+export type RatingEntryFields = Omit<StoredPlay, 'identity' | 'providerConfig'> & { identity: SheetIdentity }
+
+declare const useToRatingEntries: unique symbol
+
+/** One play as `calculateBest50` reads it, from `toRatingEntries` or an import normalizer */
+export type RatingEntry = RatingEntryFields & { readonly [useToRatingEntries]: true }
 
 export interface ImportWarning {
   provider: ImportProvider

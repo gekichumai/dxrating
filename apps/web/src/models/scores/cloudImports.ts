@@ -9,17 +9,17 @@ import {
 } from '@gekichumai/api-contract'
 import {
   type ClientImportSource,
-  calculateRatingAward,
-  comboFlagRank,
+  best50HintOf,
+  collapsePlaysBySheet,
   compareScore,
+  fromAchievementInt,
   type SourceAccountKind,
-  syncFlagRank,
   PUBLIC_SHEET_ID_PATTERN,
   toAchievementInt,
 } from '@gekichumai/maimai-domain'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
 import type { ImportEntrySource } from './ScoreRepository'
-import { preferHint, type HintCandidate, type InternalLevelResolver } from './collapseScoreRecords'
+import type { InternalLevelResolver } from './collapseScoreRecords'
 
 /**
  * Imports into a cloud save (meta#17, design §5.5, §7.3, §7.4, §8.3): what goes over the wire and how failures are
@@ -82,20 +82,17 @@ const CLAIMED_SOURCE_PATTERN = /^[\w.-]{1,64}$/
  *   can be imported;
  * - `duplicates` counts the valid entries folded into another of the same chart.
  *
- * Duplicates are collapsed as the device reads them (`collapseScoreRecordList`); `resolveInternalLevel` (the
- * calculator's) lets bucket hints be ranked by rating, AP bonus included, as there.
+ * Duplicates are collapsed as the device reads them (`collapsePlays`); `resolveInternalLevel` (the calculator's)
+ * lets bucket hints be ranked by rating, AP bonus included, as there.
  */
 export function entriesToImportRecords(
   entries: readonly PlayEntry[],
   plan: ClientImportPlan,
   resolveInternalLevel?: InternalLevelResolver | null,
 ): { records: ImportRecord[]; skipped: number; rejected: number; duplicates: number } {
-  const bySheetId = new Map<string, ImportRecord>()
-  // Each chart's bucket hint, ranked by the entry that carries it, as the device ranks it, not by the collapsed fields
-  const hints = new Map<string, HintCandidate | null>()
+  const valid: ImportRecord[] = []
   let skipped = 0
   let rejected = 0
-  let duplicates = 0
   for (const entry of entries) {
     const achievement = typeof entry.achievementRate === 'number' ? toAchievementInt(entry.achievementRate) : null
     if (achievement === null || typeof entry.sheetId !== 'string' || !PUBLIC_SHEET_ID_PATTERN.test(entry.sheetId)) {
@@ -116,70 +113,35 @@ export function entriesToImportRecords(
       comboFlag: entry.comboFlag ?? null,
       syncFlag: entry.syncFlag ?? null,
       dxScore: typeof entry.dxScore === 'number' && Number.isInteger(entry.dxScore) ? entry.dxScore : null,
-      // The hint the calculator honours (`useRatingEntries`, `LocalScoreRepository`): the stored Diving-Fish
-      // eligibility, else a Diving-Fish source's bucket. A record never carries one the device ignored
-      best50Bucket:
-        entry.providerConfig?.divingFish?.ratingEligibility ??
-        (provider === 'diving-fish' ? entry.source?.best50Bucket : undefined) ??
-        null,
+      best50Bucket: best50HintOf(entry),
       providerRecordId: entry.source?.providerId ? String(entry.source.providerId).slice(0, 128) : null,
       claimedSource,
     } satisfies ImportRecord)
-    if (!parsed.success) {
-      rejected++
-      continue
+    if (parsed.success) valid.push(parsed.data)
+    else rejected++
+  }
+  const collapsed = collapsePlaysBySheet(
+    valid,
+    (record) => ({
+      ...record,
+      achievementRate: fromAchievementInt(record.achievement),
+      best50Bucket: record.best50Bucket ?? null,
+    }),
+    (sheetId) => resolveInternalLevel?.(sheetId),
+  )
+  const records = [...collapsed.values()].map(({ plays, best }): ImportRecord => {
+    if (plays.length === 1) return plays[0]
+    // Provider ID and claimed source: those of the better score by the server's order, the first on a tie
+    const top = plays.reduce((a, b) => (compareScore(b, a) > 0 ? b : a))
+    return {
+      ...top,
+      comboFlag: best.comboFlag,
+      syncFlag: best.syncFlag,
+      dxScore: best.dxScore,
+      best50Bucket: best.best50Bucket,
     }
-    const record = parsed.data
-    const existing = bySheetId.get(record.sheetId)
-    if (existing) duplicates++
-    bySheetId.set(record.sheetId, existing ? collapseImportRecords(existing, record) : record)
-    hints.set(record.sheetId, preferHint(hints.get(record.sheetId) ?? null, hintOf(record, resolveInternalLevel)))
-  }
-  const records = [...bySheetId.values()].map((record) => {
-    const best50Bucket = hints.get(record.sheetId)?.bucket ?? null
-    return record.best50Bucket === best50Bucket ? record : { ...record, best50Bucket }
   })
-  return { records, skipped, rejected, duplicates }
-}
-
-/** A record's own bucket hint, ranked as `collapseScoreRecordList` ranks it: by rating when the level is known */
-function hintOf(record: ImportRecord, resolveInternalLevel?: InternalLevelResolver | null): HintCandidate | null {
-  if (!record.best50Bucket) return null
-  const internalLevel = resolveInternalLevel?.(record.sheetId) ?? null
-  const achievementRate = record.achievement / 10000
-  return {
-    bucket: record.best50Bucket,
-    achievement: record.achievement,
-    comboFlag: record.comboFlag,
-    domainHint:
-      internalLevel === null
-        ? null
-        : {
-            bucket: record.best50Bucket,
-            rating: calculateRatingAward(internalLevel, achievementRate, record.comboFlag),
-            achievementRate,
-          },
-  }
-}
-
-/**
- * One record of a chart from two entries of it in a file, read the way the device reads them
- * (`collapseScoreRecordList`): achievement, combo, sync and DX score each at their best independently, so a lower
- * score keeps its AP or FDX. Provider ID and claimed source come from the better score by the server's order
- * (achievement, then combo, then sync), the first entry on a tie. The bucket is chosen apart, from the entries' own
- * hints (`entriesToImportRecords`).
- */
-function collapseImportRecords(existing: ImportRecord, record: ImportRecord): ImportRecord {
-  const [best, other] = compareScore(record, existing) > 0 ? [record, existing] : [existing, record]
-  const stronger = <T extends string>(rank: (flag: T | undefined) => number, a: T | null, b: T | null) =>
-    rank(b ?? undefined) > rank(a ?? undefined) ? b : a
-  return {
-    ...best,
-    comboFlag: stronger(comboFlagRank, best.comboFlag, other.comboFlag),
-    syncFlag: stronger(syncFlagRank, best.syncFlag, other.syncFlag),
-    dxScore:
-      best.dxScore == null || (other.dxScore != null && other.dxScore > best.dxScore) ? other.dxScore : best.dxScore,
-  }
+  return { records, skipped, rejected, duplicates: valid.length - records.length }
 }
 
 /**
