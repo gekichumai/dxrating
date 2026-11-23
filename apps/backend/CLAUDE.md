@@ -230,10 +230,16 @@ set together. Methods (`EMAIL_VERIFICATION_METHODS` in `src/db/auth-schema.ts`):
 `src/lib/email-verification-record.ts` keeps them in step through Better
 Auth's `databaseHooks.user` (exposed as `user.additionalFields` with
 `input: false`, so clients can't set them): a verified new user is recorded
-on creation, writing `emailVerified: false` clears both columns, and a write
-of `emailVerified: true` is recorded right after it, only when no time is
-recorded yet, so the first verification is kept. Code that verifies an address
-itself calls `markEmailVerified(database, userId, method)`. The
+on creation; writing `emailVerified: false` clears both columns; writing
+`email` (a new address) clears them too, or records it at once when the same
+write keeps `emailVerified: true` (Better Auth's change-email confirmation);
+and any other write of `emailVerified: true` is recorded right after it by
+`recordEmailVerification`, which only fills an empty record on a row that is
+still verified, so the first verification is kept and a later unverify is not
+undone. Code that proves an address itself calls
+`markEmailVerified(database, userId, provenEmail, method)`: it verifies only
+when the user's current address is the proven one, and returns `verified`,
+`already_verified` or `email_mismatch` (treat the last as not verified). The
 `*_backfill_email_verified_at` migration gave already-verified users their
 `created_at` and `oauth` (an OAuth account is linked) or `unknown`.
 

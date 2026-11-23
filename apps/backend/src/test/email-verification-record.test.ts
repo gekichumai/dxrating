@@ -11,12 +11,15 @@ vi.hoisted(() => {
   process.env.GOOGLE_CLIENT_SECRET = 'test-google-secret'
 })
 
+import { createAuth } from '../auth'
+import { AppConfig } from '../config'
 import { Database } from '../db/index'
 import {
-  clearVerificationOnUnverify,
   emailVerificationHooks,
   markEmailVerified,
+  recordEmailVerification,
   recordVerificationOnCreate,
+  recordVerificationOnUpdate,
   verificationMethodForPath,
 } from '../lib/email-verification-record'
 import { appRuntime } from '../runtime'
@@ -127,17 +130,32 @@ describe('email verification record helpers', () => {
   })
 
   it('clears the record when an update unverifies the address and leaves other updates alone', async () => {
-    expect(clearVerificationOnUnverify({ emailVerified: false })).toEqual({
+    expect(recordVerificationOnUpdate({ emailVerified: false }, '/verify-email')).toEqual({
       emailVerifiedAt: null,
       emailVerificationMethod: null,
     })
-    expect(clearVerificationOnUnverify({ emailVerified: true })).toBeUndefined()
-    expect(clearVerificationOnUnverify({})).toBeUndefined()
+    expect(recordVerificationOnUpdate({ emailVerified: true }, '/verify-email')).toBeUndefined()
+    expect(recordVerificationOnUpdate({}, '/update-user')).toBeUndefined()
     const hooks = emailVerificationHooks({} as typeof Database.Service)
-    expect(await hooks.update.before({ emailVerified: false })).toEqual({
+    expect(await hooks.update.before({ emailVerified: false }, null)).toEqual({
       data: { emailVerifiedAt: null, emailVerificationMethod: null },
     })
-    expect(await hooks.update.before({ emailVerified: true })).toBeUndefined()
+    expect(await hooks.update.before({ emailVerified: true }, null)).toBeUndefined()
+  })
+
+  it('starts a new record when an update replaces the address', () => {
+    // Better Auth's change-email confirmation keeps `emailVerified: true` for a user who was verified
+    const replaced = recordVerificationOnUpdate({ email: 'new@example.com', emailVerified: true }, '/verify-email')
+    expect(replaced?.emailVerificationMethod).toBe('email_link')
+    expect(replaced?.emailVerifiedAt).toBeInstanceOf(Date)
+    expect(recordVerificationOnUpdate({ email: 'new@example.com' }, '/verify-email')).toEqual({
+      emailVerifiedAt: null,
+      emailVerificationMethod: null,
+    })
+    expect(recordVerificationOnUpdate({ email: 'new@example.com', emailVerified: false }, '/verify-email')).toEqual({
+      emailVerifiedAt: null,
+      emailVerificationMethod: null,
+    })
   })
 })
 
@@ -214,15 +232,88 @@ describe('email verification records', () => {
     expect((await signUp('marked@example.com', 'password123', 'Marked')).status).toBe(200)
     const { id } = (await recordOf('marked@example.com'))!
 
-    expect(await runWithDatabase((database) => markEmailVerified(database, id, 'email_verification_protocol'))).toBe(
-      true,
-    )
+    expect(
+      await runWithDatabase((database) =>
+        markEmailVerified(database, id, 'Marked@Example.com', 'email_verification_protocol'),
+      ),
+    ).toBe('verified')
     const first = await recordOf('marked@example.com')
     expect(first).toMatchObject({ email_verified: true, email_verification_method: 'email_verification_protocol' })
     expect(first!.email_verified_at).toBeInstanceOf(Date)
 
-    expect(await runWithDatabase((database) => markEmailVerified(database, id, 'email_link'))).toBe(false)
+    expect(
+      await runWithDatabase((database) => markEmailVerified(database, id, 'marked@example.com', 'email_link')),
+    ).toBe('already_verified')
     expect(await recordOf('marked@example.com')).toEqual(first)
+  })
+
+  it('verifies only the address that was proven', async () => {
+    expect((await signUp('current@example.com', 'password123', 'Current')).status).toBe(200)
+    const { id } = (await recordOf('current@example.com'))!
+
+    expect(
+      await runWithDatabase((database) =>
+        markEmailVerified(database, id, 'someone-else@example.com', 'email_verification_protocol'),
+      ),
+    ).toBe('email_mismatch')
+    expect(
+      await runWithDatabase((database) =>
+        markEmailVerified(database, randomUUID(), 'current@example.com', 'email_verification_protocol'),
+      ),
+    ).toBe('email_mismatch')
+    expect(await recordOf('current@example.com')).toMatchObject({
+      email_verified: false,
+      email_verified_at: null,
+      email_verification_method: null,
+    })
+  })
+
+  it('records a verified address after the write but never re-verifies one a later write unverified', async () => {
+    expect((await signUp('late@example.com', 'password123', 'Late')).status).toBe(200)
+    const { id } = (await recordOf('late@example.com'))!
+
+    // A pending update.after hook from an earlier verifying write, running after a later write unverified the address
+    expect(await runWithDatabase((database) => recordEmailVerification(database, id, 'oauth'))).toBe(false)
+    expect(await recordOf('late@example.com')).toMatchObject({
+      email_verified: false,
+      email_verified_at: null,
+      email_verification_method: null,
+    })
+
+    await pool.query('UPDATE "user" SET email_verified = true WHERE id = $1', [id])
+    expect(await runWithDatabase((database) => recordEmailVerification(database, id, 'oauth'))).toBe(true)
+    const first = await recordOf('late@example.com')
+    expect(first).toMatchObject({ email_verified: true, email_verification_method: 'oauth' })
+    expect(await runWithDatabase((database) => recordEmailVerification(database, id, 'email_link'))).toBe(false)
+    expect(await recordOf('late@example.com')).toEqual(first)
+  })
+
+  it("gives a replacement address its own record instead of the old address's", async () => {
+    await signInWithGoogle({ sub: randomUUID(), email: 'old@example.com', email_verified: true })
+    const { id } = (await recordOf('old@example.com'))!
+    await pool.query(`UPDATE "user" SET email_verified_at = '2025-01-01T00:00:00Z' WHERE id = $1`, [id])
+    const auth = await appRuntime.runPromise(
+      Effect.gen(function* () {
+        return createAuth(yield* Database, yield* AppConfig)
+      }),
+    )
+    const { internalAdapter } = await auth.$context
+
+    // What Better Auth's change-email confirmation writes for a user who was verified
+    const before = Date.now()
+    await internalAdapter.updateUser(id, { email: 'new@example.com', emailVerified: true })
+    const replaced = await recordOf('new@example.com')
+    expect(replaced).toMatchObject({ email_verified: true })
+    expect(replaced!.email_verification_method).not.toBe('oauth')
+    expect(replaced!.email_verified_at!.getTime()).toBeGreaterThanOrEqual(before - 1000)
+
+    // Replacing it with an address nobody vouched for leaves no record behind
+    await internalAdapter.updateUser(id, { email: 'unproven@example.com', emailVerified: false })
+    expect(await recordOf('unproven@example.com')).toMatchObject({
+      email_verified: false,
+      email_verified_at: null,
+      email_verification_method: null,
+    })
   })
 
   it('refuses a record without a verified address or a method', async () => {
