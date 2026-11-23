@@ -867,6 +867,75 @@
       "rules": {
         "dxrating/derived-query-keys": "off"
       }
+    },
+    {
+      "files": [
+        "**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+        "**/__tests__/**",
+        "apps/backend/src/test/**",
+        "apps/web/src/test-utils/**"
+      ],
+      "rules": {
+        "test-boundaries/no-own-module-mock": "error"
+      }
+    },
+    {
+      "files": [
+        "apps/backend/src/test/account-deletion.test.ts",
+        "apps/backend/src/test/auth-mail.test.ts",
+        "apps/backend/src/test/chart-og-image.test.ts",
+        "apps/backend/src/test/cloud-save-server-imports.test.ts",
+        "apps/backend/src/test/credential-hygiene-sentry-http.test.ts",
+        "apps/backend/src/test/email-verification-protocol.test.ts",
+        "apps/backend/src/test/maimai-net-status.test.ts",
+        "apps/backend/src/test/net-import-http.test.ts",
+        "apps/backend/src/test/oneshot-renderer-http.test.ts",
+        "apps/web/src/__tests__/sheets-loading.test.tsx",
+        "apps/web/src/components/auth/__tests__/LoginForm.test.tsx",
+        "apps/web/src/components/auth/__tests__/LoginForm.turnstile.test.tsx",
+        "apps/web/src/components/global/__tests__/CatalogUnverifiedHint.test.tsx",
+        "apps/web/src/components/global/__tests__/ResponsiveDialog.test.tsx",
+        "apps/web/src/components/global/__tests__/SideEffector.test.tsx",
+        "apps/web/src/components/global/backgrounds/__tests__/VersionBackground.test.tsx",
+        "apps/web/src/components/global/preferences/__tests__/LocaleSelector.test.tsx",
+        "apps/web/src/components/global/preferences/__tests__/SecuritySection.test.tsx",
+        "apps/web/src/components/global/preferences/__tests__/ThemeSelector.test.tsx",
+        "apps/web/src/components/global/preferences/__tests__/UserProfileModal.test.tsx",
+        "apps/web/src/components/global/site-meta/__tests__/About.test.tsx",
+        "apps/web/src/components/home/__tests__/HomeHub.test.tsx",
+        "apps/web/src/components/layout/__tests__/AppTabs.test.tsx",
+        "apps/web/src/components/layout/__tests__/ThemedBody.test.tsx",
+        "apps/web/src/components/layout/__tests__/TopBar.test.tsx",
+        "apps/web/src/components/rating/__tests__/RatingCalculatorAddEntryForm.test.tsx",
+        "apps/web/src/components/rating/io/import/NetImportProgress.test.tsx",
+        "apps/web/src/components/rating/io/import/__tests__/ImportFromLxnsButtonListItem.cloud.test.tsx",
+        "apps/web/src/components/rating/io/import/__tests__/ImportFromLxnsButtonListItem.test.tsx",
+        "apps/web/src/components/sheet/tags/__tests__/SheetTags.test.tsx",
+        "apps/web/src/components/song/__tests__/SongHeaderAliases.test.tsx",
+        "apps/web/src/components/song/hub/__tests__/songHubCatalog.test.tsx",
+        "apps/web/src/hooks/__tests__/useAuth.test.tsx",
+        "apps/web/src/models/__tests__/useUserRecords.test.tsx",
+        "apps/web/src/models/scores/__tests__/cloudSaveActions.test.ts",
+        "apps/web/src/models/scores/__tests__/fetchFeaturesSession.test.ts",
+        "apps/web/src/pages/__tests__/LxnsOauthCallback.test.tsx",
+        "apps/web/src/pages/__tests__/ProgressSummaryPage.test.tsx",
+        "apps/web/src/pages/__tests__/RecentPage.test.tsx",
+        "apps/web/src/pages/__tests__/SheetList.test.tsx",
+        "apps/web/src/pages/__tests__/SongHubPage.test.tsx",
+        "apps/web/src/pages/__tests__/SongPage.test.tsx",
+        "apps/web/src/pages/__tests__/TrendingPage.test.tsx",
+        "apps/web/src/pages/__tests__/platesFollowSiteRegion.test.tsx",
+        "apps/web/src/routes/__tests__/-account-reset-password.test.tsx",
+        "apps/web/src/routes/__tests__/-account-security.test.tsx",
+        "apps/web/src/routes/__tests__/-account-verify-email.test.tsx",
+        "apps/web/src/routes/__tests__/-charts-trending.test.tsx",
+        "apps/web/src/routes/__tests__/-index.test.ts",
+        "apps/web/src/routes/__tests__/-song-hub-route.test.ts",
+        "apps/web/src/test-utils/setup-auth.ts"
+      ],
+      "rules": {
+        "test-boundaries/no-own-module-mock": "off"
+      }
     }
   ],
   "jsPlugins": [
@@ -878,6 +947,10 @@
     {
       "name": "dxrating",
       "specifier": "./packages/oxlint-plugin/index.ts"
+    },
+    {
+      "name": "test-boundaries",
+      "specifier": "./scripts/lint/test-boundaries.mjs"
     }
   ]
 }

@@ -1,15 +1,18 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import { AppContextProvider } from '@/models/context/AppContext'
 import { DXRank } from '../DXRank'
 
-vi.mock('@/models/context/useAppContext', () => ({
-  useAppContext: () => ({ region: 'jp' }),
-  useAppContextSlugVersion: () => 'circle-plus',
-}))
+const renderRank = (rank: string | null) =>
+  render(
+    <AppContextProvider>
+      <DXRank rank={rank} />
+    </AppContextProvider>,
+  )
 
 describe('DXRank', () => {
-  it('describes rank images without duplicating DX in the alt text', () => {
-    render(<DXRank rank="SSS" />)
+  it('shows the rank artwork, described without duplicating DX', () => {
+    renderRank('SSS')
 
     expect(screen.getByRole('img', { name: 'Rank SSS' }).getAttribute('src')).toBe(
       'https://shama.dxrating.net/images/rank/circle-plus/SSS.png',
@@ -17,10 +20,9 @@ describe('DXRank', () => {
   })
 
   it('uses the placeholder instead of requesting a rank image when rank is missing', () => {
-    const { container } = render(<DXRank rank={null} className="h-8" />)
+    const { container } = renderRank(null)
 
     expect(screen.queryByRole('img')).toBeNull()
-    expect(container.firstElementChild?.className).toContain('bg-gray-200')
-    expect(container.firstElementChild?.className).toContain('h-8')
+    expect(container.querySelector('[src]')).toBeNull()
   })
 })

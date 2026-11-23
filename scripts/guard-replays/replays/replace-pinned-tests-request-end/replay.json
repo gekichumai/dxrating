@@ -1,0 +1,7 @@
+{
+  "mistake": "A request the client left ends with a bare interruption instead of ClientClosedRequestError, so it is reported to Sentry as a server error.",
+  "history": ["#529 f43ccfec (DXRATING-BACKEND-1X: \"All fibers interrupted without error\")"],
+  "guard": "request-runner.test.ts asserts the error callers branch on, not internal spies",
+  "check": "cd apps/backend && DATABASE_URL=postgres://postgres:postgres@localhost:5432/dxrating_test pnpm exec vitest run src/test/request-runner.test.ts",
+  "expect": "ClientClosedRequestError"
+}

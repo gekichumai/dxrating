@@ -1,0 +1,13 @@
+diff --git a/apps/backend/src/config.ts b/apps/backend/src/config.ts
+index 8607fee5..90866820 100644
+--- a/apps/backend/src/config.ts
++++ b/apps/backend/src/config.ts
+@@ -6,7 +6,7 @@ import { Context, Layer } from 'effect'
+ dotenv.config()
+ dotenv.config({
+   path: path.resolve(process.cwd(), '.env.local'),
+-  override: process.env.NODE_ENV !== 'test',
++  override: true,
+ })
+ const vaultSecretPath = process.env.VAULT_SECRET_PATH
+ if (vaultSecretPath) {
