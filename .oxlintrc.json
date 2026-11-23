@@ -63,6 +63,24 @@
                 "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
                 "importNames": ["viewerFromSession"],
                 "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              },
+              {
+                "regex": "^effect/Effect$",
+                "importNames": [
+                  "runPromise",
+                  "runPromiseExit",
+                  "runPromiseWith",
+                  "runPromiseExitWith",
+                  "runFork",
+                  "runForkWith",
+                  "runCallback",
+                  "runCallbackWith",
+                  "runSync",
+                  "runSyncExit",
+                  "runSyncWith",
+                  "runSyncExitWith"
+                ],
+                "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
               }
             ]
           }
@@ -143,6 +161,24 @@
                 "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
                 "importNames": ["viewerFromSession"],
                 "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              },
+              {
+                "regex": "^effect/Effect$",
+                "importNames": [
+                  "runPromise",
+                  "runPromiseExit",
+                  "runPromiseWith",
+                  "runPromiseExitWith",
+                  "runFork",
+                  "runForkWith",
+                  "runCallback",
+                  "runCallbackWith",
+                  "runSync",
+                  "runSyncExit",
+                  "runSyncWith",
+                  "runSyncExitWith"
+                ],
+                "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
               }
             ]
           }
@@ -163,6 +199,24 @@
               {
                 "regex": "(^|/)lxns(/index)?(\\.ts)?$",
                 "message": "Use services/lxns/viewer: its functions demand a ViewerIs proof (gdp-ts)."
+              },
+              {
+                "regex": "^effect/Effect$",
+                "importNames": [
+                  "runPromise",
+                  "runPromiseExit",
+                  "runPromiseWith",
+                  "runPromiseExitWith",
+                  "runFork",
+                  "runForkWith",
+                  "runCallback",
+                  "runCallbackWith",
+                  "runSync",
+                  "runSyncExit",
+                  "runSyncWith",
+                  "runSyncExitWith"
+                ],
+                "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
               }
             ]
           }
