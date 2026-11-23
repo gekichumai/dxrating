@@ -121,6 +121,7 @@ test('no-Origin wrong token, garbage, bad gzip, GET and empty body are rejected'
     post(JSON.stringify({ api_key: 'wrong' })),
     post('not json'),
     post(new Uint8Array([1, 2, 3]), { 'content-encoding': 'gzip' }),
+    post(new Uint8Array(64 * 1024).fill(7), { 'content-encoding': 'gzip' }),
     new Request(URL_BATCH),
     post(''),
   ]
