@@ -59,6 +59,13 @@ const CREDENTIAL_QUERY_PATTERN = new RegExp(
   'gi',
 )
 
+/**
+ * Paths with a secret segment: Better Auth's mailed password reset link, `/api/auth/reset-password/<token>`. Opening it
+ * doesn't spend the token (only setting the password does), so a token that reached telemetry would reset the account.
+ * The segment runs to the next `/`, `?`, `#`, quote, angle bracket or whitespace.
+ */
+const CREDENTIAL_PATH_PATTERN = /(\/reset-password\/)[^/?#\s"'<>]+/g
+
 const normalizeKey = (key: string) => key.toLowerCase().replace(/[-_]/g, '')
 
 const NET_ROUTE_PATTERNS = [
@@ -129,9 +136,13 @@ export function holdCredentials(values: Iterable<string | undefined | null>): ()
 /** Number of credential values registered right now (tests) */
 export const heldCredentialCount = () => activeSecrets.size
 
-/** `value` with every registered credential and the values of credential query parameters replaced */
+/**
+ * `value` with every registered credential, the values of credential query parameters and credential path segments
+ * replaced
+ */
 export function scrubString(value: string): string {
   let result = value.includes('=') ? value.replace(CREDENTIAL_QUERY_PATTERN, `$1$2=${FILTERED}`) : value
+  if (result.includes('/reset-password/')) result = result.replace(CREDENTIAL_PATH_PATTERN, `$1${FILTERED}`)
   if (activeSecrets.size === 0) return result
   // longest first, so a password containing the SEGA ID is replaced whole
   for (const secret of [...activeSecrets.keys()].sort((a, b) => b.length - a.length)) {

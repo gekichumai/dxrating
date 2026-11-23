@@ -1,0 +1,13 @@
+diff --git a/apps/backend/src/lib/functions/sentry.ts b/apps/backend/src/lib/functions/sentry.ts
+index cca42ebc..c5c736a3 100644
+--- a/apps/backend/src/lib/functions/sentry.ts
++++ b/apps/backend/src/lib/functions/sentry.ts
+@@ -63,7 +63,7 @@ export function classifyFailure(error: unknown): FailureClass {
+   const chain = causeChain(error)
+   if (chain.some(isExpectedLink)) return { report: false }
+ 
+-  const database = chain.find((link) => link instanceof DatabaseError)
++  const database = error instanceof DatabaseError ? error : undefined
+   const sql = chain.find(isSqlError)
+   const net = chain.find((link) => link instanceof NetImportError)
+   return {

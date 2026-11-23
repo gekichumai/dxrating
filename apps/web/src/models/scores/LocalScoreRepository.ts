@@ -1,4 +1,4 @@
-import { toAchievementInt, type ManualEntryMethod, type SheetIdentity } from '@gekichumai/maimai-domain'
+import { best50HintOf, toAchievementInt, type ManualEntryMethod, type SheetIdentity } from '@gekichumai/maimai-domain'
 import { RATING_ENTRIES_STORAGE_KEY } from '../../catalog/savedDataMigration'
 import type { PlayEntry } from '../../components/rating/RatingCalculatorAddEntryForm'
 import {
@@ -60,11 +60,7 @@ export function playEntryToScoreRecord(
     comboFlag: entry.comboFlag ?? null,
     syncFlag: entry.syncFlag ?? null,
     dxScore: typeof entry.dxScore === 'number' ? entry.dxScore : null,
-    // Only Diving-Fish reports the best 50 bucket, and `calculateBest50` honours no other provider's hint
-    best50Bucket:
-      entry.providerConfig?.divingFish?.ratingEligibility ??
-      (entry.source?.provider === 'diving-fish' ? entry.source.best50Bucket : undefined) ??
-      null,
+    best50Bucket: best50HintOf(entry),
     provenance: null,
   }
 }

@@ -18,13 +18,13 @@ vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() 
 vi.mock('web-haptics/react', () => ({ useWebHaptics: () => ({ trigger: vi.fn() }) }))
 
 const Host = () => {
-  const { openLoginDialog, LoginDialog } = useAuth()
+  const { openLoginDialog, loginDialog } = useAuth()
   return (
     <>
       <button type="button" onClick={openLoginDialog}>
         open
       </button>
-      <LoginDialog />
+      {loginDialog}
     </>
   )
 }
@@ -60,26 +60,12 @@ describe('useAuth login dialog', () => {
     ).toBe(true)
   })
 
-  it('opens through the hook without changing the dialog component', () => {
-    const types: unknown[] = []
-    const Probe = () => {
-      const { openLoginDialog, LoginDialog } = useAuth()
-      types.push(LoginDialog)
-      return (
-        <>
-          <button type="button" onClick={openLoginDialog}>
-            open
-          </button>
-          <LoginDialog />
-        </>
-      )
-    }
+  it('opens through the hook', () => {
     passkeySignIn.mockImplementation(() => new Promise(() => {}))
-    render(<Probe />)
+    render(<Host />)
 
     expect(screen.queryByRole('dialog')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'open' }))
     expect(screen.getByRole('dialog')).toBeTruthy()
-    expect(new Set(types).size).toBe(1)
   })
 })

@@ -1,0 +1,10 @@
+{
+  "mistake": "A reader takes the Diving-Fish best 50 hint from one of its two stored places, so a hint written to the other is ignored and that view rates differently from the rest.",
+  "history": [
+    "229d8716 (useRatingEntries read providerConfig only while toRatingEntries also read a Diving-Fish source)",
+    "#438 ca729895 (the cloud mapper had to write the hint to both places because /rating ignored source.best50Bucket)"
+  ],
+  "guard": "oxlint no-restricted-properties on ratingEligibility: best50HintOf in maimai-domain is the one reader",
+  "check": "pnpm lint",
+  "expect": "best50HintOf"
+}

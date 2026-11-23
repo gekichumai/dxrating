@@ -1,6 +1,7 @@
 import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
+import { PgText } from './storable.ts'
 
 const oc = contractBuilder.errors({})
 
@@ -18,9 +19,7 @@ export type UserFeatures = z.infer<typeof UserFeaturesSchema>
 export const CloudSaveOptInInputSchema = z
   .object({
     /** The version of the cloud save privacy terms the user agreed to. */
-    consentVersion: z
-      .string()
-      .trim()
+    consentVersion: PgText.trim()
       .min(1)
       .max(64)
       .regex(/^[\w.-]+$/),
