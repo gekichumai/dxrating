@@ -1,5 +1,5 @@
 import { Button, Chip, CircularProgress, IconButton, TextField } from '@mui/material'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FC, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { SupportedLocale } from '@/setup/locale'
@@ -22,8 +22,29 @@ import { m } from '@/paraglide/messages'
 
 type HeadingTag = 'h2' | 'h4'
 
-const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ idPrefix, headingAs: Heading }) => {
+const PASSWORD_MIN_LENGTH = 8
+const PASSWORD_MAX_LENGTH = 128
+
+/** Whether the signed-in account has a password (a `credential` account), shared by everything that changes it */
+const hasPasswordQuery = (userId: string | undefined) =>
+  // An account made with a passkey or a social provider has no password: it sets a first one, with no current password
+  // to give. If the accounts can't be read, the change form stays (the server refuses whichever doesn't apply).
+  requestQuery('has-password', { user: userId ?? null }, async () => {
+    const { data, error } = await authClient.listAccounts()
+    if (error) throw error
+    return data.some((account) => account.providerId === 'credential')
+  })
+
+const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: string | undefined }> = ({
+  idPrefix,
+  headingAs: Heading,
+  userId,
+}) => {
   const locale = useLocale()
+  const queryClient = useQueryClient()
+  const passwordQuery = hasPasswordQuery(userId)
+  const hasPasswordKey = passwordQuery.queryKey
+  const { data: hasPassword = true, isPending: accountsPending } = useQuery(passwordQuery)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -36,12 +57,41 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
   const confirmRef = useRef<HTMLInputElement>(null)
 
   const mismatch = confirmPassword.length > 0 && newPassword !== confirmPassword
-  const canSubmit = currentPassword.length > 0 && newPassword.length > 0 && confirmPassword.length > 0 && !mismatch
-  const currentMissing = attempted && currentPassword.length === 0
+  const currentMissing = hasPassword && attempted && currentPassword.length === 0
   const newMissing = attempted && newPassword.length === 0
+  const newLengthError =
+    attempted && newPassword.length > 0
+      ? newPassword.length < PASSWORD_MIN_LENGTH
+        ? m.auth_form_validation_passwordMinLength({}, { locale })
+        : newPassword.length > PASSWORD_MAX_LENGTH
+          ? m.auth_form_validation_passwordMaxLength({}, { locale })
+          : undefined
+      : undefined
   const confirmMissing = attempted && confirmPassword.length === 0
+  const newValid = newPassword.length >= PASSWORD_MIN_LENGTH && newPassword.length <= PASSWORD_MAX_LENGTH
+  const canSubmit = (!hasPassword || currentPassword.length > 0) && newValid && confirmPassword.length > 0 && !mismatch
+
+  const resetFields = () => {
+    setCurrentPassword('')
+    setNewPassword('')
+    setConfirmPassword('')
+    setAttempted(false)
+  }
 
   const [changeState, handleChange] = useAsyncFn(async () => {
+    if (!hasPassword) {
+      const { error } = await authClient.setInitialPassword({ newPassword })
+      if (error) {
+        toast.error(m.auth_userProfile_password_setError({ error: error.message ?? '' }, { locale }))
+        // Set from another tab meanwhile: show the change form
+        if (error.code === 'PASSWORD_ALREADY_SET') void queryClient.invalidateQueries({ queryKey: hasPasswordKey })
+        return
+      }
+      toast.success(m.auth_userProfile_password_setSuccess({}, { locale }))
+      resetFields()
+      queryClient.setQueryData(hasPasswordKey, true)
+      return
+    }
     const { error } = await authClient.changePassword({
       currentPassword,
       newPassword,
@@ -52,17 +102,15 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
       return
     }
     toast.success(m.auth_userProfile_password_success({}, { locale }))
-    setCurrentPassword('')
-    setNewPassword('')
-    setConfirmPassword('')
-    setAttempted(false)
-  }, [currentPassword, newPassword, locale])
+    resetFields()
+  }, [hasPassword, currentPassword, newPassword, locale, queryClient])
 
   const togglePasswordVisibility = (field: keyof typeof visiblePasswords) => {
     setVisiblePasswords((visible) => ({ ...visible, [field]: !visible[field] }))
   }
 
   const titleId = `${idPrefix}-password-settings-title`
+  const descriptionId = `${idPrefix}-password-settings-description`
   const currentPasswordId = `${idPrefix}-current-password`
   const newPasswordId = `${idPrefix}-new-password`
   const confirmPasswordId = `${idPrefix}-confirm-password`
@@ -75,119 +123,138 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag }> = ({ i
           {m.auth_userProfile_password_title({}, { locale })}
         </Heading>
       </div>
-      <form
-        aria-labelledby={titleId}
-        className="flex flex-col gap-3"
-        onSubmit={(event) => {
-          event.preventDefault()
-          if (changeState.loading) return
-          if (!canSubmit) {
-            setAttempted(true)
-            // Focus the first field that needs attention
-            if (currentPassword.length === 0) currentRef.current?.focus()
-            else if (newPassword.length === 0) newRef.current?.focus()
-            else confirmRef.current?.focus()
-            return
-          }
-          void handleChange()
-        }}
-        noValidate
-      >
-        <TextField
-          id={currentPasswordId}
-          name="current-password"
-          label={m.auth_userProfile_password_current({}, { locale })}
-          type={visiblePasswords.current ? 'text' : 'password'}
-          inputRef={currentRef}
-          value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)}
-          error={currentMissing}
-          helperText={currentMissing ? m.auth_userProfile_password_currentRequired({}, { locale }) : undefined}
-          size="small"
-          fullWidth
-          autoComplete="current-password"
-          required
-          InputProps={{
-            endAdornment: (
-              <PasswordVisibilityAdornment
-                visible={visiblePasswords.current}
-                fieldLabel={m.auth_userProfile_password_current({}, { locale })}
-                inputId={currentPasswordId}
-                onToggle={() => togglePasswordVisibility('current')}
-              />
-            ),
+      {accountsPending ? (
+        <div className="flex justify-center py-4">
+          <CircularProgress size="1.5rem" />
+        </div>
+      ) : (
+        <form
+          aria-labelledby={titleId}
+          aria-describedby={hasPassword ? undefined : descriptionId}
+          className="flex flex-col gap-3"
+          onSubmit={(event) => {
+            event.preventDefault()
+            if (changeState.loading) return
+            if (!canSubmit) {
+              setAttempted(true)
+              // Focus the first field that needs attention
+              if (hasPassword && currentPassword.length === 0) currentRef.current?.focus()
+              else if (!newValid) newRef.current?.focus()
+              else confirmRef.current?.focus()
+              return
+            }
+            void handleChange()
           }}
-        />
-        <TextField
-          id={newPasswordId}
-          name="new-password"
-          label={m.auth_userProfile_password_new({}, { locale })}
-          type={visiblePasswords.new ? 'text' : 'password'}
-          inputRef={newRef}
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          error={newMissing}
-          helperText={newMissing ? m.auth_userProfile_password_newRequired({}, { locale }) : undefined}
-          size="small"
-          fullWidth
-          autoComplete="new-password"
-          required
-          InputProps={{
-            endAdornment: (
-              <PasswordVisibilityAdornment
-                visible={visiblePasswords.new}
-                fieldLabel={m.auth_userProfile_password_new({}, { locale })}
-                inputId={newPasswordId}
-                onToggle={() => togglePasswordVisibility('new')}
-              />
-            ),
-          }}
-        />
-        <TextField
-          id={confirmPasswordId}
-          name="confirm-password"
-          label={m.auth_userProfile_password_confirm({}, { locale })}
-          type={visiblePasswords.confirm ? 'text' : 'password'}
-          inputRef={confirmRef}
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          size="small"
-          fullWidth
-          error={mismatch || confirmMissing}
-          helperText={
-            mismatch
-              ? m.auth_userProfile_password_mismatch({}, { locale })
-              : confirmMissing
-                ? m.auth_userProfile_password_confirmRequired({}, { locale })
-                : undefined
-          }
-          autoComplete="new-password"
-          required
-          InputProps={{
-            endAdornment: (
-              <PasswordVisibilityAdornment
-                visible={visiblePasswords.confirm}
-                fieldLabel={m.auth_userProfile_password_confirm({}, { locale })}
-                inputId={confirmPasswordId}
-                onToggle={() => togglePasswordVisibility('confirm')}
-              />
-            ),
-          }}
-        />
-        <Button
-          type="submit"
-          disabled={changeState.loading}
-          aria-busy={changeState.loading || undefined}
-          variant="contained"
-          className="!self-start"
+          noValidate
         >
-          {changeState.loading ? (
-            <CircularProgress size="1.25rem" color="inherit" aria-label={m.auth_userProfile_saving({}, { locale })} />
+          {hasPassword ? (
+            <TextField
+              id={currentPasswordId}
+              name="current-password"
+              label={m.auth_userProfile_password_current({}, { locale })}
+              type={visiblePasswords.current ? 'text' : 'password'}
+              inputRef={currentRef}
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              error={currentMissing}
+              helperText={currentMissing ? m.auth_userProfile_password_currentRequired({}, { locale }) : undefined}
+              size="small"
+              fullWidth
+              autoComplete="current-password"
+              required
+              InputProps={{
+                endAdornment: (
+                  <PasswordVisibilityAdornment
+                    visible={visiblePasswords.current}
+                    fieldLabel={m.auth_userProfile_password_current({}, { locale })}
+                    inputId={currentPasswordId}
+                    onToggle={() => togglePasswordVisibility('current')}
+                  />
+                ),
+              }}
+            />
           ) : (
-            m.auth_userProfile_password_save({}, { locale })
+            <p id={descriptionId} className="m-0 text-sm leading-normal text-fg-2 text-pretty">
+              {m.auth_userProfile_password_setDescription({}, { locale })}
+            </p>
           )}
-        </Button>
-      </form>
+          <TextField
+            id={newPasswordId}
+            name="new-password"
+            label={m.auth_userProfile_password_new({}, { locale })}
+            type={visiblePasswords.new ? 'text' : 'password'}
+            inputRef={newRef}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            error={newMissing || !!newLengthError}
+            helperText={
+              newMissing
+                ? m.auth_userProfile_password_newRequired({}, { locale })
+                : (newLengthError ?? m.auth_form_passwordHint({}, { locale }))
+            }
+            size="small"
+            fullWidth
+            autoComplete="new-password"
+            required
+            InputProps={{
+              endAdornment: (
+                <PasswordVisibilityAdornment
+                  visible={visiblePasswords.new}
+                  fieldLabel={m.auth_userProfile_password_new({}, { locale })}
+                  inputId={newPasswordId}
+                  onToggle={() => togglePasswordVisibility('new')}
+                />
+              ),
+            }}
+          />
+          <TextField
+            id={confirmPasswordId}
+            name="confirm-password"
+            label={m.auth_userProfile_password_confirm({}, { locale })}
+            type={visiblePasswords.confirm ? 'text' : 'password'}
+            inputRef={confirmRef}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            size="small"
+            fullWidth
+            error={mismatch || confirmMissing}
+            helperText={
+              mismatch
+                ? m.auth_userProfile_password_mismatch({}, { locale })
+                : confirmMissing
+                  ? m.auth_userProfile_password_confirmRequired({}, { locale })
+                  : undefined
+            }
+            autoComplete="new-password"
+            required
+            InputProps={{
+              endAdornment: (
+                <PasswordVisibilityAdornment
+                  visible={visiblePasswords.confirm}
+                  fieldLabel={m.auth_userProfile_password_confirm({}, { locale })}
+                  inputId={confirmPasswordId}
+                  onToggle={() => togglePasswordVisibility('confirm')}
+                />
+              ),
+            }}
+          />
+          <Button
+            type="submit"
+            disabled={changeState.loading}
+            aria-busy={changeState.loading || undefined}
+            variant="contained"
+            className="!self-start"
+          >
+            {changeState.loading ? (
+              <CircularProgress size="1.25rem" color="inherit" aria-label={m.auth_userProfile_saving({}, { locale })} />
+            ) : hasPassword ? (
+              m.auth_userProfile_password_save({}, { locale })
+            ) : (
+              m.auth_userProfile_password_set({}, { locale })
+            )}
+          </Button>
+        </form>
+      )}
     </div>
   )
 }
@@ -231,9 +298,9 @@ const PasskeyCreatedDate: FC<{ createdAt: Date }> = ({ createdAt }) => {
   )
 }
 
-const PasskeysSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTag }> = ({
-  currentSessionToken,
+const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined }> = ({
   headingAs: Heading,
+  userId,
 }) => {
   const locale = useLocale()
   const confirmDelete = useConfirmDialog()
@@ -243,7 +310,7 @@ const PasskeysSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingT
     isLoading: loading,
     refetch,
   } = useQuery(
-    requestQuery('passkeys', { session: currentSessionToken }, async () => {
+    requestQuery('passkeys', { user: userId ?? null }, async () => {
       const res = await authClient.passkey.listUserPasskeys()
       return (res.data ?? []) as PasskeyItem[]
     }),
@@ -369,9 +436,10 @@ function parseUserAgent(ua: string | null | undefined, locale: SupportedLocale):
   return os ? m.auth_userProfile_devices_browserOnOs({ browser, os }, { locale }) : browser
 }
 
-const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTag }> = ({
+const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTag; userId: string | undefined }> = ({
   currentSessionToken,
   headingAs: Heading,
+  userId,
 }) => {
   const locale = useLocale()
   const confirmRevoke = useConfirmDialog()
@@ -381,7 +449,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
     isLoading: loading,
     refetch,
   } = useQuery(
-    requestQuery('sessions', { session: currentSessionToken }, async () => {
+    requestQuery('sessions', { user: userId ?? null }, async () => {
       const res = await authClient.listSessions()
       return (res.data ?? []) as SessionItem[]
     }),
@@ -471,10 +539,12 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
 
 export const SecuritySection: FC<{
   currentSessionToken?: string
+  /** The signed-in user, which keys what this section caches */
+  userId: string | undefined
   idPrefix?: string
   /** `h1` as a page (/account/security); `h3` inside the account dialog, under its `h2` title */
   titleAs?: 'h1' | 'h3'
-}> = ({ currentSessionToken, idPrefix = 'security', titleAs: Title = 'h1' }) => {
+}> = ({ currentSessionToken, userId, idPrefix = 'security', titleAs: Title = 'h1' }) => {
   const locale = useLocale()
   const subheading: HeadingTag = Title === 'h1' ? 'h2' : 'h4'
 
@@ -486,15 +556,15 @@ export const SecuritySection: FC<{
         </Title>
       </div>
 
-      <PasswordSubsection idPrefix={idPrefix} headingAs={subheading} />
+      <PasswordSubsection idPrefix={idPrefix} headingAs={subheading} userId={userId} />
 
       <div className="h-px bg-black/8" aria-hidden="true" />
 
-      <PasskeysSubsection currentSessionToken={currentSessionToken} headingAs={subheading} />
+      <PasskeysSubsection headingAs={subheading} userId={userId} />
 
       <div className="h-px bg-black/8" aria-hidden="true" />
 
-      <DevicesSubsection currentSessionToken={currentSessionToken} headingAs={subheading} />
+      <DevicesSubsection currentSessionToken={currentSessionToken} headingAs={subheading} userId={userId} />
     </div>
   )
 }
