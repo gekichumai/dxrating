@@ -14,6 +14,7 @@ import { revokeOAuthGrants } from './lib/oauth-revocation'
 import { passkeySignUp, requireFreshSessionToAddPasskey } from './lib/passkey-sign-up'
 import { localizeAuthError } from './lib/auth-error-localization'
 import { setPassword } from './lib/set-password'
+import { emailVerificationHooks, emailVerificationUserFields } from './lib/email-verification-record'
 import { SET_PASSWORD_AUTH_PATH } from '@gekichumai/api-contract'
 import { and, eq } from 'drizzle-orm'
 /**
@@ -97,6 +98,8 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
       },
     },
     user: {
+      // When and how the address was verified (gekichumai/meta#80); kept in step by `databaseHooks.user`
+      additionalFields: emailVerificationUserFields,
       deleteUser: {
         enabled: true,
         beforeDelete: (user) =>
@@ -144,7 +147,10 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
       },
     },
     databaseHooks: {
-      user: { delete: { after: () => Effect.runPromise(database.wroteOutside([authSchema.user])) } },
+      user: {
+        ...emailVerificationHooks(database),
+        delete: { after: () => Effect.runPromise(database.wroteOutside([authSchema.user])) },
+      },
     },
     advanced: {
       cookiePrefix: 'dxrating',
