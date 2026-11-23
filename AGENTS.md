@@ -134,6 +134,8 @@ Web requires `apps/web/.env` (no `.env.example` — create manually):
 - Backend tests are integration tests. Run `pnpm --filter @gekichumai/backend db:up` **before** running tests locally. CI provides a PostgreSQL service container automatically.
 - Web tests use Vitest and do not require external services.
 - Test files: `apps/backend/src/test/`, alongside source files in `apps/web/src/`.
+- The `CI gate` workflow (`.github/workflows/ci.yml`) runs on every PR: lint, format, every package's tests and the guard replays.
+- A new guard (lint rule, type, test, model) ships with a replay in `scripts/guard-replays/` that reintroduces the past mistake it stops. See its README.
 
 ## Before Committing
 

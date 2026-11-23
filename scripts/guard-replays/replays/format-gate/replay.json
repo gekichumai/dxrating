@@ -1,0 +1,7 @@
+{
+  "mistake": "An unformatted file reaches main because no workflow runs oxfmt.",
+  "history": ["#641 e123d9d6 (trailing newline in packages/dxdata/index.ts broke pnpm format:check on main)"],
+  "guard": "the root gate runs pnpm format:check",
+  "check": "pnpm format:check",
+  "expect": "packages/dxdata/index.ts"
+}
