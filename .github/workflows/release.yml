@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   newest:
-    runs-on: boat-small
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     name: Check the tag is the newest release
@@ -34,7 +34,7 @@ jobs:
   publish:
     needs: newest
     if: needs.newest.outputs.newest == 'true'
-    runs-on: boat
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       deployments: write
