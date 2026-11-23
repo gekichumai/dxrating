@@ -23,8 +23,12 @@ const { values } = parseArgs({
 })
 const given = new Set(values.needs ?? [])
 
+// Under GITHUB_ACTIONS, oxlint switches to one-line annotations and drops the
+// help text that an `expect` names, so checks run with the local output format.
+const { GITHUB_ACTIONS: _annotations, ...env } = process.env
+
 function sh(command: string, args: string[], timeoutMs = 600_000) {
-  const result = spawnSync(command, args, { cwd: root, encoding: 'utf8', timeout: timeoutMs, shell: false })
+  const result = spawnSync(command, args, { cwd: root, encoding: 'utf8', timeout: timeoutMs, shell: false, env })
   return { status: result.status, output: `${result.stdout ?? ''}${result.stderr ?? ''}` }
 }
 
