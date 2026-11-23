@@ -1,0 +1,7 @@
+{
+  "mistake": "Better Auth's mailed reset link carries its token as a path segment (/api/auth/reset-password/<token>), and the backend's telemetry scrubbing only filtered credential query parameters.",
+  "history": ["meta#80 review of feat/email-mail-fallback (credential-hygiene.ts scrubbed ?token= only)"],
+  "guard": "apps/backend/src/lib/credential-hygiene.test.ts scrubs the token of a mailed password reset link",
+  "check": "pnpm --filter @gekichumai/backend exec vitest run src/lib/credential-hygiene.test.ts",
+  "expect": "RESETTOKEN123"
+}
