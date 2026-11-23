@@ -56,7 +56,7 @@ jobs:
   e2e:
     name: Web e2e (production build)
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -85,15 +85,16 @@ jobs:
       # The runner's preinstalled Google Chrome: `playwright install` hangs after the download on this Node version
       - name: Run Playwright
         run: pnpm --filter @gekichumai/dxrating-web exec playwright test
-        timeout-minutes: 10
+        timeout-minutes: 15
         env:
           E2E_EXPECT_SENTRY: '1'
           E2E_CHROMIUM_PATH: /usr/bin/google-chrome
 
-      # Each replay rebuilds the app with a past layout mistake put back, so it runs after the tests of this build
+      # Each replay rebuilds the app with a past mistake put back (layout overflow, hydration), so it runs after the
+      # tests of this build
       - name: Guard replays (e2e)
         run: node scripts/guard-replays/run.ts --needs e2e
-        timeout-minutes: 15
+        timeout-minutes: 35
         env:
           E2E_CHROMIUM_PATH: /usr/bin/google-chrome
 
