@@ -324,7 +324,19 @@ where it follows what Gmail ships instead: `EdDSA`, JWKS keys without `kid`).
   are HTTPS on the default port to public addresses only, never redirected, 5 s
   and 64 KB at most; metadata and keys are cached 10 minutes (an unknown `kid`
   refetches them, at most once a minute). It fails only with a typed
-  `EvpRejected` reason, logged without the token or the address.
+  `EvpRejected` reason, logged without the token or the address (a database
+  failure is logged by `databaseErrorTags` only, never with the query error,
+  whose message carries the parameters).
+- The checks before the network only turn away replayed, stale, misdirected
+  and broken tokens. They don't stop a forgery: `cnf.jwk` comes from the
+  unverified EVT, so anyone can mint a token that passes them, naming a domain
+  and issuer host of their own, and make us look those up. What bounds that:
+  the rate limits; DNS through c-ares (`dns.promises.Resolver`, 1.5 s × 2
+  tries, cancelled on abort), never `dns.lookup`, whose getaddrinfo would hold
+  the libuv threads bcrypt needs; the fetch connecting only to the addresses
+  that were checked (an undici `Agent` with a pinned `lookup`, so no DNS
+  rebinding); and a failed TXT lookup or issuer load not being retried for that
+  domain or issuer for a minute (`FAILED_LOOKUP_TTL_MS`, in memory).
 - `plugin.ts`: after a successful `/sign-up/email` whose body carries
   `emailVerificationToken` and `emailVerificationNonce`, a token that holds
   marks the address verified by `email_verification_protocol`

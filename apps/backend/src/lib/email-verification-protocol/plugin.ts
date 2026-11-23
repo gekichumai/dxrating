@@ -8,6 +8,7 @@ import type { BetterAuthPlugin, GenericEndpointContext } from 'better-auth'
 import { createAuthEndpoint, createAuthMiddleware, sessionMiddleware } from 'better-auth/api'
 import { Clock, Effect } from 'effect'
 import { z } from 'zod'
+import { databaseErrorTags } from '../../db/errors'
 import type { Database } from '../../db/index'
 import { markEmailVerified, type MarkEmailVerifiedResult } from '../email-verification-record'
 import { checkNonce, consumeNonce, issueNonce } from './nonce'
@@ -82,9 +83,10 @@ export const emailVerificationProtocol = ({ verifier, database, audiences }: Ema
             Effect.as({ verified: false, reason } as const),
           ),
         ),
-        // The database failed: the account stays unverified and gets the mail, as without a token
+        // The database failed: the account stays unverified and gets the mail, as without a token. Logged by
+        // operation and SQL error reason only: the query error's message carries its parameters, the address among them
         Effect.catch((error) =>
-          Effect.logWarning('Could not verify an Email Verification Protocol token', error).pipe(
+          Effect.logWarning('Could not verify an Email Verification Protocol token', databaseErrorTags(error)).pipe(
             Effect.as({ verified: false, reason: 'issuer_unreachable' } as const),
           ),
         ),

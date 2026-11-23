@@ -113,8 +113,9 @@ describe('Email Verification Protocol on sign-up', () => {
     expect((await signUp(forged, { token, nonce: 'v1.made-up' })).status).toBe(200)
     expect(await recordOf(forged)).toMatchObject({ email_verified: false })
 
-    const offline = `offline@${FIXTURE_EMAIL_DOMAIN}`
-    fixtureIssuer.dns.clear()
+    // A domain that delegates to no issuer. Not the fixture's own: the verifier, shared by every test here, would
+    // then skip that domain's lookups for a minute (FAILED_LOOKUP_TTL_MS)
+    const offline = 'offline@undelegated.example'
     const nonce = await newNonce()
     const offlineToken = await fixtureIssuer.mint({ email: offline, audience: ORIGIN, nonce })
     expect((await signUp(offline, { token: offlineToken, nonce })).status).toBe(200)
