@@ -1,0 +1,10 @@
+{
+  "mistake": "The song page's chart table puts the type name beside the difficulty pill on a 320px phone, so the score column scrolls off screen inside the table.",
+  "history": [
+    "#636 239f1064 (the score column scrolled 36px off screen at 320px in English, 22px in Thai; #633 5eb0dc6a fixed the same table at 375px)"
+  ],
+  "guard": "apps/web/e2e/layout-overflow.spec.ts flags any element that scrolls sideways unless its route names it",
+  "check": "VITE_E2E_BUILD=1 pnpm --filter @gekichumai/dxrating-web exec vite build && pnpm --filter @gekichumai/dxrating-web exec playwright test e2e/layout-overflow.spec.ts -g '/songs/dsng_mrw93jj9sk fits' --retries=0",
+  "expect": "dsng_mrw93jj9sk at 320px: scrolls sideways inside",
+  "needs": ["e2e"]
+}

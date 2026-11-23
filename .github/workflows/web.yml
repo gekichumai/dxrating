@@ -8,6 +8,7 @@ on:
       - 'apps/web/**'
       - 'packages/**'
       - 'pnpm-lock.yaml'
+      - 'scripts/guard-replays/**'
       - '.github/workflows/web.yml'
   pull_request:
     branches:
@@ -16,6 +17,7 @@ on:
       - 'apps/web/**'
       - 'packages/**'
       - 'pnpm-lock.yaml'
+      - 'scripts/guard-replays/**'
       - '.github/workflows/web.yml'
   workflow_dispatch:
 
@@ -54,7 +56,7 @@ jobs:
   e2e:
     name: Web e2e (production build)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -86,6 +88,13 @@ jobs:
         timeout-minutes: 10
         env:
           E2E_EXPECT_SENTRY: '1'
+          E2E_CHROMIUM_PATH: /usr/bin/google-chrome
+
+      # Each replay rebuilds the app with a past layout mistake put back, so it runs after the tests of this build
+      - name: Guard replays (e2e)
+        run: node scripts/guard-replays/run.ts --needs e2e
+        timeout-minutes: 15
+        env:
           E2E_CHROMIUM_PATH: /usr/bin/google-chrome
 
       - name: Upload traces
