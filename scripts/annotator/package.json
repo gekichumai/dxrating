@@ -16,6 +16,7 @@
     "esno": "catalog:",
     "fuse.js": "catalog:",
     "he": "^1.2.0",
+    "lodash": "^4.17.23",
     "pg": "catalog:"
   },
   "devDependencies": {

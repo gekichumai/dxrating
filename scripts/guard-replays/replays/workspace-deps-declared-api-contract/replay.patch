@@ -1,0 +1,12 @@
+diff --git a/apps/admin/package.json b/apps/admin/package.json
+index 06ef377e..ae7327a5 100644
+--- a/apps/admin/package.json
++++ b/apps/admin/package.json
+@@ -12,7 +12,6 @@
+   },
+   "dependencies": {
+     "@gekichumai/admin-api": "workspace:*",
+-    "@gekichumai/api-contract": "workspace:*",
+     "@mantine/core": "9.7.3",
+     "@mantine/hooks": "9.7.3",
+     "@orpc/client": "catalog:",

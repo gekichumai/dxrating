@@ -13,6 +13,7 @@
     "guard:replays": "node scripts/guard-replays/run.ts"
   },
   "devDependencies": {
+    "@gdp-ts/core": "0.1.0",
     "oxfmt": "^0.49.0",
     "oxlint": "^1.64.0",
     "tsconfig": "workspace:*",

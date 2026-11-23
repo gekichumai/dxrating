@@ -15,7 +15,8 @@
         "property": "ratingEligibility",
         "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
       }
-    ]
+    ],
+    "workspace/declared-dependency": "error"
   },
   "categories": {
     "correctness": "warn",
@@ -732,6 +733,7 @@
     }
   ],
   "jsPlugins": [
+    "./oxlint-plugins/workspace-deps.mts",
     {
       "name": "gdp-ts",
       "specifier": "@gdp-ts/core/lint/plugin"

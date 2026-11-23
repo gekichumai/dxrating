@@ -90,6 +90,9 @@ importers:
 
   .:
     devDependencies:
+      '@gdp-ts/core':
+        specifier: 0.1.0
+        version: 0.1.0(oxlint@1.64.0)(typescript@7.0.2)
       oxfmt:
         specifier: ^0.49.0
         version: 0.49.0
@@ -652,6 +655,9 @@ importers:
       '@svgr/plugin-jsx':
         specifier: ^8.1.0
         version: 8.1.0(@svgr/core@8.1.0(typescript@5.9.3))
+      '@tanstack/start-client-core':
+        specifier: ^1.170.14
+        version: 1.170.14
       '@types/d3':
         specifier: ^7.4.3
         version: 7.4.3
@@ -845,6 +851,9 @@ importers:
       he:
         specifier: ^1.2.0
         version: 1.2.0
+      lodash:
+        specifier: ^4.17.23
+        version: 4.17.23
       pg:
         specifier: 'catalog:'
         version: 8.23.1
