@@ -11,7 +11,7 @@ concurrency:
 jobs:
   preview-check:
     if: github.event.action != 'closed'
-    runs-on: boat
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       deployments: write
@@ -120,7 +120,7 @@ jobs:
 
   delete-preview:
     if: github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: boat-small
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     name: Delete Preview
