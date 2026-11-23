@@ -1,5 +1,3 @@
-// Usage: node infra/release/newest-tag.ts <tag> >> "$GITHUB_OUTPUT"
-// Prints newest=true when <tag> is the newest release tag on origin, newest=false otherwise.
 import { execFileSync } from 'node:child_process'
 
 type Version = readonly [major: number, minor: number, patch: number]
@@ -13,7 +11,6 @@ function compareVersions(a: Version, b: Version): number {
   return a[0] - b[0] || a[1] - b[1] || a[2] - b[2]
 }
 
-/** The newest `vMAJOR.MINOR.PATCH` tag among `tags`, compared numerically. Other tags are ignored. */
 export function newestReleaseTag(tags: readonly string[]): string | undefined {
   let newest: { tag: string; version: Version } | undefined
   for (const tag of tags) {

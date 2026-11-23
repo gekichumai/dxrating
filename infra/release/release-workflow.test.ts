@@ -9,6 +9,7 @@ import { load } from 'js-yaml'
 
 interface Step {
   run?: string
+  uses?: string
 }
 interface Job {
   needs?: string | string[]
@@ -25,7 +26,11 @@ const root = resolve(import.meta.dirname, '../..')
 const workflow = load(readFileSync(join(root, '.github/workflows/release.yml'), 'utf8')) as Workflow
 
 const deployJobs = Object.entries(workflow.jobs).filter(([, job]) =>
-  job.steps.some((step) => step.run?.includes('wrangler deploy')),
+  job.steps.some(
+    (step) =>
+      /wrangler\s+(?:versions\s+)?(?:deploy|rollback)/.test(step.run ?? '') ||
+      step.uses?.startsWith('cloudflare/wrangler-action'),
+  ),
 )
 
 function gateOf(id: string, job: Job): { gateId: string; output: string } {
@@ -48,32 +53,43 @@ function git(cwd: string, ...args: string[]) {
   })
 }
 
-function checkoutWithTags(tags: string[]): string {
-  const origin = join(fixture, 'origin.git')
-  const work = join(fixture, 'work')
-  const checkout = join(fixture, 'checkout')
-  git(fixture, 'init', '--bare', '--quiet', origin)
-  git(fixture, 'init', '--quiet', work)
+function originWithTags(tags: string[]): string {
+  const origin = mkdtempSync(join(fixture, 'origin-'))
+  const work = mkdtempSync(join(fixture, 'work-'))
+  git(origin, 'init', '--bare', '--quiet')
+  git(work, 'init', '--quiet')
   git(work, 'commit', '--allow-empty', '--no-gpg-sign', '--quiet', '-m', 'release')
   for (const tag of tags) git(work, 'tag', tag)
   git(work, 'push', '--quiet', '--tags', origin)
-  git(fixture, 'clone', '--quiet', origin, checkout)
+  return origin
+}
+
+function checkoutLikeActions(origin: string, tag: string): string {
+  const checkout = mkdtempSync(join(fixture, `checkout-${tag}-`))
+  git(checkout, 'init', '--quiet')
+  git(checkout, 'remote', 'add', 'origin', origin)
+  git(checkout, 'fetch', '--quiet', '--no-tags', '--depth=1', 'origin', `+refs/tags/${tag}:refs/tags/${tag}`)
+  git(checkout, 'checkout', '--quiet', tag)
   cpSync(join(root, 'infra/release'), join(checkout, 'infra/release'), { recursive: true })
   return checkout
 }
 
 function deploys(checkout: string, jobId: string, job: Job, tag: string): boolean {
   const { gateId, output } = gateOf(jobId, job)
-  const outputFile = join(fixture, `output-${tag}`)
+  const outputFile = join(checkout, '.github-output')
   writeFileSync(outputFile, '')
   for (const step of workflow.jobs[gateId].steps) {
     if (!step.run) continue
     assert.ok(!step.run.includes('${{'), `release.yml: read values in job "${gateId}" from env vars, not \${{ }}`)
-    execFileSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', step.run], {
-      cwd: checkout,
-      env: { ...process.env, GITHUB_REF: `refs/tags/${tag}`, GITHUB_REF_NAME: tag, GITHUB_OUTPUT: outputFile },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
+    try {
+      execFileSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', step.run], {
+        cwd: checkout,
+        env: { ...process.env, GITHUB_REF: `refs/tags/${tag}`, GITHUB_REF_NAME: tag, GITHUB_OUTPUT: outputFile },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      })
+    } catch {
+      return false
+    }
   }
   const outputs = new Map(
     readFileSync(outputFile, 'utf8')
@@ -100,17 +116,29 @@ test('every release run waits on one lock for every tag', () => {
 })
 
 test('a run for an older tag never deploys over a newer one (#374: v1.6.522 after v1.6.523)', () => {
-  const checkout = checkoutWithTags(['v1.6.521', 'v1.6.522', 'v1.6.523'])
+  const origin = originWithTags(['v1.6.521', 'v1.6.522', 'v1.6.523'])
   for (const [id, job] of deployJobs) {
     assert.equal(
-      deploys(checkout, id, job, 'v1.6.522'),
+      deploys(checkoutLikeActions(origin, 'v1.6.522'), id, job, 'v1.6.522'),
       false,
       `release.yml: job "${id}" deploys v1.6.522 over v1.6.523`,
     )
     assert.equal(
-      deploys(checkout, id, job, 'v1.6.523'),
+      deploys(checkoutLikeActions(origin, 'v1.6.523'), id, job, 'v1.6.523'),
       true,
       `release.yml: job "${id}" skips v1.6.523, the newest tag`,
+    )
+  }
+})
+
+test('the deploy is skipped when the newest-tag check cannot reach origin', () => {
+  const checkout = checkoutLikeActions(originWithTags(['v1.6.523']), 'v1.6.523')
+  git(checkout, 'remote', 'set-url', 'origin', join(fixture, 'missing.git'))
+  for (const [id, job] of deployJobs) {
+    assert.equal(
+      deploys(checkout, id, job, 'v1.6.523'),
+      false,
+      `release.yml: job "${id}" deploys when the newest-tag check fails; the check must fail closed`,
     )
   }
 })
