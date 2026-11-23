@@ -185,9 +185,11 @@ export const createAuthMail = ({
     expiresInHours: number,
   ): Promise<void> => {
     if (!allow(`${kind}:${email.toLowerCase()}`)) {
+      // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
       return Effect.runPromise(Effect.logWarning('Too many account emails to one address; not sent', { kind }))
     }
     const rendered = renderAuthMail({ kind, locale, email, url, expiresInHours })
+    // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
     return Effect.runPromise(mailer.deliver({ to: email, kind, ...rendered }))
   }
 
@@ -237,6 +239,7 @@ export const createAuthMail = ({
 
   /** Better Auth's `emailAndPassword.onPasswordReset` (see claimUnverifiedAccount) */
   const onPasswordReset = async ({ user }: { user: User }) => {
+    // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
     await Effect.runPromise(claimUnverifiedAccount(database, user))
   }
 
@@ -283,6 +286,7 @@ export const createAuthMail = ({
                 await sendSignUpVerification(ctx)
               } catch (error) {
                 // The account exists either way; the visitor can ask for another link from their account page
+                // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
                 await Effect.runPromise(Effect.logWarning('Could not send the sign-up verification email', error))
               }
             }),

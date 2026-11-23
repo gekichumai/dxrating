@@ -1,0 +1,32 @@
+diff --git a/apps/web/src/components/rating/io/import/importFromNETRecords.tsx b/apps/web/src/components/rating/io/import/importFromNETRecords.tsx
+index 0177f176..f814c38c 100644
+--- a/apps/web/src/components/rating/io/import/importFromNETRecords.tsx
++++ b/apps/web/src/components/rating/io/import/importFromNETRecords.tsx
+@@ -21,7 +21,7 @@ import { getLocale } from '@/paraglide/runtime'
+ import { captureAnalyticsEvent } from '@/lib/analytics'
+ import { m } from '@/paraglide/messages'
+ import { netImportProgress } from './netImportProgressStore'
+-import { netCredentials, netImportLastSuccess } from './netImportStorage'
++import { netImportLastSuccess } from './netImportStorage'
+ import {
+   FETCH_STATE_PROGRESS,
+   type FetchNetRecordProgressState,
+@@ -140,7 +140,17 @@ export const importFromNETRecords = async (
+ 
+   netImportProgress.update({ status: 'running', stage: 'ready', progress: 0 })
+   try {
+-    const params = authParams ?? netCredentials.get()
++    const storedAuthParams = (() => {
++      const stored = localStorage.getItem('import-net-records')
++      if (!stored) return null
++      const parsed = JSON.parse(stored) as {
++        region: 'jp' | 'intl'
++        username: string
++        password: string
++      }
++      return parsed
++    })()
++    const params = authParams ?? storedAuthParams
+     if (!params) {
+       captureAnalyticsEvent('rating_import_failed', {
+         source: 'maimai_net',

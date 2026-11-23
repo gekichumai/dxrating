@@ -981,8 +981,8 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "這將從此瀏覽器永久刪除所有記錄。如需備份，請先匯出。",
-        "countPlural=*": "這將從此瀏覽器永久刪除所有記錄。如需備份，請先匯出。"
+        "countPlural=one": "這將從此瀏覽器永久刪除全部 {count} 條記錄。如需備份，請先匯出。",
+        "countPlural=*": "這將從此瀏覽器永久刪除全部 {count} 條記錄。如需備份，請先匯出。"
       }
     }
   ],

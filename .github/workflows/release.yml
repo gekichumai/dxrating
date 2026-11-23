@@ -10,7 +10,30 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  newest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    name: Check the tag is the newest release
+    outputs:
+      newest: ${{ steps.check.outputs.newest }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+
+      - name: Compare with the newest release tag on origin
+        id: check
+        run: node infra/release/newest-tag.ts "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+
   publish:
+    needs: newest
+    if: needs.newest.outputs.newest == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -80,6 +103,8 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           VITE_BACKEND_URL: https://miruku.dxrating.net
           VITE_BETTER_AUTH_URL: https://miruku.dxrating.net
+          # Chrome's Email Verification origin trial (apps/web/src/setup/origin-trials.ts); empty emits nothing
+          VITE_EMAIL_VERIFICATION_ORIGIN_TRIAL_TOKEN: ${{ vars.EMAIL_VERIFICATION_ORIGIN_TRIAL_TOKEN }}
 
       - name: Deploy to Cloudflare Workers
         run: pnpm --filter @gekichumai/dxrating-web exec wrangler deploy --config=dist/server/wrangler.json --name=dxrating

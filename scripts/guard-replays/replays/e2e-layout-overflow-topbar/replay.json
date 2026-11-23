@@ -1,0 +1,8 @@
+{
+  "mistake": "The header's community button shows its brand badges, MCP included, on phones under 375px, so the action pill runs into the site name.",
+  "history": ["#382 b5a84ca6 (the MCP badge squeezed the logo below 375px; its second commit hid the badges there)"],
+  "guard": "apps/web/e2e/layout-overflow.spec.ts fails when two header controls overlap",
+  "check": "VITE_E2E_BUILD=1 pnpm --filter @gekichumai/dxrating-web exec vite build && pnpm --filter @gekichumai/dxrating-web exec playwright test e2e/layout-overflow.spec.ts -g '/ fits' --retries=0",
+  "expect": "/ at 320px: header controls overlap",
+  "needs": ["e2e"]
+}

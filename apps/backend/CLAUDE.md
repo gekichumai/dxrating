@@ -44,9 +44,9 @@ documented at `/docs` and `/spec.json`, which leaves out routes tagged `internal
 dxdata catalog, Better Auth, NET record fetching, oneshot rendering, the streamed export and the NET import) are
 registered in `src/app.ts`. `POST /api/auth/account/set-password` (`src/lib/set-password.ts`) lets an account without a password
 (passkey or social sign-up) set its first one: it needs a fresh session (403 `SESSION_NOT_FRESH`) and answers 400
-`PASSWORD_ALREADY_SET` once a password exists.
-`GET /api/auth/email-verification-protocol/nonce` and `POST /api/auth/email-verification-protocol/verify` serve Chrome's
-Email Verification Protocol (see "Email Verification Protocol" below).
+`PASSWORD_ALREADY_SET` once a password exists. `GET /api/auth/email-verification-protocol/nonce` and
+`POST /api/auth/email-verification-protocol/verify` serve Chrome's Email Verification Protocol: a sign-up form's nonce,
+and verifying a signed-in account's address with the browser's token (see "Email Verification Protocol" below).
 
 ## Environment Variables
 
@@ -144,8 +144,10 @@ before the method was recorded (see below).
   a disabled feature stays a 404; the opt-in checks it after the opt-in phase. The web sends it through
   `privateApiClientFor(userId)`.
 - Credential hygiene (`src/lib/credential-hygiene.ts`, §7.2): SEGA IDs and passwords are never stored or logged. The
-  NET and LXNS routes get a scrubbing evlog logger; Sentry never attaches their bodies and scrubs every event,
-  breadcrumb and log (keys and the values of running NET requests); PostHog events are scrubbed the same way.
+  credential routes (`CREDENTIAL_ROUTES`: every contract procedure that takes a credential field or is marked
+  `credentials(...)`, plus the direct routes listed there) get a scrubbing evlog logger; Sentry never attaches their
+  bodies and scrubs every event, breadcrumb and log (keys and the values of running NET requests); PostHog events are
+  scrubbed the same way.
   `src/test/credential-hygiene.test.ts` drives failing imports through every NET route and greps every channel.
 - `changes`: `since=0` is a full pull; its later pages pass `mode=full` (never reset by the tombstone horizon); the
   last page's `nextSince` is the save's revision.
@@ -304,10 +306,10 @@ where it follows what Gmail ships instead: `EdDSA`, JWKS keys without `kid`).
   made with jose, DNS and HTTPS in memory), swapped in with `vi.mock` like the
   mailer; the live service always uses real DNS and HTTPS.
 - The web side (the hidden `autocomplete="email-verification-token"` field and
-  its nonce in `apps/web/src/components/auth/LoginForm.tsx`, and the origin
-  trial token) lands with gekichumai/dxrating#688. The trial runs through
-  Chrome 160 and its token must be renewed; the protocol may still change
-  incompatibly.
+  its nonce in `LoginForm`, and the origin trial token) is described in
+  `apps/web/src/components/auth/LoginForm.tsx` and
+  `apps/web/src/setup/origin-trials.ts`. The trial runs through Chrome 160 and
+  its token must be renewed; the protocol may still change incompatibly.
 
 ## Deployment
 
@@ -389,4 +391,4 @@ release without changing the application's Effect 4 runtime. Remove the patch wh
 The API continues emitting the v1 error `status` field for deployed clients.
 Keep the compatibility tests when updating oRPC. Migration folders use the
 current Drizzle Kit format; generate or upgrade them through Drizzle Kit and
-verify existing ledgers before release. Never rewrite previously applied SQL.
+verify existing ledgers before release.

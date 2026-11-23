@@ -279,7 +279,7 @@ export const RatingCalculator = () => {
                 checked={ratingView === 'ap50'}
                 onChange={() => {
                   const enabled = ratingView !== 'ap50'
-                  void navigate({ to: '/rating', search: enabled ? { view: 'ap50' } : {}, replace: true })
+                  navigate({ to: '/rating', search: enabled ? { view: 'ap50' } : {}, replace: true })
                   captureAnalyticsEvent('rating_calculator_view_changed', { setting: 'ap50', enabled })
                 }}
               />

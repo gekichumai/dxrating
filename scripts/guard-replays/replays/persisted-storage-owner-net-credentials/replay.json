@@ -1,0 +1,9 @@
+{
+  "mistake": "The saved maimai NET credentials are read straight from localStorage and JSON.parsed with a cast to the current shape, so blocked storage or an old or corrupt value breaks the import.",
+  "history": [
+    "#292 e0de838c (importFromNETRecords casts JSON.parse(localStorage.getItem('import-net-records')); flagged in review, still there until this guard)"
+  ],
+  "guard": "oxlint no-restricted-globals: only apps/web/src/utils/persisted.ts touches localStorage and sessionStorage",
+  "check": "pnpm exec oxlint --quiet apps/web/src/components/rating/io/import/importFromNETRecords.tsx",
+  "expect": "Use persisted(key, schema, fallback) from @/utils/persisted"
+}

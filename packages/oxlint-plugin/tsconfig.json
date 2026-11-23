@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig/base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "strict": true,
+    "types": ["node"]
+  },
+  "include": ["index.ts", "derived-query-keys.ts", "no-void.ts", "__tests__/**/*.ts"]
+}

@@ -1,0 +1,54 @@
+diff --git a/apps/backend/src/lib/functions/client.ts b/apps/backend/src/lib/functions/client.ts
+index 86768737..62aad8a9 100644
+--- a/apps/backend/src/lib/functions/client.ts
++++ b/apps/backend/src/lib/functions/client.ts
+@@ -626,23 +626,25 @@ export class MaimaiNETIntlClient extends Client {
+ 
+       yield* this.stepEffect(URLS.INTL.LOGIN_PAGE)
+ 
+-      const login = yield* this.fetchEffect(URLS.INTL.LOGIN_ENDPOINT, {
+-        method: 'POST',
+-        headers: {
+-          'Content-Type': 'application/x-www-form-urlencoded',
+-        },
+-        body: new URLSearchParams({
+-          sid: id,
+-          password,
+-          retention: '1',
+-        }),
+-      })
+-      if (login.kind !== 'Redirect') {
+-        return yield* Effect.fail(unexpectedAnswerError(URLS.INTL.LOGIN_ENDPOINT, login, id))
++      const redirectURL = (
++        yield* this.fetchEffect(URLS.INTL.LOGIN_ENDPOINT, {
++          method: 'POST',
++          headers: {
++            'Content-Type': 'application/x-www-form-urlencoded',
++          },
++          body: new URLSearchParams({
++            sid: id,
++            password,
++            retention: '1',
++          }),
++        })
++      ).headers.get('location')
++      if (!redirectURL) {
++        return yield* Effect.fail(new NetImportError('INVALID_CREDENTIALS', undefined, { step: 'login_submit' }))
+       }
+ 
+-      const callback = yield* this.fetchEffect(login.location, undefined, 'AIME_CARD_UNAVAILABLE')
+-      if (login.location.startsWith('https://lng-tgk-aime-gw.am-all.net/common_auth/login')) {
++      const callback = yield* this.fetchEffect(redirectURL, undefined, 'AIME_CARD_UNAVAILABLE')
++      if (redirectURL.startsWith('https://lng-tgk-aime-gw.am-all.net/common_auth/login')) {
+         const page = callback.kind === 'Redirect' ? '' : callback.html
+         const textDom = yield* parseNetResponse(() =>
+           new DOMParser({ errorHandler: () => {} }).parseFromString(page, 'text/html'),
+@@ -656,7 +658,7 @@ export class MaimaiNETIntlClient extends Client {
+         )
+       }
+       if (callback.kind === 'UnexpectedStatus') {
+-        return yield* Effect.fail(unexpectedAnswerError(login.location, callback, id))
++        return yield* Effect.fail(unexpectedAnswerError(redirectURL, callback, id))
+       }
+ 
+       yield* this.progress('auth:succeeded')

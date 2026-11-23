@@ -19,6 +19,7 @@
     "test:watch": "vitest",
     "flag:set": "tsx src/flag-set.ts",
     "test:migration-roundtrip": "tsx scripts/migration-roundtrip.ts",
+    "migrations:lock": "tsx scripts/lock-migrations.ts",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "test:source-context": "node --test scripts/test-sentry-source-context.mjs",

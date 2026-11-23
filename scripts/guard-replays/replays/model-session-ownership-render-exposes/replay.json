@@ -1,0 +1,8 @@
+{
+  "mistake": "The render after an account switch hands the calculator cloudRepository as it is, before the effect drops the previous account's repository.",
+  "history": ["#438 945ce071 (review 4496190591: a render exposed { session: B, repositoryUser: A })"],
+  "guard": "formal/session-ownership model, invariant ExposedOwner",
+  "check": "formal/tlc.sh formal/session-ownership/SessionOwnership.tla",
+  "expect": "Invariant ExposedOwner is violated",
+  "needs": ["tlc"]
+}

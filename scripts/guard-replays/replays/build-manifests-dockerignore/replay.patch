@@ -1,0 +1,12 @@
+diff --git a/.dockerignore b/.dockerignore
+index 4c0e9310..2c048748 100644
+--- a/.dockerignore
++++ b/.dockerignore
+@@ -10,7 +10,6 @@
+ !packages/tsconfig/
+ !packages/api-contract/
+ !packages/dxdata/
+-!packages/maimai-domain/
+ !packages/oneshot-renderer/
+ !apps/backend/
+ # apps/admin-api/Dockerfile (gekichumai/meta#50)

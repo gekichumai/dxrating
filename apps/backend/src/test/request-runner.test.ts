@@ -1,7 +1,7 @@
 import { ORPCError } from '@orpc/server'
 import { Context, Deferred, Effect, Exit, Fiber, Layer, ManagedRuntime } from 'effect'
 import { describe, expect, it, vi } from '@effect/vitest'
-import { createRequestRunner, RequestRunnerClosedError } from '../request-runner'
+import { ClientClosedRequestError, createRequestRunner, RequestRunnerClosedError } from '../request-runner'
 
 class Resource extends Context.Service<Resource, { readonly open: true }>()('test/RequestRunnerResource') {}
 
@@ -63,9 +63,7 @@ describe('supervised application requests', () => {
     const events: string[] = []
     const started = await Effect.runPromise(Deferred.make<void>())
     const finishSdk = await Effect.runPromise(Deferred.make<void>())
-    const runtime = ManagedRuntime.make(resourceLayer(events))
-    const dispose = vi.spyOn(runtime, 'dispose')
-    const runner = createRequestRunner(runtime)
+    const runner = createRequestRunner(ManagedRuntime.make(resourceLayer(events)))
     const response = runner.run(
       Effect.gen(function* () {
         yield* Resource
@@ -86,14 +84,12 @@ describe('supervised application requests', () => {
     const stopped = runner.shutdown()
     expect(runner.shutdown()).toBe(stopped)
     await expect(runner.run(Effect.void)).rejects.toBeInstanceOf(RequestRunnerClosedError)
-    expect(dispose).not.toHaveBeenCalled()
     expect(events).toEqual([])
 
     await Effect.runPromise(Deferred.succeed(finishSdk, undefined))
     await settled
     await stopped
     expect(events).toEqual(['SDK finished', 'request closed', 'service closed'])
-    expect(dispose).toHaveBeenCalledTimes(1)
   })
 
   it('interrupts every active request before service disposal', async () => {
@@ -121,23 +117,20 @@ describe('supervised application requests', () => {
     await Effect.runPromise(Deferred.await(started))
     await runner.shutdown()
 
-    expect((await responses).every((response) => response.status === 'rejected')).toBe(true)
+    for (const response of await responses) {
+      expect(response.status === 'rejected' && response.reason).toBeInstanceOf(RequestRunnerClosedError)
+    }
     expect(events.slice(0, 2).sort()).toEqual(['first', 'second'])
     expect(events[2]).toBe('service closed')
   })
 
-  it('preserves framework failures and removes external signal listeners on completion', async () => {
+  it('preserves framework failures and keeps serving', async () => {
     const runner = createRequestRunner(ManagedRuntime.make(Layer.empty))
     const controller = new AbortController()
-    const removeListener = vi.spyOn(controller.signal, 'removeEventListener')
     const failure = new ORPCError('BAD_REQUEST')
     try {
-      await expect(
-        runner.run(Effect.fail(failure), {
-          signal: controller.signal,
-        }),
-      ).rejects.toBe(failure)
-      expect(removeListener).toHaveBeenCalledWith('abort', expect.any(Function))
+      await expect(runner.run(Effect.fail(failure), { signal: controller.signal })).rejects.toBe(failure)
+      controller.abort()
       await expect(runner.run(Effect.succeed('next request'))).resolves.toBe('next request')
     } finally {
       await runner.shutdown()
@@ -155,7 +148,7 @@ describe('supervised application requests', () => {
     }
   })
 
-  it('propagates caller cancellation and completes request cleanup', async () => {
+  it('ends a request the client left with ClientClosedRequestError, after its cleanup', async () => {
     const runner = createRequestRunner(ManagedRuntime.make(Layer.empty))
     const controller = new AbortController()
     const started = await Effect.runPromise(Deferred.make<void>())
@@ -171,7 +164,8 @@ describe('supervised application requests', () => {
     try {
       await Effect.runPromise(Deferred.await(started))
       controller.abort()
-      expect((await settled)[0].status).toBe('rejected')
+      const [result] = await settled
+      expect(result.status === 'rejected' && result.reason).toBeInstanceOf(ClientClosedRequestError)
       expect(cleaned).toHaveBeenCalledOnce()
     } finally {
       await runner.shutdown()

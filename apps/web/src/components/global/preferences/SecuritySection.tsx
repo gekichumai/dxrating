@@ -12,6 +12,7 @@ import IconMdiEmail from '~icons/mdi/email-outline'
 import IconPasskey from '~icons/material-symbols/passkey'
 import aaguidData from '../../../data/passkey-aaguids.json'
 import { authClient } from '../../../lib/auth-client'
+import { requestQuery } from '../../../lib/query'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
 import { hasErrorCode } from '../../auth/authLinks'
 import { isAuthMailEnabled } from '../../../setup/auth-mail'
@@ -19,6 +20,7 @@ import { PasswordVisibilityAdornment } from '../../auth/PasswordVisibilityAdornm
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 // -- Email Subsection --
 
@@ -85,7 +87,7 @@ const EmailSubsection: FC<{ email: AccountEmail; headingAs: HeadingTag; idPrefix
             {m.auth_userProfile_email_unverifiedDescription({}, { locale })}
           </p>
           <Button
-            onClick={() => void resend()}
+            onClick={asyncHandler(() => resend())}
             disabled={resendState.loading}
             aria-busy={resendState.loading || undefined}
             aria-describedby={descriptionId}
@@ -108,11 +110,15 @@ type HeadingTag = 'h2' | 'h4'
 const PASSWORD_MIN_LENGTH = 8
 const PASSWORD_MAX_LENGTH = 128
 
-/**
- * Whether the signed-in account has a password (a `credential` account), shared by everything that changes it. Keyed
- * by the user, as sign-out keeps the query cache: the next account to sign in must not see the last one's answer.
- */
-const hasPasswordQueryKey = (userId: string | undefined) => ['auth', 'has-password', userId ?? null] as const
+/** Whether the signed-in account has a password (a `credential` account), shared by everything that changes it */
+const hasPasswordQuery = (userId: string | undefined) =>
+  // An account made with a passkey or a social provider has no password: it sets a first one, with no current password
+  // to give. If the accounts can't be read, the change form stays (the server refuses whichever doesn't apply).
+  requestQuery('has-password', { user: userId ?? null }, async () => {
+    const { data, error } = await authClient.listAccounts()
+    if (error) throw error
+    return data.some((account) => account.providerId === 'credential')
+  })
 
 const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: string | undefined }> = ({
   idPrefix,
@@ -121,17 +127,9 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: 
 }) => {
   const locale = useLocale()
   const queryClient = useQueryClient()
-  const hasPasswordKey = hasPasswordQueryKey(userId)
-  // An account made with a passkey or a social provider has no password: it sets a first one, with no current password
-  // to give. If the accounts can't be read, the change form stays (the server refuses whichever doesn't apply).
-  const { data: hasPassword = true, isPending: accountsPending } = useQuery({
-    queryKey: hasPasswordKey,
-    queryFn: async () => {
-      const { data, error } = await authClient.listAccounts()
-      if (error) throw error
-      return data.some((account) => account.providerId === 'credential')
-    },
-  })
+  const passwordQuery = useMemo(() => hasPasswordQuery(userId), [userId])
+  const hasPasswordKey = passwordQuery.queryKey
+  const { data: hasPassword = true, isPending: accountsPending } = useQuery(passwordQuery)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -171,7 +169,8 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: 
       if (error) {
         toast.error(m.auth_userProfile_password_setError({ error: error.message ?? '' }, { locale }))
         // Set from another tab meanwhile: show the change form
-        if (error.code === 'PASSWORD_ALREADY_SET') void queryClient.invalidateQueries({ queryKey: hasPasswordKey })
+        if (error.code === 'PASSWORD_ALREADY_SET')
+          queryClient.invalidateQueries({ queryKey: hasPasswordKey }).catch(reportRejection)
         return
       }
       toast.success(m.auth_userProfile_password_setSuccess({}, { locale }))
@@ -190,7 +189,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: 
     }
     toast.success(m.auth_userProfile_password_success({}, { locale }))
     resetFields()
-  }, [hasPassword, currentPassword, newPassword, locale, queryClient])
+  }, [hasPassword, currentPassword, newPassword, locale, queryClient, hasPasswordKey])
 
   const togglePasswordVisibility = (field: keyof typeof visiblePasswords) => {
     setVisiblePasswords((visible) => ({ ...visible, [field]: !visible[field] }))
@@ -230,7 +229,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: 
               else confirmRef.current?.focus()
               return
             }
-            void handleChange()
+            handleChange().catch(reportRejection)
           }}
           noValidate
         >
@@ -390,16 +389,18 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
   userId,
 }) => {
   const locale = useLocale()
-  const queryClient = useQueryClient()
   const confirmDelete = useConfirmDialog()
 
-  const { data: passkeys = [], isLoading: loading } = useQuery({
-    queryKey: ['passkeys', userId ?? null],
-    queryFn: async () => {
+  const {
+    data: passkeys = [],
+    isLoading: loading,
+    refetch,
+  } = useQuery(
+    requestQuery('passkeys', { user: userId ?? null }, async () => {
       const res = await authClient.passkey.listUserPasskeys()
       return (res.data ?? []) as PasskeyItem[]
-    },
-  })
+    }),
+  )
 
   const [addState, handleAdd] = useAsyncFn(async () => {
     const res = await authClient.passkey.addPasskey()
@@ -408,8 +409,8 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
       return
     }
     toast.success(m.auth_userProfile_passkeys_added({}, { locale }))
-    queryClient.invalidateQueries({ queryKey: ['passkeys'] })
-  }, [queryClient, locale])
+    refetch().catch(reportRejection)
+  }, [refetch, locale])
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirmDelete.confirm()
@@ -417,7 +418,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
     try {
       await authClient.passkey.deletePasskey({ id })
       toast.success(m.auth_userProfile_passkeys_deleted({}, { locale }))
-      queryClient.invalidateQueries({ queryKey: ['passkeys'] })
+      refetch().catch(reportRejection)
     } catch (e: unknown) {
       toast.error(m.auth_userProfile_passkeys_error({ error: formatErrorMessage(e) }, { locale }))
     }
@@ -466,7 +467,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
                 </div>
                 <IconButton
                   size="small"
-                  onClick={() => handleDelete(pk.id)}
+                  onClick={asyncHandler(() => handleDelete(pk.id))}
                   aria-label={m.auth_userProfile_passkeys_deleteNamed({ name: info.name }, { locale })}
                   title={m.auth_userProfile_passkeys_deleteNamed({ name: info.name }, { locale })}
                   className="!text-danger"
@@ -480,7 +481,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
       )}
 
       <Button
-        onClick={handleAdd}
+        onClick={asyncHandler(handleAdd)}
         disabled={addState.loading}
         variant="outlined"
         startIcon={addState.loading ? <CircularProgress size="1rem" /> : <IconMdiPlus />}
@@ -527,16 +528,18 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
   userId,
 }) => {
   const locale = useLocale()
-  const queryClient = useQueryClient()
   const confirmRevoke = useConfirmDialog()
 
-  const { data: sessions = [], isLoading: loading } = useQuery({
-    queryKey: ['sessions', userId ?? null],
-    queryFn: async () => {
+  const {
+    data: sessions = [],
+    isLoading: loading,
+    refetch,
+  } = useQuery(
+    requestQuery('sessions', { user: userId ?? null }, async () => {
       const res = await authClient.listSessions()
       return (res.data ?? []) as SessionItem[]
-    },
-  })
+    }),
+  )
 
   const handleRevoke = async (token: string) => {
     const confirmed = await confirmRevoke.confirm()
@@ -544,7 +547,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
     try {
       await authClient.revokeSession({ token })
       toast.success(m.auth_userProfile_devices_revoked({}, { locale }))
-      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+      refetch().catch(reportRejection)
     } catch (e: unknown) {
       toast.error(m.auth_userProfile_devices_error({ error: formatErrorMessage(e) }, { locale }))
     }
@@ -602,7 +605,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
                 {!isCurrent && (
                   <Button
                     size="small"
-                    onClick={() => handleRevoke(session.token)}
+                    onClick={asyncHandler(() => handleRevoke(session.token))}
                     variant="text"
                     className="!text-xs !shrink-0"
                   >

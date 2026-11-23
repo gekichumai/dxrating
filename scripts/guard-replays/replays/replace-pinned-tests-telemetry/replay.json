@@ -1,0 +1,7 @@
+{
+  "mistake": "net_fetch.failure is sent without its outcome attribute, so failures group only by error_code, which Sentry scrubs to [Filtered].",
+  "history": ["#444 2a9f6321"],
+  "guard": "telemetry.test.ts asserts what the Sentry SDK receives, with the SDK (not our wrapper) faked",
+  "check": "cd apps/backend && DATABASE_URL=postgres://postgres:postgres@localhost:5432/dxrating_test pnpm exec vitest run src/services/functions/fetch-net-records/telemetry.test.ts",
+  "expect": "counts a failure with its outcome"
+}

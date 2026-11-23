@@ -1,0 +1,9 @@
+{
+  "mistake": "A contract route uses a method the API's CORS preflight does not allow, so every browser call to it fails while server-side tests pass.",
+  "history": [
+    "#558 88854502 (the announcements update route was PUT while the API CORS allowed only GET and POST; moved to POST in review)"
+  ],
+  "guard": "http-surface.test.ts sends every contract route's method through the CORS policy the HTTP surface gives its path",
+  "check": "pnpm --filter @gekichumai/api-contract exec vitest run src/__tests__/http-surface.test.ts",
+  "expect": "lets a browser call every route with its method"
+}

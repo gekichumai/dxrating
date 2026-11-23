@@ -1,0 +1,7 @@
+{
+  "mistake": "\"Back to home\" links to a bare / and drops the search the visitor had on Home.",
+  "history": ["d4eac3cb (fix(web): Home link keeps Home's search)"],
+  "guard": "BackToHomeLink.test.tsx navigates a real router with the real NavigationOriginTracker",
+  "check": "cd apps/web && pnpm exec vitest run src/components/global/__tests__/BackToHomeLink.test.tsx",
+  "expect": "links to the Home it came from, search included"
+}

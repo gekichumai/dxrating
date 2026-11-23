@@ -1,0 +1,15 @@
+diff --git a/apps/backend/src/request-runner.ts b/apps/backend/src/request-runner.ts
+index 85aaceb3..719c82db 100644
+--- a/apps/backend/src/request-runner.ts
++++ b/apps/backend/src/request-runner.ts
+@@ -63,10 +63,6 @@ export const createRequestRunner = <R, ER>(runtime: ManagedRuntime.ManagedRuntim
+         if (Exit.isSuccess(exit)) return exit.value
+         // An interruption is expected when the client left or shutdown stopped the request; any other one is a bug
+         // and keeps the squashed error it always had.
+-        if (Cause.hasInterruptsOnly(exit.cause)) {
+-          if (externalSignal?.aborted) throw new ClientClosedRequestError()
+-          if (!accepting) throw new RequestRunnerClosedError()
+-        }
+         throw Cause.squash(exit.cause)
+       })
+     active.set(controller, pending)

@@ -1,0 +1,11 @@
+{
+  "mistake": "A plate page shows the visitor's saved scores (localStorage) on the first client render, so it differs from the user-agnostic server and edge-cached HTML.",
+  "history": [
+    "df1d1173 (plate pages rendered localStorage-backed progress on the first client render)",
+    "39919a1c (useUserRecords revealed saved scores before mount)"
+  ],
+  "guard": "the e2e hydration matrix (apps/web/e2e/hydration-matrix.spec.ts) on a plate page, with saved scores seeded",
+  "check": "cd apps/web && VITE_E2E_BUILD=1 pnpm exec vite build >/dev/null && pnpm exec playwright test e2e/hydration-matrix.spec.ts --grep '/plates/[a-z]'",
+  "expect": "Minified React error #418",
+  "needs": ["e2e"]
+}

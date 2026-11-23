@@ -7,6 +7,7 @@ import { renderShareImage, type ShareImageSpec } from '@/utils/shareImage/shareI
 import { ShareImageViewer } from './ShareImageViewer'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler } from '@/lib/rejections'
 
 export interface ShareImageButtonProps extends Omit<ButtonProps, 'onClick'> {
   /** Builds the image spec when clicked, so heavy drawing data is only gathered on demand */
@@ -59,7 +60,7 @@ export const ShareImageButton: FC<ShareImageButtonProps> = ({
         disabled={disabled || busy}
         aria-busy={busy || undefined}
         aria-haspopup="dialog"
-        onClick={() => void handleClick()}
+        onClick={asyncHandler(handleClick)}
         {...buttonProps}
       >
         {children ?? m.share_image_button({}, { locale })}

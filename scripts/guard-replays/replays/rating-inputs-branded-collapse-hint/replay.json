@@ -1,0 +1,10 @@
+{
+  "mistake": "Collapsing a chart's plays ranks each play's best 50 hint by the aggregated record instead of the play that carries it, so the kept hint depends on the input order.",
+  "history": [
+    "#432 8a94781 (collapseScoreRecords ranked the hint with the aggregate)",
+    "#416 519a22d3, 6bb965c7 (record grouping kept a hint calculateBest50 would not)"
+  ],
+  "guard": "collapsePlays in maimai-domain is the one collapse; its property test checks every field and the hint against every input order",
+  "check": "pnpm --filter @gekichumai/maimai-domain exec vitest run src/__tests__/collapse-plays.test.ts",
+  "expect": "keeps each field at its best over every play and the hint calculateBest50 keeps, in any order"
+}

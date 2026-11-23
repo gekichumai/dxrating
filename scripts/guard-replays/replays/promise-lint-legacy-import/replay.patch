@@ -1,0 +1,12 @@
+diff --git a/apps/web/src/models/context/RatingCalculatorContext.tsx b/apps/web/src/models/context/RatingCalculatorContext.tsx
+index bdeab674..443c30bf 100644
+--- a/apps/web/src/models/context/RatingCalculatorContext.tsx
++++ b/apps/web/src/models/context/RatingCalculatorContext.tsx
+@@ -163,7 +163,6 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
+         repository.applyMigration(result.records)
+         reportMigration('rating-entries', result)
+       })
+-      .catch(reportRejection)
+     return () => {
+       cancelled = true
+     }

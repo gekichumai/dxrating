@@ -1,0 +1,15 @@
+diff --git a/apps/web/src/components/global/DXRank.tsx b/apps/web/src/components/global/DXRank.tsx
+index a2a27af5..86b3dc49 100644
+--- a/apps/web/src/components/global/DXRank.tsx
++++ b/apps/web/src/components/global/DXRank.tsx
+@@ -8,10 +8,6 @@ export const DXRank: FC<{ rank?: string | null; className?: string }> = ({ rank,
+   const slugVersion = useAppContextSlugVersion()
+   const locale = useLocale()
+ 
+-  if (!rank) {
+-    return <div className={clsx('aspect-w-128 aspect-h-60 bg-gray-200 rounded', className)} />
+-  }
+-
+   // MAGiCAL uses the existing rank artwork until its dedicated asset set is available.
+   const rankVersion = slugVersion === 'magical' ? 'circle-plus' : slugVersion
+   const image = `https://shama.dxrating.net/images/rank/${rankVersion}/${rank}.png`

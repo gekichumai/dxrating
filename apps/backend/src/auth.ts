@@ -105,20 +105,8 @@ export const createAuth = (
       enabled: true,
       ...authMail.passwordReset,
       password: {
-        hash: (password) =>
-          Effect.runPromise(
-            Effect.tryPromise({
-              try: () => bcrypt.hash(password, 10),
-              catch: (cause) => new AuthenticationError({ operation: 'Hash password', cause }),
-            }),
-          ),
-        verify: ({ hash, password }) =>
-          Effect.runPromise(
-            Effect.tryPromise({
-              try: () => bcrypt.compare(password, hash),
-              catch: (cause) => new AuthenticationError({ operation: 'Verify password', cause }),
-            }),
-          ),
+        hash: (password) => bcrypt.hash(password, 10),
+        verify: ({ hash, password }) => bcrypt.compare(password, hash),
       },
     },
     ...(authMail.emailVerification ? { emailVerification: authMail.emailVerification } : {}),
@@ -137,6 +125,7 @@ export const createAuth = (
       deleteUser: {
         enabled: true,
         beforeDelete: (user) =>
+          // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
           Effect.runPromise(
             Effect.gen(function* () {
               const accounts = yield* database.query('Read linked OAuth accounts', (db) =>
@@ -181,7 +170,14 @@ export const createAuth = (
       },
     },
     databaseHooks: {
-      user: emailVerificationHooks(database),
+      user: {
+        ...emailVerificationHooks(database),
+        delete: {
+          after: () =>
+            // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
+            Effect.runPromise(database.wroteOutside([authSchema.user])),
+        },
+      },
     },
     advanced: {
       cookiePrefix: 'dxrating',
@@ -237,6 +233,7 @@ export const createAuth = (
       }),
       setPassword({
         storeFirstPassword: ({ userId, id, password }) =>
+          // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
           Effect.runPromise(
             Effect.tryPromise({
               try: () =>

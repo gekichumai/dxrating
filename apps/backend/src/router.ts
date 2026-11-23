@@ -1,7 +1,7 @@
-import * as Sentry from '@sentry/node'
 import { ORPCError, implement } from '@orpc/server'
 import { appContract } from './contract'
 import { Database } from './db/index'
+import { reportFailure, Sentry } from './lib/functions/sentry'
 import { Clock, Data, Duration, Effect, Schema, Semaphore } from 'effect'
 import { HttpBody, HttpClientResponse } from 'effect/http'
 import type { RequestHeadersHandlerPluginContext, ResponseHeadersHandlerPluginContext } from '@orpc/server/plugins'
@@ -109,58 +109,45 @@ const tagsHandler = {
   list: os.tags.list.handler(
     handlerGen(function* ({ input }) {
       const database = yield* Database
-      const cache = yield* ApplicationCache
       const catalogIdentities = yield* CatalogIdentities
-      const cached = yield* cache.get<TagsListResult>('tags:list')
-      let result: TagsListResult
-      if (cached) {
-        yield* Effect.sync(() => Sentry.metrics.count('cache.hit', 1, { attributes: { key: 'tags:list' } }))
-        result = cached
-      } else {
-        yield* Effect.sync(() => Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'tags:list' } }))
-
-        const [allTags, allGroups, allTagSongs] = yield* Effect.all(
-          [
-            database.query('Tags.list', (db) =>
-              db
-                .select({
-                  id: tags.id,
-                  localized_name: tags.localized_name,
-                  localized_description: tags.localized_description,
-                  group_id: tags.group_id,
-                })
-                .from(tags),
-            ),
-            database.query('Tags.listGroups', (db) =>
-              db
-                .select({
-                  id: tagGroups.id,
-                  localized_name: tagGroups.localized_name,
-                  color: tagGroups.color,
-                })
-                .from(tagGroups),
-            ),
-            database.query('Tags.listSongTags', (db) =>
-              db
-                .select({
-                  song_id: tagSongs.song_id,
-                  sheet_type: tagSongs.sheet_type,
-                  sheet_difficulty: tagSongs.sheet_difficulty,
-                  tag_id: tagSongs.tag_id,
-                })
-                .from(tagSongs),
-            ),
-          ],
-          { concurrency: 'unbounded' },
-        )
-
-        result = {
-          tags: allTags,
-          tagGroups: allGroups,
-          tagSongs: allTagSongs,
-        }
-        yield* cache.set('tags:list', result)
-      }
+      const [allTags, allGroups, allTagSongs] = yield* Effect.all(
+        [
+          database.query('Tags.list', (db) =>
+            db
+              .select({
+                id: tags.id,
+                localized_name: tags.localized_name,
+                localized_description: tags.localized_description,
+                group_id: tags.group_id,
+              })
+              .from(tags)
+              .$withCache(),
+          ),
+          database.query('Tags.listGroups', (db) =>
+            db
+              .select({
+                id: tagGroups.id,
+                localized_name: tagGroups.localized_name,
+                color: tagGroups.color,
+              })
+              .from(tagGroups)
+              .$withCache(),
+          ),
+          database.query('Tags.listSongTags', (db) =>
+            db
+              .select({
+                song_id: tagSongs.song_id,
+                sheet_type: tagSongs.sheet_type,
+                sheet_difficulty: tagSongs.sheet_difficulty,
+                tag_id: tagSongs.tag_id,
+              })
+              .from(tagSongs)
+              .$withCache(),
+          ),
+        ],
+        { concurrency: 'unbounded' },
+      )
+      const result: TagsListResult = { tags: allTags, tagGroups: allGroups, tagSongs: allTagSongs }
 
       if (input?.idScheme === 'public') {
         const tagSongs = yield* withCatalogIdentityErrors(catalogIdentities.translateTagSongsToPublic(result.tagSongs))
@@ -172,7 +159,6 @@ const tagsHandler = {
   attach: os.tags.attach.handler(
     handlerGen(function* ({ input, context }) {
       const database = yield* Database
-      const cache = yield* ApplicationCache
       const catalogIdentities = yield* CatalogIdentities
       const user = context.user
       if (!user) return yield* new UnauthorizedError()
@@ -208,10 +194,7 @@ const tagsHandler = {
             })
             .returning({ id: tagSongs.id }),
         )
-        .pipe(
-          Effect.tap(() => cache.delete('tags:list')),
-          Effect.uninterruptible,
-        )
+        .pipe(Effect.uninterruptible)
 
       return res[0]
     }),
@@ -384,30 +367,19 @@ const aliasesHandler = {
   list: os.aliases.list.handler(
     handlerGen(function* ({ input }) {
       const database = yield* Database
-      const cache = yield* ApplicationCache
       const catalogIdentities = yield* CatalogIdentities
-      const cached = yield* cache.get<AliasListResult>('aliases:list')
-      let result: AliasListResult
-      if (cached) {
-        yield* Effect.sync(() => Sentry.metrics.count('cache.hit', 1, { attributes: { key: 'aliases:list' } }))
-        result = cached
-      } else {
-        yield* Effect.sync(() => Sentry.metrics.count('cache.miss', 1, { attributes: { key: 'aliases:list' } }))
-
-        const rows = yield* database.query('Aliases.list', (db) =>
-          db
-            .select({
-              song_id: songAliases.song_id,
-              name: songAliases.name,
-            })
-            .from(songAliases)
-            .orderBy(songAliases.id),
-        )
-        // The same name can be submitted for a song more than once; list it once, in submission order
-        result = uniqueAliases(rows)
-
-        yield* cache.set('aliases:list', result)
-      }
+      const rows = yield* database.query('Aliases.list', (db) =>
+        db
+          .select({
+            song_id: songAliases.song_id,
+            name: songAliases.name,
+          })
+          .from(songAliases)
+          .orderBy(songAliases.id)
+          .$withCache(),
+      )
+      // The same name can be submitted for a song more than once; list it once, in submission order
+      const result = uniqueAliases(rows)
 
       if (input?.idScheme === 'public') {
         const publicIds = yield* withCatalogIdentityErrors(
@@ -427,7 +399,6 @@ const aliasesHandler = {
   create: os.aliases.create.handler(
     handlerGen(function* ({ input, context }) {
       const database = yield* Database
-      const cache = yield* ApplicationCache
       const catalogIdentities = yield* CatalogIdentities
       const user = context.user
       if (!user) return yield* new UnauthorizedError()
@@ -445,10 +416,7 @@ const aliasesHandler = {
             })
             .returning({ id: songAliases.id }),
         )
-        .pipe(
-          Effect.tap(() => cache.delete('aliases:list')),
-          Effect.uninterruptible,
-        )
+        .pipe(Effect.uninterruptible)
 
       return res[0]
     }),
@@ -489,7 +457,7 @@ const queryTrending = Effect.fn('Analytics.queryTrending')(function* (projectId:
     }),
   })
   if (response.status < 200 || response.status >= 300) {
-    yield* Effect.sync(() => Sentry.captureException(new Error(`PostHog query failed: ${response.status}`)))
+    yield* Effect.sync(() => reportFailure(new Error(`PostHog query failed: ${response.status}`)))
     return undefined
   }
   return yield* HttpClientResponse.schemaBodyJson(TrendingResponseSchema)(response)
@@ -962,7 +930,7 @@ const maimaiNetHandler = {
     handlerGen(function* () {
       const cache = yield* ApplicationCache
       const regionStatus = Effect.fn('Maimai.netStatus')(function* (region: 'intl' | 'jp') {
-        const key = `net-status:${region}`
+        const key = `net-status:${region}` as const
         type Cached = { status: NetGatewayStatus; checkedAt: string }
         const cached = yield* cache.get<Cached>(key)
         if (cached) return cached

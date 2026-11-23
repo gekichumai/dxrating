@@ -67,8 +67,8 @@ export async function migrateStoredFavoriteSheetIds(storage: Storage, document: 
 }
 
 /** Keeps the value a key held before its first migration, once */
-export function backUpBeforeMigration(storage: Storage, key: string, original: string | null) {
-  if (original === null) return
+export function backUpBeforeMigration(storage: Storage | null, key: string, original: string | null) {
+  if (!storage || original === null) return
   try {
     if (storage.getItem(key + LEGACY_BACKUP_SUFFIX) === null) storage.setItem(key + LEGACY_BACKUP_SUFFIX, original)
   } catch {

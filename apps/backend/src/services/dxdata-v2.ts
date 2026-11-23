@@ -4,8 +4,6 @@ import { toV2Catalog } from '@gekichumai/dxdata/v2'
 import { Deferred, Effect } from 'effect'
 import { DxdataDecodeError, type PublishedDxdataMetadata } from './dxdata'
 
-/** The v2 catalog (gekichumai/meta#43): the published catalog without its community data and repeated defaults */
-export const DXDATA_V2_PATH = '/api/v2/dxdata'
 export const DXDATA_V2_CACHE_TAG = 'dxdata-v2'
 
 interface DxdataStore<E, R> {

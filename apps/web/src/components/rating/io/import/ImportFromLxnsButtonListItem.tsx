@@ -29,6 +29,7 @@ import { importFailureMessage } from '@/components/cloud-save/importFailureMessa
 import { ServerImportFailedError } from '@/models/scores/cloudImports'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 const haptics = new WebHaptics()
 
@@ -53,7 +54,7 @@ const LxnsImportDialogContent: FC<{
   }, [])
 
   useEffect(() => {
-    checkStatus()
+    checkStatus().catch(reportRejection)
   }, [checkStatus])
 
   const handleConnect = async () => {
@@ -205,7 +206,7 @@ const LxnsImportDialogContent: FC<{
 
       <DialogActions>
         {state === 'connected' && (
-          <Button onClick={handleDisconnect} color="inherit" size="small">
+          <Button onClick={asyncHandler(handleDisconnect)} color="inherit" size="small">
             {m.ratingCalculator_io_import_lxns_disconnect({}, { locale })}
           </Button>
         )}
@@ -215,13 +216,13 @@ const LxnsImportDialogContent: FC<{
         <Button onClick={onClose}>{m.ratingCalculator_io_import_lxns_close({}, { locale })}</Button>
 
         {state === 'not-connected' && (
-          <Button onClick={handleConnect} variant="contained">
+          <Button onClick={asyncHandler(handleConnect)} variant="contained">
             {m.ratingCalculator_io_import_lxns_connect({}, { locale })}
           </Button>
         )}
 
         {state === 'connected' && (
-          <Button onClick={handleImport} variant="contained">
+          <Button onClick={asyncHandler(handleImport)} variant="contained">
             {m.ratingCalculator_io_import_lxns_import({}, { locale })}
           </Button>
         )}
@@ -234,7 +235,7 @@ export const ImportFromLxnsButtonListItem: FC<{
   onClose: () => void
 }> = ({ onClose }) => {
   const locale = useLocale()
-  const { isAuthenticated, openLoginDialog, LoginDialog } = useAuth()
+  const { isAuthenticated, openLoginDialog, loginDialog } = useAuth()
   const [open, setOpen] = useState(false)
 
   const handleClose = () => {
@@ -273,7 +274,7 @@ export const ImportFromLxnsButtonListItem: FC<{
           and would unmount the form mid-sign-in */}
       {!isAuthenticated && (
         <span className="contents" onKeyDown={(event) => event.stopPropagation()}>
-          <LoginDialog />
+          {loginDialog}
         </span>
       )}
       {open && (

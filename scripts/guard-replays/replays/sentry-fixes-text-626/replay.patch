@@ -1,0 +1,35 @@
+diff --git a/pr-body.md b/pr-body.md
+new file mode 100644
+index 00000000..44dbf6b1
+--- /dev/null
++++ b/pr-body.md
+@@ -0,0 +1,29 @@
++Fixes DXRATING-BACKEND-1Z. Investigates DXRATING-BACKEND-2J; this PR does not fix it.
++
++## DXRATING-BACKEND-1Z: `Error: aborted` (122 events, 96 users)
++When the client closes the connection, `@hono/node-server` aborts the request signal with the socket error **as a string** (`incoming.errored.toString()`, which is `"Error: aborted"`). oRPC's Effect integration (`runPromise` in `@orpc/experimental-effect`) sees an interrupt-only exit, so it rethrows `signal.reason`, and the oRPC `onError` interceptor in `app.ts` captured that string. This happened on every procedure, not only `announcements.list`. The Hono routes already handle this through `ClientClosedRequestError`. The oRPC path didn't.
++
++The interceptor moves to `src/orpc-error-reporting.ts`. It skips a failure only when the request **signal is aborted** and the error is one of:
++- the signal's own reason,
++- an `AbortError`,
++- the runner's `ClientClosedRequestError`.
++
++It records an info breadcrumb in place of the event and matches no error strings. Every other failure is still captured, including a real failure on a request whose signal later aborted.
++
++## DXRATING-BACKEND-2J: `DatabaseError` on the announcements select (1 event, Googlebot)
++This is **not** the abort. An abort interrupts the query fiber, and oRPC rethrows the signal reason. 2J was a typed **failure**. The query parameters were computed at 16:24:07.254, and the error came at 16:24:12.278, about 5.0 s later. That matches `@effect/sql-pg`'s 5 s `connectTimeout`; its pool also drops idle connections after 10 s, so a cold low-traffic request often opens a new one. A stalled cancel drain also times out after 5 s, but that one wouldn't surface as the request's failure. No other backend errors occurred in that 10-minute window, so it looks like a single transient connection failure.
++
++The Sentry event stops at `EffectDrizzleQueryError` and doesn't include the innermost `SqlError`. To make the next one diagnosable, database failures now get two tags:
++- `db.operation`
++- `db.error`, the SQL error reason such as `ConnectionError` or `StatementTimeoutError`
++
++Neither tag includes query text or parameters. The commit does **not** say `Fixes DXRATING-BACKEND-2J`.
++
++## Tests
++`src/test/orpc-error-reporting.test.ts` uses a real `OpenAPIHandler` + `handlerGen` set up the way `app.ts` sets them up, and Sentry initialised with a recording `beforeSend`:
++- A client abort mid-flight with the string reason → no event, plus a breadcrumb. This test fails without the fix.
++- A real `DatabaseError` → one event tagged `orpc.procedure`, `db.operation` and `db.error: ConnectionError`.
++- A real failure on an already-aborted signal → still captured.
++- Precision checks on `isClientAbort`.
++
++🤖 Generated with [Claude Code](https://claude.com/claude-code)

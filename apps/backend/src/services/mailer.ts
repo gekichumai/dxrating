@@ -1,7 +1,7 @@
 import { Context, Data, Duration, Effect, FiberSet, Layer } from 'effect'
 import { HttpBody } from 'effect/http'
 import { AppConfig } from '../config'
-import { Sentry } from '../lib/functions/sentry'
+import { reportFailure as reportToSentry } from '../lib/functions/sentry'
 import { HttpClient } from './http-client'
 
 /**
@@ -93,7 +93,7 @@ const reportFailure = (mail: Mail, error: MailerError | MailerUnavailable) =>
     } else {
       yield* Effect.logWarning('Could not send an email', { kind: mail.kind, status: error.status })
       yield* Effect.sync(() =>
-        Sentry.captureException(new Error(`Email send failed (${mail.kind}): ${String(error.status ?? 'no status')}`), {
+        reportToSentry(new Error(`Email send failed (${mail.kind}): ${String(error.status ?? 'no status')}`), {
           tags: { component: 'mailer', 'mail.kind': mail.kind },
           extra: { status: error.status, cause: error.cause instanceof Error ? error.cause.message : error.cause },
         }),

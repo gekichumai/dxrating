@@ -74,7 +74,7 @@ export const streamNetImport: NetImportTransport = (request, signal) => ({
       notify()
     }
 
-    void fetchEventSource(netImportUrl(request.saveId), {
+    fetchEventSource(netImportUrl(request.saveId), {
       method: CLOUD_SAVE_NET_IMPORT_ROUTE.method,
       body: JSON.stringify(request.body),
       headers: {
