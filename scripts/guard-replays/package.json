@@ -1,0 +1,8 @@
+{
+  "name": "@gekichumai/guard-replays",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "replay": "node run.ts"
+  }
+}

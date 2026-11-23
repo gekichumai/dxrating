@@ -1,16 +1,19 @@
 import type { JSX } from 'react'
+import type { SupportedLocale } from '@/setup/locale'
 import { buildAlternateLinks } from '@/utils/alternateLinks'
 import { AGENT_DISCOVERY_RELATIONS } from '@/setup/agent-discovery'
 import numericFont from '@/assets/fonts/nunito-numeric.woff2?url'
 
 type RootHeadLocation = {
+  /** The router's pathname, without the language prefix */
   pathname: string
   search?: Record<string, unknown>
+  locale: SupportedLocale
 }
 
 type HeadLink = JSX.IntrinsicElements['link']
 
-export const buildRootHeadLinks = ({ pathname, search }: RootHeadLocation): HeadLink[] => [
+export const buildRootHeadLinks = ({ pathname, search, locale }: RootHeadLocation): HeadLink[] => [
   { rel: 'preconnect', href: 'https://shama.dxrating.net' },
   {
     rel: 'preload',
@@ -34,7 +37,7 @@ export const buildRootHeadLinks = ({ pathname, search }: RootHeadLocation): Head
     href: '/images/versions/magical/logo.webp',
     fetchPriority: 'high',
   },
-  ...buildAlternateLinks({ pathname, search }),
+  ...buildAlternateLinks({ pathname, search }, locale),
   ...AGENT_DISCOVERY_RELATIONS,
   { rel: 'preconnect', href: 'https://miruku.dxrating.net' },
   {

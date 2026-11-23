@@ -1,0 +1,14 @@
+diff --git a/packages/maimai-domain/src/import-normalizers.ts b/packages/maimai-domain/src/import-normalizers.ts
+index 145a289f..7a1675a6 100644
+--- a/packages/maimai-domain/src/import-normalizers.ts
++++ b/packages/maimai-domain/src/import-normalizers.ts
+@@ -72,8 +72,7 @@ type ImportRowResult = { entry: RatingEntry } | { warning: ImportWarning } | { s
+  * rating-eligible difficulty. See gekichumai/meta#55.
+  */
+ const LEVEL_INDEX_TO_DIFFICULTY: Partial<Record<number, DifficultyEnum>> = {
+-  0: DifficultyEnum.Basic,
+-  1: DifficultyEnum.Advanced,
++  1: DifficultyEnum.Basic,
+   2: DifficultyEnum.Expert,
+   3: DifficultyEnum.Master,
+   4: DifficultyEnum.ReMaster,

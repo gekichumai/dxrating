@@ -3,7 +3,7 @@ import { buildRootHeadLinks } from '../rootHeadLinks'
 
 describe('buildRootHeadLinks', () => {
   it('keeps React-managed stylesheets same-origin', () => {
-    const links = buildRootHeadLinks({ pathname: '/search', search: { q: '宴' } })
+    const links = buildRootHeadLinks({ pathname: '/search', search: { q: '宴' }, locale: 'en' })
     const stylesheetLinks = links.filter((link) => link.rel === 'stylesheet')
 
     // App CSS ships through the route manifest; any stylesheet linked here must stay same-origin
@@ -14,16 +14,16 @@ describe('buildRootHeadLinks', () => {
   })
 
   it('retains the current-route alternate and canonical links without search params', () => {
-    const links = buildRootHeadLinks({ pathname: '/rating', search: { q: '宴', locale: 'ja' } })
+    const links = buildRootHeadLinks({ pathname: '/rating', search: { q: '宴' }, locale: 'ja' })
 
-    expect(links).toContainEqual({ rel: 'alternate', hrefLang: 'ja', href: 'https://dxrating.net/rating?locale=ja' })
+    expect(links).toContainEqual({ rel: 'alternate', hrefLang: 'ja', href: 'https://dxrating.net/ja/rating' })
     expect(links.filter((link) => link.rel === 'canonical')).toEqual([
-      { rel: 'canonical', href: 'https://dxrating.net/rating?locale=ja' },
+      { rel: 'canonical', href: 'https://dxrating.net/ja/rating' },
     ])
   })
 
   it('publishes API and agent discovery relations in the final document head', () => {
-    const links = buildRootHeadLinks({ pathname: '/search' })
+    const links = buildRootHeadLinks({ pathname: '/search', locale: 'en' })
 
     expect(links).toEqual(
       expect.arrayContaining([

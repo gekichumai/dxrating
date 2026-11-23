@@ -9,6 +9,9 @@
       "env": ["VITE_*", "SENTRY_RELEASE", "CI"],
       "passThroughEnv": ["SENTRY_AUTH_TOKEN"]
     },
+    "test": {
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true

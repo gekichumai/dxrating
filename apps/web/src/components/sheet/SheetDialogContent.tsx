@@ -72,7 +72,7 @@ const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
 }
 
 const SectionHeader: FC<PropsWithChildren<object>> = ({ children }) => (
-  <h3 className="section-title m-0 px-1 pb-1 border-b border-solid border-black/8">{children}</h3>
+  <h3 className="item-title m-0 px-1 pb-1 border-b border-solid border-black/8">{children}</h3>
 )
 
 /**

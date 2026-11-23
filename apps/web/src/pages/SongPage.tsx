@@ -10,7 +10,7 @@ import { SongSheetContent, SongSheetSummary } from '../components/song/SongSheet
 import { SongSheetTabs } from '../components/song/SongSheetTabs'
 import { constantTableLevelOf, constantTablePath } from '@/components/chartDiscovery/constantTables'
 import { versionPagePath, versionSlug } from '@/components/chartDiscovery/versionPages'
-import { keepLocaleSearch, withLocaleQuery } from '@/setup/locale'
+import { localizePath } from '@/setup/locale'
 import { buildSheetPath } from '../components/sheet/sheetLinks'
 import { getVisibleSongPageSheets } from './songPageSheets'
 import { useSongSheets } from './useSongSheets'
@@ -23,9 +23,6 @@ const routeApi = getRouteApi('/songs/$songId/$type/$difficulty')
 
 export const SongPage: FC = () => {
   const { songId, type, difficulty } = routeApi.useParams()
-  // Switching charts stays on the URL's language variant (each `?locale=` variant is its own canonical page)
-  const search = routeApi.useSearch()
-  const localeSearch = keepLocaleSearch(search)
   const navigate = useNavigate()
   const locale = useLocale()
   const { song, flattenedSheets } = useSongSheets(songId)
@@ -53,7 +50,6 @@ export const SongPage: FC = () => {
         type: newType,
         difficulty: getHighestDifficulty(sheetsOfType),
       },
-      ...localeSearch,
       // The chart tabs switch within one page: replacing the entry keeps Back (and the back arrow) leaving the song
       replace: true,
     })
@@ -67,7 +63,6 @@ export const SongPage: FC = () => {
         type: newType,
         difficulty: newDifficulty,
       },
-      ...localeSearch,
       // The chart tabs switch within one page: replacing the entry keeps Back (and the back arrow) leaving the song
       replace: true,
     })
@@ -79,7 +74,7 @@ export const SongPage: FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6 pb-global flex flex-col gap-4">
-      <SongBackLink search={search} className="self-start -ml-2 -mb-2" />
+      <SongBackLink className="self-start -ml-2 -mb-2" />
 
       {headerSheet && <SongHeader sheet={headerSheet} />}
 
@@ -96,14 +91,14 @@ export const SongPage: FC = () => {
           onTypeChange={handleTypeChange}
           onDifficultyChange={handleDifficultyChange}
           hrefFor={(sheetType, sheetDifficulty) =>
-            withLocaleQuery(
+            localizePath(
               buildSheetPath({
                 songId,
                 type: sheetType,
                 difficulty:
                   sheetDifficulty ?? getHighestDifficulty(flattenedSheets.filter((s) => s.type === sheetType)),
               }),
-              search,
+              locale,
             )
           }
         />
@@ -112,7 +107,7 @@ export const SongPage: FC = () => {
           <SongSheetSummary key={sheet.id} sheet={sheet} />
         ))}
 
-        <Link to="/songs/$songId" params={{ songId: song.id }} {...localeSearch} className="link self-start text-sm">
+        <Link to="/songs/$songId" params={{ songId: song.id }} className="link self-start text-sm">
           {m.song_hub_allChartsLink({}, { locale })}
           <span aria-hidden> →</span>
         </Link>

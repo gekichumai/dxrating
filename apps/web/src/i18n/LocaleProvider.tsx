@@ -1,6 +1,16 @@
-import { type FC, type PropsWithChildren, createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { useRouterState } from '@tanstack/react-router'
+import {
+  type FC,
+  type PropsWithChildren,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { flushSync } from 'react-dom'
-import { DEFAULT_LOCALE, type SupportedLocale } from '@/setup/locale'
+import { DEFAULT_LOCALE, type SupportedLocale, splitLocalePath } from '@/setup/locale'
 import { setClientLocale } from './runtime'
 
 interface LocaleContextValue {
@@ -42,4 +52,23 @@ export function useSetLocale(): LocaleContextValue['setLocale'] {
   const context = useContext(LocaleContext)
   if (!context) throw new Error('useSetLocale must be used inside LocaleProvider')
   return context.setLocale
+}
+/**
+ * Keeps the UI language on the language of the URL. The path names the page's language (`/ja/…`), and the picker
+ * changes both together, but Back and Forward move between paths of different languages without it. Mounted once,
+ * inside the router and the LocaleProvider. An effect, so the first render keeps the server's locale.
+ */
+export const LocaleUrlSync: FC = () => {
+  const publicHref = useRouterState({ select: (state) => state.location.publicHref })
+  const locale = useLocale()
+  const setLocale = useSetLocale()
+
+  useEffect(() => {
+    const urlLocale = splitLocalePath(new URL(publicHref, 'https://dxrating.net').pathname).locale
+    if (urlLocale !== locale) void setLocale(urlLocale)
+    // Only a URL change re-checks: a picker switch updates the locale first and the URL a moment later
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [publicHref])
+
+  return null
 }

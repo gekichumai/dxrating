@@ -56,6 +56,13 @@ suite('announcements (admin API)', () => {
       adminApiConfigLayer(config),
       accessVerifierTestLayer({
         owner: { kind: 'user', email: 'owner@example.invalid' },
+        // An org member Access admits who is not on ADMIN_HUMAN_EMAILS
+        member: {
+          kind: 'user',
+          email: 'member@example.invalid',
+          subject: 'synthetic-access-sub',
+          identityProvider: 'github:synthetic-idp',
+        },
         robot: { kind: 'service', commonName: 'svc' },
       }),
       RateLimiterLive,
@@ -122,6 +129,77 @@ suite('announcements (admin API)', () => {
     const call = purge.mock.calls[0]![0]
     expect(call.url).toBe('https://api.cloudflare.com/client/v4/zones/zone/invalidate_cache')
     expect(await call.json()).toEqual({ tags: ['announcements'] })
+  })
+
+  it('records the whole principal of every write: actor on the row, Access identity in the audit log', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    try {
+      const member = { ...human, 'cf-access-jwt-assertion': 'member' }
+      const created = (await (await post('/announcements', { announcement: fields() }, member)).json()) as any
+      const id = created.announcement.id
+      await post('/announcements/update', { announcement: { ...fields({ body: { en: 'x' } }), id } }, agent(WRITE))
+      await post('/announcements/end', { id }, member)
+      const row = (await pool.query('SELECT created_by, updated_by FROM announcements WHERE id = $1', [id])).rows[0]
+      expect(row).toEqual({ created_by: 'human:member@example.invalid', updated_by: 'human:member@example.invalid' })
+
+      const lines = log.mock.calls
+        .map(([line]) => (typeof line === 'string' && line.startsWith('{') ? JSON.parse(line) : null))
+        .filter((line) => line?.event === 'admin_audit')
+      expect(lines.map(({ at, ...rest }: any) => (expect(Date.parse(at)).not.toBeNaN(), rest))).toEqual([
+        {
+          level: 'info',
+          event: 'admin_audit',
+          actor: 'human:member@example.invalid',
+          principalType: 'human',
+          principalId: 'member@example.invalid',
+          email: 'member@example.invalid',
+          accessSubject: 'synthetic-access-sub',
+          identityProvider: 'github:synthetic-idp',
+          accessCommonName: null,
+          action: 'announcements.create',
+          target: id,
+          dryRun: false,
+          outcome: 'ok',
+        },
+        expect.objectContaining({
+          actor: 'agent:writer',
+          principalType: 'agent',
+          email: null,
+          accessSubject: null,
+          accessCommonName: 'svc',
+          action: 'announcements.update',
+          target: id,
+        }),
+        expect.objectContaining({
+          actor: 'human:member@example.invalid',
+          accessSubject: 'synthetic-access-sub',
+          action: 'announcements.end',
+          target: id,
+          outcome: 'ok',
+        }),
+      ])
+      expect(JSON.stringify(lines)).not.toContain(WRITE)
+    } finally {
+      log.mockRestore()
+    }
+  })
+
+  it('audits a committed write before the edge purge, so a request cancelled there keeps its entry', async () => {
+    const order: string[] = []
+    const log = vi.spyOn(console, 'log').mockImplementation((line) => {
+      if (typeof line === 'string' && line.includes('"admin_audit"')) order.push('audit')
+    })
+    purge.mockImplementation(async () => (order.push('purge'), Response.json({ success: true })))
+    try {
+      const created = (await (await post('/announcements', { announcement: fields() })).json()) as any
+      await post('/announcements/update', {
+        announcement: { ...fields({ body: { en: 'y' } }), id: created.announcement.id },
+      })
+      await post('/announcements/end', { id: created.announcement.id })
+      expect(order).toEqual(['audit', 'purge', 'audit', 'purge', 'audit', 'purge'])
+    } finally {
+      log.mockRestore()
+    }
   })
 
   it('dry run validates and previews without saving or purging', async () => {

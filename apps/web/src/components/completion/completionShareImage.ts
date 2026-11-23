@@ -1,15 +1,10 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import type { ConstantTable } from '@/components/chartDiscovery/constantTables'
-import {
-  coverImageUrl,
-  drawRoundedImage,
-  loadCanvasImage,
-  roundedRectPath,
-  type ShareImageSpec,
-} from '@/utils/shareImage/shareImage'
+import { drawRoundedImage, loadCanvasImage, roundedRectPath, type ShareImageSpec } from '@/utils/shareImage/shareImage'
+import { drawShareFooter, loadShareLogo, SHARE_FOOTER_HEIGHT, type ShareLink } from '@/utils/shareImage/shareFooter'
 import {
   achievementRankLabel,
   COMBO_LABELS,
-  COMPLETION_TARGET_LABELS,
   type CompletionRecord,
   type CompletionSummary,
   type CompletionTarget,
@@ -29,7 +24,6 @@ const GAP = 8
 const CELL = (WIDTH - PADDING * 2 - GAP * (COLUMNS - 1)) / COLUMNS
 const GROUP_LABEL_HEIGHT = 34
 const HEADER_HEIGHT = 160
-const FOOTER_HEIGHT = 72
 
 export interface CompletionShareImageInput {
   table: ConstantTable
@@ -37,8 +31,10 @@ export interface CompletionShareImageInput {
   summary: CompletionSummary
   title: string
   summaryLine: string
+  /** Where a scan of the footer QR goes, and the short URL printed beside it */
+  link: ShareLink
+  footerCaption: string
   recordOf: (sheetId: string) => CompletionRecord | undefined
-  imageNameOf: (sheetId: string) => string | undefined
 }
 
 /** A cover grid of the level's charts, grouped by internal level; charts not meeting the target are dimmed */
@@ -48,18 +44,18 @@ export function buildCompletionShareImage(input: CompletionShareImageInput): Sha
     (sum, group) => sum + GROUP_LABEL_HEIGHT + Math.ceil(group.charts.length / COLUMNS) * (CELL + GAP),
     0,
   )
-  const height = HEADER_HEIGHT + gridHeight + FOOTER_HEIGHT
+  const height = HEADER_HEIGHT + gridHeight + SHARE_FOOTER_HEIGHT + PADDING
 
   return {
     width: WIDTH,
     height,
     draw: async (context) => {
       const images = new Map<string, HTMLImageElement | null>()
+      const logoPromise = loadShareLogo()
       await Promise.all(
         table.groups.flatMap((group) =>
           group.charts.map(async (chart) => {
-            const imageName = input.imageNameOf(chart.sheetId)
-            images.set(chart.sheetId, imageName ? await loadCanvasImage(coverImageUrl(imageName)) : null)
+            images.set(chart.sheetId, await loadCanvasImage(coverUrl(chart.songId)))
           }),
         ),
       )
@@ -121,9 +117,11 @@ export function buildCompletionShareImage(input: CompletionShareImageInput): Sha
         y += Math.ceil(group.charts.length / COLUMNS) * (CELL + GAP)
       }
 
-      context.font = `400 18px ${FONT}`
-      context.fillStyle = 'rgba(255,255,255,0.6)'
-      context.fillText(`dxrating.net · ${COMPLETION_TARGET_LABELS[input.target]}`, PADDING, height - FOOTER_HEIGHT + 16)
+      drawShareFooter(
+        context,
+        { top: y, width: WIDTH, inset: PADDING },
+        { link: input.link, caption: input.footerCaption, logo: await logoPromise, font: FONT },
+      )
     },
   }
 }

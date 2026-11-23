@@ -19,6 +19,7 @@ import {
 } from '../rating/io/import/importFromNETRecords'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { CatalogUnverifiedHint } from './CatalogUnverifiedHint'
 
 const SideEffectorThemeMeta: FC = () => {
   const versionTheme = useVersionTheme()
@@ -173,6 +174,7 @@ export const SideEffector: FC = memo(() => {
       <SideEffectorLocaleMeta />
       <SideEffectorAutoImportRating />
       <SideEffectorAnalytics />
+      <CatalogUnverifiedHint />
     </>
   )
 })

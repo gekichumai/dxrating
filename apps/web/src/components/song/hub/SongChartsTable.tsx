@@ -11,13 +11,17 @@ import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { m } from '@/paraglide/messages'
-import { keepLocaleSearch } from '@/setup/locale'
 import { useAppContext, useAppContextDXDataVersion } from '@/models/context/useAppContext'
 import { useUserRecords } from '@/models/useUserRecords'
 import type { FlattenedSheet } from '@/songs'
 import { computeSongHubRaises } from './songHubRaise'
 
 const formatAchievement = (value: number) => `${value.toFixed(4)}%`
+
+// Numeric column headers wrap on phones: "Internal level" or "My score" on one line is wider than the values under
+// them, and pushed the table past a 375px screen. Wrapped headers sit on the baseline of the bottom line
+const NUMERIC_HEADER_CLASS_NAME =
+  'px-1 py-1 font-normal text-right align-bottom leading-tight whitespace-normal sm:whitespace-nowrap'
 
 // Per-type note counts get their own columns on wide screens (xl+), where the table has room for them
 const NOTE_TYPES = ['tap', 'hold', 'slide', 'touch', 'break'] as const
@@ -54,7 +58,6 @@ export const SongChartsTable: FC<{
 }> = ({ songId, sheets, activeSheetId }) => {
   const locale = useLocale()
   // Chart links stay on the hub URL's language variant (each `?locale=` variant is its own canonical page)
-  const localeSearch = keepLocaleSearch(useSearch({ strict: false }))
   // Rating hints need every scored chart: the route slice holds only this song, so wait for the complete catalog
   const completeCatalog = useCompleteSongCatalog()
   const { region } = useAppContext()
@@ -94,27 +97,26 @@ export const SongChartsTable: FC<{
         <table className="w-full border-collapse text-sm num text-fg-1">
           <thead>
             <tr className="text-left text-xs text-fg-2">
-              <th className="px-1 py-1 font-normal whitespace-nowrap">{m.song_hub_column_chart({}, { locale })}</th>
-              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">
-                {m.song_hub_column_level({}, { locale })}
+              <th className="px-1 py-1 font-normal whitespace-nowrap align-bottom">
+                {m.song_hub_column_chart({}, { locale })}
               </th>
-              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">
-                {m.song_hub_column_constant({}, { locale })}
-              </th>
-              <th className="hidden sm:table-cell px-1 py-1 font-normal whitespace-nowrap text-right">
+              <th className={NUMERIC_HEADER_CLASS_NAME}>{m.song_hub_column_level({}, { locale })}</th>
+              <th className={NUMERIC_HEADER_CLASS_NAME}>{m.song_hub_column_constant({}, { locale })}</th>
+              <th className="hidden sm:table-cell px-1 py-1 font-normal whitespace-nowrap text-right align-bottom">
                 {m.song_hub_column_notes({}, { locale })}
               </th>
               {NOTE_TYPES.map((noteType) => (
-                <th key={noteType} className="hidden xl:table-cell px-1 py-1 font-normal whitespace-nowrap text-right">
+                <th
+                  key={noteType}
+                  className="hidden xl:table-cell px-1 py-1 font-normal whitespace-nowrap text-right align-bottom"
+                >
                   {NOTE_TYPE_LABELS[noteType]({}, { locale })}
                 </th>
               ))}
-              <th className="hidden sm:table-cell pl-3 pr-1 py-1 font-normal whitespace-nowrap">
+              <th className="hidden sm:table-cell pl-3 pr-1 py-1 font-normal whitespace-nowrap align-bottom">
                 {m.song_hub_column_designer({}, { locale })}
               </th>
-              <th className="px-1 py-1 font-normal whitespace-nowrap text-right">
-                {m.song_hub_column_myScore({}, { locale })}
-              </th>
+              <th className={NUMERIC_HEADER_CLASS_NAME}>{m.song_hub_column_myScore({}, { locale })}</th>
             </tr>
           </thead>
           <tbody>
@@ -137,8 +139,8 @@ export const SongChartsTable: FC<{
                     <Link
                       to="/songs/$songId/$type/$difficulty"
                       params={{ songId, type: sheet.type, difficulty: sheet.difficulty }}
-                      {...localeSearch}
-                      className="inline-flex items-center gap-1 no-underline text-inherit rounded-[var(--radius-sm)] after:absolute after:inset-0 after:content-['']"
+                      // Below 360px the type name stacks over the pill: side by side they took 142px of a 270px table
+                      className="inline-flex items-center gap-1 no-underline text-inherit rounded-[var(--radius-sm)] after:absolute after:inset-0 after:content-[''] [@media(max-width:359.98px)]:flex-col [@media(max-width:359.98px)]:items-start [@media(max-width:359.98px)]:gap-0.5"
                     >
                       {/* As wide as the longest type name in this table, so every difficulty pill starts at the same x */}
                       <FixedWidthText

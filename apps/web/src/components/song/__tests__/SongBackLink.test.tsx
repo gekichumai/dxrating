@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { SongBackLink, canReturnWithinSite } from '../SongBackLink'
 
 const router = vi.hoisted(() => ({
@@ -67,15 +68,19 @@ describe('SongBackLink', () => {
     vi.unstubAllGlobals()
   })
 
-  it('links to the home page, keeping the URL locale', () => {
-    render(<SongBackLink search={{ locale: 'ja' }} />)
+  it("links to the home page in the page's language", () => {
+    render(
+      <LocaleProvider initialLocale="ja">
+        <SongBackLink />
+      </LocaleProvider>,
+    )
 
-    expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe('/?locale=ja')
+    expect(screen.getByRole('link', { name: '戻る' }).getAttribute('href')).toBe('/ja')
   })
 
   it('returns to the previous page after an in-app navigation', () => {
     router.canGoBack = true
-    render(<SongBackLink search={{}} />)
+    render(<SongBackLink />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Back' }))
     expect(router.back).toHaveBeenCalledOnce()
@@ -83,16 +88,16 @@ describe('SongBackLink', () => {
   })
 
   it('opens the home page in the app when the visitor arrived from elsewhere', () => {
-    render(<SongBackLink search={{ locale: 'ja' }} />)
+    render(<SongBackLink />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Back' }))
     expect(router.back).not.toHaveBeenCalled()
-    expect(router.navigate).toHaveBeenCalledWith({ href: '/?locale=ja' })
+    expect(router.navigate).toHaveBeenCalledWith({ href: '/' })
   })
 
   it('leaves a modified click (open in a new tab) to the browser', () => {
     router.canGoBack = true
-    render(<SongBackLink search={{}} />)
+    render(<SongBackLink />)
 
     fireEvent.click(screen.getByRole('link', { name: 'Back' }), { metaKey: true })
     expect(router.back).not.toHaveBeenCalled()

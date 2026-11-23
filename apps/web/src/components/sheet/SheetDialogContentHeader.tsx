@@ -1,3 +1,4 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import { IconButton } from '@mui/material'
 import { motion } from 'motion/react'
 import { type FC, memo, useState } from 'react'
@@ -48,7 +49,8 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet; onClose?: () 
           <IconButton
             size="small"
             onClick={() => {
-              navigator.clipboard.writeText(buildSheetLink(sheet))
+              // The link opens the chart in the language it was copied from
+              navigator.clipboard.writeText(buildSheetLink(sheet, undefined, locale))
               toast.success(m.sheet_copyLink_toastSuccess({}, { locale }), {
                 id: `copy-sheet-link-${sheet.id}`,
               })
@@ -133,7 +135,7 @@ export const SheetDialogContentHeader: FC<{ sheet: FlattenedSheet; onClose?: () 
             ) : (
               <motion.img
                 layout
-                src={`https://shama.dxrating.net/images/cover/v2/${sheet.imageName}.jpg`}
+                src={coverUrl(sheet.songId)}
                 alt={m.sheet_coverArtAlt({ title: sheet.title }, { locale })}
                 className="block overflow-hidden bg-black/6 outline outline-1 -outline-offset-1 outline-black/10"
                 variants={variants}

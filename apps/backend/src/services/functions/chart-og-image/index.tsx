@@ -1,5 +1,5 @@
 import { Effect, Data } from 'effect'
-import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
+import { coverPath, coverUrl, DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import type { SheetDifficulty } from '@gekichumai/maimai-domain'
 import { ImageResponse } from '@takumi-rs/image-response'
 import type { Handler } from 'hono'
@@ -26,7 +26,6 @@ export class ChartOgRenderError extends Data.TaggedError('ChartOgRenderError')<{
 
 export const CHART_OG_IMAGE_WIDTH = OG_WIDTH
 export const CHART_OG_IMAGE_HEIGHT = OG_HEIGHT
-const ASSET_ORIGIN = 'https://shama.dxrating.net'
 const FRONTEND_ORIGIN = 'https://dxrating.net'
 
 export const CHART_OG_IMAGE_CACHE_CONTROL = 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800'
@@ -133,7 +132,7 @@ export function resolveChartOgImageData(
     artist: song.artist,
     category: song.category,
     imageName: song.imageName,
-    coverUrl: `${ASSET_ORIGIN}/images/cover/v2/${song.imageName}.jpg`,
+    coverUrl: coverUrl(song.id),
     detailUrl: buildChartOgDetailUrl(song.id, sheet.type, sheet.difficulty),
     type: sheet.type,
     typeLabel: TYPE_DISPLAY[sheet.type],
@@ -405,12 +404,12 @@ function dataUri(mimeType: 'image/jpeg' | 'image/png', data: Buffer) {
 }
 
 /** The jacket, or null when the asset server has none (new songs can be published before their jacket) */
-const loadCover = (imageName: string) =>
-  fetchAssetEffect(`/images/cover/v2/${imageName}.jpg`).pipe(
+const loadCover = (songId: string) =>
+  fetchAssetEffect(coverPath(songId)).pipe(
     Effect.map((cover): Buffer | null => cover),
     Effect.catch((error) =>
       Effect.sync(() => {
-        Sentry.captureException(error.cause, { level: 'warning', extra: { imageName } })
+        Sentry.captureException(error.cause, { level: 'warning', extra: { songId } })
         return null
       }),
     ),
@@ -437,9 +436,9 @@ const createBackdrop = (cover: Buffer) =>
     catch: (cause) => new ChartOgRenderError({ operation: 'blur OG backdrop', cause }),
   })
 
-const loadImages = (imageName: string) =>
+const loadImages = (songId: string) =>
   Effect.gen(function* () {
-    const [cover, logo] = yield* Effect.all([loadCover(imageName), loadLogo], { concurrency: 'unbounded' })
+    const [cover, logo] = yield* Effect.all([loadCover(songId), loadLogo], { concurrency: 'unbounded' })
     const backdrop = cover ? yield* createBackdrop(cover) : null
     return {
       cover: cover ? dataUri('image/jpeg', cover) : null,
@@ -482,7 +481,7 @@ const renderCard = (element: ReactElement, fonts: TakumiFont[]) =>
 
 export const renderChartOgImageEffect = (data: ChartOgImageData, locale: OgLocale = 'en') =>
   Effect.gen(function* () {
-    const [fonts, images] = yield* Effect.all([loadFonts, loadImages(data.imageName)], { concurrency: 'unbounded' })
+    const [fonts, images] = yield* Effect.all([loadFonts, loadImages(data.songId)], { concurrency: 'unbounded' })
     const designer = data.noteDesigner && data.noteDesigner !== '-' ? data.noteDesigner : null
     return yield* renderCard(
       <ChartOgCard
@@ -506,7 +505,7 @@ export const renderChartOgImageEffect = (data: ChartOgImageData, locale: OgLocal
 
 export const renderSongOgImageEffect = (data: SongOgImageData, locale: OgLocale = 'en') =>
   Effect.gen(function* () {
-    const [fonts, images] = yield* Effect.all([loadFonts, loadImages(data.imageName)], { concurrency: 'unbounded' })
+    const [fonts, images] = yield* Effect.all([loadFonts, loadImages(data.songId)], { concurrency: 'unbounded' })
     return yield* renderCard(
       <SongOgCard
         title={data.title}

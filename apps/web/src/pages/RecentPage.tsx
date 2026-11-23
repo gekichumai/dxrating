@@ -58,8 +58,8 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
       itemScope
       itemType="https://schema.org/CollectionPage"
     >
-      <div className="w-full flex flex-col gap-4">
-        <header className="w-full flex flex-col gap-2">
+      <div className="page-stack">
+        <header className="w-full page-header">
           {/* Only after arriving from Home, so it renders with the page on that navigation, never on the server */}
           <BackToHomeLink />
           <h1 className="page-title m-0" itemProp="name">
@@ -73,12 +73,7 @@ export const RecentPage: FC<RecentPageProps> = ({ charts }) => {
         {/* One list for the page's structured data; on screen the charts are grouped by release date. Every row uses
             the table layout, so from lg each chart is one 56px line of fixed columns (art | title | artist | version |
             type + difficulty | level) that lines up with every other row; below lg the rows stack as before */}
-        <div
-          className="w-full flex flex-col gap-4"
-          itemProp="mainEntity"
-          itemScope
-          itemType="https://schema.org/ItemList"
-        >
+        <div className="page-stack" itemProp="mainEntity" itemScope itemType="https://schema.org/ItemList">
           <meta itemProp="numberOfItems" content={String(charts.length)} />
           <SheetRowLayoutContext.Provider value="table">
             {groups.map((group) => (
@@ -95,11 +90,11 @@ const RecentChartGroupSection: FC<{ group: RecentChartGroup; locale: SupportedLo
   const headingId = `${useId()}recent-${group.key}`
 
   return (
-    <section aria-labelledby={headingId} className="flex w-full flex-col gap-2">
+    <section aria-labelledby={headingId} className="section-stack">
       {/* Sticky over the rows, so it takes the denser overlay tint and the full blur: rows passing under it must not
           read through */}
       <div className="glass-thin sticky top-1 z-2 mx-[var(--sticky-inline-inset)] flex items-baseline justify-between gap-2 px-3 py-1.5 bg-[var(--glass-overlay-bg)] [-webkit-backdrop-filter:var(--glass-blur)] [backdrop-filter:var(--glass-blur)]">
-        <h2 id={headingId} className="m-0 text-base font-semibold text-fg-1 num">
+        <h2 id={headingId} className="section-title m-0 num">
           {group.releaseDate ? (
             <time dateTime={group.releaseDate}>
               {/* The date alone (no "days ago"), so the cached page never goes stale */}
@@ -168,7 +163,7 @@ const RecentChartRow: FC<{ chart: RecentChartLink; position: number; locale: Sup
             level={chart.level}
             internalLevelValue={chart.internalLevelValue}
             isTypeUtage={chart.isTypeUtage}
-            imageName={chart.imageName}
+            songId={chart.songId}
             imageAlt={m.sheet_coverArtAlt({ title: chart.title }, { locale })}
           >
             <SheetListItemSummary

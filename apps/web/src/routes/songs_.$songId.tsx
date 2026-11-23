@@ -2,7 +2,7 @@ import { DifficultyEnum, type Song, TypeEnum } from '@gekichumai/dxdata'
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
 import { getCatalogDocument } from '@/catalog/catalogSource'
 import { findSongById, resolveSongRouteParam } from '@/catalog/songLookup'
-import { type SupportedLocale, keepLocaleSearch, toSupportedLocale } from '@/setup/locale'
+import { type SupportedLocale, toSupportedLocale } from '@/setup/locale'
 import { SongHubPage } from '@/pages/SongHubPage'
 import { m } from '@/paraglide/messages'
 import { getSearchAcronymsWithServerAliases } from '@/songs'
@@ -54,12 +54,7 @@ const getLegacySheetParams = (song: Song, requestedType?: string, requestedDiffi
   return getDefaultSheetParams(song)
 }
 
-export const resolveLegacySongRouteRedirect = (
-  song: Song,
-  requestedType?: string,
-  requestedDifficulty?: string,
-  currentSearch?: unknown,
-) => {
+export const resolveLegacySongRouteRedirect = (song: Song, requestedType?: string, requestedDifficulty?: string) => {
   const { type, difficulty } = getLegacySheetParams(song, requestedType, requestedDifficulty)
   return {
     to: '/songs/$songId/$type/$difficulty' as const,
@@ -68,7 +63,6 @@ export const resolveLegacySongRouteRedirect = (
       type,
       difficulty,
     },
-    ...keepLocaleSearch(currentSearch),
     statusCode: LEGACY_SONG_ROUTE_REDIRECT_STATUS_CODE,
     replace: true,
   }
@@ -77,11 +71,10 @@ export const resolveLegacySongRouteRedirect = (
 /** Old `?type=&difficulty=` links still go to that chart; a bare `/songs/<id>` renders the hub */
 export const hasLegacySheetQuery = (search: SongSearchParams) => Boolean(search.type || search.difficulty)
 
-/** A legacy song ID moves to its public ID's hub, keeping the locale variant */
-export const resolveLegacySongHubRedirect = (redirectSongId: string, currentSearch?: unknown) => ({
+/** A legacy song ID moves to its public ID's hub (the router keeps the URL's language prefix) */
+export const resolveLegacySongHubRedirect = (redirectSongId: string) => ({
   to: '/songs/$songId' as const,
   params: { songId: redirectSongId },
-  ...keepLocaleSearch(currentSearch),
   statusCode: LEGACY_SONG_ROUTE_REDIRECT_STATUS_CODE,
   replace: true,
 })
@@ -93,7 +86,7 @@ export const Route = createFileRoute('/songs_/$songId')({
     difficulty: typeof search.difficulty === 'string' ? search.difficulty : undefined,
     locale: toSupportedLocale(typeof search.locale === 'string' ? search.locale : undefined) ?? undefined,
   }),
-  beforeLoad: async ({ params, search, location }) => {
+  beforeLoad: async ({ params, search }) => {
     const catalogDocument = await getCatalogDocument()
     const resolution = await resolveSongRouteParam(catalogDocument, params.songId)
     if (!resolution) {
@@ -102,10 +95,10 @@ export const Route = createFileRoute('/songs_/$songId')({
     if (hasLegacySheetQuery(search)) {
       const song = 'song' in resolution ? resolution.song : findSongById(catalogDocument, resolution.redirectSongId)
       if (!song) throw notFound()
-      throw redirect(resolveLegacySongRouteRedirect(song, search.type, search.difficulty, location.search))
+      throw redirect(resolveLegacySongRouteRedirect(song, search.type, search.difficulty))
     }
     if ('redirectSongId' in resolution) {
-      throw redirect(resolveLegacySongHubRedirect(resolution.redirectSongId, location.search))
+      throw redirect(resolveLegacySongHubRedirect(resolution.redirectSongId))
     }
   },
   loader: async ({ params }) => {

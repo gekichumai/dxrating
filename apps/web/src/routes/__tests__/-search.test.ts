@@ -2,9 +2,9 @@ import { isRedirect } from '@tanstack/react-router'
 import { describe, expect, it } from 'vitest'
 import { Route } from '../search'
 
-const redirectFromSearch = (searchStr = '', hash = '') => {
+const redirectFromSearch = (searchStr = '', hash = '', publicPath = '/search') => {
   try {
-    Route.options.beforeLoad?.({ location: { searchStr, hash } } as never)
+    Route.options.beforeLoad?.({ location: { searchStr, hash, publicHref: publicPath + searchStr } } as never)
   } catch (error) {
     expect(isRedirect(error)).toBe(true)
     return error as Response & { options: { href: string; statusCode?: number } }
@@ -25,6 +25,11 @@ describe('/search route', () => {
     expect(redirect.options.href).toBe('/?q=pandora&locale=ja#songs')
     expect(redirect.options.statusCode).toBe(301)
     expect(redirect.headers.get('Location')).toBe('/?q=pandora&locale=ja#songs')
+  })
+
+  it('keeps the language of the public URL: /ja/search → /ja', () => {
+    expect(redirectFromSearch('?q=Test', '', '/ja/search').headers.get('Location')).toBe('/ja?q=Test')
+    expect(redirectFromSearch('', 'x', '/zh-hans/search').headers.get('Location')).toBe('/zh-hans#x')
   })
 
   it('keeps a fragment-only URL as a fragment', () => {

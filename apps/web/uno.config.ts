@@ -145,11 +145,24 @@ export default defineConfig({
     // Page frame: one gutter (with the safe-area insets) and one header treatment for every content page
     'page-gutter':
       'w-full page-max-width mx-auto pl-[calc(env(safe-area-inset-left)+1rem)] pr-[calc(env(safe-area-inset-right)+1rem)]',
+    // Heading tiers. Each tier steps down in size and in weight or ink, never up, on every page (Torus has 400 and
+    // 600 only, so ink carries the step where weight cannot):
+    //   T1 page-title       24/30px  600  fg-1        one per page
+    //   T2 section-title    18px     600  fg-1 → 80%  sections of a page or panel
+    //   T3 item-title       16px     400  fg-1        a named thing inside a section: a chart, a card, a group
+    // Spacing between tiers is the rhythm in tokens.css: `page-stack` (36px) and `section-stack` (12px)
     'page-title': 'text-2xl sm:text-3xl font-semibold leading-tight tracking-[-0.01em] text-fg-1 text-balance',
     'page-description': 'text-sm sm:text-base leading-normal text-fg-2 text-pretty max-w-[65ch]',
-    // Section heading inside a page or glass panel
-    'section-title': 'text-base font-semibold leading-snug text-fg-1',
+    'page-header': 'flex flex-col gap-2',
+    'page-stack': 'w-full flex flex-col gap-[var(--rhythm-3)]',
+    'section-stack': 'w-full flex flex-col gap-[var(--rhythm-1)]',
+    'section-title': 'text-lg font-semibold leading-snug text-[color-mix(in_oklab,var(--fg-1)_80%,var(--fg-2))]',
+    'item-title': 'text-base font-normal leading-snug text-fg-1',
     'chunks-horizontal-2': 'flex flex-col md:flex-row items-center justify-center gap-2 w-full',
+    // A control drawn smaller than 44px still takes a 44px tap: an invisible pseudo-element, centred on it, extends the
+    // hit area without changing the layout. Keep 44px clear around it so neighbours do not overlap
+    'touch-hit':
+      "relative after:absolute after:left-1/2 after:top-1/2 after:h-full after:min-h-11 after:w-full after:min-w-11 after:-translate-x-1/2 after:-translate-y-1/2 after:content-['']",
   },
   presets: [
     presetWind({

@@ -2,7 +2,7 @@ import { CircularProgress, IconButton } from '@mui/material'
 import { type FC, useCallback, useState } from 'react'
 import { useAsync } from 'react-use'
 import MdiAccountCheck from '~icons/mdi/account-check'
-import MdiLogin from '~icons/mdi/login'
+import MdiAccountCircleOutline from '~icons/mdi/account-circle-outline'
 import { authClient } from '../../../lib/auth-client'
 import { LoginForm, loginFormTitleId } from '../../auth/LoginForm'
 import { ResponsiveDialog } from '../ResponsiveDialog'
@@ -99,7 +99,7 @@ export const UserChip: FC = () => {
           {session ? (
             <ProfileImage email={user?.email} image={user?.image} size="1.2em" />
           ) : (
-            <MdiLogin aria-hidden="true" />
+            <MdiAccountCircleOutline aria-hidden="true" />
           )}
         </IconButton>
       )}

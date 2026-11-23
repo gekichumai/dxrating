@@ -15,6 +15,8 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { NAVIGATION_FEEDBACK_DELAY_MS } from '@/components/layout/NavigationProgress'
+import { useLocale } from '@/i18n/LocaleProvider'
+import { DEFAULT_LOCALE, type SupportedLocale, localizePath, splitLocalePath } from '@/setup/locale'
 
 /** Paths the server answers on its own (llms.txt, sitemap.xml, Apple's association file, images), with no page in the router */
 const SERVER_FILE_PATH = /^\/\.well-known\/|\.(?:txt|xml|json|webmanifest|ico|png|jpe?g|webp|avif|gif|svg|pdf)$/i
@@ -60,6 +62,16 @@ const pathnameOf = (path: string) => {
   }
 }
 
+/**
+ * An internal page href as the given language's URL (`/rating` → `/ja/rating`), for the markup: crawlers and new tabs
+ * get the page in the language it was linked from. An href that already names a language is kept.
+ */
+export const localizeHref = (href: string, locale: SupportedLocale) => {
+  if (locale === DEFAULT_LOCALE || !isClientRoutableHref(href)) return href
+  if (splitLocalePath(pathnameOf(href)).locale !== DEFAULT_LOCALE) return href
+  return localizePath(href, locale)
+}
+
 /** The latest navigation any InternalLink started, page-wide */
 let latestLinkNavigation = 0
 const linkNavigationListeners = new Set<() => void>()
@@ -84,6 +96,7 @@ const subscribeLinkNavigations = (listener: () => void) => {
 export const InternalLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<HTMLAnchorElement>>(
   ({ href, onClick, ...rest }, ref) => {
     const router = useRouter({ warn: false })
+    const locale = useLocale()
     const anchorRef = useRef<HTMLAnchorElement>(null)
     useImperativeHandle(ref, () => anchorRef.current as HTMLAnchorElement)
     // The id of this link's own navigation, if it started one. Only the latest link navigation on the page shows its
@@ -116,7 +129,8 @@ export const InternalLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<H
         event.preventDefault()
         const id = startLinkNavigation()
         setNavigationId(id)
-        // Settles once the next page has loaded (or once a navigation that replaced this one has)
+        // Settles once the next page has loaded (or once a navigation that replaced this one has). The router adds the
+        // current language's prefix itself (router.tsx)
         void Promise.resolve(router.navigate({ href })).finally(() => {
           setNavigationId((current) => (current === id ? undefined : current))
         })
@@ -126,7 +140,13 @@ export const InternalLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<H
 
     return (
       <>
-        <a ref={anchorRef} href={href} onClick={handleClick} aria-busy={navigating || undefined} {...rest} />
+        <a
+          ref={anchorRef}
+          href={href && localizeHref(href, locale)}
+          onClick={handleClick}
+          aria-busy={navigating || undefined}
+          {...rest}
+        />
         {navigating && <PendingSpinner anchorRef={anchorRef} />}
       </>
     )

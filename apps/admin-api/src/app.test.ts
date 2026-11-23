@@ -57,7 +57,13 @@ const runtime = makeAdminApiRuntime(
     adminApiConfigLayer(config),
     accessVerifierTestLayer({
       owner: { kind: 'user', email: 'owner@example.invalid' },
-      stranger: { kind: 'user', email: 'stranger@example.invalid' },
+      // A gekichumai org member Access admits who was never on ADMIN_HUMAN_EMAILS
+      member: {
+        kind: 'user',
+        email: 'member@example.invalid',
+        subject: 'synthetic-sub',
+        identityProvider: 'github:synthetic',
+      },
       robot: { kind: 'service', commonName: 'svc.access' },
     }),
   ),
@@ -69,7 +75,19 @@ const call = (path: string, headers: Record<string, string> = {}) =>
   app.fetch(new Request(`http://admin-api.internal${path}`, { headers }))
 
 describe('admin API guard', () => {
-  it('lets an allowlisted Access user in as a human principal', async () => {
+  it('lets any Access user of this app in as a human principal, off ADMIN_HUMAN_EMAILS too', async () => {
+    const res = await call('/api/me', { 'cf-access-jwt-assertion': 'member', origin: ORIGIN })
+    expect(res.status).toBe(200)
+    // The Access subject and identity provider stay on the server (audit log), never in the reply
+    expect(await res.json()).toEqual({
+      type: 'human',
+      id: 'member@example.invalid',
+      actor: 'human:member@example.invalid',
+      scopes: ['*'],
+    })
+  })
+
+  it('lets an Access user in as a human principal', async () => {
     const res = await call('/api/me', { 'cf-access-jwt-assertion': 'owner', origin: ORIGIN })
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({
@@ -84,7 +102,6 @@ describe('admin API guard', () => {
   it.each([
     ['no Access assertion', {}, 401],
     ['an assertion the verifier rejects', { 'cf-access-jwt-assertion': 'forged' }, 401],
-    ['an Access user off the allowlist', { 'cf-access-jwt-assertion': 'stranger' }, 403],
     ['an Access service token without a bearer', { 'cf-access-jwt-assertion': 'robot' }, 401],
     ['an unknown bearer', { 'cf-access-jwt-assertion': 'robot', authorization: 'Bearer dxa_nope' }, 403],
     ['an expired token', { 'cf-access-jwt-assertion': 'robot', authorization: `Bearer ${EXPIRED_TOKEN}` }, 403],
@@ -95,17 +112,18 @@ describe('admin API guard', () => {
     ],
     ['a valid bearer without Access', { authorization: `Bearer ${READ_TOKEN}` }, 401],
     [
-      'a valid bearer from a human Access session',
-      { 'cf-access-jwt-assertion': 'stranger', authorization: `Bearer ${READ_TOKEN}` },
-      403,
-    ],
-    [
       'a browser request from another origin',
       { 'cf-access-jwt-assertion': 'owner', origin: 'https://evil.example' },
       403,
     ],
   ])('fails closed for %s', async (_, headers, status) => {
     expect((await call('/api/me', headers)).status).toBe(status)
+  })
+
+  it('never turns a human Access session into an agent with a bearer', async () => {
+    const res = await call('/api/me', { 'cf-access-jwt-assertion': 'member', authorization: `Bearer ${READ_TOKEN}` })
+    expect(res.status).toBe(200)
+    expect(((await res.json()) as { actor: string }).actor).toBe('human:member@example.invalid')
   })
 
   it('lets an agent in with its token scopes, never all scopes', async () => {

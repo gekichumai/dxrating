@@ -13,6 +13,7 @@ on:
       - '.dockerignore'
       - '.github/workflows/backend.yml'
       - '.github/workflows/dxdata-producer-contract.yml'
+      - 'scripts/guard-replays/**'
   pull_request:
     branches:
       - main
@@ -24,6 +25,7 @@ on:
       - '.dockerignore'
       - '.github/workflows/backend.yml'
       - '.github/workflows/dxdata-producer-contract.yml'
+      - 'scripts/guard-replays/**'
   workflow_dispatch:
 
 concurrency:
@@ -126,6 +128,15 @@ jobs:
         run: |
           pnpm --filter @gekichumai/oneshot-renderer build
           pnpm --filter @gekichumai/backend test
+
+      - name: Guard replays that need Postgres
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/dxrating_test
+          BETTER_AUTH_SECRET: ci_test_secret_1234567890
+          BETTER_AUTH_URL: http://localhost:3001
+          NODE_ENV: test
+          PORT: 3001
+        run: pnpm guard:replays --needs postgres
 
   docker-build:
     runs-on: ubuntu-latest

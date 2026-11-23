@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  withLocaleQuery,
   LOCALE_COOKIE_NAME,
+  LOCALE_PATH_PREFIXES,
+  SUPPORTED_LOCALES,
+  localizePath,
+  negotiateLocale,
+  splitLocalePath,
   LOCALE_STORAGE_KEY,
   detectServerLocale,
   normalizeDetectedLanguage,
@@ -64,38 +68,30 @@ describe('locale detection', () => {
     expect(normalizeDetectedLanguage('fr-FR')).toBe('en')
   })
 
-  it('detects the server locale from querystring before cookie before Accept-Language', () => {
-    const request = createServerRequest('https://dxrating.net/search?locale=zh-Hant', {
-      cookie: `${LOCALE_COOKIE_NAME}=ja`,
-      'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
-    })
-
-    expect(detectServerLocale(request)).toBe('zh-Hant')
+  it('renders the locale the URL path names, and English without a prefix', () => {
+    const preferJa = { cookie: `${LOCALE_COOKIE_NAME}=ja`, 'accept-language': 'zh-CN,zh;q=0.9' }
+    expect(detectServerLocale(createServerRequest('https://dxrating.net/zh-hant/search', preferJa))).toBe('zh-Hant')
+    expect(detectServerLocale(createServerRequest('https://dxrating.net/ms', {}))).toBe('ms')
+    // The preference only decides the redirect from an unprefixed URL; what renders there is English
+    expect(detectServerLocale(createServerRequest('https://dxrating.net/search', preferJa))).toBe('en')
+    expect(detectServerLocale(createServerRequest('https://dxrating.net/search?locale=ja', {}))).toBe('en')
   })
 
-  it('reads the SSR locale from the cookie when there is no querystring locale', () => {
-    const request = createServerRequest('https://dxrating.net/search', {
-      cookie: `other=value; ${LOCALE_COOKIE_NAME}=zh-Hans`,
-      'accept-language': 'ja-JP,ja;q=0.9',
-    })
-
-    expect(detectServerLocale(request)).toBe('zh-Hans')
-  })
-
-  it('uses Accept-Language as the SSR fallback when no explicit preference exists', () => {
-    const request = createServerRequest('https://dxrating.net/search', {
-      'accept-language': 'fr-FR,zh-TW;q=0.9,en;q=0.5',
-    })
-
-    expect(detectServerLocale(request)).toBe('zh-Hant')
-  })
-
-  it('negotiates the maimai DX International languages from Accept-Language', () => {
-    const request = createServerRequest('https://dxrating.net/search', {
-      'accept-language': 'fr-FR,ms-MY;q=0.9,en;q=0.5',
-    })
-
-    expect(detectServerLocale(request)).toBe('ms')
+  it('negotiates the preferred locale: the cookie, then Accept-Language', () => {
+    expect(
+      negotiateLocale(
+        createServerRequest('https://dxrating.net/', {
+          cookie: `other=value; ${LOCALE_COOKIE_NAME}=zh-Hans`,
+          'accept-language': 'ja-JP,ja;q=0.9',
+        }),
+      ),
+    ).toBe('zh-Hans')
+    expect(
+      negotiateLocale(
+        createServerRequest('https://dxrating.net/', { 'accept-language': 'fr-FR,ms-MY;q=0.9,en;q=0.5' }),
+      ),
+    ).toBe('ms')
+    expect(negotiateLocale(createServerRequest('https://dxrating.net/', {}))).toBe('en')
   })
 
   it('persists the client locale preference to localStorage and the SSR cookie', () => {
@@ -106,17 +102,26 @@ describe('locale detection', () => {
   })
 })
 
-describe('withLocaleQuery', () => {
-  it('carries a supported ?locale= of the search onto the path', () => {
-    expect(withLocaleQuery('/songs/a/dx/master', { locale: 'ja' })).toBe('/songs/a/dx/master?locale=ja')
-    expect(withLocaleQuery('/songs/a/dx/master', { locale: 'zh-Hant', q: 'x' })).toBe(
-      '/songs/a/dx/master?locale=zh-Hant',
-    )
+describe('locale paths', () => {
+  it('splits a canonical lowercase prefix off the path', () => {
+    expect(splitLocalePath('/ja/songs/a')).toEqual({ locale: 'ja', pathname: '/songs/a' })
+    expect(splitLocalePath('/zh-hans')).toEqual({ locale: 'zh-Hans', pathname: '/' })
+    expect(splitLocalePath('/songs/a')).toEqual({ locale: 'en', pathname: '/songs/a' })
+    // Not prefixes: other casing and /en are redirected by the server, and a segment that only starts like one
+    expect(splitLocalePath('/zh-Hans/x')).toEqual({ locale: 'en', pathname: '/zh-Hans/x' })
+    expect(splitLocalePath('/en/x')).toEqual({ locale: 'en', pathname: '/en/x' })
+    expect(splitLocalePath('/japan')).toEqual({ locale: 'en', pathname: '/japan' })
   })
 
-  it('leaves the path alone without a usable locale', () => {
-    expect(withLocaleQuery('/songs/a/dx/master', {})).toBe('/songs/a/dx/master')
-    expect(withLocaleQuery('/songs/a/dx/master', { locale: 'fr' })).toBe('/songs/a/dx/master')
-    expect(withLocaleQuery('/songs/a/dx/master', { locale: 123 })).toBe('/songs/a/dx/master')
+  it('builds the URL of a path in a locale', () => {
+    expect(localizePath('/songs/a?x=1#h', 'zh-Hant')).toBe('/zh-hant/songs/a?x=1#h')
+    expect(localizePath('/', 'th')).toBe('/th')
+    expect(localizePath('/?q=x', 'th')).toBe('/th?q=x')
+    expect(localizePath('/songs/a', 'en')).toBe('/songs/a')
+  })
+
+  it('gives every locale but English a lowercase prefix', () => {
+    expect(Object.keys(LOCALE_PATH_PREFIXES).sort()).toEqual(SUPPORTED_LOCALES.filter((l) => l !== 'en').sort())
+    for (const prefix of Object.values(LOCALE_PATH_PREFIXES)) expect(prefix).toBe(prefix.toLowerCase())
   })
 })

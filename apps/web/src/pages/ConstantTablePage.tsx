@@ -1,5 +1,6 @@
+import { coverUrl } from '@gekichumai/dxdata'
 import clsx from 'clsx'
-import { type FC, useEffect, useMemo, useState } from 'react'
+import { type FC, startTransition, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import MdiCheckCircle from '~icons/mdi/check-circle'
 import MdiViewGrid from '~icons/mdi/view-grid'
 import MdiViewList from '~icons/mdi/view-list'
@@ -27,6 +28,7 @@ import type { SupportedLocale } from '@/setup/locale'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import { InternalLink } from '@/components/global/InternalLink'
+import { afterNextPaint } from '@/utils/afterNextPaint'
 
 export const constantTableRange = (table: ConstantTable) => ({
   max: table.groups[0]?.constant ?? '-',
@@ -76,7 +78,7 @@ const ConstantGroupTable: FC<{
       className="glass w-full overflow-hidden scroll-mt-2"
     >
       <div className="flex items-baseline justify-between gap-2 px-4 py-2 border-b border-b-solid border-[var(--glass-border)]">
-        <h2 id={headingId} className="m-0 text-lg font-semibold text-fg-1">
+        <h2 id={headingId} className="section-title m-0 num">
           {m.constants_group({ constant }, { locale })}
         </h2>
         <span className="text-xs text-fg-2 num">{m.constants_groupCount({ count: total }, { locale })}</span>
@@ -184,8 +186,6 @@ function useConstantTableView() {
 
 const TYPE_SHORT: Partial<Record<ConstantChart['type'], string>> = { dx: 'DX', std: 'STD' }
 
-const coverSrc = (imageName: string) => `https://shama.dxrating.net/images/cover/v2/${imageName}.jpg`
-
 const ConstantTile: FC<{
   chart: ConstantChart
   overlay: ReturnType<typeof useCompletionOverlay>
@@ -211,7 +211,7 @@ const ConstantTile: FC<{
           )}
         >
           <img
-            src={coverSrc(chart.imageName)}
+            src={coverUrl(chart.songId)}
             width={190}
             height={190}
             alt=""
@@ -267,13 +267,9 @@ const ConstantGroupGrid: FC<{
   const headingId = `constant-${constant}`
 
   return (
-    <section
-      aria-labelledby={headingId}
-      className="flex w-full flex-col gap-2 scroll-mt-2"
-      id={constantAnchor(constant)}
-    >
+    <section aria-labelledby={headingId} className="section-stack scroll-mt-2" id={constantAnchor(constant)}>
       <div className="glass-thin sticky top-1 z-2 mx-[var(--sticky-inline-inset)] flex items-baseline justify-between gap-2 px-3 py-1.5">
-        <h2 id={headingId} className="m-0 text-base font-semibold text-fg-1 num">
+        <h2 id={headingId} className="section-title m-0 num">
           {m.constants_group({ constant }, { locale })}
         </h2>
         <span className="text-xs text-fg-2 num">{m.constants_groupCount({ count: total }, { locale })}</span>
@@ -329,17 +325,77 @@ const ConstantJumpNav: FC<{ constants: string[] }> = ({ constants }) => {
   )
 }
 
+/** About one screen of tiles: what a client navigation to a level renders inside the tap */
+const FIRST_RENDER_CHARTS = 48
+
+const subscribeNothing = () => () => {}
+
+/**
+ * The type of the latest navigation ('push', 'replace', 'traverse', 'reload'), where the browser has the Navigation
+ * API; the same-document navigations of the router (pushState, Back) fire its navigate event too
+ */
+let lastNavigationType: string | undefined
+type NavigationLike = {
+  addEventListener: (type: 'navigate', listener: (event: { navigationType: string }) => void) => void
+}
+if (typeof window !== 'undefined' && 'navigation' in window) {
+  ;(window as unknown as { navigation: NavigationLike }).navigation.addEventListener('navigate', (event) => {
+    lastNavigationType = event.navigationType
+  })
+}
+/**
+ * Only after a link (push/replace): Back and Forward restore the scroll position right after the render, which needs
+ * the whole page. With no Navigation API, or before its first event, everything renders at once, as before.
+ */
+const linkNavigation = () => lastNavigationType === 'push' || lastNavigationType === 'replace'
+
+/**
+ * How many of a level's groups to render. A level has up to ~600 charts, and a client navigation (the level links,
+ * Back) rendered all of them inside the tap (~500-650ms at 4x CPU): after a link it now renders the groups up to
+ * about one screen of charts, and the rest in the task after that paint. A server render and its hydration render
+ * every group, so the HTML (edge-cached) and the first client render match.
+ */
+function useProgressiveGroupCount(table: ConstantTable): number {
+  // false while hydrating (React uses the server snapshot), true when the page mounts on a client navigation
+  const clientMount = useSyncExternalStore(
+    subscribeNothing,
+    () => true,
+    () => false,
+  )
+  const firstCount = () => {
+    let charts = 0
+    const index = table.groups.findIndex((group) => (charts += group.charts.length) >= FIRST_RENDER_CHARTS)
+    return index === -1 ? table.groups.length : index + 1
+  }
+  const startCount = () => (linkNavigation() ? firstCount() : table.groups.length)
+  const [shown, setShown] = useState(() => ({ table, count: clientMount ? startCount() : table.groups.length }))
+  // Another level in the same page (the level links, Back): start again
+  let count = shown.count
+  if (shown.table !== table) {
+    count = startCount()
+    setShown({ table, count })
+  }
+
+  useEffect(() => {
+    if (count >= table.groups.length) return undefined
+    return afterNextPaint(() => startTransition(() => setShown({ table, count: table.groups.length })))
+  }, [count, table])
+
+  return count
+}
+
 export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
   const locale = useLocale()
   const range = constantTableRange(table)
   // Client-only: the server HTML (edge-cached) never contains the visitor's records
   const overlay = useCompletionOverlay(table)
   const [view, setView] = useConstantTableView()
+  const groupCount = useProgressiveGroupCount(table)
 
   return (
     <div className="flex-container w-full max-w-7xl px-4 pb-global">
-      <div className="w-full flex flex-col gap-4">
-        <header className="w-full flex flex-col gap-2">
+      <div className="page-stack">
+        <header className="w-full page-header">
           <Breadcrumb
             items={[
               { href: '/constants', label: m.constants_breadcrumb({}, { locale }) },
@@ -355,14 +411,16 @@ export const ConstantTablePage: FC<{ table: ConstantTable }> = ({ table }) => {
           <LevelNav current={table.level} />
         </header>
 
-        <CompletionToolbar table={table} overlay={overlay} />
-
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <ConstantJumpNav constants={table.groups.map((group) => group.constant)} />
-          <ViewToggle view={view} onChange={setView} />
+        {/* The controls for the table are one group (12px apart), then a full pause before the first level */}
+        <div className="section-stack">
+          <CompletionToolbar table={table} overlay={overlay} />
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <ConstantJumpNav constants={table.groups.map((group) => group.constant)} />
+            <ViewToggle view={view} onChange={setView} />
+          </div>
         </div>
 
-        {table.groups.map((group) => {
+        {table.groups.slice(0, groupCount).map((group) => {
           const charts = group.charts.filter((chart) => overlay.isVisible(chart.sheetId))
           if (charts.length === 0) return null
           const Group = view === 'grid' ? ConstantGroupGrid : ConstantGroupTable
@@ -394,8 +452,8 @@ export const ConstantTableIndexPage: FC<{ tables: ConstantTableSummary[] }> = ({
 
   return (
     <div className="flex-container w-full max-w-5xl px-4 pb-global">
-      <div className="w-full flex flex-col gap-4">
-        <header className="flex flex-col gap-2">
+      <div className="page-stack">
+        <header className="page-header">
           <Breadcrumb items={[{ label: m.constants_breadcrumb({}, { locale }) }]} />
           <h1 className="page-title m-0 [word-break:auto-phrase]">{m.constants_index_title({}, { locale })}</h1>
           <p className="page-description m-0">{m.constants_index_intro({}, { locale })}</p>

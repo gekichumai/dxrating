@@ -311,7 +311,7 @@ const getRenderService = () => {
           Effect.scoped(
             Effect.gen(function* () {
               const start = performance.now()
-              const catalog = getSongCatalog(document, body.version)
+              const catalog = getSongCatalog(document, body.version, body.region)
               const data = body.calculatedEntries
                 ? prepareCalculatedEntries(body.calculatedEntries, catalog)
                 : calculateEntries(body.entries ?? [], catalog, body.region)

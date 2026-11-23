@@ -37,6 +37,7 @@ DXRating is a maimai DX rating calculator and chart database. It provides canoni
 - Chart types: dx, std, utage, utage2p
 - Difficulties: basic, advanced, expert, master, remaster
 - Chart Open Graph image: https://miruku.dxrating.net/api/v1/songs/{songId}/{type}/{difficulty}/og-image
+- Song Open Graph image: https://miruku.dxrating.net/api/v1/songs/{songId}/og-image
 
 ## Languages
 

@@ -2,7 +2,6 @@ import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { getCatalogDocument } from '@/catalog/catalogSource'
 import { TolerancePage, type ToleranceSelectedSheet } from '@/pages/tools/TolerancePage'
-import { keepLocaleSearch } from '@/setup/locale'
 import { buildToolPageSeo, resolveSeoLocale } from '@/utils/seo'
 
 type ToleranceSearch = { sheet?: string }
@@ -43,13 +42,12 @@ export const Route = createFileRoute('/tools/tolerance')({
   ssr: true,
   validateSearch: validateToleranceSearch,
   loaderDeps: ({ search }) => ({ sheet: search.sheet }),
-  loader: async ({ deps, location }) => {
+  loader: async ({ deps }) => {
     const sheet = await loadToleranceSheet(deps.sheet)
     if (sheet) {
       throw redirect({
         to: '/songs/$songId/$type/$difficulty/tolerance',
         params: { songId: sheet.songId, type: sheet.type, difficulty: sheet.difficulty },
-        ...keepLocaleSearch(location.search),
         statusCode: 308,
         replace: true,
       })

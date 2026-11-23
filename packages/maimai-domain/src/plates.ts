@@ -12,7 +12,8 @@
  *
  * Song lists are generated from the dxdata `version` field of the sheets (the version a chart first appeared in),
  * so charts added later (a DX chart of an old song, a later Re:MASTER) never move a song into another plate.
- * Charts removed from a server (`serverIds` without it) do not count there.
+ * Charts removed from a server (`serverIds` without it) do not count there. A few songs are left out of some plates
+ * (`excludedMusicIds`).
  */
 import { DifficultyEnum, type Sheet, type Song, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import type { ComboFlag, SyncFlag } from './types'
@@ -44,6 +45,11 @@ export interface PlateVersionGroup {
   includesRemaster: boolean
   /** Mapping not yet confirmed against an in-game plate list */
   unverified?: boolean
+  /**
+   * Internal IDs (`internalId`) of songs the plate leaves out although their version is in `versions`. An ID below
+   * 10000 is a song's STD chart set, 10000 and up its DX one.
+   */
+  excludedMusicIds?: readonly number[]
 }
 
 /** Every SD (pre-DX) version: maimai to FiNALE */
@@ -70,14 +76,23 @@ const group = (
   ja: string,
   zh: string,
   versions: readonly VersionEnum[],
-  extra: Partial<Pick<PlateVersionGroup, 'kinds' | 'includesRemaster' | 'unverified'>> = {},
+  extra: Partial<Pick<PlateVersionGroup, 'kinds' | 'includesRemaster' | 'unverified' | 'excludedMusicIds'>> = {},
 ): PlateVersionGroup => ({ id, ja, zh, versions, kinds: STANDARD_KINDS, includesRemaster: false, ...extra })
+
+/**
+ * Songs some plates leave out, by internal ID (gekichumai/meta#58): 真 leaves out 70 ジングルベル, and 菫, 舞 and
+ * 覇者 leave out 853 前前前世. ジングルベル still counts toward 舞 and 覇者.
+ */
+const SHIN_EXCLUDED_MUSIC_IDS = [70] as const
+const SUMIRE_EXCLUDED_MUSIC_IDS = [853] as const
+const MAI_EXCLUDED_MUSIC_IDS = SUMIRE_EXCLUDED_MUSIC_IDS
 
 /** SD-era plates: identical on every server (YuzuChaN `SD_VERSION`) */
 const SD_PLATE_GROUPS: readonly PlateVersionGroup[] = [
   // 真将 does not exist: maimai PLUS had no SSS rank to award it
   group('shin-ver', '真', '真', [VersionEnum.Maimai, VersionEnum.MaimaiPLUS], {
     kinds: ['kiwami', 'shin', 'maimai'],
+    excludedMusicIds: SHIN_EXCLUDED_MUSIC_IDS,
   }),
   group('cho', '超', '超', [VersionEnum.GreeN]),
   group('geki', '檄', '檄', [VersionEnum.GreeNPLUS]),
@@ -86,15 +101,19 @@ const SD_PLATE_GROUPS: readonly PlateVersionGroup[] = [
   group('momo', '桃', '桃', [VersionEnum.PiNK]),
   group('sakura', '櫻', '樱', [VersionEnum.PiNKPLUS]),
   group('murasaki', '紫', '紫', [VersionEnum.MURASAKi]),
-  group('sumire', '菫', '堇', [VersionEnum.MURASAKiPLUS]),
+  group('sumire', '菫', '堇', [VersionEnum.MURASAKiPLUS], { excludedMusicIds: SUMIRE_EXCLUDED_MUSIC_IDS }),
   group('shiro', '白', '白', [VersionEnum.MiLK]),
   group('yuki', '雪', '雪', [VersionEnum.MiLKPLUS]),
   group('kagayaki', '輝', '辉', [VersionEnum.FiNALE]),
-  group('mai', '舞', '舞', SD_VERSIONS, { includesRemaster: true }),
-  group('ha', '覇', '霸', SD_VERSIONS, { kinds: ['hasha'], includesRemaster: true }),
+  group('mai', '舞', '舞', SD_VERSIONS, { includesRemaster: true, excludedMusicIds: MAI_EXCLUDED_MUSIC_IDS }),
+  group('ha', '覇', '霸', SD_VERSIONS, {
+    kinds: ['hasha'],
+    includesRemaster: true,
+    excludedMusicIds: MAI_EXCLUDED_MUSIC_IDS,
+  }),
 ]
 
-/** JP / INTL: every DX version and its PLUS are separate plates (YuzuChaN `DX_VERSION`) */
+/** JP / INTL: every DX version and its PLUS are separate plates (YuzuChaN `DX_VERSION`). INTL lags behind JP. */
 const JP_DX_PLATE_GROUPS: readonly PlateVersionGroup[] = [
   group('kuma', '熊', '熊', [VersionEnum.Maimaiでらっくす]),
   group('hana', '華', '华', [VersionEnum.MaimaiでらっくすPLUS]),
@@ -107,9 +126,19 @@ const JP_DX_PLATE_GROUPS: readonly PlateVersionGroup[] = [
   group('sou-buddies', '双', '双', [VersionEnum.BUDDiES]),
   group('utage', '宴', '宴', [VersionEnum.BUDDiESPLUS]),
   group('kagami', '鏡', '镜', [VersionEnum.PRiSM]),
-  group('irodori', '彩', '彩', [VersionEnum.PRiSMPLUS], { unverified: true }),
-  group('maru', '丸', '丸', [VersionEnum.CiRCLE], { unverified: true }),
+  // 彩, 丸 and 廻: gekichumai/meta#57. MAGiCAL has no plate yet: a version's plates arrive with the next version.
+  group('irodori', '彩', '彩', [VersionEnum.PRiSMPLUS]),
+  group('maru', '丸', '丸', [VersionEnum.CiRCLE]),
+  // No CN plate exists to take the simplified character from, so zh keeps 廻
+  group('meguri', '廻', '廻', [VersionEnum.CiRCLEPLUS]),
 ]
+
+/**
+ * JP plates INTL does not have yet: INTL is still adding CiRCLE PLUS songs, and a version's plates only arrive with
+ * the next version's update.
+ */
+const JP_ONLY_GROUP_IDS: ReadonlySet<string> = new Set(['meguri'])
+const INTL_DX_PLATE_GROUPS = JP_DX_PLATE_GROUPS.filter((group) => !JP_ONLY_GROUP_IDS.has(group.id))
 
 /**
  * CN: one 舞萌DX version a year covers a JP version and its PLUS, so both plate characters share one song list
@@ -135,7 +164,8 @@ const CN_DX_PLATE_GROUPS: readonly PlateVersionGroup[] = [
 ]
 
 export function getPlateVersionGroups(region: PlateRegion): readonly PlateVersionGroup[] {
-  return [...SD_PLATE_GROUPS, ...(region === 'cn' ? CN_DX_PLATE_GROUPS : JP_DX_PLATE_GROUPS)]
+  const dx = region === 'cn' ? CN_DX_PLATE_GROUPS : region === 'intl' ? INTL_DX_PLATE_GROUPS : JP_DX_PLATE_GROUPS
+  return [...SD_PLATE_GROUPS, ...dx]
 }
 
 export interface PlateDefinition {
@@ -259,6 +289,7 @@ export function buildPlateCharts(songs: readonly Song[], group: PlateVersionGrou
       if (base.length === 0) continue
       const version = earliestVersion(base.map((sheet) => sheetVersionOn(sheet, region)))
       if (!versions.has(version)) continue
+      if (isExcluded(group, type, base)) continue
       const remaster = group.includesRemaster
         ? sheets.filter((sheet) => sheet.difficulty === DifficultyEnum.ReMaster && isSdEraRemaster(sheet, region))
         : []
@@ -272,6 +303,26 @@ export function buildPlateCharts(songs: readonly Song[], group: PlateVersionGrou
     }
   }
   return charts
+}
+
+/** DX chart sets have internal IDs offset by 10000 from the song's STD charts */
+const DX_MUSIC_ID_OFFSET = 10000
+
+/**
+ * Whether a chart set is on the group's exclusion list. Matched by the internal ID of its Basic to Master sheets;
+ * a DX `internalId` below 10000 (dxdata gives some DX charts the STD ID, gekichumai/meta#56) is read as the DX ID.
+ */
+function isExcluded(group: PlateVersionGroup, type: TypeEnum, base: readonly Sheet[]): boolean {
+  const excluded = group.excludedMusicIds
+  if (!excluded?.length) return false
+  return base.some((sheet) => {
+    if (sheet.internalId === undefined) return false
+    const musicId =
+      type === TypeEnum.DX && sheet.internalId < DX_MUSIC_ID_OFFSET
+        ? sheet.internalId + DX_MUSIC_ID_OFFSET
+        : sheet.internalId
+    return excluded.includes(musicId)
+  })
 }
 
 const VERSION_ORDER = Object.values(VersionEnum)
