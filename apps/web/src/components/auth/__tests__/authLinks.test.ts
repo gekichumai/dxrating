@@ -14,14 +14,28 @@ describe('password reset landing', () => {
 })
 
 describe('email verification landing', () => {
-  it('is a success without a query', () => {
-    expect(readVerifyOutcome('')).toEqual({ status: 'verified' })
+  const verified = { isPending: false, emailVerified: true }
+  const unverified = { isPending: false, emailVerified: false }
+  const signedOut = { isPending: false, emailVerified: undefined }
+
+  it('is a success only when the session shows the address verified', () => {
+    expect(readVerifyOutcome('', verified)).toEqual({ status: 'verified' })
+    expect(readVerifyOutcome('', { isPending: true, emailVerified: undefined })).toEqual({ status: 'pending' })
   })
 
-  it('tells an expired link from any other failure', () => {
-    expect(readVerifyOutcome('?error=TOKEN_EXPIRED')).toEqual({ status: 'error', reason: 'expired' })
-    expect(readVerifyOutcome('?error=INVALID_TOKEN')).toEqual({ status: 'error', reason: 'invalid' })
-    expect(readVerifyOutcome('?error=USER_NOT_FOUND')).toEqual({ status: 'error', reason: 'invalid' })
+  it('reports nothing for a page opened without an outcome (history, a bookmark, a reload)', () => {
+    expect(readVerifyOutcome('', signedOut)).toEqual({ status: 'unknown' })
+    expect(readVerifyOutcome('', unverified)).toEqual({ status: 'unknown' })
+  })
+
+  it('tells an expired link and a missing session from any other failure', () => {
+    expect(readVerifyOutcome('?error=TOKEN_EXPIRED', verified)).toEqual({ status: 'error', reason: 'expired' })
+    expect(readVerifyOutcome('?error=SESSION_REQUIRED', signedOut)).toEqual({
+      status: 'error',
+      reason: 'signInRequired',
+    })
+    expect(readVerifyOutcome('?error=INVALID_TOKEN', unverified)).toEqual({ status: 'error', reason: 'invalid' })
+    expect(readVerifyOutcome('?error=USER_NOT_FOUND', unverified)).toEqual({ status: 'error', reason: 'invalid' })
   })
 })
 
