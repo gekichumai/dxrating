@@ -43,6 +43,39 @@
       }
     },
     {
+      "files": ["packages/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/(.*/)?([^/.]+|[^/]*\\.js)$",
+                "allowTypeImports": true,
+                "message": "Node loads this package from source: write the .ts extension."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/oneshot-renderer/**/*.ts", "packages/**/__tests__/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["apps/backend/src/**/*.ts", "apps/backend/src/**/*.tsx"],
       "rules": {
         "gdp-ts/no-define-proof": "error",
