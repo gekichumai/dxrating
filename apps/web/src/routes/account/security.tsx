@@ -58,6 +58,7 @@ function AccountSecurityPage() {
           <SecuritySection
             currentSessionToken={sessionData.session.token}
             userId={sessionData.user.id}
+            email={{ address: sessionData.user.email, verified: sessionData.user.emailVerified }}
             idPrefix="account-security"
           />
         ) : (

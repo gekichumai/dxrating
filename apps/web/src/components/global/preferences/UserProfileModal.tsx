@@ -194,6 +194,11 @@ const ModalContent: FC<{ onClose: () => void }> = ({ onClose }) => {
             <SecuritySection
               currentSessionToken={sessionData?.session?.token}
               userId={sessionData?.user?.id}
+              email={
+                sessionData?.user
+                  ? { address: sessionData.user.email, verified: sessionData.user.emailVerified }
+                  : undefined
+              }
               idPrefix="account-dialog"
               titleAs="h3"
             />

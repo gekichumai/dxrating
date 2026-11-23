@@ -8,14 +8,98 @@ import IconMdiDelete from '~icons/mdi/delete-outline'
 import IconMdiPlus from '~icons/mdi/plus'
 import IconMdiDevices from '~icons/mdi/devices'
 import IconMdiLock from '~icons/mdi/lock-outline'
+import IconMdiEmail from '~icons/mdi/email-outline'
 import IconPasskey from '~icons/material-symbols/passkey'
 import aaguidData from '../../../data/passkey-aaguids.json'
 import { authClient } from '../../../lib/auth-client'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
+import { hasErrorCode } from '../../auth/authLinks'
+import { isAuthMailEnabled } from '../../../setup/auth-mail'
 import { PasswordVisibilityAdornment } from '../../auth/PasswordVisibilityAdornment'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+
+// -- Email Subsection --
+
+/** The signed-in account's address and whether it is verified (gekichumai/meta#80) */
+export interface AccountEmail {
+  address: string
+  verified: boolean
+}
+
+const EmailSubsection: FC<{ email: AccountEmail; headingAs: HeadingTag; idPrefix: string }> = ({
+  email,
+  headingAs: Heading,
+  idPrefix,
+}) => {
+  const locale = useLocale()
+  const [resendState, resend] = useAsyncFn(async () => {
+    // The backend sends the link to the web's verification page in this page's language
+    const { error } = await authClient.sendVerificationEmail({ email: email.address })
+    if (error) {
+      toast.error(
+        hasErrorCode(error, 'VERIFICATION_EMAIL_NOT_ENABLED')
+          ? m.auth_userProfile_email_unavailable({}, { locale })
+          : m.auth_userProfile_email_resendError({ error: formatErrorMessage(error) }, { locale }),
+      )
+      return
+    }
+    toast.success(m.auth_userProfile_email_resent({}, { locale }))
+  }, [email.address, locale])
+
+  const titleId = `${idPrefix}-email-title`
+  const descriptionId = `${idPrefix}-email-description`
+  // Without account email nothing can verify an address: say nothing about it rather than offer a link that can't come
+  const mailEnabled = isAuthMailEnabled()
+
+  return (
+    <section className="flex flex-col gap-4" aria-labelledby={titleId}>
+      <div className="flex items-center gap-2">
+        <IconMdiEmail className="text-lg text-fg-2" aria-hidden="true" />
+        <Heading id={titleId} className="text-base font-semibold text-fg-1 m-0">
+          {m.auth_userProfile_email_title({}, { locale })}
+        </Heading>
+      </div>
+      <div className="glass-inset flex flex-wrap items-center gap-x-3 gap-y-2 py-2 px-3">
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-fg-1" translate="no">
+          {email.address}
+        </span>
+        {(email.verified || mailEnabled) && (
+          <Chip
+            label={
+              email.verified
+                ? m.auth_userProfile_email_verified({}, { locale })
+                : m.auth_userProfile_email_unverified({}, { locale })
+            }
+            size="small"
+            color={email.verified ? 'success' : 'warning'}
+            variant="outlined"
+            className="!h-5 !text-xs"
+          />
+        )}
+      </div>
+      {!email.verified && mailEnabled && (
+        <>
+          <p id={descriptionId} className="m-0 text-sm leading-normal text-fg-2 text-pretty">
+            {m.auth_userProfile_email_unverifiedDescription({}, { locale })}
+          </p>
+          <Button
+            onClick={() => void resend()}
+            disabled={resendState.loading}
+            aria-busy={resendState.loading || undefined}
+            aria-describedby={descriptionId}
+            variant="outlined"
+            startIcon={resendState.loading ? <CircularProgress size="1rem" /> : undefined}
+            className="!self-start"
+          >
+            {m.auth_userProfile_email_resend({}, { locale })}
+          </Button>
+        </>
+      )}
+    </section>
+  )
+}
 
 // -- Password Subsection --
 
@@ -540,10 +624,12 @@ export const SecuritySection: FC<{
   currentSessionToken?: string
   /** The signed-in user, which keys what this section caches */
   userId: string | undefined
+  /** The account's address and its verification; the email part is left out without it */
+  email?: AccountEmail
   idPrefix?: string
   /** `h1` as a page (/account/security); `h3` inside the account dialog, under its `h2` title */
   titleAs?: 'h1' | 'h3'
-}> = ({ currentSessionToken, userId, idPrefix = 'security', titleAs: Title = 'h1' }) => {
+}> = ({ currentSessionToken, userId, email, idPrefix = 'security', titleAs: Title = 'h1' }) => {
   const locale = useLocale()
   const subheading: HeadingTag = Title === 'h1' ? 'h2' : 'h4'
 
@@ -554,6 +640,14 @@ export const SecuritySection: FC<{
           {m.auth_userProfile_security({}, { locale })}
         </Title>
       </div>
+
+      {email && (
+        <>
+          <EmailSubsection email={email} headingAs={subheading} idPrefix={idPrefix} />
+
+          <div className="h-px bg-black/8" aria-hidden="true" />
+        </>
+      )}
 
       <PasswordSubsection idPrefix={idPrefix} headingAs={subheading} userId={userId} />
 

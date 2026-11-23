@@ -15,6 +15,8 @@ import { passkeySignUp, requireFreshSessionToAddPasskey } from './lib/passkey-si
 import { localizeAuthError } from './lib/auth-error-localization'
 import { setPassword } from './lib/set-password'
 import { emailVerificationHooks, emailVerificationUserFields } from './lib/email-verification-record'
+import { createAuthMail } from './lib/auth-mail'
+import { Mailer } from './services/mailer'
 import { SET_PASSWORD_AUTH_PATH } from '@gekichumai/api-contract'
 import { and, eq } from 'drizzle-orm'
 /**
@@ -37,7 +39,13 @@ class AuthenticationError extends Data.TaggedError('AuthenticationError')<{
   readonly cause: unknown
 }> {}
 
-export const createAuth = (database: typeof Database.Service, config: typeof AppConfig.Service) => {
+export const createAuth = (
+  database: typeof Database.Service,
+  config: typeof AppConfig.Service,
+  mailer: typeof Mailer.Service,
+) => {
+  // Verification and password reset mail (gekichumai/meta#80); all of it off while the mailer is
+  const authMail = createAuthMail({ mailer, database, frontendUrl: config.frontendUrl })
   const crossSubDomainCookies = config.auth.cookieDomain
     ? { enabled: true as const, domain: config.auth.cookieDomain }
     : undefined
@@ -80,6 +88,7 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
     baseURL: config.auth.url,
     emailAndPassword: {
       enabled: true,
+      ...authMail.passwordReset,
       password: {
         hash: (password) =>
           Effect.runPromise(
@@ -95,6 +104,16 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
               catch: (cause) => new AuthenticationError({ operation: 'Verify password', cause }),
             }),
           ),
+      },
+    },
+    ...(authMail.emailVerification ? { emailVerification: authMail.emailVerification } : {}),
+    rateLimit: {
+      // Better Auth's defaults already hold /send-verification-email and /request-password-reset to 3 a minute per
+      // address (and auth-mail.ts mails one address at most 3 times in 15 minutes); these also slow down guessing
+      // tokens at the routes that take them
+      customRules: {
+        '/reset-password': { window: 60, max: 10 },
+        '/verify-email': { window: 60, max: 10 },
       },
     },
     user: {
@@ -165,6 +184,8 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
       'dxrating://',
       'http://localhost:5173',
       'http://localhost:5174',
+      // Mailed links redirect here (auth-mail.ts); Better Auth checks every callback URL against this list
+      new URL(config.frontendUrl).origin,
     ],
     socialProviders: {
       google: {
@@ -189,6 +210,7 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
         registration: passkeySignUp({ turnstileSecretKey: config.auth.turnstile.secretKey }),
       }),
       oneTap(),
+      authMail.plugin,
       lastLoginMethod({
         cookieName: 'dxrating.last_used_login_method',
       }),
@@ -263,7 +285,8 @@ export const AuthenticationLive = Layer.effect(
   Effect.gen(function* () {
     const database = yield* Database
     const config = yield* AppConfig
-    const auth = yield* Effect.sync(() => createAuth(database, config))
+    const mailer = yield* Mailer
+    const auth = yield* Effect.sync(() => createAuth(database, config, mailer))
     const normalizeUnlinkRequest = Effect.fn('Authentication.normalizeUnlinkRequest')(function* (request: Request) {
       if (request.method !== 'POST' || new URL(request.url).pathname !== '/api/auth/unlink-account') return request
 
