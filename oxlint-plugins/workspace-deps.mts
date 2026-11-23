@@ -52,6 +52,15 @@ function packageName(specifier: string): string | undefined {
   return first.length > 1 && second ? `${first}/${second}` : undefined
 }
 
+const root = manifestFor(dirname(import.meta.dirname))
+const oxlintConfig = JSON.parse(readFileSync(join(import.meta.dirname, '../.oxlintrc.json'), 'utf8'))
+for (const plugin of oxlintConfig.jsPlugins ?? []) {
+  const name = packageName(typeof plugin === 'string' ? plugin : plugin.specifier)
+  if (name && !root?.declared.has(name)) {
+    throw new Error(`Add ${name} to package.json devDependencies: .oxlintrc.json loads it as a jsPlugin.`)
+  }
+}
+
 const typesPackage = (name: string) => `@types/${name.replace(/^@/, '').replace('/', '__')}`
 
 const declaredDependency = {
