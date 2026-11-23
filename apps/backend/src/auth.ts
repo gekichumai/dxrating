@@ -12,6 +12,7 @@ import { i18n } from '@better-auth/i18n'
 import { AppConfig } from './config'
 import { createAppleClientSecretGenerator } from './lib/apple-client-secret'
 import { revokeOAuthGrants } from './lib/oauth-revocation'
+import { passkeySignUp, requireFreshSessionToAddPasskey } from './lib/passkey-sign-up'
 import { and, eq } from 'drizzle-orm'
 class AuthenticationError extends Data.TaggedError('AuthenticationError')<{
   readonly operation: string
@@ -132,6 +133,9 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
         ipAddressHeaders: ['cf-connecting-ip'],
       },
     },
+    hooks: {
+      before: requireFreshSessionToAddPasskey,
+    },
     trustedOrigins: [
       'https://dxrating.net',
       'https://appleid.apple.com',
@@ -159,6 +163,7 @@ export const createAuth = (database: typeof Database.Service, config: typeof App
         rpID: config.auth.passkey.rpID,
         rpName: 'DXRating',
         origin: config.auth.passkey.origin,
+        registration: passkeySignUp({ turnstileSecretKey: config.auth.turnstile.secretKey }),
       }),
       oneTap(),
       lastLoginMethod({
