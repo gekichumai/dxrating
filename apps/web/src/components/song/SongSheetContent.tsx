@@ -191,7 +191,7 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
 const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const locale = useLocale()
-  const { session, user, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
+  const { session, user, ensureAuthenticated, openLoginDialog, loginDialog } = useAuth()
   const visibility = useCommentVisibility(user?.id)
   const [content, setContent] = useState<string>('')
   const {
@@ -232,13 +232,13 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
     mutate()
     setContent('')
-  }, [sheet, content, ensureAuthenticated])
+  }, [sheet, content, ensureAuthenticated, mutate])
 
   const visibleComments = filterComments(comments ?? [], visibility)
 
   return (
     <div className="flex flex-col gap-3">
-      <LoginDialog />
+      {loginDialog}
 
       <div className="flex gap-2 relative">
         <TextField

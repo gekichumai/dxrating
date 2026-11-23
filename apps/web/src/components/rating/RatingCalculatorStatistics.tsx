@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import * as d3 from 'd3'
 import { Button } from '@mui/material'
 import compact from 'lodash-es/compact'
-import { type FC, type HTMLAttributes, useEffect, useRef, useState } from 'react'
+import { type FC, type HTMLAttributes, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useMeasure } from 'react-use'
 import { makeId } from '../../utils/random'
 import { estimateLabelWidth, placeAverageLabel } from './averageLabel'
@@ -149,7 +149,7 @@ const Histogram: FC<{
   const b15Avg = d3.mean(b15Values) ?? 0
   const b35Avg = d3.mean(b35Values) ?? 0
 
-  const draw = () => {
+  const draw = useEffectEvent(() => {
     // The top margin holds the two average labels, one row each, above the bars and their count labels
     const margin = { top: 44, right: 10, bottom: 20, left: 25 }
     const width = containerRect.width - margin.left - margin.right
@@ -296,7 +296,7 @@ const Histogram: FC<{
       BUCKET_COLORS.b35.line,
       -18,
     )
-  }
+  })
 
   useEffect(() => {
     draw()

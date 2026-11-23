@@ -1,0 +1,22 @@
+diff --git a/apps/web/src/hooks/useAuth.tsx b/apps/web/src/hooks/useAuth.tsx
+index 824a300a..4a2b3f5c 100644
+--- a/apps/web/src/hooks/useAuth.tsx
++++ b/apps/web/src/hooks/useAuth.tsx
+@@ -27,6 +27,8 @@ export const useAuth = () => {
+   const openLoginDialog = useCallback(() => setIsLoginDialogOpen(true), [])
+   const closeLoginDialog = useCallback(() => setIsLoginDialogOpen(false), [])
+ 
++  const LoginDialog = () => <AuthLoginDialog open={isLoginDialogOpen} onClose={closeLoginDialog} />
++
+   /**
+    * Ensures the user is authenticated before proceeding.
+    * If not authenticated, shows a login dialog.
+@@ -56,6 +58,6 @@ export const useAuth = () => {
+     ensureAuthenticated,
+     openLoginDialog,
+     closeLoginDialog,
+-    loginDialog: <AuthLoginDialog open={isLoginDialogOpen} onClose={closeLoginDialog} />,
++    LoginDialog,
+   }
+ }
+\ No newline at end of file

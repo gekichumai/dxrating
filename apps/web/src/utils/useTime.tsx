@@ -38,7 +38,7 @@ export const useTime = (time?: string, length: 'short' | 'normal' = 'normal') =>
     } catch {
       return 'unknown'
     }
-  }, [time, locale, now])
+  }, [time, length, locale, now])
 }
 
 /** Self-refreshing relative time display. Rerenders only itself once per minute. */
