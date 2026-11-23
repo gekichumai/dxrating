@@ -114,7 +114,6 @@ Web requires `apps/web/.env` (no `.env.example` — create manually):
 - Drizzle ORM with PostgreSQL 16.
 - Schema: `apps/backend/src/db/schema.ts` (app tables), `apps/backend/src/db/auth-schema.ts` (Better Auth tables).
 - Migrations live in `apps/backend/drizzle/`. Generate with `drizzle-kit generate`, apply with `drizzle-kit migrate`.
-- Never hand-edit generated migration SQL files.
 
 ### Caching
 - `apps/backend/src/router.ts` uses an in-memory Keyv cache (30-minute TTL).

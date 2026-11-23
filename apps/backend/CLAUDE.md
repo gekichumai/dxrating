@@ -283,4 +283,4 @@ release without changing the application's Effect 4 runtime. Remove the patch wh
 The API continues emitting the v1 error `status` field for deployed clients.
 Keep the compatibility tests when updating oRPC. Migration folders use the
 current Drizzle Kit format; generate or upgrade them through Drizzle Kit and
-verify existing ledgers before release. Never rewrite previously applied SQL.
+verify existing ledgers before release.
