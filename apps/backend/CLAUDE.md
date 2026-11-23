@@ -88,6 +88,7 @@ src/
 - `GET /health` — Health check
 - `GET|HEAD /api/v1/dxdata` — Complete published catalog or metadata-only headers
 - `POST|GET /api/auth/**` — Better Auth endpoints
+- `GET /api/auth/email-verification-protocol/nonce`, `POST /api/auth/email-verification-protocol/verify` — Chrome's Email Verification Protocol: a sign-up form's nonce, and verifying a signed-in account's address with the browser's token (see "Email Verification Protocol" below)
 - `POST /api/auth/account/set-password` — An account without a password (passkey or social sign-up) sets its first one (`src/lib/set-password.ts`): fresh session required (403 `SESSION_NOT_FRESH`), 400 `PASSWORD_ALREADY_SET` once it has one, sign-up length rules and haveIBeenPwned
 - `POST /functions/fetch-net-records/v0` — Fetch NET records (JSON)
 - `POST /functions/fetch-net-records/v1/:region` — Fetch NET records (SSE)
@@ -117,7 +118,7 @@ Optional:
 - `MCP_ANALYTICS_SECRET` — HMAC secret of the daily-rotating MCP analytics distinct_id (random per process if unset)
 - `MCP_POSTHOG_KEY`, `MCP_POSTHOG_HOST`, `MCP_ANALYTICS_SAMPLE_RATE`, `MCP_ANALYTICS_DAILY_CAP` — MCP PostHog events (see `src/services/mcp/analytics.ts`)
 - `CLOUD_SAVE_MODE` — `off` (default) | `allowlist` | `optin` | `on`; see "Feature flags" below
-- `CLOUD_SAVE_ALLOWLIST_EMAILS` — Comma-separated emails that get cloud save while the mode is not `off` (verified emails only, `user.email_verified`: an OAuth provider's word, or a mailed link once mail is on; an email/password or passkey account that hasn't used its link needs `flag:set`). See "Email verification" below
+- `CLOUD_SAVE_ALLOWLIST_EMAILS` — Comma-separated emails that get cloud save while the mode is not `off` (verified emails only, `user.email_verified`: an OAuth provider's word, the browser's proof at sign-up (Email Verification Protocol), or a mailed link once mail is on; an email/password or passkey account with neither needs `flag:set`). See "Email verification" below
 - `SERVER_IMPORTS` — `off` (default) | `on`; server-side imports into cloud saves
 - `RESEND_API_KEY` — Resend API key for account email (verification links, password reset). Unset turns mail off: nothing is sent, `/send-verification-email` and `/request-password-reset` answer `VERIFICATION_EMAIL_NOT_ENABLED` / `RESET_PASSWORD_DISABLED`, and a warning is logged at startup. The web offers "Forgot password?" and the verification resend only when its build has `VITE_AUTH_MAIL_ENABLED=true` (the `AUTH_MAIL_ENABLED` repository variable, `apps/web/src/setup/auth-mail.ts`): set it when you set this key. See "Account email" below
 - `EMAIL_FROM` — Sender of account email (default `DXRating <no-reply@dxrating.net>`); its domain must be verified at Resend
@@ -153,7 +154,7 @@ node dist/flag-set.js cloud_save owner@example.com off   # in the production ima
 
 It prints whether the address is verified and, when it is, how and since when
 (`email verified by oauth at 2026-01-14T15:01:21Z`; `by email_link` for a
-mailed link). `NOT verified` means nobody has proved the address belongs to the
+mailed link, `by email_verification_protocol` for Chrome's proof at sign-up). `NOT verified` means nobody has proved the address belongs to the
 account holder: check it is the right person before granting, or have them use
 "Resend verification email" on their account page, after which the allowlist
 matches them without `flag:set`. `verified by unknown` is an address verified
@@ -297,6 +298,64 @@ enabled (otherwise Better Auth behaves as before mail existed):
   `/request-password-reset` to 3 a minute per IP in production; `/reset-password`
   and `/verify-email` get 10 a minute; and one address gets at most 3 messages
   of a kind in 15 minutes (in memory, per instance).
+
+### Email Verification Protocol
+
+Chrome's Email Verification Protocol (EVP) lets a sign-up prove the address
+without mail: the visitor's mail provider (the issuer; Gmail today) signs a
+token for the address, and Chrome binds it to our origin and the form's nonce.
+`src/lib/email-verification-protocol/` follows the WICG report of 26 June 2026
+and draft-hardt-email-verification-02 (the header of `verifier.ts` lists
+where it follows what Gmail ships instead: `EdDSA`, JWKS keys without `kid`).
+
+- `nonce.ts`: `GET /email-verification-protocol/nonce` answers a signed,
+  30-minute nonce (HMAC of `BETTER_AUTH_SECRET`), with no database write. A
+  nonce is used up (a `verification` row keyed by its hash, whose primary key
+  makes a second use fail) only once a token with it holds.
+- `verifier.ts` (`EmailVerificationProtocol` service in
+  `src/services/email-verification-protocol.ts`): splits `<EVT>~<KB-JWT>`; checks
+  the address (case aside), `email_verified`, the KB-JWT's `aud` (the request's
+  `Origin`, which must be one of `emailVerificationAudiences` in `auth.ts`),
+  `nonce`, `sd_hash`, both `iat`s (30 minutes, 60 s skew) and any `exp`, and the
+  KB-JWT signature against `cnf.jwk`; then looks up DNS TXT
+  `_email-verification.<domain>` (exactly one `iss=<host>`), requires the EVT's
+  `iss` to be `https://<host>`, fetches `<iss>/.well-known/email-verification`
+  (its `issuer` must match) and its `jwks_uri`, and verifies the EVT. Fetches
+  are HTTPS on the default port to public addresses only, never redirected, 5 s
+  and 64 KB at most; metadata and keys are cached 10 minutes (an unknown `kid`
+  refetches them, at most once a minute). It fails only with a typed
+  `EvpRejected` reason, logged without the token or the address (a database
+  failure is logged by `databaseErrorTags` only, never with the query error,
+  whose message carries the parameters).
+- The checks before the network only turn away replayed, stale, misdirected
+  and broken tokens. They don't stop a forgery: `cnf.jwk` comes from the
+  unverified EVT, so anyone can mint a token that passes them, naming a domain
+  and issuer host of their own, and make us look those up. What bounds that:
+  the rate limits; DNS through c-ares (`dns.promises.Resolver`, 1.5 s × 2
+  tries, cancelled on abort), never `dns.lookup`, whose getaddrinfo would hold
+  the libuv threads bcrypt needs; the fetch connecting only to the addresses
+  that were checked (an undici `Agent` with a pinned `lookup`, so no DNS
+  rebinding); and a failed TXT lookup or issuer load not being retried for that
+  domain or issuer for a minute (`FAILED_LOOKUP_TTL_MS`, in memory).
+- `plugin.ts`: after a successful `/sign-up/email` whose body carries
+  `emailVerificationToken` and `emailVerificationNonce`, a token that holds
+  marks the address verified by `email_verification_protocol`
+  (`markEmailVerified`). The plugin comes before auth-mail's in `auth.ts`, so the
+  verification mail then isn't sent. Anything else, a missing, bad or
+  unverifiable token included, leaves the sign-up as it was: unverified, and
+  mailed a link. The passkey client fixes its own request body, so a passkey
+  sign-up sends its token afterwards to `POST /email-verification-protocol/verify`
+  (signed in; answers `{ verified }`); its mail has gone out by then and the link
+  just finds the address verified.
+- Cloud save's allowlist trusts an address verified this way like any other.
+- Tests verify against a fixture issuer (`src/test/evp-fixture-issuer.ts`, keys
+  made with jose, DNS and HTTPS in memory), swapped in with `vi.mock` like the
+  mailer; the live service always uses real DNS and HTTPS.
+- The web side (the hidden `autocomplete="email-verification-token"` field and
+  its nonce in `LoginForm`, and the origin trial token) is described in
+  `apps/web/src/components/auth/LoginForm.tsx` and
+  `apps/web/src/setup/origin-trials.ts`. The trial runs through Chrome 160 and
+  its token must be renewed; the protocol may still change incompatibly.
 
 ## Deployment
 

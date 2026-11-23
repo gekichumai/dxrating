@@ -12,6 +12,8 @@ vi.hoisted(() => {
 })
 
 import { createAuth } from '../auth'
+import { makeEvpVerifier } from '../lib/email-verification-protocol/verifier'
+import { nodeEvpTransport } from '../services/email-verification-protocol'
 import { AppConfig } from '../config'
 import { Database } from '../db/index'
 import { Mailer } from '../services/mailer'
@@ -295,7 +297,7 @@ describe('email verification records', () => {
     await pool.query(`UPDATE "user" SET email_verified_at = '2025-01-01T00:00:00Z' WHERE id = $1`, [id])
     const auth = await appRuntime.runPromise(
       Effect.gen(function* () {
-        return createAuth(yield* Database, yield* AppConfig, yield* Mailer)
+        return createAuth(yield* Database, yield* AppConfig, yield* Mailer, makeEvpVerifier(nodeEvpTransport))
       }),
     )
     const { internalAdapter } = await auth.$context

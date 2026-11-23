@@ -47,7 +47,8 @@ const program = Effect.gen(function* () {
     ),
   )
   if (rows.length === 0) return yield* Effect.fail(new FlagSetError({ message: 'No user has this email' }))
-  // Email/password and passkey sign-ups do not verify addresses: check an unverified match is the right person.
+  // Email/password and passkey sign-ups start unverified unless Chrome's Email Verification Protocol proved the address;
+  // a mailed link verifies them later. Check an unverified match is the right person.
   // A verified one says how (oauth, email_link, email_verification_protocol, admin or unknown) and since when.
   const row = rows[0]!
   const verified = !row.email_verified
