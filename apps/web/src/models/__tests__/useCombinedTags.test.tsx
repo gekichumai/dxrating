@@ -2,11 +2,11 @@ import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { toV2Community } from '@gekichumai/dxdata/v2'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { SWRConfig } from 'swr'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setLoadedCatalogDocumentForTests } from '../../catalog/clientCatalog'
 import { rememberAttachedTag, resetCommunityListsForTests } from '../../catalog/communityOverlay'
-import { useCombinedTags, withAttachedTag } from '../useCombinedTags'
+import { useCombinedTags } from '../useCombinedTags'
 
 const [first, ...rest] = catalogSnapshot.songs
 const newSheet = { ...first!.sheets[0]!, id: 'dsht_newsheet00' }
@@ -18,6 +18,11 @@ const overlay = toV2Community(
   },
   [],
 )
+
+const withClient = (client: QueryClient) =>
+  function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  }
 
 describe('useCombinedTags', () => {
   beforeEach(() => {
@@ -38,11 +43,8 @@ describe('useCombinedTags', () => {
   })
 
   it('re-resolves on mount after a catalog was published while nothing was mounted', async () => {
-    // One SWR cache for both mounts, as navigating between pages keeps it; the hook's own options otherwise
-    const cache = new Map()
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <SWRConfig value={{ provider: () => cache }}>{children}</SWRConfig>
-    )
+    // One query cache for both mounts, as navigating between pages keeps it
+    const wrapper = withClient(new QueryClient())
     const firstMount = renderHook(() => useCombinedTags(), { wrapper })
     await waitFor(() => expect(firstMount.result.current.data?.tagSongs).toEqual([]))
     firstMount.unmount()
@@ -60,10 +62,8 @@ describe('useCombinedTags', () => {
   })
 
   it('recovers a catalog refresh that a local attachment overlapped, keeping the attachment', async () => {
-    const cache = new Map()
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <SWRConfig value={{ provider: () => cache }}>{children}</SWRConfig>
-    )
+    const queryClient = new QueryClient()
+    const wrapper = withClient(queryClient)
     let respond!: (response: Response) => void
     const fetchMock = vi.fn(async () => Response.json(overlay))
     vi.stubGlobal('fetch', fetchMock)
@@ -86,7 +86,7 @@ describe('useCombinedTags', () => {
     })
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
 
-    // The viewer attaches a tag meanwhile, as SheetTagsAddButton does; SWR discards the overlapping refresh
+    // The viewer attaches a tag meanwhile, as SheetTagsAddButton does
     const sheet = first!.sheets.find((candidate) => candidate.difficulty !== newSheet.difficulty)!
     const attached = {
       song_id: first!.id,
@@ -95,10 +95,7 @@ describe('useCombinedTags', () => {
       sheet_difficulty: sheet.difficulty,
       tag_id: 3,
     }
-    rememberAttachedTag(attached)
-    await act(() =>
-      firstMount.result.current.mutate((current) => withAttachedTag(current, attached), { revalidate: false }),
-    )
+    act(() => rememberAttachedTag(queryClient, attached))
     respond(Response.json(overlay))
 
     const expected = [newSheet.id, sheet.id].sort()

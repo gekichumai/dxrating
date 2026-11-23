@@ -1,0 +1,9 @@
+{
+  "mistake": "A private contract input that PostgreSQL stores is a bare z.string(), so U+0000 reaches the JSONB cast and the whole write fails with a 500.",
+  "history": [
+    "#436 d4fd8a42 (providerRecordId was z.string().min(1).max(128): a replace or client import item with U+0000 failed the batch's JSONB cast, a 500 that rolled back its valid siblings; save names, sourceAccountId and snapshot detail had the same gap)"
+  ],
+  "guard": "oxlint no-restricted-properties bans bare z primitives in packages/api-contract/src/private",
+  "check": "pnpm exec oxlint packages/api-contract/src/private",
+  "expect": "Build private contract schemas from ./storable"
+}

@@ -1,0 +1,8 @@
+{
+  "mistake": "A replace records the save revision like a merge, although it keeps a chart listed twice differently, so the next identical automatic upload short-circuits and never backfills the DX score the merge would.",
+  "history": ["#436 0d12d685 (review 4503806160: replaceRecords marked itself reusable for the short-circuit)"],
+  "guard": "formal/import-ordering ShortCircuitSound (Bug_0d12d685_Replace = LockedReplace records saveRevision)",
+  "check": "formal/tlc.sh formal/import-ordering/ImportOrdering.tla",
+  "expect": "Invariant ShortCircuitSound is violated",
+  "needs": ["tlc"]
+}

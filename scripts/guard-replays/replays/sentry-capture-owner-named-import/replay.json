@@ -1,0 +1,9 @@
+{
+  "mistake": "The oRPC error interceptor captures failures itself through a named import of captureException from @sentry/node, so a client that closed the connection reaches Sentry as a server error.",
+  "history": [
+    "#626 5b8d815f (DXRATING-BACKEND-1Z: 122 events on announcements.list from clients leaving mid-request; the interceptor in app.ts captured failures after shouldCaptureSentryError only)"
+  ],
+  "guard": "oxlint no-restricted-imports bans @sentry/node outside lib/functions/sentry.ts and tests, so a named import cannot skip the captureException property ban",
+  "check": "pnpm exec oxlint apps/backend/src/app.ts",
+  "expect": "Import Sentry from lib/functions/sentry and report failures with reportFailure(error)"
+}

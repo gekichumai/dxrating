@@ -10,6 +10,7 @@ import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 interface AccountItem {
   id: string
@@ -47,7 +48,7 @@ export const ConnectedAccountsSection: FC = () => {
   }, [])
 
   useEffect(() => {
-    fetchAccounts()
+    fetchAccounts().catch(reportRejection)
   }, [fetchAccounts])
 
   // Count total auth methods: social accounts + credential (email/password) account + passkeys
@@ -129,7 +130,7 @@ export const ConnectedAccountsSection: FC = () => {
                 {connected ? (
                   <Button
                     size="small"
-                    onClick={() => handleDisconnect(id)}
+                    onClick={asyncHandler(() => handleDisconnect(id))}
                     disabled={!canDisconnect || disconnectingProvider === id}
                     aria-describedby={statusId}
                     color="error"
@@ -145,7 +146,7 @@ export const ConnectedAccountsSection: FC = () => {
                 ) : (
                   <Button
                     size="small"
-                    onClick={() => handleConnect(id)}
+                    onClick={asyncHandler(() => handleConnect(id))}
                     disabled={connectingProvider !== null}
                     variant="outlined"
                     className="!text-xs !shrink-0"

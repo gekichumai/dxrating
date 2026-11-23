@@ -29,6 +29,8 @@ import { ScoreRepositoryContext } from '../scores/useScoreRepository'
 import { type CloudSaveUi, CloudSaveUiContext } from '../scores/CloudSaveUiContext'
 import { CloudSaveDemoBoundary } from '../scores/CloudSaveDemoBoundary'
 import { CloudMigrationProvider } from '../scores/CloudMigrationContext'
+import { browserStorage } from '@/utils/persisted'
+import { reportRejection } from '@/lib/rejections'
 
 /**
  * The rating calculator's view of the score repository, kept source compatible: `entries` are the saved entries and
@@ -39,16 +41,6 @@ export interface RatingCalculatorContext {
   entries: PlayEntry[]
   /** @deprecated Write through the explicit methods of `useScoreRepository()` */
   modifyEntries: ListActions<PlayEntry>
-}
-
-/** The browser's localStorage, or nothing on the server and where the browser refuses it */
-function getBrowserStorage(): Storage | null {
-  if (typeof window === 'undefined') return null
-  try {
-    return window.localStorage
-  } catch {
-    return null
-  }
 }
 
 /** `react-use` `useList` actions over the repository, each a wholesale replacement of the saved entries */
@@ -114,7 +106,7 @@ export const RatingCalculatorContext = createContext<RatingCalculatorContext>({
 
 export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({ children }) => {
   // The visitor's save is read in the browser only: on the server the repository is empty (no scores in SSR)
-  const [localRepository] = useState(() => new LocalScoreRepository(getBrowserStorage()))
+  const [localRepository] = useState(() => new LocalScoreRepository(browserStorage('local')))
   // A cloud save replaces the local one only when the server enables it for the signed-in user (ActiveSaveContext);
   // otherwise this is the local save, as it always was
   const activeSave = useActiveSaveDecision()
@@ -153,22 +145,25 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
     if (repository.kind !== 'local') return
     if (!completeCatalogDocument || !hasLegacySheetRecords(entries)) return
     let cancelled = false
-    void loadLegacySongIds().then((legacySongIds) => {
-      if (cancelled) return
-      const result = migrateLegacySheetRecords(entries, getMigrationCatalog(completeCatalogDocument), legacySongIds)
-      if (result.migrated === 0) return
-      backUpBeforeMigration(window.localStorage, RATING_ENTRIES_STORAGE_KEY, JSON.stringify(entries))
-      repository.applyMigration(result.records)
-      reportMigration('rating-entries', result)
-    })
+    loadLegacySongIds()
+      .then((legacySongIds) => {
+        if (cancelled) return
+        const result = migrateLegacySheetRecords(entries, getMigrationCatalog(completeCatalogDocument), legacySongIds)
+        if (result.migrated === 0) return
+        backUpBeforeMigration(browserStorage('local'), RATING_ENTRIES_STORAGE_KEY, JSON.stringify(entries))
+        repository.applyMigration(result.records)
+        reportMigration('rating-entries', result)
+      })
+      .catch(reportRejection)
     return () => {
       cancelled = true
     }
   }, [entries, completeCatalogDocument, repository])
 
   useEffect(() => {
-    if (!completeCatalogDocument) return
-    void migrateStoredFavoriteSheetIds(window.localStorage, completeCatalogDocument)
+    const storage = browserStorage('local')
+    if (!completeCatalogDocument || !storage) return
+    migrateStoredFavoriteSheetIds(storage, completeCatalogDocument).catch(reportRejection)
   }, [completeCatalogDocument])
 
   const value = useMemo(() => ({ entries, modifyEntries }), [entries, modifyEntries])

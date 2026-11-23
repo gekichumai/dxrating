@@ -419,20 +419,17 @@ describe('Effect framework boundary', () => {
   })
 })
 describe('Effect cache lifetime', () => {
-  it('expires entries at their TTL and makes invalidation visible immediately', async () => {
+  it('expires entries at their TTL', async () => {
     const runtime = ManagedRuntime.make(Layer.merge(ApplicationCacheLive, TestClock.layer()))
     try {
       await runtime.runPromise(
         Effect.gen(function* () {
           const cache = yield* ApplicationCache
-          yield* cache.set('tags:list', ['one'])
+          yield* cache.set('analytics:trending', ['one'])
           yield* TestClock.adjust('29 minutes')
-          expect(yield* cache.get('tags:list')).toEqual(['one'])
+          expect(yield* cache.get('analytics:trending')).toEqual(['one'])
           yield* TestClock.adjust('1 minute')
-          expect(yield* cache.get('tags:list')).toBeUndefined()
-          yield* cache.set('tags:list', ['two'])
-          yield* cache.delete('tags:list')
-          expect(yield* cache.get('tags:list')).toBeUndefined()
+          expect(yield* cache.get('analytics:trending')).toBeUndefined()
         }),
       )
     } finally {

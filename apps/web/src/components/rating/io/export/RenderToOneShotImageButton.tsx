@@ -8,16 +8,18 @@ import {
   DialogTitle,
 } from '@mui/material'
 import * as Sentry from '@/lib/telemetry'
+import { useQuery } from '@tanstack/react-query'
 import { type FC, useEffect, useRef, useState } from 'react'
-import useSWR from 'swr'
 import IconMdiImage from '~icons/mdi/image'
 import { useAppContext, useAppContextDXDataVersion } from '../../../../models/context/useAppContext'
 import { useRatingEntries } from '../../useRatingEntries'
 import { mapCalculatedEntryForOneShot } from './oneshotPayload'
 import { captureAnalyticsEvent } from '@/lib/analytics'
+import { requestQuery } from '@/lib/query'
 import { ShareImageActions, useObjectUrl } from '@/components/global/ShareImageViewer'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler } from '@/lib/rejections'
 
 const useElapsedTime = (isLoading: boolean) => {
   const startTime = useRef<number | null>(null)
@@ -56,9 +58,21 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
   const version = useAppContextDXDataVersion()
   const { region } = useAppContext()
 
-  const { data, isValidating, error, mutate } = useSWR(
-    `miruku::functions/oneshot-renderer?data=${JSON.stringify(allEntries)}&version=${version}&region=${region}`,
-    async () => {
+  const request = {
+    version,
+    region,
+    calculatedEntries: {
+      b15: b15Entries.map(mapCalculatedEntryForOneShot),
+      b35: b35Entries.map(mapCalculatedEntryForOneShot),
+    },
+  }
+  const {
+    data,
+    isFetching: isValidating,
+    error,
+    refetch,
+  } = useQuery({
+    ...requestQuery('oneshot-render', request, async (request) => {
       const from = performance.now()
       try {
         const response = await fetch('https://miruku.dxrating.net/functions/render-oneshot/v0?pixelated=1', {
@@ -66,14 +80,7 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            version,
-            region,
-            calculatedEntries: {
-              b15: b15Entries.map(mapCalculatedEntryForOneShot),
-              b35: b35Entries.map(mapCalculatedEntryForOneShot),
-            },
-          }),
+          body: JSON.stringify(request),
         })
         if (!response.ok) {
           throw new Error(`render_request_http_${response.status}`)
@@ -105,13 +112,11 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
         Sentry.metrics.count('oneshot_render.failure', 1)
         throw error
       }
-    },
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      revalidateIfStale: false,
-    },
-  )
+    }),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  })
   const elapsedTime = useElapsedTime(isValidating)
   const imageUrl = useObjectUrl(data)
 
@@ -181,7 +186,7 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
       </DialogContent>
       <DialogActions>
         {error && !isValidating && (
-          <Button onClick={() => void mutate()}>
+          <Button onClick={asyncHandler(() => refetch())}>
             {m.ratingCalculator_io_export_oneshotImage_dialog_retry({}, { locale })}
           </Button>
         )}

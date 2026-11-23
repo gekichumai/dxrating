@@ -63,7 +63,7 @@ export const SongBackLink: FC<{ className?: string }> = ({ className }) => {
           historyLength: window.history.length,
         })
         if (returnWithinSite) router.history.back()
-        else void router.navigate({ href: homeHref })
+        else router.navigate({ href: homeHref })
       }}
       className={clsx('touch-hit', className)}
     >

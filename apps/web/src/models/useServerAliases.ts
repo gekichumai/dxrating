@@ -1,18 +1,6 @@
-import useSWR from 'swr'
-import { loadCommunityLists, resolvedAgainst, useRefreshOnCatalogChange } from '../catalog/communityOverlay'
+import { useCommunityLists, type CommunityLists } from '../catalog/communityOverlay'
+
+const aliasesOf = (lists: CommunityLists) => lists.aliases
 
 /** The aliases of every song, by public song ID, from the v2 community overlay */
-export const useServerAliases = () => {
-  const aliases = useSWR(
-    'aliases.list',
-    async () => {
-      const { aliases, catalogUpdatedAt } = await loadCommunityLists()
-      return resolvedAgainst(aliases, catalogUpdatedAt)
-    },
-    {
-      focusThrottleInterval: 1000 * 60 * 60,
-    },
-  )
-  useRefreshOnCatalogChange(aliases.data, aliases.mutate)
-  return aliases
-}
+export const useServerAliases = () => useCommunityLists(aliasesOf)

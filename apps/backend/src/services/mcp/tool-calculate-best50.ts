@@ -127,8 +127,7 @@ export function runCalculateBest50(
   const parsedServer = parseServer(catalog, input.server ?? 'jp')
   if (!parsedServer.ok) return toolError(parsedServer.error)
   const server = parsedServer.server!
-  const latest = currentVersion(catalog, server)
-  const version = input.version?.trim() ?? latest
+  const version = input.version?.trim() ?? currentVersion(catalog, server)
   if (version === undefined || versionOrder(version) === undefined) {
     return toolError(`Unknown game version ${JSON.stringify(input.version)}: PRiSM, PRiSM PLUS, CiRCLE, …`)
   }
@@ -148,12 +147,7 @@ export function runCalculateBest50(
       )
     }
     const [sheet] = sheets
-    const onServer = sheetOnServer(sheet, server)
-    // a past version rates a chart with its internal level then, where the catalog knows it, as the web app does
-    const internalLevel =
-      version === latest
-        ? onServer.internalLevel
-        : (sheet.multiverInternalLevelValue?.[version] ?? onServer.internalLevel)
+    const { internalLevel, ...onServer } = sheetOnServer(sheet, server, version)
     const bucket = isB15Sheet(onServer.version as VersionEnum, version as VersionEnum, serverRegion(server) ?? 'jp')
       ? 'b15'
       : isB35Sheet(onServer.version as VersionEnum, version as VersionEnum, serverRegion(server) ?? 'jp')

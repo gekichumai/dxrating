@@ -1,6 +1,7 @@
 import { CategoryEnum, DifficultyEnum, type Sheet, type Song, TypeEnum, VersionEnum } from '@gekichumai/dxdata'
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { describe, expect, it } from 'vitest'
+import { collapsePlays, type ChartPlay } from '../collapse-plays'
 import {
   buildPlateCharts,
   evaluatePlate,
@@ -75,21 +76,23 @@ const songs: Song[] = [
   song('utage', [sheet('utage', TypeEnum.UTAGE, DifficultyEnum.Basic, VersionEnum.PRiSM)]),
 ]
 
+const play = (fields: Omit<ChartPlay, 'best50Bucket'>) => collapsePlays([{ ...fields, best50Bucket: null }], null)
+
 describe('meetsPlateCondition', () => {
   const cases: [PlateKind, PlateRecord | undefined, boolean][] = [
-    ['hasha', { achievementRate: 80 }, true],
-    ['hasha', { achievementRate: 79.9999 }, false],
+    ['hasha', play({ achievementRate: 80 }), true],
+    ['hasha', play({ achievementRate: 79.9999 }), false],
     ['hasha', undefined, false],
-    ['kiwami', { achievementRate: 50, comboFlag: 'fc' }, true],
-    ['kiwami', { achievementRate: 50, comboFlag: 'app' }, true],
-    ['kiwami', { achievementRate: 101, comboFlag: null }, false],
-    ['sho', { achievementRate: 100 }, true],
-    ['sho', { achievementRate: 99.9999, comboFlag: 'app' }, false],
-    ['shin', { achievementRate: 90, comboFlag: 'ap' }, true],
-    ['shin', { achievementRate: 101, comboFlag: 'fcp' }, false],
-    ['maimai', { achievementRate: 90, syncFlag: 'fsd' }, true],
-    ['maimai', { achievementRate: 90, syncFlag: 'fsdp' }, true],
-    ['maimai', { achievementRate: 101, syncFlag: 'fsp' }, false],
+    ['kiwami', play({ achievementRate: 50, comboFlag: 'fc' }), true],
+    ['kiwami', play({ achievementRate: 50, comboFlag: 'app' }), true],
+    ['kiwami', play({ achievementRate: 101, comboFlag: null }), false],
+    ['sho', play({ achievementRate: 100 }), true],
+    ['sho', play({ achievementRate: 99.9999, comboFlag: 'app' }), false],
+    ['shin', play({ achievementRate: 90, comboFlag: 'ap' }), true],
+    ['shin', play({ achievementRate: 101, comboFlag: 'fcp' }), false],
+    ['maimai', play({ achievementRate: 90, syncFlag: 'fsd' }), true],
+    ['maimai', play({ achievementRate: 90, syncFlag: 'fsdp' }), true],
+    ['maimai', play({ achievementRate: 101, syncFlag: 'fsp' }), false],
   ]
   it.each(cases)('%s with %o → %s', (kind, record, expected) => {
     expect(meetsPlateCondition(kind, record)).toBe(expected)
@@ -150,9 +153,9 @@ describe('buildPlateCharts', () => {
 describe('evaluatePlate', () => {
   it('counts complete, partial and untouched charts', () => {
     const records = new Map<string, PlateRecord>(
-      BASE.map((d) => [`kuma:dx:${d}`, { achievementRate: 100.5, comboFlag: 'ap' }]),
+      BASE.map((d) => [`kuma:dx:${d}`, play({ achievementRate: 100.5, comboFlag: 'ap' })]),
     )
-    records.set('hana:dx:basic', { achievementRate: 100.5, comboFlag: 'fc' })
+    records.set('hana:dx:basic', play({ achievementRate: 100.5, comboFlag: 'fc' }))
     const cnKuma = findPlate('cn', 'kuma-shin')!
     const progress = evaluatePlate({ songs, plate: cnKuma, region: 'cn', records })
     expect(progress.totalCharts).toBe(2)
@@ -222,7 +225,7 @@ describe('Re:MASTERs that differ between servers (meta#18)', () => {
 
   it('counts them in plate progress', () => {
     const plate = findPlate('jp', 'mai-maimai')!
-    const fdx: PlateRecord = { achievementRate: 101, comboFlag: 'app', syncFlag: 'fsdp' }
+    const fdx = play({ achievementRate: 101, comboFlag: 'app', syncFlag: 'fsdp' })
     const charts = buildPlateCharts(catalogSnapshot.songs, plate.group, 'jp').filter((c) => c.hasServerVariantRemaster)
     const baseOnly = new Map<string, PlateRecord>(
       charts.flatMap((c) =>

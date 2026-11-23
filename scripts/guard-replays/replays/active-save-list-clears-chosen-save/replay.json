@@ -1,0 +1,9 @@
+{
+  "mistake": "When the chosen save is missing from the save list, the decision clears whatever selection is stored by then, including a save chosen while the list was on its way.",
+  "history": [
+    "#438 ca729895 (found by the formal/session-ownership model; onStopped got the same guard in #438 cc07485f, the list miss did not; fixed in this PR)"
+  ],
+  "guard": "apps/web/src/models/scores/__tests__/ActiveSaveContext.test.tsx",
+  "check": "pnpm --filter @gekichumai/dxrating-web exec vitest run src/models/scores/__tests__/ActiveSaveContext.test.tsx",
+  "expect": "keeps a save chosen while the save list was on its way"
+}

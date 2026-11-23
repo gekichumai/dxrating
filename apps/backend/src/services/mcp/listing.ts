@@ -1,3 +1,4 @@
+import { MCP_PATH, MCP_SERVER_CARD_PATH } from '@gekichumai/api-contract'
 import { SUPPORTED_PROTOCOL_VERSIONS } from '@modelcontextprotocol/server'
 import { ICONS } from './output'
 import { SERVER_DESCRIPTION, SERVER_NAME, SERVER_TITLE, serverVersion } from './server'
@@ -17,10 +18,9 @@ export const LISTING_VERSION = '1.1.0'
 /** The host the server is reached at; the backend answers other hosts too, whose root is something else */
 export const MCP_HOST = 'mcp.dxrating.net'
 /** The public URL of the server, the remote of the listing; never a preview host */
-export const MCP_PUBLIC_URL = `https://${MCP_HOST}/mcp`
+export const MCP_PUBLIC_URL = `https://${MCP_HOST}${MCP_PATH}`
 /** The setup guide, at the root of the host, the website of the listing */
 export const MCP_GUIDE_URL = `https://${MCP_HOST}/`
-export const MCP_SERVER_CARD_PATH = '/mcp/server-card'
 export const MCP_SERVER_CARD_URL = `https://${MCP_HOST}${MCP_SERVER_CARD_PATH}`
 
 /** This repository on GitHub; the ID survives a rename or a transfer */

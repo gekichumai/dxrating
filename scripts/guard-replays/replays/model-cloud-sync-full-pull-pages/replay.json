@@ -1,0 +1,10 @@
+{
+  "mistake": "A full pull asks for its later pages in incremental mode, the server resets them below the tombstone horizon, and the client commits the first page as the whole save.",
+  "history": [
+    "36f797e5 / f6fd8083 (fix(web): full pulls stay full across pages; a save with live revisions 1 and 3 and a purged tombstone 2 kept only its first page on every sync)"
+  ],
+  "guard": "formal/cloud-sync/CloudSync.tla, invariant Convergence",
+  "check": "formal/tlc.sh formal/cloud-sync/CloudSync.tla",
+  "expect": "Invariant Convergence is violated",
+  "needs": ["tlc"]
+}

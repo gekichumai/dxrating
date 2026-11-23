@@ -1,0 +1,7 @@
+{
+  "mistake": "A hook defines a component inside itself, so each render is a new component type: React remounts the sign-in form and its new passkey request cancels the pending WebAuthn prompt.",
+  "history": ["#625 203d7ac1 (useAuth created its LoginDialog on every render, which cancelled passkey sign-in)"],
+  "guard": "dxrating/no-nested-component (packages/oxlint-plugin) at error",
+  "check": "pnpm exec oxlint apps/web/src/hooks/useAuth.tsx",
+  "expect": "dxrating(no-nested-component): LoginDialog is a component defined inside useAuth"
+}

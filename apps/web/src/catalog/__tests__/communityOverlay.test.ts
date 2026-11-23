@@ -1,5 +1,6 @@
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { toV2Community } from '@gekichumai/dxdata/v2'
+import { QueryClient } from '@tanstack/react-query'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setLoadedCatalogDocumentForTests } from '../clientCatalog'
 import {
@@ -52,11 +53,11 @@ describe('community overlay loading', () => {
     expect(lists.aliases).toEqual([{ song_id: song.id, name: 'alias' }])
     expect(lists.tags).toEqual(overlay.tags)
     expect(lists.tagGroups).toEqual(overlay.tagGroups)
-    expect(lists.catalogUpdatedAt).toBe(catalogSnapshot.updatedAt)
   })
 
   it("adds the viewer's own attachments and aliases to every load, once", async () => {
     fetchMock.mockResolvedValue(Response.json(overlay))
+    const queryClient = new QueryClient()
     const attached = {
       song_id: song.id,
       sheet_id: 'dsht_x',
@@ -64,10 +65,10 @@ describe('community overlay loading', () => {
       sheet_difficulty: 'remaster',
       tag_id: 3,
     }
-    rememberAttachedTag(attached)
-    rememberAttachedTag(attached)
-    rememberCreatedAlias({ song_id: song.id, name: 'alias' })
-    rememberCreatedAlias({ song_id: song.id, name: 'mine' })
+    rememberAttachedTag(queryClient, attached)
+    rememberAttachedTag(queryClient, attached)
+    rememberCreatedAlias(queryClient, { song_id: song.id, name: 'alias' })
+    rememberCreatedAlias(queryClient, { song_id: song.id, name: 'mine' })
 
     const lists = await loadCommunityLists()
     expect(lists.tagSongs).toHaveLength(2)

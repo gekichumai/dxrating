@@ -18,7 +18,6 @@ import {
 } from '@mui/material'
 import { type FC, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useLocalStorage } from 'react-use'
 import CarbonFish from '~icons/carbon/fish'
 import { formatErrorMessage } from '../../../../utils/formatErrorMessage'
 import { WebHaptics } from 'web-haptics'
@@ -38,15 +37,19 @@ import {
 } from './cloudImport'
 import { importFailureMessage } from '@/components/cloud-save/importFailureMessage'
 import { ServerImportFailedError } from '@/models/scores/cloudImports'
+import { persisted, usePersisted } from '@/utils/persisted'
+import { z } from 'zod'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler } from '@/lib/rejections'
 
 const haptics = new WebHaptics()
 
-interface DivingFishProfile {
-  username?: string
-  qq?: string
-}
+const divingFishProfileSchema = z.object({ username: z.string().optional(), qq: z.string().optional() })
+
+type DivingFishProfile = z.infer<typeof divingFishProfileSchema>
+
+const storedDivingFishProfile = persisted('diving-fish-profile', divingFishProfileSchema, null)
 
 type DivingFishRequestBody = {
   b50: 1
@@ -199,7 +202,7 @@ export const ImportDivingFishDialogContent: FC<{
   const repository = useScoreRepository()
   const [busy, setBusy] = useState(false)
   const locale = useLocale()
-  const [divingFishConfig, setDivingFishConfig] = useLocalStorage<DivingFishProfile | null>('diving-fish-profile', null)
+  const [divingFishConfig, setDivingFishConfig] = usePersisted(storedDivingFishProfile)
 
   const invalidReason = useMemo(() => {
     if (!divingFishConfig) return 'missing' as const
@@ -280,7 +283,7 @@ export const ImportDivingFishDialogContent: FC<{
       <DialogActions>
         <Button onClick={onClose}>{m.ratingCalculator_io_import_divingFish_close({}, { locale })}</Button>
         <Button
-          onClick={async () => {
+          onClick={asyncHandler(async () => {
             setBusy(true)
             try {
               if (invalidReason) {
@@ -312,7 +315,7 @@ export const ImportDivingFishDialogContent: FC<{
             } finally {
               setBusy(false)
             }
-          }}
+          })}
           disabled={busy}
           variant="contained"
         >

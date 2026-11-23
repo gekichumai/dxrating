@@ -6,6 +6,7 @@ import {
   calculateRatingAward,
   getSongCatalog,
   resolveLegacySheetId,
+  toRatingEntries,
   type Best50Bucket,
   type RatingAward,
   type SongCatalog,
@@ -15,7 +16,8 @@ import {
 import type { Context } from 'hono'
 import { match } from 'ts-pattern'
 import { z } from 'zod'
-import { type Scope, Sentry } from '../../../lib/functions/sentry'
+import { reportFailure, Sentry } from '../../../lib/functions/sentry'
+import { runApp } from '../../../runtime'
 import { fetchAsset, fetchImageAsset, getAssetSourceKey } from './assetFetcher'
 import { calculateDXScoreStars } from './calculateDXScore'
 import { demo } from './demo'
@@ -238,14 +240,17 @@ export const calculateEntries = (
         catalog,
         version,
         region,
-        entries: [
-          {
-            sheetId: renderData.sheetId,
-            identity: renderData.sheet.identity,
-            achievementRate: renderData.achievementRate,
-            comboFlag: renderData.achievementAccuracy ?? null,
-          },
-        ],
+        entries: toRatingEntries(
+          [
+            {
+              sheetId: renderData.sheetId,
+              identity: renderData.sheet.identity,
+              achievementRate: renderData.achievementRate,
+              comboFlag: renderData.achievementAccuracy ?? null,
+            },
+          ],
+          catalog,
+        ),
       })
       const bucket = match({ hasB15: best50.b15.length > 0, hasB35: best50.b35.length > 0 })
         .with({ hasB15: true }, () => 'b15' as const)
@@ -307,29 +312,27 @@ const getRenderService = () => {
     service = {
       source,
       render: createRenderService(({ body, catalog: document }: OneshotJob, options) =>
-        Effect.runPromise(
-          Effect.scoped(
-            Effect.gen(function* () {
-              const start = performance.now()
-              const catalog = getSongCatalog(document, body.version, body.region)
-              const data = body.calculatedEntries
-                ? prepareCalculatedEntries(body.calculatedEntries, catalog)
-                : calculateEntries(body.entries ?? [], catalog, body.region)
-              const calc = performance.now() - start
-              const result = yield* Effect.tryPromise({
-                try: () =>
-                  draw(
-                    { data, version: body.version, region: body.region, playerCollection: body.playerCollection },
-                    options,
-                  ),
-                catch: (cause) =>
-                  cause instanceof RenderQueueFullError
-                    ? new OneshotQueueFullError({ cause })
-                    : new OneshotRenderError({ operation: 'draw oneshot image', cause }),
-              })
-              return { ...result, timings: { calc, ...result.timings } }
-            }),
-          ),
+        runApp(
+          Effect.gen(function* () {
+            const start = performance.now()
+            const catalog = getSongCatalog(document, body.version, body.region)
+            const data = body.calculatedEntries
+              ? prepareCalculatedEntries(body.calculatedEntries, catalog)
+              : calculateEntries(body.entries ?? [], catalog, body.region)
+            const calc = performance.now() - start
+            const result = yield* Effect.tryPromise({
+              try: () =>
+                draw(
+                  { data, version: body.version, region: body.region, playerCollection: body.playerCollection },
+                  options,
+                ),
+              catch: (cause) =>
+                cause instanceof RenderQueueFullError
+                  ? new OneshotQueueFullError({ cause })
+                  : new OneshotRenderError({ operation: 'draw oneshot image', cause }),
+            })
+            return { ...result, timings: { calc, ...result.timings } }
+          }),
         ),
       ),
     }
@@ -433,15 +436,17 @@ export const createOneshotHandler =
           })
         }
         return Effect.sync(() =>
-          Sentry.withScope((scope: Scope) => {
-            scope.setContext('function', { name: 'renderOneshot' })
-            scope.setContext('parameters', { demo: !!queryDemo, format, width: queryWidth })
-            Sentry.captureException(error)
+          reportFailure(error, {
+            signal: c.req.raw.signal,
+            contexts: {
+              function: { name: 'renderOneshot' },
+              parameters: { demo: !!queryDemo, format, width: queryWidth },
+            },
           }),
         ).pipe(Effect.andThen(Effect.fail(error)))
       }),
     )
     return Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, () =>
-      Effect.runPromise(Effect.scoped(program), { signal: c.req.raw.signal }),
+      runApp(program, { signal: c.req.raw.signal }),
     )
   }

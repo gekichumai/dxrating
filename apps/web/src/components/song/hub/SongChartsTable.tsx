@@ -177,7 +177,7 @@ export const SongChartsTable: FC<{
                   </td>
                   <td className="px-1 py-1.5 whitespace-nowrap text-right">
                     {record ? (
-                      <span className="font-semibold">{formatAchievement(record.entry.achievementRate)}</span>
+                      <span className="font-semibold">{formatAchievement(record.best.achievementRate)}</span>
                     ) : (
                       '—'
                     )}

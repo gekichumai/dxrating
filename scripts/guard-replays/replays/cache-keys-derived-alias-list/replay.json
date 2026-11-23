@@ -1,0 +1,11 @@
+{
+  "mistake": "A server cache key is written by hand and every write to its rows must remember to delete it: the alias list is cached under 'aliases:list', which only POST /aliases deletes, so an account deletion that cascades to song_aliases keeps serving the deleted account's aliases.",
+  "history": [
+    "1b1067da (hand-keyed tags:list and aliases:list, one cache.delete per mutation; AGENTS.md listed only tags:list)",
+    "ea52db70 (Better Auth's delete-user cascades to song_aliases and never deleted aliases:list)"
+  ],
+  "guard": "selects cache through Drizzle's .$withCache(), which every write through Drizzle and every Better Auth user deletion invalidates by table; aliases.test.ts checks an account deletion",
+  "check": "pnpm --filter @gekichumai/backend exec vitest run src/test/aliases.test.ts",
+  "expect": "takes a deleted account's aliases off the list",
+  "needs": ["postgres"]
+}

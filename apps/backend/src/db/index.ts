@@ -1,15 +1,18 @@
 import * as PgClient from '@effect/sql-pg/PgClient'
+import { EffectCache } from 'drizzle-orm/cache/core/cache-effect'
 import * as PgDrizzle from 'drizzle-orm/effect-postgres'
 import { drizzle } from 'drizzle-orm/node-postgres'
+import { getTableName, type Table } from 'drizzle-orm'
 import { Context, Effect, Layer, Redacted } from 'effect'
 import { DatabaseError } from './errors'
+import { makeQueryCache, TransactionWrites } from './query-cache'
 import { isSqlError } from 'effect/sql/SqlError'
 import { Pool } from 'pg'
 import { config } from '../config'
 
 export const pool = new Pool({ connectionString: config.databaseUrl, max: 5 })
 
-export type AppDatabase = Effect.Success<ReturnType<typeof PgDrizzle.makeWithDefaults>>
+export type AppDatabase = Effect.Success<ReturnType<typeof PgDrizzle.make>>
 type AuthDatabase = ReturnType<typeof makeAuthDatabase>
 const makeAuthDatabase = (connection: Pool) => drizzle({ client: connection })
 
@@ -34,12 +37,18 @@ export class Database extends Context.Service<
     readonly transaction: <A, E, R>(
       evaluate: (tx: AppDatabase) => Effect.Effect<A, E, R>,
     ) => Effect.Effect<A, E | DatabaseError, R>
+    /** Drops the cached selects that writes made without `query` or `transaction` (Better Auth's adapter) can change */
+    readonly wroteOutside: (tables: readonly Table[]) => Effect.Effect<void>
   }
 >()('dxrating/Database') {}
 
 export const makeDatabase = (connection: Pool) =>
   Effect.gen(function* () {
-    const db = yield* PgDrizzle.makeWithDefaults()
+    const queryCache = makeQueryCache()
+    const db = yield* PgDrizzle.make().pipe(
+      Effect.provideService(EffectCache, queryCache.shape),
+      Effect.provideService(PgDrizzle.EffectLogger, yield* PgDrizzle.EffectLogger.make),
+    )
     const sql = yield* PgClient.PgClient
     const query: typeof Database.Service.query = (operation, evaluate) =>
       Effect.suspend(() => evaluate(db)).pipe(
@@ -60,13 +69,20 @@ export const makeDatabase = (connection: Pool) =>
           Effect.withSpan(operation),
         ),
       transaction: (evaluate) =>
-        sql
-          .withTransaction(Effect.suspend(() => evaluate(db)))
-          .pipe(
-            Effect.mapError((cause) =>
-              isSqlError(cause) ? new DatabaseError({ operation: 'Database transaction', cause }) : cause,
-            ),
+        Effect.gen(function* () {
+          const outer = yield* TransactionWrites
+          const writes = outer ?? new Set<string>()
+          const result = yield* sql
+            .withTransaction(Effect.suspend(() => evaluate(db)))
+            .pipe(Effect.provideService(TransactionWrites, writes))
+          if (!outer) queryCache.invalidate(writes)
+          return result
+        }).pipe(
+          Effect.mapError((cause) =>
+            isSqlError(cause) ? new DatabaseError({ operation: 'Database transaction', cause }) : cause,
           ),
+        ),
+      wroteOutside: (tables) => Effect.sync(() => queryCache.invalidate(tables.map(getTableName))),
     })
   })
 

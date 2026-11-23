@@ -1,11 +1,11 @@
 import { Button, Dialog, Grow, TextField } from '@mui/material'
+import { useQueryClient } from '@tanstack/react-query'
 import { type FC, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAsyncFn } from 'react-use'
 import IconMdiPlus from '~icons/mdi/plus'
 import { useAuth } from '../../hooks/useAuth'
 import { apiClient as client } from '../../lib/orpc'
-import { useServerAliases } from '../../models/useServerAliases'
 import { rememberCreatedAlias } from '../../catalog/communityOverlay'
 import type { FlattenedSheet } from '../../songs'
 import { formatErrorMessage } from '../../utils/formatErrorMessage'
@@ -14,14 +14,15 @@ import { SheetListItemContent } from './SheetListItem'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const locale = useLocale()
   const [open, setOpen] = useState(false)
-  const { session, openLoginDialog, LoginDialog } = useAuth()
+  const { session, openLoginDialog, loginDialog } = useAuth()
 
   const [newAltName, setNewAltName] = useState('')
-  const { mutate } = useServerAliases()
+  const queryClient = useQueryClient()
 
   const [{ loading }, handleAddAltName] = useAsyncFn(async () => {
     if (!session) return
@@ -41,15 +42,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
       setOpen(false)
       setNewAltName('')
       // Show the new alias at once: the shared edge copy of the list can take a few minutes to include it
-      const created = { song_id: sheet.songId, name: newAltName.trim() }
-      rememberCreatedAlias(created)
-      void mutate(
-        (aliases) =>
-          aliases?.some((alias) => alias.song_id === created.song_id && alias.name === created.name)
-            ? aliases
-            : [...(aliases ?? []), created],
-        { revalidate: false },
-      )
+      rememberCreatedAlias(queryClient, { song_id: sheet.songId, name: newAltName.trim() })
     } catch (e: any) {
       captureAnalyticsEvent('sheet_alias_failed', {
         song_id: sheet.songId,
@@ -59,11 +52,11 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
       })
       toast.error(m.sheet_aliases_toastFailed({ error: formatErrorMessage(e) }, { locale }))
     }
-  }, [newAltName, sheet.songId, mutate, locale])
+  }, [session, newAltName, sheet.songId, sheet.type, sheet.difficulty, queryClient, locale])
 
   return (
     <>
-      <LoginDialog />
+      {loginDialog}
       <MotionButtonBase
         className="h-6 glass-inset inline-flex self-start items-center justify-center gap-1 px-2 cursor-pointer text-fg-1 hover:bg-white/80 active:bg-black/6 transition-colors duration-150 mt-1 -ml-2"
         onClick={() => {
@@ -104,7 +97,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
                 onChange={(e) => setNewAltName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    handleAddAltName()
+                    handleAddAltName().catch(reportRejection)
                   }
                 }}
                 data-attr="add-alias-input"
@@ -113,7 +106,7 @@ export const AddSheetAltNameButton: FC<{ sheet: FlattenedSheet }> = ({ sheet }) 
               <Button
                 variant="contained"
                 color="primary"
-                onClick={handleAddAltName}
+                onClick={asyncHandler(handleAddAltName)}
                 startIcon={<IconMdiPlus />}
                 disabled={newAltName.trim().length === 0 || newAltName.trim().length > 100 || loading}
                 type="submit"

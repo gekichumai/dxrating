@@ -1,0 +1,11 @@
+diff --git a/apps/backend/drizzle/20260801184911_enforce_arcade_public_identities/migration.sql b/apps/backend/drizzle/20260801184911_enforce_arcade_public_identities/migration.sql
+index 6954eceb..996cd1b7 100644
+--- a/apps/backend/drizzle/20260801184911_enforce_arcade_public_identities/migration.sql
++++ b/apps/backend/drizzle/20260801184911_enforce_arcade_public_identities/migration.sql
+@@ -1,4 +1,4 @@
+-ALTER TABLE "arcade"."venues" DROP CONSTRAINT "venues_public_id_check";--> statement-breakpoint
++ALTER TABLE "arcade"."venues" DROP CONSTRAINT IF EXISTS "venues_public_id_check";--> statement-breakpoint
+ ALTER TABLE "arcade"."installations" ALTER COLUMN "installation_identity_id" SET NOT NULL;--> statement-breakpoint
+ ALTER TABLE "arcade"."venues" ALTER COLUMN "public_id" SET NOT NULL;--> statement-breakpoint
+ ALTER TABLE "arcade"."venues" ADD CONSTRAINT "venues_public_id_check" CHECK ("arcade"."venues"."public_id" ~ '^dven_[23456789abcdefghjkmnpqrstvwxyz]{10}$');
+\ No newline at end of file
