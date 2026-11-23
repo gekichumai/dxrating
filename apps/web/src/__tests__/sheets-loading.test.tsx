@@ -1,8 +1,6 @@
 import { VersionEnum } from '@gekichumai/dxdata'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
-import { type PropsWithChildren } from 'react'
 import { renderToString } from 'react-dom/server'
-import { SWRConfig } from 'swr'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CombinedTags } from '../models/useCombinedTags'
 import { useSheets, useSongs, type ServerAlias } from '../songs'
@@ -25,10 +23,6 @@ vi.mock('../models/useCombinedTags', () => ({
 vi.mock('../models/useServerAliases', () => ({
   useServerAliases: () => ({ data: state.aliases, isLoading: state.loadingAliases }),
 }))
-
-function wrapper({ children }: PropsWithChildren) {
-  return <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>{children}</SWRConfig>
-}
 
 beforeEach(() => {
   state.version = VersionEnum.MAGiCAL
@@ -58,7 +52,7 @@ const tagsFor = (tagId: number): CombinedTags => {
 
 describe('sheet catalog availability', () => {
   it('renders the complete catalog once it has loaded, and no sheets during SSR', () => {
-    const { result } = renderHook(() => ({ sheets: useSheets(), songs: useSongs() }), { wrapper })
+    const { result } = renderHook(() => ({ sheets: useSheets(), songs: useSongs() }))
     expect(result.current.sheets.data?.length).toBeGreaterThan(0)
     expect(result.current.songs.data?.length).toBeGreaterThan(0)
     // Server renders (and hydration) render from the page's catalog slice; every sheet waits for the complete catalog
@@ -71,14 +65,11 @@ describe('sheet catalog availability', () => {
 
   it('never clears existing sheets when tags and aliases arrive independently', async () => {
     const snapshots: Array<number | undefined> = []
-    const { result, rerender } = renderHook(
-      () => {
-        const sheets = useSheets()
-        snapshots.push(sheets.data?.length)
-        return sheets
-      },
-      { wrapper },
-    )
+    const { result, rerender } = renderHook(() => {
+      const sheets = useSheets()
+      snapshots.push(sheets.data?.length)
+      return sheets
+    })
     await waitFor(() => expect(result.current.data?.length).toBeGreaterThan(0))
     snapshots.length = 0
     state.tags = tagsFor(11)
@@ -98,7 +89,7 @@ describe('sheet catalog availability', () => {
     const songId = getFlattenedSheetsForVersion(VersionEnum.MAGiCAL)[0]!.songId
     state.aliases = [{ song_id: songId, name: 'first alias' }]
     state.loadingAliases = false
-    const { result, rerender } = renderHook(() => useSheets(), { wrapper })
+    const { result, rerender } = renderHook(() => useSheets())
     await waitFor(() => expect(result.current.data?.length).toBeGreaterThan(0))
     expect(result.current.data![0]!.searchAcronyms).toContain('first alias')
     state.tags = tagsFor(11)
@@ -120,7 +111,7 @@ describe('sheet catalog availability', () => {
     state.aliases = [{ song_id: songId, name: 'old alias' }]
     state.loadingTags = false
     state.loadingAliases = false
-    const { result, rerender } = renderHook(() => useSheets(), { wrapper })
+    const { result, rerender } = renderHook(() => useSheets())
     await waitFor(() => expect(result.current.data?.[0]?.tags).toEqual([11]))
     state.tags = tagsFor(22)
     state.aliases = [{ song_id: songId, name: 'edited alias' }]
@@ -136,7 +127,7 @@ describe('sheet catalog availability', () => {
   })
 
   it('switches directly to the selected version without retaining a stale catalog', async () => {
-    const { result, rerender } = renderHook(() => useSheets(), { wrapper })
+    const { result, rerender } = renderHook(() => useSheets())
     await waitFor(() => expect(result.current.data?.length).toBeGreaterThan(0))
     state.version = VersionEnum.CiRCLEPLUS
     rerender()

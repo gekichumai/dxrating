@@ -1,4 +1,9 @@
 import type { MiddlewareHandler } from 'hono'
+import { ProcedureContract } from '@orpc/contract'
+import { getOpenAPIMeta } from '@orpc/openapi'
+import { z } from 'zod'
+import { CLOUD_SAVE_NET_IMPORT_ROUTE, getCredentials, type CredentialKind } from '@gekichumai/api-contract'
+import { appContract } from '../contract'
 
 /**
  * Credential hygiene (design §7.2). SEGA IDs and passwords are used for one request and must never reach a log line
@@ -59,14 +64,14 @@ const CREDENTIAL_QUERY_PATTERN = new RegExp(
   'gi',
 )
 
-const normalizeKey = (key: string) => key.toLowerCase().replace(/[-_]/g, '')
+/**
+ * Paths with a secret segment: Better Auth's mailed password reset link, `/api/auth/reset-password/<token>`. Opening it
+ * doesn't spend the token (only setting the password does), so a token that reached telemetry would reset the account.
+ * The segment runs to the next `/`, `?`, `#`, quote, angle bracket or whitespace.
+ */
+const CREDENTIAL_PATH_PATTERN = /(\/reset-password\/)[^/?#\s"'<>]+/g
 
-const NET_ROUTE_PATTERNS = [
-  /^\/functions\/fetch-net-records(?:\/|$)/,
-  /^\/api\/v1\/io\/import\/maimai-net\/?$/,
-  /^\/api\/v1\/saves\/[^/]+\/imports\/maimai-net\/?$/,
-]
-const TOKEN_ROUTE_PATTERNS = [/^\/api\/v1\/io\/import\/lxns(?:\/|$)/, /^\/api\/v1\/saves\/[^/]+\/imports\/lxns\/?$/]
+const normalizeKey = (key: string) => key.toLowerCase().replace(/[-_]/g, '')
 
 /** The path of a URL, a path with a query, or a transaction name like `POST /functions/...` */
 export function pathOf(urlOrPath: string | undefined): string {
@@ -79,12 +84,89 @@ export function pathOf(urlOrPath: string | undefined): string {
   }
 }
 
-/** The maimai NET routes, whose bodies carry a SEGA ID and password (new and legacy) */
-export const isNetCredentialPath = (path: string) => NET_ROUTE_PATTERNS.some((pattern) => pattern.test(path))
+// --- Credential routes ---
+
+export interface CredentialRoute {
+  /** `/api/v1/saves/{id}/imports/lxns`, `/api/auth/*` */
+  readonly template: string
+  readonly kind: CredentialKind
+}
+
+/**
+ * Routes whose requests carry credentials beyond what the contract derivation finds; `/*` also matches every path
+ * below. Every direct Hono route that takes a body is either here or in the test's list of routes without
+ * credentials (`src/test/credential-routes.test.ts`).
+ */
+export const DIRECT_CREDENTIAL_ROUTES: ReadonlyArray<CredentialRoute> = [
+  { template: '/functions/fetch-net-records/*', kind: 'sega' },
+  { template: CLOUD_SAVE_NET_IMPORT_ROUTE.path, kind: 'sega' },
+  // every LXNS route: the direct OAuth callback, and routes added without a `credentials` mark
+  { template: '/api/v1/io/import/lxns/*', kind: 'secret' },
+  { template: '/api/auth/*', kind: 'secret' },
+]
+
+const isCredentialInputKey = (key: string) => {
+  const normalized = normalizeKey(key)
+  return (
+    CREDENTIAL_KEYS.has(normalized) ||
+    normalized === 'code' ||
+    normalized === 'state' ||
+    /(?:token|secret|password|passwd|credentials?|(?:api|access|private|secret|signing|session|auth)key)$/.test(
+      normalized,
+    )
+  )
+}
+
+const propertyNames = (jsonSchema: unknown, names: string[] = []): string[] => {
+  if (typeof jsonSchema !== 'object' || jsonSchema === null) return names
+  const { properties } = jsonSchema as { properties?: object }
+  if (properties) names.push(...Object.keys(properties))
+  for (const child of Object.values(jsonSchema)) propertyNames(child, names)
+  return names
+}
+
+export function credentialRoutesOf(router: unknown, path: string[] = []): CredentialRoute[] {
+  if (typeof router !== 'object' || router === null) return []
+  if (!(router instanceof ProcedureContract)) {
+    return Object.entries(router).flatMap(([key, child]) => credentialRoutesOf(child, [...path, key]))
+  }
+  const takesCredential = (router['~orpc'].inputSchemas ?? []).some((schema) =>
+    propertyNames(z.toJSONSchema(schema as z.ZodType, { io: 'input', unrepresentable: 'any' })).some(
+      isCredentialInputKey,
+    ),
+  )
+  const kind = getCredentials(router) ?? (takesCredential ? 'secret' : undefined)
+  if (!kind) return []
+  return [{ template: `/api/v1${getOpenAPIMeta(router)?.path ?? `/${path.join('/')}`}`, kind }]
+}
+
+/** Every route whose request carries credentials: its body, query and logs never reach telemetry */
+export const CREDENTIAL_ROUTES: ReadonlyArray<CredentialRoute> = [
+  ...credentialRoutesOf(appContract),
+  ...DIRECT_CREDENTIAL_ROUTES,
+]
+
+const routePattern = (template: string) =>
+  new RegExp(
+    `^${template
+      .replace(/[.+?^$()|[\]\\]/g, '\\$&')
+      .replace(/\{[^}]+\}/g, '[^/]+')
+      .replace(/\/\*$/, '(?:/.*)?')}/?$`,
+  )
+
+const CREDENTIAL_ROUTE_PATTERNS = CREDENTIAL_ROUTES.map((route) => ({
+  ...route,
+  pattern: routePattern(route.template),
+}))
+
+const matchesCredentialRoute = (path: string, kind?: CredentialKind) =>
+  CREDENTIAL_ROUTE_PATTERNS.some((route) => (kind === undefined || route.kind === kind) && route.pattern.test(path))
+
+/** Routes whose bodies carry a SEGA ID and password */
+export const isNetCredentialPath = (path: string) => matchesCredentialRoute(path, 'sega')
 
 /** Routes whose request bodies must never be attached to telemetry */
-export const isCredentialPath = (path: string) =>
-  isNetCredentialPath(path) || TOKEN_ROUTE_PATTERNS.some((pattern) => pattern.test(path))
+export const isCredentialPath = (path: string) => matchesCredentialRoute(path)
 
 // --- Registry of the credentials of running requests ---
 
@@ -129,9 +211,13 @@ export function holdCredentials(values: Iterable<string | undefined | null>): ()
 /** Number of credential values registered right now (tests) */
 export const heldCredentialCount = () => activeSecrets.size
 
-/** `value` with every registered credential and the values of credential query parameters replaced */
+/**
+ * `value` with every registered credential, the values of credential query parameters and credential path segments
+ * replaced
+ */
 export function scrubString(value: string): string {
   let result = value.includes('=') ? value.replace(CREDENTIAL_QUERY_PATTERN, `$1$2=${FILTERED}`) : value
+  if (result.includes('/reset-password/')) result = result.replace(CREDENTIAL_PATH_PATTERN, `$1${FILTERED}`)
   if (activeSecrets.size === 0) return result
   // longest first, so a password containing the SEGA ID is replaced whole
   for (const secret of [...activeSecrets.keys()].sort((a, b) => b.length - a.length)) {
@@ -332,7 +418,7 @@ async function peekCredentials(request: Request): Promise<string[]> {
 }
 
 /**
- * Hono middleware of the credential routes (the NET routes, new and legacy, and the LXNS routes). Register it after
+ * Hono middleware of the credential routes ({@link isCredentialPath}). Register it after
  * evlog. It registers the request's SEGA ID and password (read ahead from a small JSON body) for value scrubbing
  * while the handler runs, and replaces the request logger with a scrubbing one, so no field, error or message the
  * route logs carries a credential. Request bodies are never logged by evlog itself; Sentry is told not to attach

@@ -6,6 +6,7 @@ import { authClient } from '../../../lib/auth-client'
 import { ProfileImage } from './UserChip'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { reportRejection } from '@/lib/rejections'
 
 export const ProfileSection: FC<{ idPrefix?: string }> = ({ idPrefix = 'profile' }) => {
   const locale = useLocale()
@@ -75,7 +76,7 @@ export const ProfileSection: FC<{ idPrefix?: string }> = ({ idPrefix = 'profile'
               displayNameRef.current?.focus()
               return
             }
-            if (displayName !== user?.name && !updateState.loading) void handleUpdate()
+            if (displayName !== user?.name && !updateState.loading) handleUpdate().catch(reportRejection)
           }}
         >
           <label htmlFor={displayNameId} className="text-sm font-semibold text-fg-1">

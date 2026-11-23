@@ -57,6 +57,7 @@ import { sheetMatchesDifficultyFilter } from './sheetDifficultyFilter'
 import { compareSheetsBySorts, getSongCatalogPositions } from './sheetSorting'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { reportRejection } from '@/lib/rejections'
 
 const searchRouteApi = getRouteApi('/')
 
@@ -421,7 +422,7 @@ const SheetListInnerContent: FC<{
         if (nextQuery === (pendingWrites.current.at(-1)?.query ?? routeQuery.current)) return
         const write = { query: nextQuery }
         pendingWrites.current.push(write)
-        void Promise.resolve(
+        Promise.resolve(
           navigate({
             to: '/',
             search: (prev: Record<string, unknown>) => ({
@@ -431,12 +432,14 @@ const SheetListInnerContent: FC<{
             replace: true,
             resetScroll: false,
           }),
-        ).finally(() => {
-          // After the route's render of it (and its effect above) has run
-          setTimeout(() => {
-            pendingWrites.current = pendingWrites.current.filter((pending) => pending !== write)
+        )
+          .finally(() => {
+            // After the route's render of it (and its effect above) has run
+            setTimeout(() => {
+              pendingWrites.current = pendingWrites.current.filter((pending) => pending !== write)
+            })
           })
-        })
+          .catch(reportRejection)
       }, URL_QUERY_DELAY_MS)
     },
     [navigate],

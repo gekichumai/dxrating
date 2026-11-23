@@ -1,0 +1,9 @@
+{
+  "mistake": "The web adds Sentry trace headers to an API path whose CORS preflight refuses them, because its trace targets are a hand-written regex that left out only /api/v1/dxdata.",
+  "history": [
+    "#621 42a7914d (the v2 catalog and community overlay got sentry-trace and baggage, failed the preflight, and the community overlay never loaded)"
+  ],
+  "guard": "trace-propagation.test.ts checks every API route and surface path against the CORS policy the HTTP surface gives it",
+  "check": "pnpm --filter @gekichumai/dxrating-web exec vitest run src/setup/trace-propagation.test.ts",
+  "expect": "only where its CORS preflight allows them"
+}

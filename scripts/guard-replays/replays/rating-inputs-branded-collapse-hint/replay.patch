@@ -1,0 +1,13 @@
+diff --git a/packages/maimai-domain/src/collapse-plays.ts b/packages/maimai-domain/src/collapse-plays.ts
+index 46081bee..3bf31c35 100644
+--- a/packages/maimai-domain/src/collapse-plays.ts
++++ b/packages/maimai-domain/src/collapse-plays.ts
+@@ -43,7 +43,7 @@ export function collapsePlays(
+     if (comboFlagRank(play.comboFlag) > comboFlagRank(comboFlag)) comboFlag = play.comboFlag ?? null
+     if (syncFlagRank(play.syncFlag) > syncFlagRank(syncFlag)) syncFlag = play.syncFlag ?? null
+     if (typeof play.dxScore === 'number' && (dxScore === null || play.dxScore > dxScore)) dxScore = play.dxScore
+-    hint = preferHint(hint, rankedHint(play, internalLevel))
++    hint = preferHint(hint, rankedHint({ ...play, achievementRate, comboFlag }, internalLevel))
+   }
+   return { achievementRate, comboFlag, syncFlag, dxScore, best50Bucket: hint?.bucket ?? null } as CollapsedPlay
+ }

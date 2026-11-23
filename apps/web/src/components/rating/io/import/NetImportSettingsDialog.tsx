@@ -19,8 +19,6 @@ import {
   Typography,
 } from '@mui/material'
 import { type FC, useState, useSyncExternalStore } from 'react'
-import { useLocalStorage } from 'react-use'
-import { match } from 'ts-pattern'
 import IconMdiChevronDown from '~icons/mdi/chevron-down'
 import IconMdiHelpCircleOutline from '~icons/mdi/help-circle-outline'
 import { importFromNETRecords } from './importFromNETRecords'
@@ -33,6 +31,8 @@ import { useAppContext } from '@/models/context/useAppContext'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { toggleFocusRing } from '../../focusRing'
 import { netImportProgress } from './netImportProgressStore'
+import { netAutoImport, netCredentials } from './netImportStorage'
+import { usePersisted } from '@/utils/persisted'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 
@@ -65,22 +65,10 @@ export const netRegionForSiteRegion = (siteRegion: Region): 'intl' | 'jp' => (si
 
 /** Saved credentials win; with none, the site's region picks which maimai NET to sign in to */
 function readSavedCredentials(siteRegion: Region) {
-  const empty = { region: netRegionForSiteRegion(siteRegion), username: '', password: '', remember: false }
-  try {
-    const saved = JSON.parse(localStorage.getItem('import-net-records') ?? 'null')
-    if (!saved || typeof saved.username !== 'string' || typeof saved.password !== 'string') return empty
-    return {
-      region: saved.region === 'jp' ? ('jp' as const) : ('intl' as const),
-      username: saved.username,
-      password: saved.password,
-      remember: true,
-    }
-  } catch {
-    return empty
-  }
+  const saved = netCredentials.get()
+  if (!saved) return { region: netRegionForSiteRegion(siteRegion), username: '', password: '', remember: false }
+  return { ...saved, remember: true }
 }
-
-type AutoImportMode = boolean | 'replace' | 'merge'
 
 const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const repository = useScoreRepository()
@@ -95,11 +83,8 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
   const { region: siteRegion } = useAppContext()
   const [form, setForm] = useState(() => readSavedCredentials(siteRegion))
   const { region, username, password, remember } = form
-  const [autoImport, setAutoImport] = useLocalStorage<AutoImportMode>('rating-auto-import-from-net', false)
-  const mappedAutoImport = match(autoImport as AutoImportMode | 'false')
-    .with(true, () => 'replace' as const)
-    .with('false', () => false as const)
-    .otherwise((value) => value)
+  const [autoImport, setAutoImport] = usePersisted(netAutoImport)
+  const mappedAutoImport = autoImport === true ? 'replace' : autoImport
   const loadCatalog = useSongCatalogLoader()
   const maintenance = useMaimaiNetStatus(true)
 
@@ -107,19 +92,16 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
     const next = { ...form, ...patch }
     setForm(next)
     if (next.remember) {
-      localStorage.setItem(
-        'import-net-records',
-        JSON.stringify({ region: next.region, username: next.username, password: next.password }),
-      )
+      netCredentials.set({ region: next.region, username: next.username, password: next.password })
     } else {
-      localStorage.removeItem('import-net-records')
+      netCredentials.remove()
       setAutoImport(false)
     }
   }
 
   const handleImport = () => {
     // The import reports its own progress; it starts once the complete catalog is there
-    void loadCatalog()
+    loadCatalog()
       .then((catalog) =>
         importFromNETRecords(catalog, repository, mappedAutoImport || 'replace', undefined, {
           region,

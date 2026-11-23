@@ -1,0 +1,7 @@
+{
+  "mistake": "apps/web imports zod but its package.json does not declare it, so it resolves only through hoisting.",
+  "history": ["#292 e0de838c (apps/web imported zod undeclared; the PR added it to apps/web/package.json)"],
+  "guard": "the oxlint rule workspace/declared-dependency",
+  "check": "pnpm exec oxlint apps/web",
+  "expect": "Add zod to apps/web/package.json"
+}

@@ -1,5 +1,5 @@
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
-import { buildSongCatalog, calculateBest50, recommendRatingRaises } from '@gekichumai/maimai-domain'
+import { buildSongCatalog, calculateBest50, recommendRatingRaises, toRatingEntries } from '@gekichumai/maimai-domain'
 import { act } from '@testing-library/react'
 import { hydrateRoot } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { PlayEntry } from '@/components/rating/RatingCalculatorAddEntryForm'
 import { RatingCalculatorContext } from '../context/RatingCalculatorContext'
 import { useUserRecords } from '../useUserRecords'
-import { groupUserRecords, toRatingEntries } from '../userRecords'
+import { groupUserRecords } from '../userRecords'
 
 const catalog = buildSongCatalog(catalogSnapshot, 'MAGiCAL' as never)
 vi.mock('@/catalog/CatalogContext', () => ({ useSongCatalog: () => catalog }))
@@ -48,8 +48,13 @@ describe('groupUserRecords', () => {
       { sheetId, achievementRate: 100.1, comboFlag: 'fc', syncFlag: null },
       { sheetId, achievementRate: 99.9, comboFlag: 'ap', syncFlag: 'fsd' },
     ])
-    expect(record.entry.achievementRate).toBe(100.1)
-    expect(record.best).toEqual({ achievementRate: 100.1, comboFlag: 'ap', syncFlag: 'fsd', dxScore: null })
+    expect(record.best).toEqual({
+      achievementRate: 100.1,
+      comboFlag: 'ap',
+      syncFlag: 'fsd',
+      dxScore: null,
+      best50Bucket: null,
+    })
   })
 
   it('keeps the highest DX score across duplicates, wherever it was earned', () => {
@@ -67,7 +72,13 @@ describe('groupUserRecords', () => {
       { sheetId, achievementRate: 100, comboFlag: 'fcp', syncFlag: 'fsdp' },
       { sheetId, achievementRate: 100, comboFlag: 'app', syncFlag: 'fs' },
     ])
-    expect(record.best).toEqual({ achievementRate: 100, comboFlag: 'app', syncFlag: 'fsdp', dxScore: null })
+    expect(record.best).toEqual({
+      achievementRate: 100,
+      comboFlag: 'app',
+      syncFlag: 'fsdp',
+      dxScore: null,
+      best50Bucket: null,
+    })
   })
 
   it('keeps a bucket hint carried by a lower-scoring duplicate', () => {
@@ -75,7 +86,7 @@ describe('groupUserRecords', () => {
       { sheetId, achievementRate: 100.1 },
       { sheetId, achievementRate: 99, providerConfig: { divingFish: { ratingEligibility: 'b35' } } },
     ])
-    expect(record.source).toEqual({ provider: 'diving-fish', best50Bucket: 'b35' })
+    expect(record.best.best50Bucket).toBe('b35')
   })
 })
 
@@ -120,8 +131,8 @@ describe('grouped bucket hints agree with calculateBest50', () => {
     const best50 = calculateBest50({ catalog: cnCatalog, version, region: 'cn', entries: ratingEntries })
     expect(best50.b15).toHaveLength(15)
     const grouped = groupUserRecords(entries, (id) => cnCatalog.getById(id))
-    expect(grouped.get(target.id)!.source).toEqual({ provider: 'diving-fish', best50Bucket: 'b15' })
-    const records = new Map([...grouped].map(([id, r]) => [id, { ...r.entry, source: r.source }]))
+    expect(grouped.get(target.id)!.best.best50Bucket).toBe('b15')
+    const records = new Map([...grouped].map(([id, r]) => [id, r.best]))
     const [rec] = recommendRatingRaises({ sheets: [target], best50, records, version, region: 'cn' })
     const recalculated = (rate: number) =>
       calculateBest50({
@@ -174,8 +185,8 @@ describe('conflicting bucket hints across duplicates', () => {
     expect(best50.b15).toHaveLength(15)
     const grouped = groupUserRecords(entries, (id) => cnCatalog.getById(id))
     // The AP entry rates one point higher: calculateBest50 keeps its B15 hint
-    expect(grouped.get(target.id)!.source).toEqual({ provider: 'diving-fish', best50Bucket: 'b15' })
-    const records = new Map([...grouped].map(([id, r]) => [id, { ...r.entry, source: r.source }]))
+    expect(grouped.get(target.id)!.best.best50Bucket).toBe('b15')
+    const records = new Map([...grouped].map(([id, r]) => [id, r.best]))
     const recs = recommendRatingRaises({ sheets: [target], best50, records, version, region: 'cn' })
     const recalculated = (rate: number, comboFlag: PlayEntry['comboFlag']) =>
       calculateBest50({

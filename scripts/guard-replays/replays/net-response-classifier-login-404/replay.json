@@ -1,0 +1,9 @@
+{
+  "mistake": "The international login reads the Location header of SEGA's answer itself, so a 404 from the login endpoint is a missing redirect and is reported as INVALID_CREDENTIALS.",
+  "history": [
+    "#221 ddcd4517 (the gateway answered 404 to /common_auth/login/sid/; every intl import failed as INVALID_CREDENTIALS)"
+  ],
+  "guard": "fetchEffect returns a classified NetPage, never the raw response, so the backend typecheck rejects reading its headers",
+  "check": "pnpm --filter @gekichumai/oneshot-renderer build >/dev/null && pnpm --filter @gekichumai/backend exec tsc --noEmit",
+  "expect": "Property 'headers' does not exist on type 'NetPage'"
+}

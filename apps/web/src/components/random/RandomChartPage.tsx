@@ -117,7 +117,7 @@ export const RandomChartPage: FC = () => {
   const roll = () => {
     const picked = pickRandom(pool)
     setResult(picked)
-    void navigate({
+    navigate({
       to: '/random',
       search: (prev) => ({ ...prev, chart: picked?.id }),
       replace: true,

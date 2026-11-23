@@ -16,7 +16,12 @@ import { McpAnalyticsLive, type McpAnalyticsService } from './services/mcp/analy
 import { ApplicationCacheLive, type ApplicationCache } from './services/cache'
 import { HttpClientLive, type HttpClient } from './services/http-client'
 import { FeatureFlagsLive, type FeatureFlags } from './services/feature-flags'
+import { MailerLive, type Mailer } from './services/mailer'
+import { EmailVerificationProtocolLive } from './services/email-verification-protocol'
 import { TracingLive, withActiveRequestSpan } from './tracing'
+
+// One value, so the application and Better Auth share a single mailer (layers are memoized by reference)
+const MailerLayer = MailerLive.pipe(Layer.provide(Layer.merge(AppConfigLive, HttpClientLive)))
 
 export const ApplicationLive = Layer.mergeAll(
   AppConfigLive,
@@ -26,7 +31,10 @@ export const ApplicationLive = Layer.mergeAll(
   McpUsageLive,
   McpAnalyticsLive,
   HttpClientLive,
-  AuthenticationLive.pipe(Layer.provide(Layer.merge(AppConfigLive, DatabaseLive))),
+  MailerLayer,
+  AuthenticationLive.pipe(
+    Layer.provide(Layer.mergeAll(AppConfigLive, DatabaseLive, MailerLayer, EmailVerificationProtocolLive)),
+  ),
   CatalogIdentitiesLive.pipe(Layer.provide(DatabaseLive)),
   McpCatalogSourceLive.pipe(Layer.provide(DatabaseLive)),
   BuildInformationLive.pipe(Layer.provide(HttpClientLive)),
@@ -40,6 +48,7 @@ export type ApplicationServices =
   | McpUsage
   | McpAnalyticsService
   | HttpClient
+  | Mailer
   | Authentication
   | CatalogIdentities
   | McpCatalogSource

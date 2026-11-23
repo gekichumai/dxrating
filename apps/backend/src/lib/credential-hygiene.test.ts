@@ -1,5 +1,10 @@
+import { credentials } from '@gekichumai/api-contract'
+import { oc } from '@orpc/contract'
+import { openapi } from '@orpc/openapi'
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import {
+  credentialRoutesOf,
   FILTERED,
   holdCredentials,
   isCredentialPath,
@@ -8,6 +13,7 @@ import {
   scrubbingLogger,
   scrubSentryBreadcrumb,
   scrubSentryEvent,
+  scrubSentryLog,
   scrubUrl,
   scrubValue,
 } from './credential-hygiene'
@@ -22,9 +28,45 @@ describe('credential hygiene', () => {
     ]) {
       expect(isNetCredentialPath(path), path).toBe(true)
     }
-    expect(isCredentialPath('/api/v1/io/import/lxns/start')).toBe(true)
-    expect(isNetCredentialPath('/api/v1/io/import/lxns/start')).toBe(false)
+    for (const path of [
+      '/api/v1/io/import/lxns/start',
+      '/api/v1/io/import/lxns/complete',
+      '/api/v1/io/import/lxns/oauth_callback',
+      // LXNS routes added without a `credentials` mark
+      '/api/v1/io/import/lxns',
+      '/api/v1/io/import/lxns/personal',
+      '/api/v1/saves/dsav_x/imports/lxns',
+      '/api/auth/sign-in/email',
+    ]) {
+      expect(isCredentialPath(path), path).toBe(true)
+      expect(isNetCredentialPath(path), path).toBe(false)
+    }
     expect(isCredentialPath('/api/v1/saves/dsav_x/client-imports')).toBe(false)
+    expect(isCredentialPath('/api/v1/io/import/maimai-net/status')).toBe(false)
+  })
+
+  it('makes every procedure that takes a credential field a credential route', () => {
+    const contract = {
+      login: oc
+        .meta(openapi({ method: 'POST', path: '/login' }))
+        .input(z.object({ account: z.object({ apiToken: z.string() }).optional() })),
+      search: oc.meta(openapi({ method: 'GET', path: '/search' })).input(z.object({ query: z.string() })),
+      stored: oc.meta(openapi({ method: 'POST', path: '/stored' }), credentials('sega')),
+      personal: oc.meta(openapi({ method: 'POST', path: '/personal' })).input(z.object({ apiKey: z.string() })),
+      // #501: an OAuth completion outside the LXNS routes, taking the code and state
+      complete: oc
+        .meta(openapi({ method: 'POST', path: '/oauth/complete' }))
+        .input(z.object({ code: z.string(), state: z.string() })),
+      upload: oc
+        .meta(openapi({ method: 'POST', path: '/upload' }))
+        .input(z.object({ idempotencyKey: z.string(), clientProfileKey: z.string() })),
+    }
+    expect(credentialRoutesOf(contract)).toEqual([
+      { template: '/api/v1/login', kind: 'secret' },
+      { template: '/api/v1/stored', kind: 'sega' },
+      { template: '/api/v1/personal', kind: 'secret' },
+      { template: '/api/v1/oauth/complete', kind: 'secret' },
+    ])
   })
 
   it('replaces credential keys everywhere, and the SEGA ID keys on the NET routes only', () => {
@@ -120,6 +162,28 @@ describe('credential hygiene', () => {
     logger.set({ body: { id: 'sega', password: 'p', region: 'jp' } })
     expect(calls).toEqual([[{ body: { id: FILTERED, password: FILTERED, region: 'jp' } }]])
     expect(logger.getContext()).toEqual({ ok: true })
+  })
+
+  it('scrubs the token of a mailed password reset link, a path segment, from events, transactions, spans and logs', () => {
+    const link =
+      '/api/auth/reset-password/RESETTOKEN123?callbackURL=https%3A%2F%2Fdxrating.net%2Faccount%2Freset-password'
+    const event = scrubSentryEvent({
+      transaction: 'GET /api/auth/reset-password/RESETTOKEN123',
+      request: { url: `https://miruku.dxrating.net${link}` },
+      contexts: { trace: { data: { 'http.target': link, 'url.path': '/api/auth/reset-password/RESETTOKEN123' } } },
+      spans: [{ description: `GET ${link}`, data: { 'http.route': '/api/auth/reset-password/RESETTOKEN123' } }],
+      breadcrumbs: [{ message: `GET https://miruku.dxrating.net${link} 302` }],
+    })
+    expect(JSON.stringify(event)).not.toContain('RESETTOKEN123')
+    expect(event.transaction).toBe(`GET /api/auth/reset-password/${FILTERED}`)
+    expect(event.request.url).toMatch(
+      /^https:\/\/miruku\.dxrating\.net\/api\/auth\/reset-password\/\[Filtered\]\?callbackURL=/,
+    )
+    expect(
+      scrubSentryLog({ message: 'request', attributes: { path: '/api/auth/reset-password/RESETTOKEN123' } }),
+    ).toEqual({ message: 'request', attributes: { path: `/api/auth/reset-password/${FILTERED}` } })
+    // The route that sets the password takes the token in its body, never in the path
+    expect(scrubUrl('/api/auth/reset-password')).toBe('/api/auth/reset-password')
   })
 
   it('scrubs credential query parameters in span data, trace data and breadcrumb queries', () => {
