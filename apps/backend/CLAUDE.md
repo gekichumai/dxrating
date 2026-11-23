@@ -117,7 +117,7 @@ Optional:
 - `MCP_ANALYTICS_SECRET` — HMAC secret of the daily-rotating MCP analytics distinct_id (random per process if unset)
 - `MCP_POSTHOG_KEY`, `MCP_POSTHOG_HOST`, `MCP_ANALYTICS_SAMPLE_RATE`, `MCP_ANALYTICS_DAILY_CAP` — MCP PostHog events (see `src/services/mcp/analytics.ts`)
 - `CLOUD_SAVE_MODE` — `off` (default) | `allowlist` | `optin` | `on`; see "Feature flags" below
-- `CLOUD_SAVE_ALLOWLIST_EMAILS` — Comma-separated emails that get cloud save while the mode is not `off` (verified emails only; email/password sign-ups are unverified, so grant those with `flag:set`)
+- `CLOUD_SAVE_ALLOWLIST_EMAILS` — Comma-separated emails that get cloud save while the mode is not `off` (verified emails only, `user.email_verified`; email/password and passkey sign-ups are unverified, so grant those with `flag:set`). See "Email verification" below
 - `SERVER_IMPORTS` — `off` (default) | `on`; server-side imports into cloud saves
 - `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_CACHE_PURGE_TOKEN` — purge the edge's public Cache-Tags at startup and invalidate `dxdata` on each new publication (see `src/services/edge-cache.ts`). The token needs only Zone → Cache Purge → Purge on dxrating.net
 
@@ -129,7 +129,7 @@ and caches each user's state in memory for 60 seconds. Precedence for
 
 1. `CLOUD_SAVE_MODE=off` is the kill switch and overrides everything.
 2. A `feature_flag_overrides` row decides for its user (`enabled=false` turns one user off).
-3. A verified email in `CLOUD_SAVE_ALLOWLIST_EMAILS` turns it on.
+3. A verified email (`user.email_verified`, however it was verified) in `CLOUD_SAVE_ALLOWLIST_EMAILS` turns it on.
 4. Otherwise `on` enables everyone; `allowlist` and `optin` enable nobody.
 
 `server_imports` additionally needs `SERVER_IMPORTS=on` and cloud save; an
@@ -148,6 +148,12 @@ servers see it within 60 seconds):
 pnpm --filter @gekichumai/backend flag:set cloud_save owner@example.com on
 node dist/flag-set.js cloud_save owner@example.com off   # in the production image
 ```
+
+It prints whether the address is verified and, when it is, how and since when
+(`email verified by oauth at 2026-01-14T15:01:21Z`). `NOT verified` means
+nobody has proved the address belongs to the account holder: check it is the
+right person before granting. `verified by unknown` is an address verified
+before the method was recorded (see below).
 
 ### Cloud save services (`src/services/cloud-save/`)
 
@@ -202,6 +208,40 @@ up (`pnpm test:migration-roundtrip`).
 - Run a `down.sql` only after `pg_dump -t 'score_*' -t feature_flag_overrides`
   has produced a verified backup; run them newest first. Each one also removes
   its migration ledger row so a later deploy applies the migration again.
+
+## Email verification (gekichumai/meta#80)
+
+`user.email_verified` (Better Auth's boolean) is what everything checks. Next
+to it, `user.email_verified_at` (timestamptz) and
+`user.email_verification_method` record when and how the current address was
+first verified; both are null while it is unverified, and a CHECK keeps them
+set together. Methods (`EMAIL_VERIFICATION_METHODS` in `src/db/auth-schema.ts`):
+
+- `oauth` — Google, GitHub or Apple said the address is verified, at sign-up or
+  on a later sign-in to a linked account
+- `email_link` — a mailed verification link or code
+- `email_verification_protocol` — the browser proved control of the address
+  (Chrome's Email Verification Protocol)
+- `admin` — an operator marked it verified
+- `unknown` — verified before the columns existed with no OAuth account linked
+  (Supabase-era confirmations, or OAuth sign-ups that unlinked their provider),
+  or written by a Better Auth route that names no method
+
+`src/lib/email-verification-record.ts` keeps them in step through Better
+Auth's `databaseHooks.user` (exposed as `user.additionalFields` with
+`input: false`, so clients can't set them): a verified new user is recorded
+on creation; writing `emailVerified: false` clears both columns; writing
+`email` (a new address) clears them too, or records it at once when the same
+write keeps `emailVerified: true` (Better Auth's change-email confirmation);
+and any other write of `emailVerified: true` is recorded right after it by
+`recordEmailVerification`, which only fills an empty record on a row that is
+still verified, so the first verification is kept and a later unverify is not
+undone. Code that proves an address itself calls
+`markEmailVerified(database, userId, provenEmail, method)`: it verifies only
+when the user's current address is the proven one, and returns `verified`,
+`already_verified` or `email_mismatch` (treat the last as not verified). The
+`*_backfill_email_verified_at` migration gave already-verified users their
+`created_at` and `oauth` (an OAuth account is linked) or `unknown`.
 
 ## Deployment
 
