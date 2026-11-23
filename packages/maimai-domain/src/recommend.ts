@@ -1,16 +1,10 @@
 /** Rating-raise suggestions (上分推荐): charts where a reachable achievement step beats the B50 floor */
 import type { VersionEnum } from '@gekichumai/dxdata'
 import { type Best50Result, calculateRatingAward, resolveBest50Bucket } from './best50.ts'
-import type { ComboFlag, RatingEntry, Region, VersionedSheet } from './types'
+import type { CollapsedPlay } from './collapse-plays.ts'
+import type { Region, VersionedSheet } from './types'
 
 export const RECOMMEND_TARGETS = [97, 98, 99, 99.5, 100, 100.5] as const
-
-export interface RecommendRecord {
-  achievementRate: number
-  comboFlag?: ComboFlag
-  /** Import metadata; a CN Diving Fish bucket hint decides the bucket as in `calculateBest50` */
-  source?: RatingEntry['source']
-}
 
 export interface RatingRecommendation {
   sheet: VersionedSheet
@@ -38,7 +32,7 @@ export function recommendRatingRaises({
 }: {
   sheets: readonly VersionedSheet[]
   best50: Best50Result
-  records: ReadonlyMap<string, RecommendRecord>
+  records: ReadonlyMap<string, CollapsedPlay>
   version: VersionEnum
   region: Region
   targets?: readonly number[]
@@ -66,7 +60,7 @@ export function recommendRatingRaises({
     const record = records.get(sheet.id)
     const best = inBest.get(sheet.id)
     // A chart in B50 stays in its bucket; otherwise the same rule as calculateBest50 (provider hints included)
-    const bucket = best?.bucket ?? resolveBest50Bucket(sheet.version, version, region, record?.source)
+    const bucket = best?.bucket ?? resolveBest50Bucket(sheet.version, version, region, record?.best50Bucket)
     if (!bucket) continue
     const current = record?.achievementRate ?? null
     // An existing AP / AP+ keeps its bonus point; no bonus is assumed for charts without one

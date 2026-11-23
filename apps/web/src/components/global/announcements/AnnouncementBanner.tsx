@@ -22,6 +22,7 @@ import {
   writeDismissed,
   type DismissedAnnouncements,
 } from './announcements'
+import { browserStorage } from '@/utils/persisted'
 
 const SEVERITY_STYLE: Record<
   PublicAnnouncement['severity'],
@@ -67,7 +68,7 @@ export function AnnouncementBanners() {
   const [dismissed, setDismissed] = useState<DismissedAnnouncements>({})
   useEffect(() => {
     setMounted(true)
-    setDismissed(readDismissed(safeLocalStorage()))
+    setDismissed(readDismissed(browserStorage('local')))
   }, [])
   const inNativeShell = mounted && detectAnalyticsPlatform(window.location.href) === 'ios'
   const enabled = mounted && hydrated && !inNativeShell
@@ -91,7 +92,7 @@ export function AnnouncementBanners() {
   const dismiss = (announcement: PublicAnnouncement) =>
     setDismissed((current) =>
       writeDismissed(
-        safeLocalStorage(),
+        browserStorage('local'),
         { ...current, [announcement.id]: announcement.revision },
         data?.announcements ?? [],
       ),
@@ -221,12 +222,4 @@ function AnnouncementCard({
       </div>
     </section>
   )
-}
-
-function safeLocalStorage(): Storage | undefined {
-  try {
-    return window.localStorage
-  } catch {
-    return undefined
-  }
 }

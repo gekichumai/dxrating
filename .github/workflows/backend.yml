@@ -232,7 +232,7 @@ jobs:
     steps:
       - name: Trigger Coolify deployment
         run: |
-          curl --request GET "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
+          curl --request POST "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
             --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
             --header "CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}" \
             --header "CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \

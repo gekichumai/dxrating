@@ -11,6 +11,7 @@ import {
   ratingEntryAchievementInt,
   withAchievementInt,
 } from '../import-normalizers'
+import { mintRatingEntry } from '../rating-entries'
 import { buildSongCatalog, type SongCatalogSource } from '../song-catalog'
 
 const SONG_A_MASTER = 'dsht_23456789ab'
@@ -499,12 +500,12 @@ describe('Rating Import normalizers', () => {
   it('turns entries without a valid integer achievement into warnings', () => {
     const result = withAchievementInt({
       entries: [
-        {
+        mintRatingEntry({
           sheetId: SONG_A_MASTER,
           identity: { songId: 'dsng_23456789ab', type: TypeEnum.DX, difficulty: DifficultyEnum.Master },
           achievementRate: 101.5,
           source: { provider: 'lxns' },
-        },
+        }),
       ],
       warnings: [],
     })

@@ -1,0 +1,8 @@
+{
+  "mistake": "A mailed verification link verified the address (and signed the clicker in) without a session of its account, so an account someone set up on another person's address became verified, with their passkey still on it.",
+  "history": ["meta#80 review of feat/email-mail-fallback (autoSignInAfterVerification with no ownership check)"],
+  "guard": "apps/backend/src/test/auth-mail.test.ts refuses a link opened without a session of its account",
+  "check": "pnpm --filter @gekichumai/backend exec vitest run src/test/auth-mail.test.ts",
+  "expect": "SESSION_REQUIRED",
+  "needs": ["postgres"]
+}

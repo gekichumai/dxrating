@@ -78,6 +78,15 @@ export function classifyFailure(error: unknown): FailureClass {
 }
 
 /**
+ * The tags `classifyFailure` gives a reported failure (database operation, SQL error reason, maimai NET codes), for a
+ * log line; an expected failure has none. Like the Sentry tags, they hold no query text or parameters.
+ */
+export const failureTags = (error: unknown): Record<string, string> => {
+  const failure = classifyFailure(error)
+  return failure.report ? failure.tags : {}
+}
+
+/**
  * The client left: the request signal is aborted and the failure is its own reason (the Node adapter aborts with the
  * socket error as a string, "Error: aborted", which oRPC rethrows), an `AbortError` it caused, or the request runner's
  * client-closed error. Any other failure of an aborted request is still a failure.

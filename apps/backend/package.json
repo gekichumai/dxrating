@@ -65,6 +65,7 @@
     "effect": "4.0.0-rc.118",
     "evlog": "^2.34.0",
     "hono": "catalog:",
+    "jose": "catalog:",
     "pg": "catalog:",
     "postgres": "^3.4.9",
     "react": "catalog:",

@@ -1,0 +1,9 @@
+{
+  "mistake": "The plate page resolves a sheet's level from serverOverrides itself, with its own precedence (override, then the base value), so its internal levels differ from the catalog's for the same server.",
+  "history": [
+    "#418 397ed1dc (plateData levelOn: serverOverrides[region] ?? base, ignoring the version's value: 回レ！雪月花 on intl showed 12.0 where the catalog and ratings use 12.5)"
+  ],
+  "guard": "no-restricted-properties on serverOverrides in apps/** (use sheetLevelOn from maimai-domain)",
+  "check": "pnpm exec oxlint apps/web/src/components/plates/plateData.ts",
+  "expect": "sheetLevelOn(sheet, { version, region })"
+}
