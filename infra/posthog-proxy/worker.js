@@ -89,9 +89,17 @@ async function gunzipLimited(bytes, limit) {
   const chunks = []
   let total = 0
   let overLimit = false
+  let corrupt = false
   const reading = (async () => {
     for (;;) {
-      const { done, value } = await reader.read()
+      let step
+      try {
+        step = await reader.read()
+      } catch {
+        corrupt = true
+        return
+      }
+      const { done, value } = step
       if (done) return
       total += value.byteLength
       if (total > limit) {
@@ -103,18 +111,18 @@ async function gunzipLimited(bytes, limit) {
     }
   })()
   try {
-    for (let offset = 0; offset < bytes.byteLength && !overLimit; offset += GZIP_INPUT_SLICE_BYTES) {
+    for (let offset = 0; offset < bytes.byteLength && !overLimit && !corrupt; offset += GZIP_INPUT_SLICE_BYTES) {
       await writer.write(bytes.subarray(offset, offset + GZIP_INPUT_SLICE_BYTES))
       // Let the reader drain this slice's output before writing the next one.
       await new Promise((resolve) => setTimeout(resolve, 0))
     }
-    if (overLimit) await writer.abort().catch(() => {})
+    if (overLimit || corrupt) await writer.abort().catch(() => {})
     else await writer.close()
   } catch {
-    // Corrupt gzip or a cancelled reader: `reading` reports what happened.
+    // The stream errored: `reading` reports why.
   }
   await reading
-  if (overLimit) return null
+  if (overLimit || corrupt) return null
   const decoded = new Uint8Array(total)
   let offset = 0
   for (const chunk of chunks) {
