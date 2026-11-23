@@ -10,9 +10,9 @@ type MessageFile = Record<string, string | Variant[]>
 const read = (locale: string): MessageFile =>
   JSON.parse(readFileSync(path.resolve(__dirname, `../../../messages/${locale}.json`), 'utf8'))
 
-/** Every pattern of a message: the string, or each plural form */
-const patterns = (value: string | Variant[]) =>
-  typeof value === 'string' ? [value] : value.flatMap((variant) => Object.values(variant.match))
+/** Every pattern of a message, keyed by its match: `*` for a plain string */
+const variants = (value: string | Variant[]): [string, string][] =>
+  typeof value === 'string' ? [['*', value]] : value.flatMap((variant) => Object.entries(variant.match))
 
 describe('messages/*.json', () => {
   it('translates every message in every locale, with no blank text', () => {
@@ -22,7 +22,7 @@ describe('messages/*.json', () => {
       expect(Object.keys(file).sort(), `${locale} has missing or extra messages`).toEqual(ids)
       const blank = Object.entries(file)
         .filter(([id]) => id !== '$schema')
-        .filter(([, value]) => patterns(value).some((pattern) => pattern.trim() === ''))
+        .filter(([, value]) => variants(value).some(([, pattern]) => pattern.trim() === ''))
         .map(([id]) => id)
       expect(blank, `${locale} has blank messages`).toEqual([])
     }
@@ -47,21 +47,31 @@ describe('messages/*.json', () => {
     }
   })
 
-  it('uses only the placeholders and markup tags the English message has', () => {
+  it('uses exactly the placeholders and markup tags the English message has', () => {
     const en = read('en')
-    const tokens = (pattern: string) => pattern.match(/\{[^}]*\}/g) ?? []
+    // English `one` says "1 record", a translation's may print {count}; the test above says where it must
+    const tokens = (key: string, pattern = '') =>
+      [...new Set(pattern.match(/\{[^}]*\}/g))]
+        .filter((token) => key !== 'countPlural=one' || token !== '{count}')
+        .sort()
     for (const locale of SUPPORTED_LOCALES) {
-      const file = read(locale)
-      const unknown = Object.entries(file)
+      const mismatched = Object.entries(read(locale))
         .filter(([id]) => id !== '$schema')
         .flatMap(([id, value]) => {
-          const known = new Set(patterns(en[id]).flatMap(tokens))
-          return patterns(value)
-            .flatMap(tokens)
-            .filter((token) => !known.has(token))
-            .map((token) => `${id}: ${token}`)
+          const english = Object.fromEntries(variants(en[id]))
+          return variants(value)
+            .map(([key, pattern]) => ({
+              key,
+              has: tokens(key, pattern),
+              expected: tokens(key, english[key] ?? english['countPlural=*']),
+            }))
+            .filter(({ has, expected }) => has.join() !== expected.join())
+            .map(
+              ({ key, has, expected }) =>
+                `${id} [${key}]: has ${has.join(' ') || 'none'}, English has ${expected.join(' ') || 'none'}`,
+            )
         })
-      expect(unknown, `${locale} has placeholders or tags English doesn't`).toEqual([])
+      expect(mismatched, `${locale} drops or adds placeholders or tags; use exactly the English ones`).toEqual([])
     }
   })
 

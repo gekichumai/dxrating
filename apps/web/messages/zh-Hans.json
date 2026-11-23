@@ -259,7 +259,7 @@
   "song_type_utage": "宴",
   "song_type_utage2p": "Buddy",
   "song_seo_description": "{title}（{artist}）{sheetLabel} 谱面（Lv.{level}）。{facts}。在 DXRating 查看舞萌DX 各达成率的单曲 Rating、定数变化与全部难度。",
-  "song_seo_title": "{title} {sheetLabel} 定数 {constant} - 舞萌DX 谱面 | DXRating",
+  "song_seo_title": "{title} {sheetLabel} {level}（定数 {constant}）- 舞萌DX 谱面 | DXRating",
   "song_seo_titleNoConstant": "{title} {sheetLabel} Lv.{level} - 舞萌DX 谱面 | DXRating",
   "song_seo_fact_constant": "谱面定数 {value}",
   "song_seo_fact_notes": "物量 {value}",
@@ -938,8 +938,8 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "这将从此浏览器永久删除所有记录。如需备份，请先导出。",
-        "countPlural=*": "这将从此浏览器永久删除所有记录。如需备份，请先导出。"
+        "countPlural=one": "这将从此浏览器永久删除全部 {count} 条记录。如需备份，请先导出。",
+        "countPlural=*": "这将从此浏览器永久删除全部 {count} 条记录。如需备份，请先导出。"
       }
     }
   ],

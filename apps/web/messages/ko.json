@@ -259,7 +259,7 @@
   "song_type_utage": "宴会場",
   "song_type_utage2p": "버디",
   "song_seo_description": "{artist}의 {title} {sheetLabel} 채보 (Lv.{level}). {facts}. DXRating에서 maimai DX 달성률별 레이팅, 상수 변화와 모든 난이도를 확인하세요.",
-  "song_seo_title": "{title} {sheetLabel} 상수 {constant} - maimai DX 채보 | DXRating",
+  "song_seo_title": "{title} {sheetLabel} {level} (상수 {constant}) - maimai DX 채보 | DXRating",
   "song_seo_titleNoConstant": "{title} {sheetLabel} Lv.{level} - maimai DX 채보 | DXRating",
   "song_seo_fact_constant": "내부 레벨 {value}",
   "song_seo_fact_notes": "노트 수 {value}",
@@ -938,8 +938,8 @@
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "이 브라우저에서 모든 기록이 영구적으로 삭제됩니다. 백업이 필요하면 먼저 내보내세요.",
-        "countPlural=*": "이 브라우저에서 모든 기록이 영구적으로 삭제됩니다. 백업이 필요하면 먼저 내보내세요."
+        "countPlural=one": "이 브라우저에서 모든 기록 {count}개가 영구적으로 삭제됩니다. 백업이 필요하면 먼저 내보내세요.",
+        "countPlural=*": "이 브라우저에서 모든 기록 {count}개가 영구적으로 삭제됩니다. 백업이 필요하면 먼저 내보내세요."
       }
     }
   ],

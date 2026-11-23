@@ -184,7 +184,7 @@ describe('SEO localization', () => {
     }
 
     expect(buildSongSheetSeo(song, sheet, 'ja').title).toBe(
-      'Sky Trails でらっくす MASTER 譜面定数14.7 | maimai でらっくす - DXRating',
+      'Sky Trails でらっくす MASTER 14+（譜面定数14.7）| maimai でらっくす - DXRating',
     )
     expect(buildSongSheetSeo(song, sheet, 'en').title).toBe(
       'Sky Trails DX MASTER 14+ (14.7) - maimai DX Chart | DXRating',
