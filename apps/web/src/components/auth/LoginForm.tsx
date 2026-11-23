@@ -22,6 +22,7 @@ import { PasswordVisibilityAdornment } from './PasswordVisibilityAdornment'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { ParaglideMessage } from '@inlang/paraglide-js-react'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
 
@@ -183,7 +184,7 @@ export const LoginForm = ({
   }
 
   const finishSignIn = (message: string) => {
-    haptic.trigger('success')
+    haptic.trigger('success')?.catch(reportRejection)
     toast.success(message)
     onSuccess?.()
   }
@@ -248,7 +249,7 @@ export const LoginForm = ({
       : undefined
 
   const fail = (e: unknown, fallback: string) => {
-    haptic.trigger('error')
+    haptic.trigger('error')?.catch(reportRejection)
     setError(formatErrorMessage(e, fallback))
   }
 
@@ -345,7 +346,7 @@ export const LoginForm = ({
         if (error) throw error
         finishSignIn(m.auth_login_toastSuccess({}, { locale }))
       }
-      void upgradeToPasskeyQuietly().catch(() => {})
+      upgradeToPasskeyQuietly().catch(() => {})
     } catch (e: unknown) {
       fail(e, m.auth_form_errorGeneric({}, { locale }))
     } finally {
@@ -382,7 +383,7 @@ export const LoginForm = ({
   }
 
   const toggleView = () => {
-    if (!isSignUp) void refreshEmailVerificationNonce()
+    if (!isSignUp) refreshEmailVerificationNonce().catch(reportRejection)
     setIsSignUp(!isSignUp)
     setShowPassword(false)
     setError(null)
@@ -435,7 +436,7 @@ export const LoginForm = ({
       <form
         aria-labelledby={formTitleId}
         className="flex flex-col gap-3"
-        onSubmit={handleFormSubmit(onSubmit)}
+        onSubmit={asyncHandler(handleFormSubmit(onSubmit))}
         noValidate
       >
         {/* A switch to sign-up still shows its heading, since the page around the form only talks about signing in */}
@@ -481,19 +482,19 @@ export const LoginForm = ({
                   'passkey',
                   <IconPasskey className="size-5" />,
                   m.auth_form_signInWithPasskey({}, { locale }),
-                  handlePasskey,
+                  asyncHandler(handlePasskey),
                 )}
               {providerButton(
                 'github',
                 <IconLogosGithub className="w-5 h-5 dark:invert" />,
                 m.auth_form_continueWithGithub({}, { locale }),
-                () => handleSocial('github'),
+                asyncHandler(() => handleSocial('github')),
               )}
               {providerButton(
                 'google',
                 <IconLogosGoogle className="w-5 h-5" />,
                 m.auth_form_continueWithGoogle({}, { locale }),
-                () => handleSocial('google'),
+                asyncHandler(() => handleSocial('google')),
               )}
             </div>
 
@@ -605,7 +606,7 @@ export const LoginForm = ({
                 type="button"
                 variant="text"
                 size="small"
-                onClick={() => void requestPasswordReset()}
+                onClick={asyncHandler(() => requestPasswordReset())}
                 disabled={loading || resetPending}
                 aria-busy={resetPending || undefined}
                 className="!-mt-1 !self-end"
@@ -725,12 +726,12 @@ function ConditionalPasskey({ onSuccess }: { onSuccess?: () => void }) {
       const { error } = await authClient.signIn.passkey({ autoFill: true })
       if (!active || error) return
 
-      haptic.trigger('success')
+      haptic.trigger('success')?.catch(reportRejection)
       toast.success(m.auth_login_toastSuccess({}))
       onSuccess?.()
     }
 
-    void signInWithConditionalPasskey().catch(() => {})
+    signInWithConditionalPasskey().catch(() => {})
     return () => {
       active = false
       // Ignoring the result isn't enough: the request itself stays pending in the browser. Switching to sign-up left it

@@ -41,6 +41,7 @@ import { persisted, usePersisted } from '@/utils/persisted'
 import { z } from 'zod'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler } from '@/lib/rejections'
 
 const haptics = new WebHaptics()
 
@@ -282,7 +283,7 @@ export const ImportDivingFishDialogContent: FC<{
       <DialogActions>
         <Button onClick={onClose}>{m.ratingCalculator_io_import_divingFish_close({}, { locale })}</Button>
         <Button
-          onClick={async () => {
+          onClick={asyncHandler(async () => {
             setBusy(true)
             try {
               if (invalidReason) {
@@ -314,7 +315,7 @@ export const ImportDivingFishDialogContent: FC<{
             } finally {
               setBusy(false)
             }
-          }}
+          })}
           disabled={busy}
           variant="contained"
         >

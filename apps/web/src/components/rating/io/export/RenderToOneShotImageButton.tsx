@@ -19,6 +19,7 @@ import { requestQuery } from '@/lib/query'
 import { ShareImageActions, useObjectUrl } from '@/components/global/ShareImageViewer'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler } from '@/lib/rejections'
 
 const useElapsedTime = (isLoading: boolean) => {
   const startTime = useRef<number | null>(null)
@@ -185,7 +186,7 @@ const RenderToOneShotImageDialogContent: FC<{ onClose: () => void }> = ({ onClos
       </DialogContent>
       <DialogActions>
         {error && !isValidating && (
-          <Button onClick={() => void refetch()}>
+          <Button onClick={asyncHandler(() => refetch())}>
             {m.ratingCalculator_io_export_oneshotImage_dialog_retry({}, { locale })}
           </Button>
         )}

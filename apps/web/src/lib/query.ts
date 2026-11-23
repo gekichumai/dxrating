@@ -1,4 +1,5 @@
 import { queryOptions, type QueryClient } from '@tanstack/react-query'
+import { reportRejection } from '@/lib/rejections'
 
 /**
  * Query options keyed by the request they send: `load` gets the request back from the key. Put in the request every
@@ -31,7 +32,7 @@ export const resetQueriesOnAccountChange = (
   return session.subscribe(({ data, isPending }) => {
     if (isPending) return
     const next = data?.user?.id ?? null
-    if (account !== undefined && next !== account) void queryClient.resetQueries()
+    if (account !== undefined && next !== account) queryClient.resetQueries().catch(reportRejection)
     account = next
   })
 }

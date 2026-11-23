@@ -10,6 +10,7 @@ import { useLocale } from '@/i18n/LocaleProvider'
 import { authClient } from '@/lib/auth-client'
 import { m } from '@/paraglide/messages'
 import { formatErrorMessage } from '@/utils/formatErrorMessage'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 import { buildPageTitleMeta } from '@/utils/pageTitleSeo'
 import { resolveSeoLocale } from '@/utils/seo'
 
@@ -110,7 +111,7 @@ function ResetPasswordPage() {
                   else confirmRef.current?.focus()
                   return
                 }
-                void submit()
+                submit().catch(reportRejection)
               }}
             >
               <TextField
@@ -207,7 +208,7 @@ function ResetPasswordPage() {
                 ? m.auth_resetPassword_successBody({}, { locale })
                 : m.auth_resetPassword_invalidBody({}, { locale })}
             </p>
-            <Button variant="contained" onClick={toSignIn} className="!mt-2">
+            <Button variant="contained" onClick={asyncHandler(toSignIn)} className="!mt-2">
               {m.auth_resetPassword_signIn({}, { locale })}
             </Button>
           </div>

@@ -9,6 +9,7 @@ import { orpc, type RouterOutputs } from '@/lib/orpc'
 import { formatSheetReleaseDateParts, sheetReleaseDateTimestamp } from '@/utils/dateFormatting'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { reportRejection } from '@/lib/rejections'
 
 type TrendingData = RouterOutputs['analytics']['trending']
 
@@ -114,7 +115,7 @@ export const TrendingPage: FC<TrendingPageProps> = ({ initialTrendingData }) => 
                 size="small"
                 disabled={trendingQuery.isRefetching}
                 onClick={() => {
-                  void trendingQuery.refetch()
+                  trendingQuery.refetch().catch(reportRejection)
                 }}
               >
                 {trendingQuery.isRefetching ? (

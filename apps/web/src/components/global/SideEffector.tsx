@@ -17,6 +17,7 @@ import { netAutoImport, netImportLastSuccess } from '../rating/io/import/netImpo
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import { CatalogUnverifiedHint } from './CatalogUnverifiedHint'
+import { reportRejection } from '@/lib/rejections'
 
 const SideEffectorThemeMeta: FC = () => {
   const versionTheme = useVersionTheme()
@@ -86,7 +87,7 @@ export const SideEffectorAutoImportRating: FC = () => {
       repository.kind === 'cloud' && activeSave.saveId
         ? { trigger: 'auto' as const, idempotencyKey: autoNetImportKey(activeSave.saveId) }
         : undefined
-    importFromNETRecords(catalog, repository, mode, undefined, undefined, cloud)
+    importFromNETRecords(catalog, repository, mode, undefined, undefined, cloud).catch(reportRejection)
   }, [catalog, activeSave.decided, activeSave.saveId, repository, locale])
 
   return null

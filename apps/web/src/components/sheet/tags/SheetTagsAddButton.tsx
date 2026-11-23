@@ -18,6 +18,7 @@ import { rememberAttachedTag } from '../../../catalog/communityOverlay'
 import { useSheetTags } from './useSheetTags'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler } from '@/lib/rejections'
 
 const groupTags = ({ tags, tagGroups }: RouterOutputs['tags']['list']) =>
   tagGroups.map((group) => ({
@@ -120,7 +121,7 @@ const SheetTagsAddDialog: FC<{
                         <Chip
                           key={tag.id}
                           label={localizeMessage(tag.localized_name)}
-                          onClick={() => addTag(tag.id)}
+                          onClick={asyncHandler(() => addTag(tag.id))}
                           disabled={pending || exists}
                           className={clsx(
                             // Group colours are pastels: dark mode's light chip text would vanish on them

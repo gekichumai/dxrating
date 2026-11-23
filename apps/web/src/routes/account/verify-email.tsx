@@ -6,6 +6,7 @@ import IconError from '~icons/material-symbols/error-outline'
 import IconInfo from '~icons/material-symbols/info-outline'
 import IconLogin from '~icons/material-symbols/login'
 import { readVerifyOutcome, type VerifyOutcome } from '@/components/auth/authLinks'
+import { asyncHandler } from '@/lib/rejections'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { authClient } from '@/lib/auth-client'
 import { m } from '@/paraglide/messages'
@@ -57,7 +58,11 @@ function VerifyEmailPage() {
           {title({}, { locale })}
         </h1>
         <p className="m-0 text-base leading-normal text-fg-2 text-pretty">{body({}, { locale })}</p>
-        <Button variant="contained" onClick={() => navigate({ to: '/account/security' })} className="!mt-2">
+        <Button
+          variant="contained"
+          onClick={asyncHandler(() => navigate({ to: '/account/security' }))}
+          className="!mt-2"
+        >
           {m.auth_verifyEmail_toAccount({}, { locale })}
         </Button>
       </section>

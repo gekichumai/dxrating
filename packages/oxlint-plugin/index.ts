@@ -1,5 +1,6 @@
 import type { RuleTester } from 'oxlint/plugins-dev'
 import { derivedQueryKeys } from './derived-query-keys.ts'
+import { noVoid } from './no-void.ts'
 
 type Rule = Parameters<RuleTester['run']>[1]
 type Visitor = ReturnType<Extract<Rule, { create: unknown }>['create']>
@@ -62,5 +63,5 @@ const noNestedComponent: Rule = {
 
 export default {
   meta: { name: 'dxrating' },
-  rules: { 'no-nested-component': noNestedComponent, 'derived-query-keys': derivedQueryKeys },
+  rules: { 'no-nested-component': noNestedComponent, 'derived-query-keys': derivedQueryKeys, 'no-void': noVoid },
 }

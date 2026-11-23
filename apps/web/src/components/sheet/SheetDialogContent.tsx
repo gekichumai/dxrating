@@ -41,6 +41,7 @@ import { InternalLink } from '@/components/global/InternalLink'
 import { SheetTags } from './tags/SheetTags'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 const DeltaArrow: FC<{ delta: number }> = ({ delta }) => {
   const locale = useLocale()
@@ -133,7 +134,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     }
     await client.comments.create(payload)
 
-    void refetch()
+    refetch().catch(reportRejection)
     setContent('')
   }, [sheet, content, ensureAuthenticated, refetch])
 
@@ -154,7 +155,7 @@ const SheetComments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
             multiline
             data-attr="comment-input"
           />
-          <Button variant="contained" onClick={handleSubmit} disabled={!content || submitting}>
+          <Button variant="contained" onClick={asyncHandler(handleSubmit)} disabled={!content || submitting}>
             {submitting ? (
               <CircularProgress size={24} aria-label={m.global_submit({}, { locale })} />
             ) : (

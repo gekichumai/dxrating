@@ -12,6 +12,7 @@ import { createRatingImportTracker } from '@/lib/analytics'
 import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
 import { m } from '@/paraglide/messages'
 import { useLocale } from '@/i18n/LocaleProvider'
+import { reportRejection } from '@/lib/rejections'
 
 type AquaDxExportMusicDetail = {
   musicId: string | number
@@ -79,7 +80,7 @@ export const ImportFromAquaDxButtonListItem: FC<{
                 return
               }
               analytics.succeeded(result.count, importResult.warnings.length)
-              haptic.trigger('success')
+              haptic.trigger('success')?.catch(reportRejection)
               // A cloud save counts what the server took, not what was sent
               toast.success(m.ratingCalculator_io_import_aquaDx_success({ count: result.count }, { locale }))
               announceImportLeftOut(result, locale, (message) => toast(message))

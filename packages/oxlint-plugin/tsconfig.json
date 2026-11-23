@@ -12,5 +12,5 @@
     "strict": true,
     "types": ["node"]
   },
-  "include": ["index.ts", "derived-query-keys.ts", "__tests__/**/*.ts"]
+  "include": ["index.ts", "derived-query-keys.ts", "no-void.ts", "__tests__/**/*.ts"]
 }

@@ -50,7 +50,44 @@
             "additionalHooks": "^(useAsync|useAsyncFn)$"
           }
         ],
-        "dxrating/no-nested-component": "error"
+        "dxrating/no-nested-component": "error",
+        "dxrating/no-void": "error",
+        "typescript/no-floating-promises": [
+          "error",
+          {
+            "allowForKnownSafeCalls": [
+              {
+                "from": "package",
+                "package": "@tanstack/router-core",
+                "name": ["NavigateFn", "UseNavigateResult"]
+              },
+              {
+                "from": "package",
+                "package": "@tanstack/query-core",
+                "name": ["invalidateQueries"]
+              },
+              {
+                "from": "package",
+                "package": "web-haptics",
+                "name": ["trigger"]
+              },
+              {
+                "from": "package",
+                "package": "react-hot-toast",
+                "name": ["promise"]
+              }
+            ]
+          }
+        ],
+        "typescript/no-misused-promises": "error"
+      }
+    },
+    {
+      "files": ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+      "rules": {
+        "dxrating/no-void": "off",
+        "typescript/no-floating-promises": "off",
+        "typescript/no-misused-promises": "off"
       }
     },
     {

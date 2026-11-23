@@ -30,6 +30,7 @@ import { type CloudSaveUi, CloudSaveUiContext } from '../scores/CloudSaveUiConte
 import { CloudSaveDemoBoundary } from '../scores/CloudSaveDemoBoundary'
 import { CloudMigrationProvider } from '../scores/CloudMigrationContext'
 import { browserStorage } from '@/utils/persisted'
+import { reportRejection } from '@/lib/rejections'
 
 /**
  * The rating calculator's view of the score repository, kept source compatible: `entries` are the saved entries and
@@ -144,14 +145,16 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
     if (repository.kind !== 'local') return
     if (!completeCatalogDocument || !hasLegacySheetRecords(entries)) return
     let cancelled = false
-    void loadLegacySongIds().then((legacySongIds) => {
-      if (cancelled) return
-      const result = migrateLegacySheetRecords(entries, getMigrationCatalog(completeCatalogDocument), legacySongIds)
-      if (result.migrated === 0) return
-      backUpBeforeMigration(browserStorage('local'), RATING_ENTRIES_STORAGE_KEY, JSON.stringify(entries))
-      repository.applyMigration(result.records)
-      reportMigration('rating-entries', result)
-    })
+    loadLegacySongIds()
+      .then((legacySongIds) => {
+        if (cancelled) return
+        const result = migrateLegacySheetRecords(entries, getMigrationCatalog(completeCatalogDocument), legacySongIds)
+        if (result.migrated === 0) return
+        backUpBeforeMigration(browserStorage('local'), RATING_ENTRIES_STORAGE_KEY, JSON.stringify(entries))
+        repository.applyMigration(result.records)
+        reportMigration('rating-entries', result)
+      })
+      .catch(reportRejection)
     return () => {
       cancelled = true
     }
@@ -160,7 +163,7 @@ export const RatingCalculatorContextProvider: FC<PropsWithChildren<object>> = ({
   useEffect(() => {
     const storage = browserStorage('local')
     if (!completeCatalogDocument || !storage) return
-    void migrateStoredFavoriteSheetIds(storage, completeCatalogDocument)
+    migrateStoredFavoriteSheetIds(storage, completeCatalogDocument).catch(reportRejection)
   }, [completeCatalogDocument])
 
   const value = useMemo(() => ({ entries, modifyEntries }), [entries, modifyEntries])

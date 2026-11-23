@@ -101,7 +101,7 @@ const NetImportSettingsContent: FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleImport = () => {
     // The import reports its own progress; it starts once the complete catalog is there
-    void loadCatalog()
+    loadCatalog()
       .then((catalog) =>
         importFromNETRecords(catalog, repository, mappedAutoImport || 'replace', undefined, {
           region,

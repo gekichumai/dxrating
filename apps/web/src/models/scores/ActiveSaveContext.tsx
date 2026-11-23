@@ -8,6 +8,7 @@ import { authClient } from '../../lib/auth-client'
 import type { CloudScoreRepository, CloudScoreRepositoryOptions, CloudSyncStopReason } from './CloudScoreRepository'
 import { clearUserFeaturesCache, type FetchUserFeatures, getUserFeatures } from './userFeatures'
 import { browserStorage } from '@/utils/persisted'
+import { reportRejection } from '@/lib/rejections'
 
 /**
  * Which save the visitor works on (design §8.2, the simplified #181): the local save, or a cloud save.
@@ -256,7 +257,7 @@ export function useActiveSaveDecision(): ActiveSave {
     // their changes in it. No flush either, the session is no longer the previous user's
     const previous = cloudRef.current
     if (previous && previous.userId !== userId) {
-      void previous.dispose({ flushTimeoutMs: 0 })
+      previous.dispose({ flushTimeoutMs: 0 }).catch(reportRejection)
       setCloudRepository(null)
     }
 
@@ -280,7 +281,7 @@ export function useActiveSaveDecision(): ActiveSave {
       })
     }, dependencies.decisionTimeoutMs ?? DECISION_TIMEOUT_MS)
 
-    void (async () => {
+    ;(async () => {
       const features = await getUserFeatures(userId, dependencies.fetchFeatures)
       if (cancelled) return
       setFeaturesState((current) =>
@@ -326,7 +327,7 @@ export function useActiveSaveDecision(): ActiveSave {
       })
       opened = repository
       if (cancelled) {
-        void repository.dispose({ flushTimeoutMs: 0 })
+        repository.dispose({ flushTimeoutMs: 0 }).catch(reportRejection)
         return
       }
       repository.start()
@@ -354,7 +355,7 @@ export function useActiveSaveDecision(): ActiveSave {
   useEffect(() => {
     if (!cloudRepository) return
     return () => {
-      void cloudRepository.dispose()
+      cloudRepository.dispose().catch(reportRejection)
     }
   }, [cloudRepository])
 

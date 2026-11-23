@@ -20,6 +20,7 @@ import { PasswordVisibilityAdornment } from '../../auth/PasswordVisibilityAdornm
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler, reportRejection } from '@/lib/rejections'
 
 // -- Email Subsection --
 
@@ -86,7 +87,7 @@ const EmailSubsection: FC<{ email: AccountEmail; headingAs: HeadingTag; idPrefix
             {m.auth_userProfile_email_unverifiedDescription({}, { locale })}
           </p>
           <Button
-            onClick={() => void resend()}
+            onClick={asyncHandler(() => resend())}
             disabled={resendState.loading}
             aria-busy={resendState.loading || undefined}
             aria-describedby={descriptionId}
@@ -168,7 +169,8 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: 
       if (error) {
         toast.error(m.auth_userProfile_password_setError({ error: error.message ?? '' }, { locale }))
         // Set from another tab meanwhile: show the change form
-        if (error.code === 'PASSWORD_ALREADY_SET') void queryClient.invalidateQueries({ queryKey: hasPasswordKey })
+        if (error.code === 'PASSWORD_ALREADY_SET')
+          queryClient.invalidateQueries({ queryKey: hasPasswordKey }).catch(reportRejection)
         return
       }
       toast.success(m.auth_userProfile_password_setSuccess({}, { locale }))
@@ -227,7 +229,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: 
               else confirmRef.current?.focus()
               return
             }
-            void handleChange()
+            handleChange().catch(reportRejection)
           }}
           noValidate
         >
@@ -407,7 +409,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
       return
     }
     toast.success(m.auth_userProfile_passkeys_added({}, { locale }))
-    void refetch()
+    refetch().catch(reportRejection)
   }, [refetch, locale])
 
   const handleDelete = async (id: string) => {
@@ -416,7 +418,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
     try {
       await authClient.passkey.deletePasskey({ id })
       toast.success(m.auth_userProfile_passkeys_deleted({}, { locale }))
-      void refetch()
+      refetch().catch(reportRejection)
     } catch (e: unknown) {
       toast.error(m.auth_userProfile_passkeys_error({ error: formatErrorMessage(e) }, { locale }))
     }
@@ -465,7 +467,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
                 </div>
                 <IconButton
                   size="small"
-                  onClick={() => handleDelete(pk.id)}
+                  onClick={asyncHandler(() => handleDelete(pk.id))}
                   aria-label={m.auth_userProfile_passkeys_deleteNamed({ name: info.name }, { locale })}
                   title={m.auth_userProfile_passkeys_deleteNamed({ name: info.name }, { locale })}
                   className="!text-danger"
@@ -479,7 +481,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
       )}
 
       <Button
-        onClick={handleAdd}
+        onClick={asyncHandler(handleAdd)}
         disabled={addState.loading}
         variant="outlined"
         startIcon={addState.loading ? <CircularProgress size="1rem" /> : <IconMdiPlus />}
@@ -545,7 +547,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
     try {
       await authClient.revokeSession({ token })
       toast.success(m.auth_userProfile_devices_revoked({}, { locale }))
-      void refetch()
+      refetch().catch(reportRejection)
     } catch (e: unknown) {
       toast.error(m.auth_userProfile_devices_error({ error: formatErrorMessage(e) }, { locale }))
     }
@@ -603,7 +605,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
                 {!isCurrent && (
                   <Button
                     size="small"
-                    onClick={() => handleRevoke(session.token)}
+                    onClick={asyncHandler(() => handleRevoke(session.token))}
                     variant="text"
                     className="!text-xs !shrink-0"
                   >
