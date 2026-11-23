@@ -1,8 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// Every page must fit the narrowest phone we support and each breakpoint boundary: no sideways scroll of the page, no
-// hidden sideways scroll inside it, and no header control drawn over another. A failure names the route, the width
-// and the element.
+// The narrowest phone we support and each breakpoint boundary
 const WIDTHS = [320, 360, 375, 768, 1024]
 const LOCALES = ['en', 'ja'] as const
 const SONG = '/songs/dsng_mrw93jj9sk'
@@ -148,7 +146,10 @@ for (const locale of LOCALES) {
         const found = await page.evaluate(findLayoutProblems, Object.values(scrollers))
         problems.push(...found.map((problem) => `${url} at ${width}px: ${problem}`))
       }
-      expect(problems).toEqual([])
+      expect(
+        problems,
+        'Make the element fit at that width. If it scrolls sideways by design, name it under its route in ROUTES',
+      ).toEqual([])
     })
   }
 }
