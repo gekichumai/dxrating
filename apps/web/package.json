@@ -33,6 +33,7 @@
     "@radix-ui/react-collapsible": "^1.2.1",
     "@sentry/cloudflare": "10.70.0",
     "@sentry/tanstackstart-react": "^10.70.0",
+    "@simplewebauthn/browser": "13.3.0",
     "@tanstack/react-query": "^5.100.11",
     "@tanstack/react-router": "^1.170.17",
     "@tanstack/react-start": "^1.168.27",

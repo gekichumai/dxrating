@@ -1,0 +1,23 @@
+diff --git a/apps/web/src/components/rating/useRatingEntries.tsx b/apps/web/src/components/rating/useRatingEntries.tsx
+index 59ff8a4f..e7c2eb7d 100644
+--- a/apps/web/src/components/rating/useRatingEntries.tsx
++++ b/apps/web/src/components/rating/useRatingEntries.tsx
+@@ -76,7 +76,17 @@ export const calculateWebRatingEntries = ({
+     const sheet = sheetsById.get(entry.sheetId)
+     if (!sheet) return []
+ 
+-    return [{ originalEntry: entry, sheet, ratingEntry: toRatingEntry(entry, catalog) }]
++    const hint = entry.providerConfig?.divingFish?.ratingEligibility
++    return [
++      {
++        originalEntry: entry,
++        sheet,
++        ratingEntry: toRatingEntry(
++          { ...entry, source: hint ? { provider: 'diving-fish', best50Bucket: hint } : undefined },
++          catalog,
++        ),
++      },
++    ]
+   })
+ 
+   const result = calculateBest50({

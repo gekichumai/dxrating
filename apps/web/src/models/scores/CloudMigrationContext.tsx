@@ -18,6 +18,7 @@ import { readActiveSaveId, useActiveSave } from './ActiveSaveContext'
 import { useCloudSaveActions } from './cloudSaveActions'
 import { pruneExpiredCloudBackup } from './cloudMigration'
 import type { InternalLevelResolver } from './collapseScoreRecords'
+import { browserStorage } from '@/utils/persisted'
 
 /**
  * Whether to offer the first sign-in migration (design §10) and how to start it. It is offered, never run, when all
@@ -59,15 +60,6 @@ const CloudMigrationDialog = lazy(() =>
     default: module.CloudMigrationDialog,
   })),
 )
-
-function browserLocalStorage(): Storage | null {
-  if (typeof window === 'undefined') return null
-  try {
-    return window.localStorage
-  } catch {
-    return null
-  }
-}
 
 const EMPTY: readonly PlayEntry[] = []
 
@@ -112,10 +104,10 @@ export const CloudMigrationProvider: FC<
   )
 
   // The backup the migration keeps lasts 30 days
-  useEffect(() => pruneExpiredCloudBackup(browserLocalStorage()), [])
+  useEffect(() => pruneExpiredCloudBackup(browserStorage('local')), [])
 
   const { userId, features, decided, kind, setActiveSaveId } = activeSave
-  const storage = browserLocalStorage()
+  const storage = browserStorage('local')
   const available =
     !!userId &&
     features?.cloudSave === true &&

@@ -1,0 +1,15 @@
+diff --git a/apps/backend/src/services/functions/fetch-net-records/index.ts b/apps/backend/src/services/functions/fetch-net-records/index.ts
+index a7a0cc47..8045e5e2 100644
+--- a/apps/backend/src/services/functions/fetch-net-records/index.ts
++++ b/apps/backend/src/services/functions/fetch-net-records/index.ts
+@@ -166,7 +166,9 @@ export const v1Handler = (c: Context) => {
+       ),
+     )
+     try {
+-      await Sentry.startSpan({ name: 'fetchNetRecords_v1', op: 'function' }, () => runApp(observedProgram, { signal }))
++      await Sentry.startSpan({ name: 'fetchNetRecords_v1', op: 'function' }, () =>
++        Effect.runPromise(Effect.scoped(observedProgram), { signal }),
++      )
+     } catch (error) {
+       if (!signal.aborted && !interrupted) {
+         throw error

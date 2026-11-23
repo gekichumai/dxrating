@@ -1,0 +1,9 @@
+{
+  "mistake": "A workspace package the backend image copies is left out of the .dockerignore allowlist, so the Docker build on main cannot find it.",
+  "history": [
+    "#239 8009cc25 (635118a8 made the backend image copy packages/maimai-domain without `!packages/maimai-domain/`, breaking the main build)"
+  ],
+  "guard": "infra/build-manifests.test.mts derives each image's workspace packages from the package.json graph and checks that .dockerignore lets them in",
+  "check": "node --test infra/build-manifests.test.mts",
+  "expect": ".dockerignore: add a `!<dir>/` line for each of these"
+}

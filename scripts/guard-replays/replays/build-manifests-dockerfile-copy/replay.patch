@@ -1,0 +1,28 @@
+diff --git a/apps/backend/Dockerfile b/apps/backend/Dockerfile
+index ba3960d5..d9027cf4 100644
+--- a/apps/backend/Dockerfile
++++ b/apps/backend/Dockerfile
+@@ -30,7 +30,6 @@ COPY patches ./patches
+ COPY packages/tsconfig/package.json ./packages/tsconfig/
+ COPY packages/api-contract/package.json ./packages/api-contract/
+ COPY packages/dxdata/package.json ./packages/dxdata/
+-COPY packages/maimai-domain/package.json ./packages/maimai-domain/
+ COPY packages/oneshot-renderer/package.json ./packages/oneshot-renderer/
+ COPY apps/backend/package.json ./apps/backend/
+ 
+@@ -41,7 +40,6 @@ RUN pnpm install --frozen-lockfile
+ COPY packages/tsconfig ./packages/tsconfig
+ COPY packages/api-contract ./packages/api-contract
+ COPY packages/dxdata ./packages/dxdata
+-COPY packages/maimai-domain ./packages/maimai-domain
+ COPY packages/oneshot-renderer ./packages/oneshot-renderer
+ COPY apps/backend ./apps/backend
+ 
+@@ -77,7 +75,6 @@ COPY patches ./patches
+ COPY packages/tsconfig/package.json ./packages/tsconfig/
+ COPY packages/api-contract/package.json ./packages/api-contract/
+ COPY packages/dxdata/package.json ./packages/dxdata/
+-COPY packages/maimai-domain/package.json ./packages/maimai-domain/
+ COPY packages/oneshot-renderer/package.json ./packages/oneshot-renderer/
+ COPY apps/backend/package.json ./apps/backend/
+ 

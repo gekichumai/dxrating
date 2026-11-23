@@ -1,0 +1,9 @@
+{
+  "mistake": "Sentry classification looks only at the top-level error, so a database failure wrapped in other errors arrives without its db.operation and db.error tags.",
+  "history": [
+    "#631 7797e013 (databaseErrorTags returned {} unless the top-level error was a DatabaseError; DXRATING-BACKEND-2N and -2P, an ORPCError wrapping CatalogIdentityError wrapping DatabaseError(ConnectionError), arrived untagged)"
+  ],
+  "guard": "classifyFailure walks the cause chain; orpc-error-reporting.test.ts sends the 2N shape through the production beforeSend",
+  "check": "pnpm --filter @gekichumai/oneshot-renderer build >/dev/null && pnpm --filter @gekichumai/backend exec vitest run src/test/orpc-error-reporting.test.ts",
+  "expect": "tags a database failure wrapped in other errors (DXRATING-BACKEND-2N)"
+}
