@@ -54,7 +54,11 @@ interface Def {
   valueType?: z.ZodType
   left?: z.ZodType
   right?: z.ZodType
+  in?: z.ZodType
   out?: z.ZodType
+  items?: z.ZodType[]
+  rest?: z.ZodType | null
+  getter?: () => z.ZodType
 }
 const defOf = (schema: z.ZodType) => schema.def as unknown as Def
 
@@ -76,6 +80,12 @@ const children = (def: Def, path: string): Array<[string, z.ZodType]> => {
         [path, def.left!],
         [path, def.right!],
       ]
+    case 'pipe':
+      return children(defOf(def.in!), path).length > 0 ? [[path, def.in!]] : []
+    case 'tuple':
+      return [...def.items!, ...(def.rest ? [def.rest] : [])].map((item, index) => [`${path}[${index}]`, item])
+    case 'lazy':
+      return [[path, def.getter!()]]
     default:
       return def.innerType ? [[path, def.innerType]] : []
   }
@@ -121,6 +131,8 @@ describe('private contract inputs', () => {
       at: z.iso.datetime({ offset: true }),
       revision: PgBigint.nonnegative().optional(),
       loose: z.unknown(),
+      piped: z.strictObject({ id: z.string() }).transform((value) => value),
+      pair: z.tuple([z.string()]),
     })
     expect(unstorable(input)).toEqual([
       '.name accepts "a\\u0000b"',
@@ -131,6 +143,12 @@ describe('private contract inputs', () => {
       '.at accepts "0001-01-01T00:30:00+01:00"',
       '.at accepts "9999-12-31T23:30:00-01:00"',
       ...[...UNSTORABLE, ...BEYOND_INTEGER_COLUMN].map((value) => `.loose accepts ${JSON.stringify(value)}`),
+      '.piped.id accepts "a\\u0000b"',
+      '.piped.id accepts "\\ud800"',
+      '.piped.id accepts "x\\udc00"',
+      '.pair[0] accepts "a\\u0000b"',
+      '.pair[0] accepts "\\ud800"',
+      '.pair[0] accepts "x\\udc00"',
     ])
   })
 })

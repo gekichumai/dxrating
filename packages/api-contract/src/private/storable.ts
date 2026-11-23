@@ -13,7 +13,6 @@ export const isStorableText = (value: string) => !value.includes('\u0000') && !L
 /** A string PostgreSQL `text` and JSONB can hold */
 export const PgText = z.string().refine(isStorableText, 'must be well-formed Unicode without U+0000')
 
-/** An integer that fits a PostgreSQL `integer` column */
 export const PgInteger = z.int32()
 
 /** An integer that fits a PostgreSQL `bigint` column and stays exact in JavaScript */
@@ -25,5 +24,4 @@ export const PgTimestamp = z.iso.datetime({ offset: true }).refine((value) => {
   return year >= 1 && year <= 9999
 }, 'Out of the storable range')
 
-/** `schema`, read from a query string */
 export const fromQuery = <T extends z.ZodType<number, number>>(schema: T) => z.coerce.number().pipe(schema)
