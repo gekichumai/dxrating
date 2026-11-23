@@ -10,7 +10,7 @@ import {
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { LEGACY_SONG_IDS } from '@gekichumai/dxdata/legacy-song-ids'
 import { describe, expect, it } from 'vitest'
-import { buildSongCatalog, getSongCatalog, type SongCatalogSource } from '../song-catalog'
+import { buildSongCatalog, getSongCatalog, sheetLevelOn, type SongCatalogSource } from '../song-catalog'
 
 const sheet = (overrides: Partial<Sheet> & Pick<Sheet, 'id'>): Sheet => ({
   type: TypeEnum.DX,
@@ -385,5 +385,51 @@ describe('CN server overrides', () => {
     expect(getSongCatalog(source, VersionEnum.PRiSMPLUS, 'jp')).toBe(
       getSongCatalog(source, VersionEnum.PRiSMPLUS, 'intl'),
     )
+  })
+})
+
+describe('sheetLevelOn', () => {
+  // 回レ！雪月花 DX Master: 12+ / 12.7 in Japan now, 12.5 on CiRCLE PLUS; International shows it as 12
+  const intlSheet = sheet({
+    id: 'dsht_j7kvr7fcz6',
+    level: '12+',
+    internalLevelValue: 12.7,
+    multiverInternalLevelValue: { [VersionEnum.CiRCLEPLUS]: 12.5 },
+    serverOverrides: { [ServerEnum.INTL]: { level: '12', levelValue: 12 } },
+  })
+  const intlNow = { version: VersionEnum.CiRCLEPLUS, region: 'intl' } as const
+
+  it("takes intl's level on its current version, and the version's internal level over intl's", () => {
+    expect(sheetLevelOn(intlSheet, intlNow)).toEqual({ level: '12', internalLevelValue: 12.5 })
+  })
+
+  it("takes intl's internal level where the version has none", () => {
+    expect(sheetLevelOn({ ...intlSheet, multiverInternalLevelValue: undefined }, intlNow)).toEqual({
+      level: '12',
+      internalLevelValue: 12,
+    })
+  })
+
+  it("ignores a region's overrides on its older versions and on other regions", () => {
+    expect(sheetLevelOn(intlSheet, { version: VersionEnum.PRiSMPLUS, region: 'intl' })).toEqual({
+      level: '12+',
+      internalLevelValue: 12.7,
+    })
+    expect(sheetLevelOn(intlSheet, { version: VersionEnum.CiRCLEPLUS, region: 'jp' })).toEqual({
+      level: '12+',
+      internalLevelValue: 12.5,
+    })
+  })
+
+  it('is what the catalog of that version and region holds', () => {
+    const source: SongCatalogSource = {
+      versions: [],
+      songs: [song({ id: 'dsng_intl000000', title: 'I', sheets: [intlSheet] })],
+    }
+    expect(getSongCatalog(source, intlNow.version, intlNow.region).getById(intlSheet.id)).toMatchObject({
+      level: '12',
+      internalLevelValue: 12.5,
+    })
+    expect(getSongCatalog(source, intlNow.version, 'jp').getById(intlSheet.id)).toMatchObject({ level: '12+' })
   })
 })
