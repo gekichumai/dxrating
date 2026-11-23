@@ -1,0 +1,8 @@
+{
+  "mistake": "The tombstone purge changes what merging a payload does without moving the save's revision, but leaves counts.saveRevision on the save's jobs, so the same payload keeps short-circuiting and the record never comes back.",
+  "history": ["#436 d95f7c29 (review 4496321673: purgeTombstones did not drop counts.saveRevision)"],
+  "guard": "formal/import-ordering ShortCircuitSound (Bug_d95f7c29 = PurgeTombstone keeps saveRevision)",
+  "check": "formal/tlc.sh formal/import-ordering/ImportOrdering.tla",
+  "expect": "Invariant ShortCircuitSound is violated",
+  "needs": ["tlc"]
+}

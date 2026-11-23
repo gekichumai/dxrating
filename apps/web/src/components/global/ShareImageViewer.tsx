@@ -15,6 +15,7 @@ import {
 import { ResponsiveDialog } from './ResponsiveDialog'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { asyncHandler } from '@/lib/rejections'
 
 /** An object URL for the blob, revoked when the blob changes or the component unmounts */
 export const useObjectUrl = (blob: Blob | null | undefined) => {
@@ -81,7 +82,7 @@ export const ShareImageActions: FC<ShareImageActionsProps> = ({ blob, filename, 
         {m.share_image_download({}, { locale })}
       </Button>
       {support.copy && (
-        <Button variant="outlined" startIcon={<MdiContentCopy aria-hidden="true" />} onClick={() => void handleCopy()}>
+        <Button variant="outlined" startIcon={<MdiContentCopy aria-hidden="true" />} onClick={asyncHandler(handleCopy)}>
           {m.share_image_copy({}, { locale })}
         </Button>
       )}
@@ -89,7 +90,7 @@ export const ShareImageActions: FC<ShareImageActionsProps> = ({ blob, filename, 
         <Button
           variant="outlined"
           startIcon={<MdiShareVariant aria-hidden="true" />}
-          onClick={() => void handleShare()}
+          onClick={asyncHandler(handleShare)}
         >
           {m.share_image_share({}, { locale })}
         </Button>

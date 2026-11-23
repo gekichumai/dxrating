@@ -1,0 +1,8 @@
+{
+  "mistake": "listSaves goes out with whatever session cookie the browser has, so another account's list clears this account's selection.",
+  "history": ["#438 ca729895 (found by this model, fixed in this PR)"],
+  "guard": "formal/session-ownership model, invariant SelectionClearedOnlyWhenGone",
+  "check": "formal/tlc.sh formal/session-ownership/SessionOwnership.tla",
+  "expect": "Invariant SelectionClearedOnlyWhenGone is violated",
+  "needs": ["tlc"]
+}

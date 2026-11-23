@@ -1,0 +1,9 @@
+{
+  "mistake": "A caller voids startViewTransition's promise, so a transition the browser skips reaches Sentry as an unhandled rejection.",
+  "history": [
+    "#599 e6973018 (DXRATING-WEB-7N, DXRATING-WEB-7K: RegionVersionUpdatePrompt voided the raw updateCallbackDone)"
+  ],
+  "guard": "dxrating/no-void in .oxlintrc.json",
+  "check": "pnpm lint",
+  "expect": "dxrating(no-void)"
+}

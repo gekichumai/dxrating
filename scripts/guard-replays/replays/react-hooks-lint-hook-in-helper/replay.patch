@@ -1,0 +1,14 @@
+diff --git a/apps/web/src/components/rating/io/import/ImportFromDivingFishButtonListItem.tsx b/apps/web/src/components/rating/io/import/ImportFromDivingFishButtonListItem.tsx
+index 32f72400..2faedb2e 100644
+--- a/apps/web/src/components/rating/io/import/ImportFromDivingFishButtonListItem.tsx
++++ b/apps/web/src/components/rating/io/import/ImportFromDivingFishButtonListItem.tsx
+@@ -103,7 +103,8 @@ const fetchDivingFish = async (
+   repository: WebScoreRepository,
+   messages: DivingFishImportMessages,
+ ) => {
+-  const toastId = toast.loading(messages.loading)
++  const locale = useLocale()
++  const toastId = toast.loading(m.ratingCalculator_io_import_divingFish_loading({}, { locale }))
+   const analytics = createRatingImportTracker('diving_fish')
+   try {
+     const path = importPath(repository)

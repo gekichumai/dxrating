@@ -1,0 +1,9 @@
+{
+  "mistake": "A PR body says it does not fix a Sentry issue, but writes `Fixes <ID>` inside that sentence, so Sentry resolves the issue anyway.",
+  "history": [
+    "#626 5b8d815f (body: 'The commit does **not** say `Fixes DXRATING-BACKEND-2J`'; AGENTS.md rule from #366 b0cceb77 did not stop it)"
+  ],
+  "guard": "the CI gate's Sentry Fixes lines job runs scripts/sentry-fixes/check.ts on the PR body and commits",
+  "check": "PR_BODY=\"$(cat pr-body.md)\" node scripts/sentry-fixes/check.ts",
+  "expect": "PR body: resolves DXRATING-BACKEND-2J through"
+}

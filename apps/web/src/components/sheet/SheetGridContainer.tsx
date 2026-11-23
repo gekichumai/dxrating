@@ -18,6 +18,7 @@ import { MaterialSurface } from '../global/MaterialSurface'
 import { SHEET_LIST_FIRST_SCREEN_ROWS } from './SheetListContainer'
 import { captureSheetContentViewed, type SheetListItemAnalyticsProps, SheetType } from './SheetListItem'
 import { buildSheetPath } from './sheetLinks'
+import { reportRejection } from '@/lib/rejections'
 
 /**
  * Three columns on phones, like the iOS app's results grid; from `sm` as many 8.5rem columns as fit. Every tile has the
@@ -96,7 +97,7 @@ export const SheetGridItem: FC<{
         if (!isPlainNavigationClick(event)) return
         event.preventDefault()
         onOpen()
-        haptic.trigger('medium')
+        haptic.trigger('medium')?.catch(reportRejection)
         captureSheetContentViewed(sheet, analytics)
       }}
       className="group flex min-w-0 flex-col gap-1.5 rounded-[var(--radius-md)] text-fg-1 no-underline"

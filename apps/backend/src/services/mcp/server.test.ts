@@ -159,7 +159,10 @@ describe('MCP server', () => {
     it('applies the level of a server', async () => {
       const all = structured(await call('get_sheet', { song: HIBANA, difficulty: 'master' }))
       expect(all.sheets[0]).toMatchObject({ sheetId: HIBANA_MASTER, level: '12+', internalLevel: 12.9 })
-      expect(all.sheets[0].serverOverrides).toEqual({ intl: { level: '13', levelValue: 13.0 } })
+      expect(all.sheets[0].serverOverrides).toEqual({
+        intl: { level: '13', levelValue: 13.0 },
+        cn: { levelValue: 12.7 },
+      })
 
       const intl = structured(await call('get_sheet', { song: HIBANA, difficulty: 'master', server: 'INTL' }))
       expect(intl.server).toBe('intl')

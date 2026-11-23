@@ -1,0 +1,9 @@
+{
+  "mistake": "apps/admin imports @gekichumai/api-contract but its package.json does not declare it, so only a leftover local link made it resolve.",
+  "history": [
+    "#586 dd984209 (Pullfrog P1: the announcements page imported @gekichumai/api-contract undeclared; fixed by the PR's commit 'fix(admin): declare the api-contract dependency')"
+  ],
+  "guard": "the oxlint rule workspace/declared-dependency",
+  "check": "pnpm exec oxlint apps/admin",
+  "expect": "Add @gekichumai/api-contract to apps/admin/package.json"
+}

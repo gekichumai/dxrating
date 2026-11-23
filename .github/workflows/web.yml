@@ -8,8 +8,8 @@ on:
       - 'apps/web/**'
       - 'packages/**'
       - 'pnpm-lock.yaml'
-      - '.github/workflows/web.yml'
       - 'scripts/guard-replays/**'
+      - '.github/workflows/web.yml'
   pull_request:
     branches:
       - main
@@ -17,8 +17,8 @@ on:
       - 'apps/web/**'
       - 'packages/**'
       - 'pnpm-lock.yaml'
-      - '.github/workflows/web.yml'
       - 'scripts/guard-replays/**'
+      - '.github/workflows/web.yml'
   workflow_dispatch:
 
 concurrency:
@@ -56,7 +56,7 @@ jobs:
   e2e:
     name: Web e2e (production build)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -90,6 +90,14 @@ jobs:
           E2E_EXPECT_SENTRY: '1'
           E2E_CHROMIUM_PATH: /usr/bin/google-chrome
 
+      # Each replay rebuilds the app with a past mistake put back (layout overflow, hydration), so it runs after the
+      # tests of this build
+      - name: Guard replays (e2e)
+        run: node scripts/guard-replays/run.ts --needs e2e
+        timeout-minutes: 35
+        env:
+          E2E_CHROMIUM_PATH: /usr/bin/google-chrome
+
       - name: Upload traces
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -97,10 +105,3 @@ jobs:
           name: playwright-traces
           path: apps/web/test-results/
           retention-days: 7
-
-      # Each replay rebuilds the app with a past mistake put back, so this runs last
-      - name: Guard replays (e2e)
-        run: node scripts/guard-replays/run.ts --needs e2e
-        timeout-minutes: 20
-        env:
-          E2E_CHROMIUM_PATH: /usr/bin/google-chrome

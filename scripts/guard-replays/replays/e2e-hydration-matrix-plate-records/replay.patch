@@ -1,8 +1,8 @@
 diff --git a/apps/web/src/models/useUserRecords.ts b/apps/web/src/models/useUserRecords.ts
-index 85a1f587..de4519a4 100644
+index d2751fa0..259a9342 100644
 --- a/apps/web/src/models/useUserRecords.ts
 +++ b/apps/web/src/models/useUserRecords.ts
-@@ -40,7 +40,7 @@ export function useUserRecords(): UserRecords {
+@@ -36,7 +36,7 @@ export function useUserRecords(): UserRecords {
    }, [])
  
    const entries = useMemo(
@@ -12,23 +12,19 @@ index 85a1f587..de4519a4 100644
    )
  
 diff --git a/apps/web/src/pages/PlatesPage.tsx b/apps/web/src/pages/PlatesPage.tsx
-index 1435fd9c..e1ed10b0 100644
+index 6a1fef5b..a372ed33 100644
 --- a/apps/web/src/pages/PlatesPage.tsx
 +++ b/apps/web/src/pages/PlatesPage.tsx
-@@ -114,7 +114,6 @@ const usePlateRecords = () => {
+@@ -105,10 +105,10 @@ const usePlateRecords = () => {
+   const [mounted, setMounted] = useState(false)
    useEffect(() => setMounted(true), [])
-   const records = useMemo(() => {
-     const map = new Map<string, PlateRecord>()
--    if (!mounted) return map
-     for (const entry of entries) {
-       const existing = map.get(entry.sheetId)
-       map.set(entry.sheetId, {
-@@ -131,7 +130,7 @@ const usePlateRecords = () => {
-     }
-     return map
-   }, [entries, mounted])
--  return { records, ready: mounted, hasRecords: mounted && entries.length > 0, isDemo: mounted && isDemo }
-+  return { records, ready: mounted, hasRecords: entries.length > 0, isDemo }
+   const records = useMemo(
+-    () => new Map(mounted ? [...bySheetId].map(([sheetId, record]) => [sheetId, record.best]) : []),
++    () => new Map([...bySheetId].map(([sheetId, record]) => [sheetId, record.best])),
+     [bySheetId, mounted],
+   )
+-  return { records, ready: mounted, hasRecords: mounted && bySheetId.size > 0, isDemo: mounted && isDemo }
++  return { records, ready: mounted, hasRecords: bySheetId.size > 0, isDemo }
  }
  
  const PlateBreadcrumb: FC<{ leaf?: string; region: PlateRegion }> = ({ leaf, region }) => {

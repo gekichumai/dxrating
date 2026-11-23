@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { Effect } from 'effect'
 import { Response, type RequestInit } from 'undici'
 import { describe, expect, it } from 'vitest'
@@ -7,13 +7,14 @@ import {
   MaimaiNETJpClient,
   NetImportError,
   NetRequestError,
+  classifyNetResponse,
   gatewayStatusEffect,
   netErrorPageMessage,
   netStepOf,
   pageSignals,
   parseNetErrorCode,
 } from './client'
-import { netErrorTags, shouldCaptureSentryError } from './sentry'
+import { classifyFailure } from './sentry'
 import { URLS } from './URLS'
 
 // Recorded public pages (2026-11-05, trimmed; no session, no user data): DXRATING-BACKEND-1W and -2A
@@ -74,6 +75,35 @@ describe('maimai NET request steps', () => {
   })
 })
 
+describe('what a maimai NET answer means', () => {
+  const RECORDED = [
+    ['aime-gateway-maintenance.html', 200, 'Maintenance'],
+    ['jp-emergency-maintenance.html', 503, 'Maintenance'],
+    ['jp-emergency-maintenance.html', 200, 'Maintenance'],
+    ['intl-error-page.html', 200, 'Page'],
+  ] as const
+
+  it.each(RECORDED)('recorded %s answered %i is %s', (name, status, tag) => {
+    expect(classifyNetResponse(status, null, fixture(name)).kind).toBe(tag)
+  })
+
+  it('states the meaning of every recorded page', () => {
+    const recordings = readdirSync(new URL('./__fixtures__/', import.meta.url)).filter((name) => name.endsWith('.html'))
+    expect(recordings.sort()).toEqual([...new Set(RECORDED.map(([name]) => name))].sort())
+  })
+
+  it.each([
+    [302, AIME_MAINTENANCE_URL, 'Maintenance'],
+    [302, INTL_ERROR_URL, 'ErrorPage'],
+    [302, INTL_CALLBACK, 'Redirect'],
+    [302, null, 'UnexpectedStatus'],
+    [404, null, 'UnexpectedStatus'],
+    [500, null, 'UnexpectedStatus'],
+  ] as const)('%i to %s is %s', (status, location, tag) => {
+    expect(classifyNetResponse(status, location, '<html></html>').kind).toBe(tag)
+  })
+})
+
 describe('maimai NET maintenance (DXRATING-BACKEND-1W, -2A)', () => {
   it('reports SEGA ID login gateway maintenance on the international login page', async () => {
     const { client, requested } = stubbed(new MaimaiNETIntlClient(), (url) =>
@@ -83,7 +113,7 @@ describe('maimai NET maintenance (DXRATING-BACKEND-1W, -2A)', () => {
     expect(error).toMatchObject({ code: 'NET_MAINTENANCE', step: 'login_page' })
     // stops before sending the credentials
     expect(requested).toEqual(['login_page'])
-    expect(shouldCaptureSentryError(error)).toBe(false)
+    expect(classifyFailure(error).report).toBe(false)
   })
 
   it('reports the gateway maintenance page when it is reached through the login callback', async () => {
@@ -100,18 +130,14 @@ describe('maimai NET maintenance (DXRATING-BACKEND-1W, -2A)', () => {
     const { client } = stubbed(new MaimaiNETJpClient(), () => html(JP_EMERGENCY_MAINTENANCE, 503))
     const error = await failure(client.loginEffect({ id: 'synthetic', password: 'synthetic' }))
     expect(error).toMatchObject({ code: 'NET_MAINTENANCE', step: 'login_page' })
-    expect(shouldCaptureSentryError(error)).toBe(false)
-  })
-
-  it('recognizes the emergency maintenance text on a 200 page too', () => {
-    expect(() => new MaimaiNETJpClient().checkMaintenance(JP_EMERGENCY_MAINTENANCE)).toThrow(NetImportError)
+    expect(classifyFailure(error).report).toBe(false)
   })
 
   it('still reports a login page without a token when NET is up', async () => {
     const { client } = stubbed(new MaimaiNETJpClient(), () => html('<html><body><form></form></body></html>'))
     const error = await failure(client.loginEffect({ id: 'synthetic', password: 'synthetic' }))
     expect(error).toMatchObject({ code: 'TOKEN_ERROR', step: 'login_page' })
-    expect(shouldCaptureSentryError(error)).toBe(true)
+    expect(classifyFailure(error).report).toBe(true)
   })
 })
 
@@ -137,12 +163,10 @@ describe('maimai NET error page', () => {
       'record_recent',
       'error_page',
     ])
-    expect(netErrorTags(error)).toEqual({
-      'net.code': 'UNKNOWN_ERROR',
-      'net.step': 'record_recent',
-      'net.error_code': '100001',
+    expect(classifyFailure(error)).toEqual({
+      report: true,
+      tags: { 'net.code': 'UNKNOWN_ERROR', 'net.step': 'record_recent', 'net.error_code': '100001' },
     })
-    expect(shouldCaptureSentryError(error)).toBe(true)
   })
 
   it('keeps the original error when the error page cannot be read', async () => {
@@ -178,7 +202,7 @@ describe('what SEGA said when it refused a login (the 2026-11-01 outage)', () =>
     })
     const error = await failure(client.loginEffect({ id: 'synthetic', password: 'synthetic' }))
     expect(error).toMatchObject({ code: 'INVALID_CREDENTIALS', step: 'login_submit', netErrorCode: '200004' })
-    expect(shouldCaptureSentryError(error)).toBe(false)
+    expect(classifyFailure(error).report).toBe(false)
   })
 
   it('describes the page when the international login form answers 200 instead of redirecting', async () => {
@@ -199,6 +223,20 @@ describe('what SEGA said when it refused a login (the 2026-11-01 outage)', () =>
     const error = await failure(client.loginEffect({ id: 'synthetic', password: 'synthetic' }))
     expect(error).toMatchObject({ code: 'INTERNAL_ERROR', step: 'login_submit', upstreamMessage: undefined })
   })
+
+  it.each([
+    ['intl', () => new MaimaiNETIntlClient(), URLS.INTL.LOGIN_ENDPOINT, html('<form></form>')],
+    ['jp', () => new MaimaiNETJpClient(), URLS.JP.LOGIN_ENDPOINT, html('<form><input name="token" value="t"></form>')],
+  ] as const)(
+    'reports a %s login answered 404 as unexpected, not as invalid credentials (#221)',
+    async (_, make, endpoint, loginPage) => {
+      const { client } = stubbed(make(), (url) =>
+        url === endpoint ? html('<html><head><title>404 Not Found</title></head></html>', 404) : loginPage,
+      )
+      const error = await failure(client.loginEffect({ id: 'synthetic', password: 'synthetic' }))
+      expect(error).toMatchObject({ code: 'INTERNAL_ERROR', step: 'login_submit', upstreamMessage: '404 Not Found' })
+    },
+  )
 
   it('records the gateway error text of an international rejection', async () => {
     const { client } = stubbed(new MaimaiNETIntlClient(), (url) => {

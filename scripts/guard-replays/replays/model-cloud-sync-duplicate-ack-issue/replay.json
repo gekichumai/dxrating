@@ -1,0 +1,10 @@
+{
+  "mistake": "A late duplicate acknowledgement of an outbox entry both tabs sent writes its sync issue again after the user dismissed it.",
+  "history": [
+    "945ce071 (fix(web): close four cloud sync races, item 3: an acknowledged entry's issue is written only if the same transaction removes the entry)"
+  ],
+  "guard": "formal/cloud-sync/CloudSync.tla, invariant DismissedStaysDismissed",
+  "check": "formal/tlc.sh formal/cloud-sync/CloudSync.tla",
+  "expect": "Invariant DismissedStaysDismissed is violated",
+  "needs": ["tlc"]
+}

@@ -3,7 +3,7 @@ import { Database, type DatabaseError } from '../db/index'
 import { createCatalogIdentityEffects } from './catalog-identities'
 import { createPostgresDxdataEffects } from './dxdata'
 import { createMcpCatalogLoader } from './mcp/loader'
-import { Sentry } from '../lib/functions/sentry'
+import { reportFailure } from '../lib/functions/sentry'
 
 export class CatalogIdentities extends Context.Service<
   CatalogIdentities,
@@ -30,7 +30,7 @@ export const McpCatalogSourceLive = Layer.effect(
     const database = yield* Database
     return createMcpCatalogLoader(
       createPostgresDxdataEffects((text, values) => database.raw('McpCatalog.query', text, values)),
-      { reportError: (error) => Sentry.captureException(error, { tags: { component: 'mcp' } }) },
+      { reportError: (error) => reportFailure(error, { tags: { component: 'mcp' } }) },
     )
   }),
 )

@@ -1,0 +1,8 @@
+{
+  "mistake": "When another account signs in without a sign-out, useActiveSaveDecision keeps the previous account's cloud repository active until the new account's features and saves load.",
+  "history": ["#438 0d2a2e32 (account B saw and wrote to account A's cloud save until B's save list answered)"],
+  "guard": "formal/session-ownership model, invariant RepositoryDroppedOnSwitch",
+  "check": "formal/tlc.sh formal/session-ownership/SessionOwnership.tla",
+  "expect": "Invariant RepositoryDroppedOnSwitch is violated",
+  "needs": ["tlc"]
+}

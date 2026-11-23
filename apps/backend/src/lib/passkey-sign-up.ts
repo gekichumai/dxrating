@@ -65,6 +65,7 @@ class TurnstileUnavailable extends Data.TaggedError('TurnstileUnavailable')<{ re
  * without a Turnstile widget.
  */
 const verifyTurnstile = (ctx: GenericEndpointContext, secretKey: string, token: string | undefined) =>
+  // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
   Effect.runPromise(
     Effect.gen(function* () {
       if (!token) {

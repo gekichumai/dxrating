@@ -7,6 +7,7 @@ import { startViewTransition } from '@/utils/startViewTransition'
 import { REGION_LABELS } from './VersionRegionSwitcher'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { reportRejection } from '@/lib/rejections'
 
 // A non-modal banner rather than a dialog: it never blocks the page on load, and only an explicit choice persists.
 // "Keep" remembers the decision for this release; the close button only hides it for this visit.
@@ -54,7 +55,7 @@ export function RegionVersionUpdatePrompt() {
         <Button
           variant="contained"
           onClick={() => {
-            void startViewTransition(() => setVersionAndRegion(availableVersionUpdate, region))
+            startViewTransition(() => setVersionAndRegion(availableVersionUpdate, region)).catch(reportRejection)
           }}
         >
           {m.settings_versionUpdate_confirm({ latest }, { locale })}
