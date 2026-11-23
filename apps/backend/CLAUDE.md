@@ -88,6 +88,7 @@ src/
 - `GET /health` — Health check
 - `GET|HEAD /api/v1/dxdata` — Complete published catalog or metadata-only headers
 - `POST|GET /api/auth/**` — Better Auth endpoints
+- `POST /api/auth/account/set-password` — An account without a password (passkey or social sign-up) sets its first one (`src/lib/set-password.ts`): fresh session required (403 `SESSION_NOT_FRESH`), 400 `PASSWORD_ALREADY_SET` once it has one, sign-up length rules and haveIBeenPwned
 - `POST /functions/fetch-net-records/v0` — Fetch NET records (JSON)
 - `POST /functions/fetch-net-records/v1/:region` — Fetch NET records (SSE)
 - `POST /functions/render-oneshot/v0` — Render player card image
@@ -222,6 +223,7 @@ When working on Coolify deployment or integration, use context7 to query the Coo
 
 - API contracts defined in `contract.ts` using oRPC + Zod, implementations in `router.ts`
 - Auth context passed through oRPC handler context (`context.user`)
+- Better Auth error responses are translated on the way out (`src/lib/auth-error-localization.ts`, called from `Authentication.handle`, with messages in `src/lib/auth-error-translations.ts` for every supported language but English), not by the `@better-auth/i18n` plugin, whose after-hook misses before-hook, captcha and rate-limit errors. The language is the one `src/lib/auth-locale.ts` detects: Accept-Language, which the web's auth client sets to the page's URL language, then the `dxrating.locale` cookie. Don't add a custom request header for this: the web and the backend deploy separately, and a header the live backend's CORS doesn't allow fails every auth request
 - Authorization proofs (gdp-ts): functions that read or change one user's private data demand a proof about their exact arguments. See `src/proofs/README.md`.
 - Database schema changes go through Drizzle migrations (`drizzle-kit`)
 - ES modules with extensionless relative TypeScript imports. TypeScript uses `bundler` module resolution; esbuild resolves local modules into the production bundle. Keep extensions on actual output and asset paths.

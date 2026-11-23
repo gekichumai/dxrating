@@ -3,7 +3,7 @@ import { CircularProgress } from '@mui/material'
 import { createFileRoute } from '@tanstack/react-router'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { SecuritySection } from '@/components/global/preferences/SecuritySection'
-import { authClient } from '@/lib/auth-client'
+import { useSettledSession } from '@/hooks/useSettledSession'
 import { resolveSeoLocale } from '@/utils/seo'
 import { buildPageTitleMeta } from '@/utils/pageTitleSeo'
 import IconMdiDevices from '~icons/mdi/devices'
@@ -29,7 +29,9 @@ export const Route = createFileRoute('/account/security')({
 
 function AccountSecurityPage() {
   const locale = useLocale()
-  const { data: sessionData, isPending } = authClient.useSession()
+  // Pending only on the first load: a session refetch (such as after a failed passkey autofill) must not swap the
+  // sign-in form for the spinner and back, which would remount it
+  const { data: sessionData, isPending } = useSettledSession()
 
   // Signed in, SecuritySection brings its own page heading; otherwise this page names itself
   const pageHeading = (
@@ -53,7 +55,11 @@ function AccountSecurityPage() {
             </div>
           </>
         ) : sessionData?.session ? (
-          <SecuritySection currentSessionToken={sessionData.session.token} idPrefix="account-security" />
+          <SecuritySection
+            currentSessionToken={sessionData.session.token}
+            userId={sessionData.user.id}
+            idPrefix="account-security"
+          />
         ) : (
           // One column on phones; from md the page heading and what the page manages sit beside the form, which then
           // drops its own (duplicate) sign-in heading
