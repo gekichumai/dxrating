@@ -1,9 +1,10 @@
 /**
- * OAuth callbacks carry one-time credentials in the query (`/io/import/lxns/oauth_callback?code=…&state=…`). The page
- * removes them from the address bar after mounting, but Sentry captures the request (worker) and the page URL
- * (browser) before that, so every event, transaction and breadcrumb drops these parameters' values first.
+ * Some pages are opened with a credential in the query: OAuth callbacks (`/io/import/lxns/oauth_callback?code=…&state=…`)
+ * and the mailed password reset link (`/account/reset-password?token=…`, a token that resets the account until it is
+ * used). The pages remove them from the address bar after mounting, but Sentry captures the request (worker) and the
+ * page URL (browser) before that, so every event, transaction and breadcrumb drops these parameters' values first.
  */
-const SECRET_QUERY_PARAMS = ['code', 'state'] as const
+const SECRET_QUERY_PARAMS = ['code', 'state', 'token'] as const
 const REDACTED = '[Filtered]'
 
 export function scrubUrl(url: string): string {

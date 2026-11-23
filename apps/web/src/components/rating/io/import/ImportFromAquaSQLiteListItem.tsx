@@ -17,7 +17,7 @@ import {
   ListItemText,
   MenuItem,
 } from '@mui/material'
-import { type FC, useCallback, useMemo, useState } from 'react'
+import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import sqljs, { type Database } from 'sql.js'
 // The binary of the installed sql.js, served with the app: sql.js.org only hosts the latest build, under another
@@ -141,15 +141,19 @@ const ImportFromAquaSQLiteDatabaseContent: FC<{
   const locale = useLocale()
   const repository = useScoreRepository()
   const haptic = useWebHaptics()
-  const users = useMemo(() => {
+  const readUsers = useMemo((): { users: AquaUser[]; error?: unknown } => {
     try {
-      return readAquaUsers(db)
-    } catch (e) {
-      toast.error(m.ratingCalculator_io_import_aquaSqlite_readUsersFailed({ error: formatErrorMessage(e) }, { locale }))
-      console.error('Failed to read users from Aqua SQLite database', e)
-      return []
+      return { users: readAquaUsers(db) }
+    } catch (error) {
+      return { users: [], error }
     }
   }, [db])
+  const { users } = readUsers
+  useEffect(() => {
+    if (!('error' in readUsers)) return
+    toast.error(m.ratingCalculator_io_import_aquaSqlite_readUsersFailed({ error: formatErrorMessage(readUsers.error) }))
+    console.error('Failed to read users from Aqua SQLite database', readUsers.error)
+  }, [readUsers])
   const [selectedUser, setSelectedUser] = useState<AquaUser | null>(null)
   const { data: sheets } = useSheets()
   const catalog = useCompleteSongCatalog()

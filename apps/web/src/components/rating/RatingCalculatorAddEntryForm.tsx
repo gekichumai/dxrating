@@ -1,5 +1,5 @@
 import { Autocomplete, Button, TextField } from '@mui/material'
-import type { RatingEntry } from '@gekichumai/maimai-domain'
+import type { StoredPlay } from '@gekichumai/maimai-domain'
 import clsx from 'clsx'
 import {
   cloneElement,
@@ -24,19 +24,10 @@ import { useScoreEntries } from '@/models/scores/useScoreRepository'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 
-export interface PlayEntryProviderConfig {
-  divingFish?: {
-    ratingEligibility: 'b15' | 'b35' | null
-  }
-}
-
 export type { ComboFlag } from '../../utils/rating'
 export type SyncFlag = 'fs' | 'fsp' | 'fsd' | 'fsdp' | 'sync' | null
 
-export interface PlayEntry extends Omit<RatingEntry, 'identity'> {
-  identity?: RatingEntry['identity']
-  providerConfig?: PlayEntryProviderConfig
-}
+export type PlayEntry = StoredPlay
 
 const ListboxComponent = (({
   children,

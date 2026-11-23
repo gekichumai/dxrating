@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { toV2Community } from '@gekichumai/dxdata/v2'
 import { Data, Effect, Exit } from 'effect'
+import { DXDATA_V2_COMMUNITY_PATH } from '@gekichumai/api-contract'
 import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
 import {
@@ -8,7 +9,6 @@ import {
   COMMUNITY_REUSE_MS,
   createCommunityOverlayHandler,
   DXDATA_V2_COMMUNITY_CACHE_TAG,
-  DXDATA_V2_COMMUNITY_PATH,
   readListsThrough,
   type CommunityLists,
 } from './dxdata-v2-community'

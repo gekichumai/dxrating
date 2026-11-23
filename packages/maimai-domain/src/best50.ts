@@ -192,18 +192,17 @@ function getEntryBucket(
 }
 
 /**
- * The B50 bucket a chart competes in: an authoritative provider hint (CN Diving Fish imports) wins, otherwise the
- * chart version decides. The single rule shared by `calculateBest50` and features that project gains onto it.
+ * The B50 bucket a chart competes in: on CN, the chart's Diving-Fish hint (`CollapsedPlay.best50Bucket`) wins,
+ * otherwise the chart version decides. The single rule shared by `calculateBest50` and features that project gains
+ * onto it.
  */
 export function resolveBest50Bucket(
   sheetVersion: Version,
   appVersion: Version,
   region: Region,
-  source?: RatingEntry['source'],
+  best50Hint?: Best50Bucket | null,
 ): Best50Bucket | null {
-  if (region === 'cn' && source?.provider === 'diving-fish' && source.best50Bucket !== undefined) {
-    return source.best50Bucket
-  }
+  if (region === 'cn' && best50Hint) return best50Hint
   if (isB15Sheet(sheetVersion, appVersion, region)) return 'b15'
   if (isB35Sheet(sheetVersion, appVersion, region)) return 'b35'
   return null

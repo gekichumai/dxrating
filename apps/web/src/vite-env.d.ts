@@ -6,4 +6,8 @@ interface ImportMetaEnv {
   readonly VITE_SENTRY_RELEASE: string
   /** Set on Playwright builds: the Worker's Sentry stays off (src/server.ts) */
   readonly VITE_E2E_BUILD?: string
+  /** `true` when the backend sends account email (RESEND_API_KEY); see src/setup/auth-mail.ts */
+  readonly VITE_AUTH_MAIL_ENABLED?: string
+  /** Chrome's Email Verification origin trial token for dxrating.net; unset emits nothing (src/setup/origin-trials.ts) */
+  readonly VITE_EMAIL_VERIFICATION_ORIGIN_TRIAL_TOKEN?: string
 }

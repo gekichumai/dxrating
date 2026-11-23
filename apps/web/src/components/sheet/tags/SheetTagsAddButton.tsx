@@ -2,10 +2,10 @@ import { Button, Chip, Dialog, Grow } from '@mui/material'
 import clsx from 'clsx'
 import { type CSSProperties, type FC, useState } from 'react'
 import toast from 'react-hot-toast'
-import useSWR from 'swr'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import IconMdiTagPlus from '~icons/mdi/tag-plus'
 import { useAuth } from '../../../hooks/useAuth'
-import { apiClient as client } from '../../../lib/orpc'
+import { apiClient as client, orpc, type RouterOutputs } from '../../../lib/orpc'
 import type { FlattenedSheet } from '../../../songs'
 import { deriveColor } from '../../../utils/color'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
@@ -14,12 +14,17 @@ import { chipPresenceTransitions } from '../sheetMotion'
 import { useLocalizedMessageTranslation } from '../../../utils/useLocalizedMessageTranslation'
 import { Markdown } from '../../global/Markdown'
 import { SheetListItemContent } from '../SheetListItem'
-import { withAttachedTag } from '../../../models/useCombinedTags'
 import { rememberAttachedTag } from '../../../catalog/communityOverlay'
 import { useSheetTags } from './useSheetTags'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
-import { asyncHandler, reportRejection } from '@/lib/rejections'
+import { asyncHandler } from '@/lib/rejections'
+
+const groupTags = ({ tags, tagGroups }: RouterOutputs['tags']['list']) =>
+  tagGroups.map((group) => ({
+    group,
+    tags: tags.filter((tag) => tag.group_id === group.id).map((tag) => ({ ...tag, group })),
+  }))
 
 const SheetTagsAddDialog: FC<{
   sheet: FlattenedSheet
@@ -27,22 +32,11 @@ const SheetTagsAddDialog: FC<{
   const locale = useLocale()
   const [pending, setPending] = useState(false)
   const localizeMessage = useLocalizedMessageTranslation()
-  const { session, openLoginDialog, LoginDialog } = useAuth()
+  const { session, openLoginDialog, loginDialog } = useAuth()
 
-  const { data: tagGroups, isLoading: loadingTags } = useSWR('tags.grouped', async () => {
-    const { tags, tagGroups } = await client.tags.list()
-
-    return tagGroups.map((g) => ({
-      group: g,
-      tags: tags
-        .filter((t) => t.group_id === g.id)
-        .map((t) => ({
-          ...t,
-          group: g,
-        })),
-    }))
-  })
-  const { data: existingTags, isLoading: loadingExistingTags, mutate: mutateExistingTags } = useSheetTags(sheet)
+  const queryClient = useQueryClient()
+  const { data: tagGroups, isLoading: loadingTags } = useQuery(orpc.tags.list.queryOptions({ select: groupTags }))
+  const { data: existingTags, isLoading: loadingExistingTags } = useSheetTags(sheet)
 
   const existingTagsIDList = existingTags?.map(({ id }) => id) ?? []
 
@@ -60,15 +54,13 @@ const SheetTagsAddDialog: FC<{
       toast.success(m.sheet_tags_add_toastSuccess({}, { locale }), {
         id: `tag-add-success:${tagId}`,
       })
-      const attached = {
+      rememberAttachedTag(queryClient, {
         song_id: sheet.songId,
         sheet_id: sheet.id,
         sheet_type: sheet.type,
         sheet_difficulty: sheet.difficulty,
         tag_id: tagId,
-      }
-      rememberAttachedTag(attached)
-      mutateExistingTags((current) => withAttachedTag(current, attached), { revalidate: false }).catch(reportRejection)
+      })
     } catch (error) {
       console.error('Failed to add tag', error)
 
@@ -82,7 +74,7 @@ const SheetTagsAddDialog: FC<{
 
   return (
     <div className="flex flex-col gap-2 p-4 relative">
-      <LoginDialog />
+      {loginDialog}
       <h2 className="m-0 text-lg font-semibold">{m.sheet_tags_add_title({}, { locale })}</h2>
       <div className="text-lg">
         <SheetListItemContent sheet={sheet} />

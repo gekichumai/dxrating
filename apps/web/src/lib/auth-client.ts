@@ -1,4 +1,8 @@
-import { SET_PASSWORD_AUTH_PATH } from '@gekichumai/api-contract'
+import {
+  EMAIL_VERIFICATION_NONCE_AUTH_PATH,
+  EMAIL_VERIFICATION_VERIFY_AUTH_PATH,
+  SET_PASSWORD_AUTH_PATH,
+} from '@gekichumai/api-contract'
 import type { BetterAuthClientPlugin } from 'better-auth/client'
 import { createAuthClient } from 'better-auth/react'
 import { oneTapClient, lastLoginMethodClient } from 'better-auth/client/plugins'
@@ -32,6 +36,24 @@ const setPasswordClient = () =>
     }),
   }) satisfies BetterAuthClientPlugin
 
+/**
+ * The backend's Email Verification Protocol plugin (apps/backend/src/lib/email-verification-protocol/plugin.ts): a
+ * sign-up form's nonce, and verifying a signed-in account's address with the token Chrome filled in. Sign-up with a
+ * password sends the token in its own body instead (LoginForm).
+ */
+const emailVerificationProtocolClient = () =>
+  ({
+    id: 'dxrating-email-verification-protocol',
+    getActions: ($fetch) => ({
+      emailVerificationProtocol: {
+        nonce: () =>
+          $fetch<{ nonce: string; expiresAt: string }>(EMAIL_VERIFICATION_NONCE_AUTH_PATH, { method: 'GET' }),
+        verify: (body: { token: string; nonce: string }) =>
+          $fetch<{ verified: boolean }>(EMAIL_VERIFICATION_VERIFY_AUTH_PATH, { method: 'POST', body }),
+      },
+    }),
+  }) satisfies BetterAuthClientPlugin
+
 export const authClient = createAuthClient({
   baseURL: import.meta.env.VITE_BACKEND_URL,
   fetchOptions: {
@@ -46,6 +68,7 @@ export const authClient = createAuthClient({
     }),
     passkeyClient(),
     setPasswordClient(),
+    emailVerificationProtocolClient(),
     lastLoginMethodClient({
       cookieName: 'dxrating.last_used_login_method',
     }),

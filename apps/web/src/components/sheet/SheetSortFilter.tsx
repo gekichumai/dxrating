@@ -32,6 +32,7 @@ import { SheetTagFilter } from './filters/SheetTagFilter'
 import { SheetVersionFilter } from './filters/SheetVersionFilter'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { browserStorage } from '@/utils/persisted'
 
 export interface SortPredicate {
   descriptor: keyof FlattenedSheet
@@ -84,20 +85,14 @@ const latestKnownVersion = () => VERSION_SORT_ORDER[VERSION_SORT_ORDER.length - 
  * or a reload, and a new visit starts from the defaults. They used to expire 5 minutes after the last change, which
  * reset them without a word; the trigger now shows how many are active, so a kept filter is never a surprise.
  */
-const sortFilterStorage = (): Storage | null => {
-  try {
-    return typeof window === 'undefined' ? null : window.sessionStorage
-  } catch {
-    return null
-  }
-}
+const sortFilterStorage = () => browserStorage('session')
 
 const clearPersistedSheetSortFilter = () => {
   if (typeof window === 'undefined') return
   try {
     sortFilterStorage()?.removeItem(SHEET_SORT_FILTER_STORAGE_KEY)
     // The 5-minute copy older builds kept in localStorage
-    window.localStorage.removeItem(SHEET_SORT_FILTER_STORAGE_KEY)
+    browserStorage('local')?.removeItem(SHEET_SORT_FILTER_STORAGE_KEY)
   } catch {
     // Storage blocked: nothing persisted to clear
   }
@@ -225,7 +220,7 @@ const loadSavedSheetSortFilterForm = (): SheetSortFilterForm | null => {
   try {
     alreadySaved = sortFilterStorage()?.getItem(SHEET_SORT_FILTER_STORAGE_KEY) ?? null
     // A copy an older build left in localStorage is not carried over: it would come back on every visit
-    window.localStorage.removeItem(SHEET_SORT_FILTER_STORAGE_KEY)
+    browserStorage('local')?.removeItem(SHEET_SORT_FILTER_STORAGE_KEY)
   } catch {
     return null
   }

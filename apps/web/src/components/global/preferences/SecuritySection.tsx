@@ -8,15 +8,100 @@ import IconMdiDelete from '~icons/mdi/delete-outline'
 import IconMdiPlus from '~icons/mdi/plus'
 import IconMdiDevices from '~icons/mdi/devices'
 import IconMdiLock from '~icons/mdi/lock-outline'
+import IconMdiEmail from '~icons/mdi/email-outline'
 import IconPasskey from '~icons/material-symbols/passkey'
 import aaguidData from '../../../data/passkey-aaguids.json'
 import { authClient } from '../../../lib/auth-client'
+import { requestQuery } from '../../../lib/query'
 import { formatErrorMessage } from '../../../utils/formatErrorMessage'
+import { hasErrorCode } from '../../auth/authLinks'
+import { isAuthMailEnabled } from '../../../setup/auth-mail'
 import { PasswordVisibilityAdornment } from '../../auth/PasswordVisibilityAdornment'
 import { ConfirmDialog, useConfirmDialog } from '../ConfirmDialog'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import { asyncHandler, reportRejection } from '@/lib/rejections'
+
+// -- Email Subsection --
+
+/** The signed-in account's address and whether it is verified (gekichumai/meta#80) */
+export interface AccountEmail {
+  address: string
+  verified: boolean
+}
+
+const EmailSubsection: FC<{ email: AccountEmail; headingAs: HeadingTag; idPrefix: string }> = ({
+  email,
+  headingAs: Heading,
+  idPrefix,
+}) => {
+  const locale = useLocale()
+  const [resendState, resend] = useAsyncFn(async () => {
+    // The backend sends the link to the web's verification page in this page's language
+    const { error } = await authClient.sendVerificationEmail({ email: email.address })
+    if (error) {
+      toast.error(
+        hasErrorCode(error, 'VERIFICATION_EMAIL_NOT_ENABLED')
+          ? m.auth_userProfile_email_unavailable({}, { locale })
+          : m.auth_userProfile_email_resendError({ error: formatErrorMessage(error) }, { locale }),
+      )
+      return
+    }
+    toast.success(m.auth_userProfile_email_resent({}, { locale }))
+  }, [email.address, locale])
+
+  const titleId = `${idPrefix}-email-title`
+  const descriptionId = `${idPrefix}-email-description`
+  // Without account email nothing can verify an address: say nothing about it rather than offer a link that can't come
+  const mailEnabled = isAuthMailEnabled()
+
+  return (
+    <section className="flex flex-col gap-4" aria-labelledby={titleId}>
+      <div className="flex items-center gap-2">
+        <IconMdiEmail className="text-lg text-fg-2" aria-hidden="true" />
+        <Heading id={titleId} className="text-base font-semibold text-fg-1 m-0">
+          {m.auth_userProfile_email_title({}, { locale })}
+        </Heading>
+      </div>
+      <div className="glass-inset flex flex-wrap items-center gap-x-3 gap-y-2 py-2 px-3">
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-fg-1" translate="no">
+          {email.address}
+        </span>
+        {(email.verified || mailEnabled) && (
+          <Chip
+            label={
+              email.verified
+                ? m.auth_userProfile_email_verified({}, { locale })
+                : m.auth_userProfile_email_unverified({}, { locale })
+            }
+            size="small"
+            color={email.verified ? 'success' : 'warning'}
+            variant="outlined"
+            className="!h-5 !text-xs"
+          />
+        )}
+      </div>
+      {!email.verified && mailEnabled && (
+        <>
+          <p id={descriptionId} className="m-0 text-sm leading-normal text-fg-2 text-pretty">
+            {m.auth_userProfile_email_unverifiedDescription({}, { locale })}
+          </p>
+          <Button
+            onClick={asyncHandler(() => resend())}
+            disabled={resendState.loading}
+            aria-busy={resendState.loading || undefined}
+            aria-describedby={descriptionId}
+            variant="outlined"
+            startIcon={resendState.loading ? <CircularProgress size="1rem" /> : undefined}
+            className="!self-start"
+          >
+            {m.auth_userProfile_email_resend({}, { locale })}
+          </Button>
+        </>
+      )}
+    </section>
+  )
+}
 
 // -- Password Subsection --
 
@@ -25,11 +110,15 @@ type HeadingTag = 'h2' | 'h4'
 const PASSWORD_MIN_LENGTH = 8
 const PASSWORD_MAX_LENGTH = 128
 
-/**
- * Whether the signed-in account has a password (a `credential` account), shared by everything that changes it. Keyed
- * by the user, as sign-out keeps the query cache: the next account to sign in must not see the last one's answer.
- */
-const hasPasswordQueryKey = (userId: string | undefined) => ['auth', 'has-password', userId ?? null] as const
+/** Whether the signed-in account has a password (a `credential` account), shared by everything that changes it */
+const hasPasswordQuery = (userId: string | undefined) =>
+  // An account made with a passkey or a social provider has no password: it sets a first one, with no current password
+  // to give. If the accounts can't be read, the change form stays (the server refuses whichever doesn't apply).
+  requestQuery('has-password', { user: userId ?? null }, async () => {
+    const { data, error } = await authClient.listAccounts()
+    if (error) throw error
+    return data.some((account) => account.providerId === 'credential')
+  })
 
 const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: string | undefined }> = ({
   idPrefix,
@@ -38,17 +127,9 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: 
 }) => {
   const locale = useLocale()
   const queryClient = useQueryClient()
-  const hasPasswordKey = hasPasswordQueryKey(userId)
-  // An account made with a passkey or a social provider has no password: it sets a first one, with no current password
-  // to give. If the accounts can't be read, the change form stays (the server refuses whichever doesn't apply).
-  const { data: hasPassword = true, isPending: accountsPending } = useQuery({
-    queryKey: hasPasswordKey,
-    queryFn: async () => {
-      const { data, error } = await authClient.listAccounts()
-      if (error) throw error
-      return data.some((account) => account.providerId === 'credential')
-    },
-  })
+  const passwordQuery = useMemo(() => hasPasswordQuery(userId), [userId])
+  const hasPasswordKey = passwordQuery.queryKey
+  const { data: hasPassword = true, isPending: accountsPending } = useQuery(passwordQuery)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -108,7 +189,7 @@ const PasswordSubsection: FC<{ idPrefix: string; headingAs: HeadingTag; userId: 
     }
     toast.success(m.auth_userProfile_password_success({}, { locale }))
     resetFields()
-  }, [hasPassword, currentPassword, newPassword, locale, queryClient])
+  }, [hasPassword, currentPassword, newPassword, locale, queryClient, hasPasswordKey])
 
   const togglePasswordVisibility = (field: keyof typeof visiblePasswords) => {
     setVisiblePasswords((visible) => ({ ...visible, [field]: !visible[field] }))
@@ -308,16 +389,18 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
   userId,
 }) => {
   const locale = useLocale()
-  const queryClient = useQueryClient()
   const confirmDelete = useConfirmDialog()
 
-  const { data: passkeys = [], isLoading: loading } = useQuery({
-    queryKey: ['passkeys', userId ?? null],
-    queryFn: async () => {
+  const {
+    data: passkeys = [],
+    isLoading: loading,
+    refetch,
+  } = useQuery(
+    requestQuery('passkeys', { user: userId ?? null }, async () => {
       const res = await authClient.passkey.listUserPasskeys()
       return (res.data ?? []) as PasskeyItem[]
-    },
-  })
+    }),
+  )
 
   const [addState, handleAdd] = useAsyncFn(async () => {
     const res = await authClient.passkey.addPasskey()
@@ -326,8 +409,8 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
       return
     }
     toast.success(m.auth_userProfile_passkeys_added({}, { locale }))
-    queryClient.invalidateQueries({ queryKey: ['passkeys'] })
-  }, [queryClient, locale])
+    refetch().catch(reportRejection)
+  }, [refetch, locale])
 
   const handleDelete = async (id: string) => {
     const confirmed = await confirmDelete.confirm()
@@ -335,7 +418,7 @@ const PasskeysSubsection: FC<{ headingAs: HeadingTag; userId: string | undefined
     try {
       await authClient.passkey.deletePasskey({ id })
       toast.success(m.auth_userProfile_passkeys_deleted({}, { locale }))
-      queryClient.invalidateQueries({ queryKey: ['passkeys'] })
+      refetch().catch(reportRejection)
     } catch (e: unknown) {
       toast.error(m.auth_userProfile_passkeys_error({ error: formatErrorMessage(e) }, { locale }))
     }
@@ -445,16 +528,18 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
   userId,
 }) => {
   const locale = useLocale()
-  const queryClient = useQueryClient()
   const confirmRevoke = useConfirmDialog()
 
-  const { data: sessions = [], isLoading: loading } = useQuery({
-    queryKey: ['sessions', userId ?? null],
-    queryFn: async () => {
+  const {
+    data: sessions = [],
+    isLoading: loading,
+    refetch,
+  } = useQuery(
+    requestQuery('sessions', { user: userId ?? null }, async () => {
       const res = await authClient.listSessions()
       return (res.data ?? []) as SessionItem[]
-    },
-  })
+    }),
+  )
 
   const handleRevoke = async (token: string) => {
     const confirmed = await confirmRevoke.confirm()
@@ -462,7 +547,7 @@ const DevicesSubsection: FC<{ currentSessionToken?: string; headingAs: HeadingTa
     try {
       await authClient.revokeSession({ token })
       toast.success(m.auth_userProfile_devices_revoked({}, { locale }))
-      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+      refetch().catch(reportRejection)
     } catch (e: unknown) {
       toast.error(m.auth_userProfile_devices_error({ error: formatErrorMessage(e) }, { locale }))
     }
@@ -542,10 +627,12 @@ export const SecuritySection: FC<{
   currentSessionToken?: string
   /** The signed-in user, which keys what this section caches */
   userId: string | undefined
+  /** The account's address and its verification; the email part is left out without it */
+  email?: AccountEmail
   idPrefix?: string
   /** `h1` as a page (/account/security); `h3` inside the account dialog, under its `h2` title */
   titleAs?: 'h1' | 'h3'
-}> = ({ currentSessionToken, userId, idPrefix = 'security', titleAs: Title = 'h1' }) => {
+}> = ({ currentSessionToken, userId, email, idPrefix = 'security', titleAs: Title = 'h1' }) => {
   const locale = useLocale()
   const subheading: HeadingTag = Title === 'h1' ? 'h2' : 'h4'
 
@@ -556,6 +643,14 @@ export const SecuritySection: FC<{
           {m.auth_userProfile_security({}, { locale })}
         </Title>
       </div>
+
+      {email && (
+        <>
+          <EmailSubsection email={email} headingAs={subheading} idPrefix={idPrefix} />
+
+          <div className="h-px bg-black/8" aria-hidden="true" />
+        </>
+      )}
 
       <PasswordSubsection idPrefix={idPrefix} headingAs={subheading} userId={userId} />
 

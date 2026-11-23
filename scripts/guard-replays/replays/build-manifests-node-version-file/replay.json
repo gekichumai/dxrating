@@ -1,0 +1,7 @@
+{
+  "mistake": "A workflow reads the Node version from a file other than the root .node-version.",
+  "history": ["8af13e7f (backend.yml pointed setup-node at apps/backend/.node-version)"],
+  "guard": "infra/build-manifests.test.mts requires node-version-file: '.node-version' in every workflow and allows one Node version file",
+  "check": "node --test infra/build-manifests.test.mts",
+  "expect": ".github/workflows/backend.yml: use node-version-file: '.node-version'"
+}

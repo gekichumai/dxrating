@@ -1,0 +1,7 @@
+{
+  "mistake": "A maintenance page SEGA serves with a 200 is not recognized, so a login that reached it counts as finished and the import fails later on NET's error page.",
+  "history": ["#443 cff39f75 (the SEGA ID gateway's maintenance.html text was not listed; DXRATING-BACKEND-1W)"],
+  "guard": "classifyNetResponse is checked against every recorded maimai NET page in client-errors.test.ts",
+  "check": "pnpm --filter @gekichumai/backend exec vitest run src/lib/functions/client-errors.test.ts",
+  "expect": "recorded aime-gateway-maintenance.html answered 200 is Maintenance"
+}

@@ -1,3 +1,4 @@
+import { DXDATA_PATH, DXDATA_V2_PATH } from '@gekichumai/api-contract'
 import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { fromV2Catalog, type CatalogV2Document } from '@gekichumai/dxdata/v2'
 import snapshotAssetUrl from '@gekichumai/dxdata/snapshot.json?url'
@@ -13,10 +14,10 @@ import { reportRejection } from '@/lib/rejections'
 
 // The v2 catalog (gekichumai/meta#43) carries no tags or aliases: those come from the community overlay
 // (communityOverlay.ts), which changes far more often and is cached apart
-export const CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v2/dxdata`
+export const CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}${DXDATA_V2_PATH}`
 export const CATALOG_CACHE_NAME = 'dxrating-catalog-v1'
 /** Where earlier builds kept the v1 document in the same cache; deleted when found */
-const V1_CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v1/dxdata`
+const V1_CATALOG_URL = `${import.meta.env.VITE_BACKEND_URL}${DXDATA_PATH}`
 const ETAG_HEADER = 'x-dxrating-catalog-etag'
 // Where a cached copy came from: 'api', or 'unverified' for the build snapshot kept because the API could not be
 // reached. Copies cached before this header existed have none (see readCachedCatalog)

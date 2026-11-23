@@ -1,6 +1,7 @@
 import { SERVER_BADGE_ORDER } from '@/models/constants'
 import { CommentActions } from '../comments/CommentActions'
 import { filterComments, useCommentVisibility } from '../comments/commentVisibility'
+import { useSheetComments } from '../comments/useSheetComments'
 import { MULTIVER_AVAILABLE_VERSIONS, TypeEnum, VERSION_ID_MAP, VERSION_SLUG_MAP } from '@gekichumai/dxdata'
 import { Button, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material'
 import clsx from 'clsx'
@@ -16,7 +17,6 @@ import {
   useState,
 } from 'react'
 import { useAsyncFn } from 'react-use'
-import useSWR from 'swr'
 import { match } from 'ts-pattern'
 import MdiCheck from '~icons/mdi/check'
 import MdiClose from '~icons/mdi/close'
@@ -98,6 +98,7 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     () =>
       MULTIVER_AVAILABLE_VERSIONS.map((version) => ({
         version,
+        // oxlint-disable-next-line no-restricted-properties -- the raw per-version table, shown as is
         internalLevelValue: sheet.multiverInternalLevelValue?.[version],
         available: VERSION_ID_MAP.get(version)! >= VERSION_ID_MAP.get(sheet.version)!,
       })).reduce(
@@ -192,26 +193,10 @@ const InternalLevelHistory: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
 
 const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   const locale = useLocale()
-  const { session, user, ensureAuthenticated, openLoginDialog, LoginDialog } = useAuth()
+  const { session, user, ensureAuthenticated, openLoginDialog, loginDialog } = useAuth()
   const visibility = useCommentVisibility(user?.id)
   const [content, setContent] = useState<string>('')
-  const {
-    data: comments,
-    isLoading: isLoadingComments,
-    mutate,
-  } = useSWR(['comments.list', user?.id ?? null, sheet.songId, sheet.type, sheet.difficulty], async () => {
-    const data = await client.comments.list({
-      songId: sheet.songId,
-      sheetId: sheet.id,
-      sheetType: sheet.type,
-      sheetDifficulty: sheet.difficulty,
-    })
-    return data.map((c) => ({
-      ...c,
-      // ISO, so it is a valid <time dateTime> and parses the same everywhere
-      created_at: new Date(c.created_at).toISOString(),
-    }))
-  })
+  const { data: comments, isLoading: isLoadingComments, refetch } = useSheetComments(sheet)
   // Comments load on the client only, so formatting them in the app locale cannot cause a hydration mismatch
   const dateFormat = useMemo(
     () => new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }),
@@ -231,15 +216,15 @@ const Comments: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
     }
     await client.comments.create(payload)
 
-    mutate().catch(reportRejection)
+    refetch().catch(reportRejection)
     setContent('')
-  }, [sheet, content, ensureAuthenticated])
+  }, [sheet, content, ensureAuthenticated, refetch])
 
   const visibleComments = filterComments(comments ?? [], visibility)
 
   return (
     <div className="flex flex-col gap-3">
-      <LoginDialog />
+      {loginDialog}
 
       <div className="flex gap-2 relative">
         <TextField

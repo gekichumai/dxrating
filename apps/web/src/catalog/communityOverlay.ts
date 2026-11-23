@@ -1,14 +1,16 @@
+import { DXDATA_V2_COMMUNITY_PATH } from '@gekichumai/api-contract'
 import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { fromV2Community, type CommunityV2Document } from '@gekichumai/dxdata/v2'
-import { useEffect, useRef } from 'react'
+import { keepPreviousData, useQuery, type QueryClient } from '@tanstack/react-query'
+import { useSyncExternalStore } from 'react'
+import { requestQueriesNamed, requestQuery } from '@/lib/query'
 import { getLoadedCatalogDocument, loadClientCatalogDocument, subscribeToCatalog } from './clientCatalog'
-import { reportRejection } from '@/lib/rejections'
 
 // The tags and aliases of the catalog (dxdata v2, gekichumai/meta#43). They change within minutes while the catalog
 // changes about daily, so they come from their own small document. Its responses tell the browser to revalidate
 // every time (the edge answers a 304 when nothing changed), so a plain fetch() always sees a current copy; like the
 // catalog it is a plain GET route of the backend, not an oRPC procedure.
-export const COMMUNITY_URL = `${import.meta.env.VITE_BACKEND_URL}/api/v2/dxdata/community`
+export const COMMUNITY_URL = `${import.meta.env.VITE_BACKEND_URL}${DXDATA_V2_COMMUNITY_PATH}`
 
 /** Requests within this window share one load: the tag and alias hooks mount together */
 const SHARE_MS = 5_000
@@ -59,23 +61,37 @@ const withAdded = <T>(list: T[], added: readonly T[], same: (a: T, b: T) => bool
   return missing.length ? [...list, ...missing] : list
 }
 
-/** Adds a tag association the viewer attached to every later load of the lists */
-export const rememberAttachedTag = (tagSong: TagSong) => {
+const withLocalAdditions = (lists: CommunityLists): CommunityLists => ({
+  ...lists,
+  tagSongs: withAdded(lists.tagSongs, attachedTags, sameTagSong),
+  aliases: withAdded(lists.aliases, createdAliases, sameAlias),
+})
+
+const COMMUNITY_QUERY = 'community'
+
+const showLocalAdditions = (queryClient: QueryClient) =>
+  queryClient.setQueriesData<CommunityLists>(requestQueriesNamed(COMMUNITY_QUERY), (lists) =>
+    lists ? withLocalAdditions(lists) : lists,
+  )
+
+/** Shows a tag association the viewer attached at once, and adds it to every later load of the lists */
+export const rememberAttachedTag = (queryClient: QueryClient, tagSong: TagSong) => {
   if (!attachedTags.some((existing) => sameTagSong(existing, tagSong))) attachedTags.push(tagSong)
+  showLocalAdditions(queryClient)
 }
 
-/** Adds an alias the viewer created to every later load of the lists */
-export const rememberCreatedAlias = (alias: Alias) => {
+/** Shows an alias the viewer created at once, and adds it to every later load of the lists */
+export const rememberCreatedAlias = (queryClient: QueryClient, alias: Alias) => {
   if (!createdAliases.some((existing) => sameAlias(existing, alias))) createdAliases.push(alias)
+  showLocalAdditions(queryClient)
 }
 
 /**
  * The v1 tag and alias lists the app renders from, rebuilt from the overlay against the current catalog: an
  * association or alias of a sheet or song the catalog does not have yet is left out. The overlay request is shared
  * for a few seconds; the lists are resolved on every call, so a call after a catalog refresh sees the new songs.
- * `catalogUpdatedAt` names the catalog they were resolved against (see {@link resolvedAgainst}).
  */
-export async function loadCommunityLists(): Promise<CommunityLists & { catalogUpdatedAt: string }> {
+export async function loadCommunityLists(): Promise<CommunityLists> {
   if (!shared || Date.now() - shared.at >= SHARE_MS) {
     const entry = { at: Date.now(), community: fetchCommunity() }
     shared = entry
@@ -85,54 +101,25 @@ export async function loadCommunityLists(): Promise<CommunityLists & { catalogUp
     })
   }
   const [community, loaded] = await Promise.all([shared.community, loadClientCatalogDocument()])
-  // The latest catalog, not the one loaded when this call began: a background revalidation can publish a newer one
-  // while the overlay request is in flight, and nothing would notify this call again
-  const catalog = getLoadedCatalogDocument() ?? loaded
-  const lists = fromV2Community(community, catalog)
-  return {
-    ...lists,
-    tagSongs: withAdded(lists.tagSongs, attachedTags, sameTagSong),
-    aliases: withAdded(lists.aliases, createdAliases, sameAlias),
-    catalogUpdatedAt: catalog.updatedAt,
-  }
+  return withLocalAdditions(fromV2Community(community, getLoadedCatalogDocument() ?? loaded))
 }
 
-// The catalog each value a hook keeps in SWR was resolved against, keyed by that value. Keyed by what SWR actually
-// holds, not by fetcher completion: SWR discards a revalidation that overlaps a local mutation, and a value made by a
-// local mutation has no entry, so it counts as unresolved
-const resolvedCatalogs = new WeakMap<object, string>()
-
-/** Records that `value`, as returned to SWR, was resolved against the catalog of `catalogUpdatedAt` */
-export const resolvedAgainst = <T extends object>(value: T, catalogUpdatedAt: string): T => {
-  resolvedCatalogs.set(value, catalogUpdatedAt)
-  return value
-}
-
-const isStale = (data: object | undefined) => {
-  const current = getLoadedCatalogDocument()?.updatedAt
-  return data !== undefined && current !== undefined && resolvedCatalogs.get(data) !== current
-}
+const loadedCatalogUpdatedAt = () => getLoadedCatalogDocument()?.updatedAt ?? null
+const noCatalog = () => null
 
 /**
- * Re-resolves a hook's community data when what it holds was not resolved against the current catalog: a catalog
- * published while it is mounted (a background revalidation found it), one published while no consumer was mounted
- * (found when it mounts again), or a value a local mutation made, which may have replaced a discarded refresh. Songs
- * and sheets a newer catalog adds get their tags and aliases without a reload; the viewer's own additions stay.
+ * The lists, as `select` picks from them. The loaded catalog is part of the query key, so a catalog published later
+ * resolves them again: the songs and sheets it adds get their tags and aliases without a reload.
  */
-export const useRefreshOnCatalogChange = (data: object | undefined, revalidate: () => Promise<unknown>) => {
-  const latest = useRef(data)
-  useEffect(() => {
-    latest.current = data
-    if (isStale(data)) revalidate().catch(reportRejection)
-  }, [data, revalidate])
-  useEffect(
-    () =>
-      subscribeToCatalog(() => {
-        if (isStale(latest.current)) revalidate().catch(reportRejection)
-      }),
-    [revalidate],
-  )
-}
+export const useCommunityLists = <T>(select: (lists: CommunityLists) => T) =>
+  useQuery({
+    ...requestQuery(COMMUNITY_QUERY, useSyncExternalStore(subscribeToCatalog, loadedCatalogUpdatedAt, noCatalog), () =>
+      loadCommunityLists(),
+    ),
+    select,
+    staleTime: 60 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  })
 
 /** Tests only: forgets the shared load */
 export function resetCommunityListsForTests() {

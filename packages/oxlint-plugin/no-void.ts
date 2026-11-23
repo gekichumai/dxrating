@@ -1,5 +1,13 @@
-const noVoid = {
-  meta: { type: 'problem' },
+import type { RuleTester } from 'oxlint/plugins-dev'
+
+type Rule = Parameters<RuleTester['run']>[1]
+
+export const noVoid: Rule = {
+  meta: {
+    type: 'problem',
+    docs: { description: '`void` drops a promise rejection, which then reaches Sentry as unhandled.' },
+    schema: [],
+  },
   create(context) {
     return {
       UnaryExpression(node) {
@@ -13,5 +21,3 @@ const noVoid = {
     }
   },
 }
-
-export default { meta: { name: 'dxrating' }, rules: { 'no-void': noVoid } }

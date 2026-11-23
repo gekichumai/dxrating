@@ -51,7 +51,7 @@ export function localizeAnnouncement(
   return { title, body, linkLabel }
 }
 
-export function readDismissed(storage: Pick<Storage, 'getItem'> | undefined): DismissedAnnouncements {
+export function readDismissed(storage: Pick<Storage, 'getItem'> | null): DismissedAnnouncements {
   try {
     const parsed: unknown = JSON.parse(storage?.getItem(DISMISSED_ANNOUNCEMENTS_STORAGE_KEY) ?? '{}')
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
@@ -68,7 +68,7 @@ export function readDismissed(storage: Pick<Storage, 'getItem'> | undefined): Di
  * as small as the list.
  */
 export function writeDismissed(
-  storage: Pick<Storage, 'setItem'> | undefined,
+  storage: Pick<Storage, 'setItem'> | null,
   dismissed: DismissedAnnouncements,
   served: readonly PublicAnnouncement[],
 ): DismissedAnnouncements {
