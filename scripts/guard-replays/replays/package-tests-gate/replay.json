@@ -1,0 +1,7 @@
+{
+  "mistake": "A shared package's tests catch a regression, but no workflow runs them, so it merges anyway.",
+  "history": ["#615 9958920c (AquaDX level map dropped BASIC; maimai-domain tests ran in no workflow)"],
+  "guard": "the root gate runs every package's tests",
+  "check": "pnpm turbo run test --filter='./packages/*' --output-logs=errors-only",
+  "expect": "import-normalizers.test.ts"
+}

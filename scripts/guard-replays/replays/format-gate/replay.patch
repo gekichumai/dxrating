@@ -1,0 +1,11 @@
+diff --git a/packages/dxdata/index.ts b/packages/dxdata/index.ts
+index 9190009f..b378e495 100644
+--- a/packages/dxdata/index.ts
++++ b/packages/dxdata/index.ts
+@@ -299,4 +299,4 @@ export const COVER_ORIGIN = 'https://shama.dxrating.net'
+ export const coverPath = (songId: string) => `/images/cover/v3/${songId}.jpg`
+ 
+ /** Absolute URL of a song's cover; see {@link coverPath} */
+-export const coverUrl = (songId: string) => `${COVER_ORIGIN}${coverPath(songId)}`
+\ No newline at end of file
++export const coverUrl = (songId: string) => `${COVER_ORIGIN}${coverPath(songId)}`
