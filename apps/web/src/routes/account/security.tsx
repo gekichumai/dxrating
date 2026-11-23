@@ -3,7 +3,7 @@ import { CircularProgress } from '@mui/material'
 import { createFileRoute } from '@tanstack/react-router'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { SecuritySection } from '@/components/global/preferences/SecuritySection'
-import { authClient } from '@/lib/auth-client'
+import { useSettledSession } from '@/hooks/useSettledSession'
 import { resolveSeoLocale } from '@/utils/seo'
 import { buildPageTitleMeta } from '@/utils/pageTitleSeo'
 import IconMdiDevices from '~icons/mdi/devices'
@@ -29,7 +29,9 @@ export const Route = createFileRoute('/account/security')({
 
 function AccountSecurityPage() {
   const locale = useLocale()
-  const { data: sessionData, isPending } = authClient.useSession()
+  // Pending only on the first load: a session refetch (such as after a failed passkey autofill) must not swap the
+  // sign-in form for the spinner and back, which would remount it
+  const { data: sessionData, isPending } = useSettledSession()
 
   // Signed in, SecuritySection brings its own page heading; otherwise this page names itself
   const pageHeading = (
