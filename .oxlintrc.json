@@ -96,6 +96,10 @@
                 "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
                 "importNames": ["viewerFromSession"],
                 "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              },
+              {
+                "regex": "^hono/cors$",
+                "message": "CORS comes from the HTTP surface: give a path its policy in CORS_GROUP_PATHS, or a policy its headers and methods in CORS_POLICIES (packages/api-contract/src/http-surface.ts), and apply it with the cors middleware of apps/backend/src/cors.ts."
               }
             ]
           }
