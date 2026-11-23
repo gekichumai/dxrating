@@ -10,7 +10,6 @@
 (* time Postgres gives started_at and finished_at) is a separate step.     *)
 (*                                                                         *)
 (* Each Bug_* constant puts one action back to the code before a past fix. *)
-(* ImportOrdering.cfg sets them all FALSE.                                 *)
 (***************************************************************************)
 EXTENDS Integers, Sequences
 
@@ -51,7 +50,7 @@ InitRecords ==
   {Absent, [present |-> TRUE, ach |-> 3, dx |-> FALSE, verification |-> "verified", source |-> "lxns", deletedAt |-> None]}
 
 VARIABLES
-  clock,       \* the database clock
+  clock,
   rec,         \* the score_records row of the chart
   saveRev,     \* score_saves.revision
   jobs,        \* score_import_jobs rows, plus where each job's transaction is
