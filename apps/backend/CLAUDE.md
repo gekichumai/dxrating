@@ -192,8 +192,10 @@ before the method was recorded (see below).
   a disabled feature stays a 404; the opt-in checks it after the opt-in phase. The web sends it through
   `privateApiClientFor(userId)`.
 - Credential hygiene (`src/lib/credential-hygiene.ts`, §7.2): SEGA IDs and passwords are never stored or logged. The
-  NET and LXNS routes get a scrubbing evlog logger; Sentry never attaches their bodies and scrubs every event,
-  breadcrumb and log (keys and the values of running NET requests); PostHog events are scrubbed the same way.
+  credential routes (`CREDENTIAL_ROUTES`: every contract procedure that takes a credential field or is marked
+  `credentials(...)`, plus the direct routes listed there) get a scrubbing evlog logger; Sentry never attaches their
+  bodies and scrubs every event, breadcrumb and log (keys and the values of running NET requests); PostHog events are
+  scrubbed the same way.
   `src/test/credential-hygiene.test.ts` drives failing imports through every NET route and greps every channel.
 - `changes`: `since=0` is a full pull; its later pages pass `mode=full` (never reset by the tombstone horizon); the
   last page's `nextSince` is the save's revision.

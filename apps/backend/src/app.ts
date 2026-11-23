@@ -61,7 +61,7 @@ import {
   MCP_SERVER_CARD_PATH,
 } from '@gekichumai/api-contract'
 import { cors } from './cors'
-import { credentialHygiene, holdCredentials } from './lib/credential-hygiene'
+import { credentialHygiene, holdCredentials, isCredentialPath } from './lib/credential-hygiene'
 import { netImportHandler } from './services/cloud-save/net-import-route'
 import { McpCatalogSource } from './services/application'
 import { clientKey, createRateLimiter, handleMcpRequest, MCP_RATE_LIMIT, rateLimited } from './services/mcp/http'
@@ -314,17 +314,8 @@ app.use(
   }) as unknown as MiddlewareHandler,
 )
 
-// Credential hygiene (design §7.2): the routes that carry a SEGA ID and password (or LXNS tokens) never log or report
-// them. Right after evlog, so their request logger is the scrubbing one.
-for (const path of [
-  '/functions/fetch-net-records/*',
-  '/api/v1/io/import/maimai-net',
-  '/api/v1/io/import/lxns/*',
-  CLOUD_SAVE_NET_IMPORT_ROUTE.honoPath,
-  '/api/v1/saves/:id/imports/lxns',
-]) {
-  app.use(path, credentialHygiene)
-}
+// Right after evlog, so the request logger of a credential route is the scrubbing one
+app.use('*', (c, next) => (isCredentialPath(c.req.path) ? credentialHygiene(c, next) : next()))
 
 // API usage accounting: classify each request by route template and caller,
 // attach the result to the request wide event, and add it to the per-minute
