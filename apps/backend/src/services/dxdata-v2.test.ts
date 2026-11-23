@@ -3,11 +3,12 @@ import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { fromV2Catalog, fromV2Community, toV2Catalog, toV2Community, type CatalogV1 } from '@gekichumai/dxdata/v2'
 import { Effect, Fiber } from 'effect'
+import { DXDATA_V2_PATH } from '@gekichumai/api-contract'
 import { Hono } from 'hono'
-import { cors } from 'hono/cors'
 import { describe, expect, it } from 'vitest'
-import { createDxdataEffect, DXDATA_CORS_OPTIONS } from './dxdata'
-import { createDxdataV2Store, DXDATA_V2_CACHE_TAG, DXDATA_V2_PATH } from './dxdata-v2'
+import { cors } from '../cors'
+import { createDxdataEffect } from './dxdata'
+import { createDxdataV2Store, DXDATA_V2_CACHE_TAG } from './dxdata-v2'
 
 const { tagGroups, tags, tagSongs, aliases, ...v1Catalog } = catalogSnapshot
 
@@ -118,7 +119,7 @@ describe('dxdata v2 endpoint', () => {
     })
     const handler = createDxdataEffect(store, (error) => void errors.push(error), undefined, DXDATA_V2_CACHE_TAG)
     const app = new Hono()
-    app.use('*', cors(DXDATA_CORS_OPTIONS))
+    app.use('*', cors)
     app.on(['GET', 'HEAD'], DXDATA_V2_PATH, (context) => Effect.runPromise(handler(context)))
     const publish = (next: { metadata?: typeof v1Metadata; body?: string }) => {
       metadata = next.metadata

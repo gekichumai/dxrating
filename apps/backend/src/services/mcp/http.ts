@@ -8,28 +8,8 @@ import type { McpCatalog } from './catalog'
 import { MCP_GUIDE_URL } from './listing'
 import { createMcpServer } from './server'
 
-export const MCP_PATH = '/mcp'
-
 /** The body of a request (413 past it): a tool call is a few hundred bytes */
 export const MCP_MAX_BODY_BYTES = 64 * 1024
-
-export const MCP_CORS_OPTIONS = {
-  // no credentials and no writes: any page may call it, as browser-based MCP clients do
-  origin: '*',
-  // Mcp-Method and Mcp-Name mirror the method and tool of 2026-07-28 requests, which must carry them
-  allowHeaders: [
-    'Content-Type',
-    'Accept',
-    'Mcp-Protocol-Version',
-    'Mcp-Method',
-    'Mcp-Name',
-    'Mcp-Session-Id',
-    'Last-Event-ID',
-  ],
-  allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-  exposeHeaders: ['Mcp-Session-Id', 'Mcp-Protocol-Version'],
-  maxAge: 86400,
-}
 
 const jsonRpcError = (status: number, code: number, message: string, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify({ jsonrpc: '2.0', error: { code, message }, id: null }), {

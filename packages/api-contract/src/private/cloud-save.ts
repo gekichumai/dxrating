@@ -17,6 +17,7 @@ import {
 import { oc as contractBuilder } from '@orpc/contract'
 import { openapi } from '@orpc/openapi'
 import { z } from 'zod'
+import type { ApiMethod } from '../http-surface.ts'
 
 /**
  * Cloud save contract (gekichumai/meta#17, design §5.1).
@@ -598,7 +599,7 @@ const oc = contractBuilder.errors({
 })
 const importErrors = { CONFLICT: { data: CloudSaveErrorDataSchemas.importInProgress } }
 
-const route = (method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: `/${string}`, summary: string) =>
+const route = (method: ApiMethod, path: `/${string}`, summary: string) =>
   openapi({ method, path, summary, tags: CLOUD_SAVE_ROUTE_TAGS })
 
 // --- Routes ---

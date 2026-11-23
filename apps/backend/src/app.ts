@@ -2,7 +2,6 @@ import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { createMiddleware } from 'hono/factory'
 import { routePath } from 'hono/route'
-import { cors } from 'hono/cors'
 import { etag, RETAINED_304_HEADERS } from 'hono/etag'
 import { z } from 'zod'
 import { Authentication } from './auth'
@@ -33,24 +32,13 @@ import { onError, ORPCError } from '@orpc/server'
 import { Sentry } from './lib/functions/sentry'
 import { reportProcedureError } from './orpc-error-reporting'
 import { Database } from './db/index'
-import {
-  compressCatalogBody,
-  createDxdataEffect,
-  createPostgresDxdataEffects,
-  DXDATA_CORS_OPTIONS,
-  DXDATA_PATH,
-} from './services/dxdata'
-import { createDxdataV2Store, DXDATA_V2_CACHE_TAG, DXDATA_V2_PATH } from './services/dxdata-v2'
-import {
-  createCommunityOverlayHandler,
-  DXDATA_V2_COMMUNITY_PATH,
-  readListsThrough,
-} from './services/dxdata-v2-community'
+import { compressCatalogBody, createDxdataEffect, createPostgresDxdataEffects } from './services/dxdata'
+import { createDxdataV2Store, DXDATA_V2_CACHE_TAG } from './services/dxdata-v2'
+import { createCommunityOverlayHandler, readListsThrough } from './services/dxdata-v2-community'
 import { addPublishedDxdataToOpenApi } from './services/dxdata-openapi'
 import { applyApiPolicyToOpenApi } from './services/api-policy'
 import { addPublicApiExamplesToOpenApi } from './services/openapi-examples'
 import {
-  API_CLIENT_HEADER,
   ApiUsage,
   classifyCaller,
   classifyUserAgent,
@@ -60,25 +48,26 @@ import {
 } from './services/api-usage'
 import { appContract } from './contract'
 import {
-  CLOUD_SAVE_EXPECTED_USER_HEADER,
+  API_CLIENT_HEADER,
+  ARCADE_VENUES_PATH,
   CLOUD_SAVE_NET_IMPORT_ROUTE,
+  CORS_GROUP_PATHS,
+  corsGroupFor,
+  DXDATA_PATH,
+  DXDATA_V2_COMMUNITY_PATH,
+  DXDATA_V2_PATH,
   isPublicSpecProcedure,
+  MCP_PATH,
+  MCP_SERVER_CARD_PATH,
 } from '@gekichumai/api-contract'
+import { cors } from './cors'
 import { credentialHygiene, holdCredentials } from './lib/credential-hygiene'
 import { netImportHandler } from './services/cloud-save/net-import-route'
 import { McpCatalogSource } from './services/application'
-import {
-  clientKey,
-  createRateLimiter,
-  handleMcpRequest,
-  MCP_CORS_OPTIONS,
-  MCP_PATH,
-  MCP_RATE_LIMIT,
-  rateLimited,
-} from './services/mcp/http'
+import { clientKey, createRateLimiter, handleMcpRequest, MCP_RATE_LIMIT, rateLimited } from './services/mcp/http'
 import { guideResponse, guideView, isMcpHost } from './services/mcp/guide'
 import { API_DOCS_CSP, API_DOCS_HTML, API_JSON_CSP, isJsonContentType } from './services/api-docs'
-import { MCP_SERVER_CARD_PATH, serverCardResponse } from './services/mcp/listing'
+import { serverCardResponse } from './services/mcp/listing'
 import { McpUsage, observeMcpRequest, rateLimitedTelemetry, reportMcpInternalError } from './services/mcp/telemetry'
 import { isPrefetchOrBot, McpAnalyticsService, mcpLogFields, sanitizeVia } from './services/mcp/analytics'
 import { clientAddress } from './services/mcp/client-key'
@@ -151,7 +140,6 @@ const isLargeCloudSaveUpload = (path: string) => /^\/api\/v1\/saves\/[^/]+\/(rep
 
 const API_CATALOG_PROFILE_URL = 'https://www.rfc-editor.org/info/rfc9727'
 const API_CATALOG_CONTENT_TYPE = `application/linkset+json; profile="${API_CATALOG_PROFILE_URL}"`
-const ARCADE_VENUES_PATH = '/api/v1/arcades/venues'
 const ARCADE_VENUES_BROWSER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=60, stale-if-error=86400'
 // Nothing purges the edge when venues change, so it revalidates every 5 minutes in the background with the ETag.
 // Longer than dxdata's 60s because each revalidation rebuilds and hashes the full body to compare ETags.
@@ -165,11 +153,6 @@ const ARCADE_VENUES_RETAINED_304_HEADERS = [
   'access-control-allow-origin',
   'access-control-expose-headers',
 ]
-const PUBLIC_STATIC_CATALOG_PATHS = new Set([ARCADE_VENUES_PATH, DXDATA_PATH, DXDATA_V2_PATH, DXDATA_V2_COMMUNITY_PATH])
-// The tag and alias lists are public data that the edge shares between every caller. The edge ignores
-// `Vary: Origin`, so a cached copy must not carry one caller's reflected origin: reads answer `*` without
-// credentials, like the catalog. Writes on the same paths (POST /aliases) keep the credentialed API CORS.
-const PUBLIC_LIST_PATHS = new Set(['/api/v1/tags', '/api/v1/aliases', '/api/v1/announcements'])
 const PUBLIC_LIST_CACHE_TAGS: Record<string, string> = {
   '/api/v1/tags': 'tags',
   '/api/v1/aliases': 'aliases',
@@ -188,13 +171,6 @@ const PUBLIC_LIST_RETAINED_304_HEADERS = [
   'access-control-allow-origin',
   'access-control-expose-headers',
 ]
-const isPublicListRead = (c: Context) => {
-  if (!PUBLIC_LIST_PATHS.has(c.req.path)) return false
-  if (c.req.method === 'GET' || c.req.method === 'HEAD') return true
-  if (c.req.method !== 'OPTIONS') return false
-  const requested = c.req.header('Access-Control-Request-Method')?.toUpperCase()
-  return requested === undefined || requested === 'GET' || requested === 'HEAD'
-}
 
 const getFirstHeaderValue = (value: string | undefined) => value?.split(',')[0]?.trim() || undefined
 
@@ -311,66 +287,10 @@ app.onError((err, c) => {
   return c.json({ error: 'Internal server error', requestId }, 500)
 })
 
-const apiCors = cors({
-  origin: (origin) => {
-    // Allow local development
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-      return origin
-    }
-
-    // Allow production domain and preview deployments
-    if (
-      origin === 'https://dxrating.net' ||
-      origin.endsWith('.dxrating.pages.dev') ||
-      origin.endsWith('.galvin.workers.dev')
-    ) {
-      return origin
-    }
-
-    return null
-  },
-  allowHeaders: [
-    'Content-Type',
-    'Authorization',
-    'sentry-trace',
-    'baggage',
-    'x-captcha-response',
-    API_CLIENT_HEADER,
-    CLOUD_SAVE_EXPECTED_USER_HEADER,
-  ],
-  // PATCH and DELETE: cloud save routes (rename and delete a save)
-  allowMethods: ['POST', 'GET', 'PATCH', 'DELETE', 'OPTIONS'],
-  exposeHeaders: ['Content-Length', 'X-DXRating-Request-ID'],
-  maxAge: 600,
-  credentials: true,
-})
-
-const publicStaticCatalogCors = cors(DXDATA_CORS_OPTIONS)
-const publicListCors = cors({
-  origin: '*',
-  // The web sends Sentry trace headers to the API (router.tsx tracePropagationTargets)
-  allowHeaders: ['Content-Type', 'If-None-Match', 'sentry-trace', 'baggage', API_CLIENT_HEADER],
-  allowMethods: ['GET', 'HEAD', 'OPTIONS'],
-  exposeHeaders: ['Content-Length', 'ETag', 'X-DXRating-Request-ID'],
-  maxAge: 86400,
-})
-const mcpCors = cors(MCP_CORS_OPTIONS)
-
 // While the server drains on shutdown, readiness (/health) fails and new requests are refused; in-flight ones finish.
 app.use('*', refuseWhileDraining)
 
-// Static catalog responses are credential-independent, allowing one public
-// representation per URL to be safely shared by browsers and the CDN. The MCP
-// server is read-only and takes no credentials, so any origin may call it.
-app.use('*', (c, next) =>
-  PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)
-    ? publicStaticCatalogCors(c, next)
-    : isPublicListRead(c)
-      ? publicListCors(c, next)
-      : c.req.path === MCP_PATH || c.req.path === MCP_SERVER_CARD_PATH
-        ? mcpCors(c, next)
-        : apiCors(c, next),
-)
+app.use('*', cors)
 
 // Request logging
 app.use(
@@ -454,7 +374,7 @@ app.use('*', (c, next) =>
       })
       const log = c.get('log')
       const requestId = (log?.getContext() as Record<string, unknown>)?.requestId as string | undefined
-      if (requestId && !PUBLIC_STATIC_CATALOG_PATHS.has(c.req.path)) {
+      if (requestId && corsGroupFor(c.req.path, c.req.method) !== 'catalog') {
         c.header('X-DXRating-Request-ID', requestId)
       }
     }),
@@ -899,7 +819,7 @@ const publicListCacheHeaders = createMiddleware(async (c, next) => {
   c.header('Cloudflare-CDN-Cache-Control', PUBLIC_LIST_CDN_CACHE_CONTROL)
   c.header('Cache-Tag', PUBLIC_LIST_CACHE_TAGS[c.req.path] ?? 'aliases')
 })
-for (const path of PUBLIC_LIST_PATHS) {
+for (const path of CORS_GROUP_PATHS.publicList) {
   app.on(['GET', 'HEAD'], path, publicListEtag, publicListCacheHeaders)
 }
 
