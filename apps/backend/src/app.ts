@@ -386,6 +386,10 @@ app.use(
       '/',
       '/.well-known/api-catalog',
       '/api/v1/monitoring/tunnel',
+      // Better Auth's mailed reset link carries its token in the path, and opening the link doesn't spend it: a
+      // logged path would let anyone who reads the logs reset the account. Setting the password (POST
+      // /api/auth/reset-password, token in the body) is still logged.
+      '/api/auth/reset-password/*',
     ],
   }) as unknown as MiddlewareHandler,
 )

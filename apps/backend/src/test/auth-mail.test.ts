@@ -1,3 +1,4 @@
+import { format } from 'node:util'
 import { Pool } from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -218,7 +219,12 @@ describe('password reset', () => {
     expect(link.pathname.startsWith('/api/auth/reset-password/')).toBe(true)
     expect(link.searchParams.get('callbackURL')).toBe('http://localhost:5173/ko/account/reset-password')
 
-    // Better Auth checks the token, then hands it to the web's page
+    // Better Auth checks the token, then hands it to the web's page. The request log never sees the token: opening
+    // the link doesn't spend it.
+    const logged: string[] = []
+    const spies = (['log', 'info', 'warn', 'error', 'debug'] as const).map((level) =>
+      vi.spyOn(console, level).mockImplementation((...args: unknown[]) => void logged.push(format(...args))),
+    )
     const landed = await fetch(link, { redirect: 'manual' })
     expect(landed.status).toBe(302)
     const page = new URL(landed.headers.get('location')!)
@@ -228,6 +234,10 @@ describe('password reset', () => {
 
     const reset = await auth('/reset-password', { body: { token, newPassword: 'a-brand-new-password' } })
     expect(reset.status).toBe(200)
+    for (const spy of spies) spy.mockRestore()
+    // the check is meaningful: the request log is on, and logged setting the password
+    expect(logged.some((line) => line.includes('/api/auth/reset-password'))).toBe(true)
+    expect(logged.filter((line) => line.includes(token))).toEqual([])
     expect(await sessionUser(cookie)).toBeNull()
     expect(await sessionUser(otherDevice)).toBeNull()
     expect((await signIn('reset@example.com', 'password123')).status).toBe(401)
