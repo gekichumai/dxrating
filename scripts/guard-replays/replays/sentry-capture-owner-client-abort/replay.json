@@ -4,6 +4,6 @@
     "#626 5b8d815f (DXRATING-BACKEND-1Z: the oRPC interceptor had no client-abort check; 122 events on announcements.list)"
   ],
   "guard": "reportFailure drops client aborts; orpc-error-reporting.test.ts aborts a running procedure through the production beforeSend",
-  "check": "pnpm --filter @gekichumai/backend exec vitest run src/test/orpc-error-reporting.test.ts",
+  "check": "pnpm --filter @gekichumai/oneshot-renderer build >/dev/null && pnpm --filter @gekichumai/backend exec vitest run src/test/orpc-error-reporting.test.ts",
   "expect": "does not capture a request the client aborted mid-flight"
 }

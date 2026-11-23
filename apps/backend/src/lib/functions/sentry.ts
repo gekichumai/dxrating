@@ -13,7 +13,6 @@ import {
   scrubSentryLog,
 } from '../credential-hygiene'
 
-/** Whether a failure reaches Sentry, and the tags that explain it. */
 export type FailureClass = { readonly report: false } | { readonly report: true; readonly tags: Record<string, string> }
 
 const EXPECTED_NET_CODES: ReadonlySet<NetImportErrorCode> = new Set<NetImportErrorCode>([

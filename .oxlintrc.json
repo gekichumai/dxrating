@@ -61,6 +61,12 @@
         "no-restricted-imports": [
           "error",
           {
+            "paths": [
+              {
+                "name": "@sentry/node",
+                "message": "Import Sentry from lib/functions/sentry and report failures with reportFailure(error): it alone decides which failures reach Sentry."
+              }
+            ],
             "patterns": [
               {
                 "regex": "^\\.{1,2}/.*\\.js$",
@@ -83,7 +89,27 @@
     {
       "files": ["apps/backend/src/lib/functions/sentry.ts", "apps/backend/src/**/*.test.ts"],
       "rules": {
-        "no-restricted-properties": "off"
+        "no-restricted-properties": "off",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.{1,2}/.*\\.js$",
+                "message": "Use extensionless relative imports in TypeScript source."
+              },
+              {
+                "regex": "(^|/)lxns(/index)?(\\.ts)?$",
+                "message": "Use services/lxns/viewer: its functions demand a ViewerIs proof (gdp-ts)."
+              },
+              {
+                "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
+                "importNames": ["viewerFromSession"],
+                "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -100,6 +126,12 @@
         "no-restricted-imports": [
           "error",
           {
+            "paths": [
+              {
+                "name": "@sentry/node",
+                "message": "Import Sentry from lib/functions/sentry and report failures with reportFailure(error): it alone decides which failures reach Sentry."
+              }
+            ],
             "patterns": [
               {
                 "regex": "^\\.{1,2}/.*\\.js$",
@@ -121,6 +153,12 @@
         "no-restricted-imports": [
           "error",
           {
+            "paths": [
+              {
+                "name": "@sentry/node",
+                "message": "Import Sentry from lib/functions/sentry and report failures with reportFailure(error): it alone decides which failures reach Sentry."
+              }
+            ],
             "patterns": [
               {
                 "regex": "^\\.{1,2}/.*\\.js$",

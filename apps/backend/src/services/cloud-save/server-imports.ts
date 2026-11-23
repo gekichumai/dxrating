@@ -7,11 +7,10 @@ import {
   type SongCatalog,
   type SourceAccountKind,
 } from '@gekichumai/maimai-domain'
-import * as Sentry from '@sentry/node'
 import { Cause, Clock, Data, Duration, Effect, Exit } from 'effect'
 import { log } from 'evlog'
 import type { Database } from '../../db/index'
-import { reportFailure } from '../../lib/functions/sentry'
+import { reportFailure, Sentry } from '../../lib/functions/sentry'
 import { CloudSaveBadRequest, CloudSaveBusy, CloudSaveNotFound } from './errors'
 import { importCatalog } from './import-catalog'
 import {
