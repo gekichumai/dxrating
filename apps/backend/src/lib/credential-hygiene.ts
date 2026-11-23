@@ -93,8 +93,7 @@ export interface CredentialRoute {
 export const DIRECT_CREDENTIAL_ROUTES: ReadonlyArray<CredentialRoute> = [
   { template: '/functions/fetch-net-records/*', kind: 'sega' },
   { template: CLOUD_SAVE_NET_IMPORT_ROUTE.path, kind: 'sega' },
-  // LXNS: OAuth code and state, and the stored OAuth tokens its handlers use; the whole family, including routes
-  // added later without a `credentials` mark (the OAuth callback is a direct route)
+  // every LXNS route: the direct OAuth callback, and routes added without a `credentials` mark
   { template: '/api/v1/io/import/lxns/*', kind: 'secret' },
   { template: '/api/auth/*', kind: 'secret' },
 ]
@@ -119,7 +118,6 @@ const propertyNames = (jsonSchema: unknown, names: string[] = []): string[] => {
   return names
 }
 
-/** The procedures of `router` whose request carries credentials: marked with `credentials`, or taking a credential field */
 export function credentialRoutesOf(router: unknown, path: string[] = []): CredentialRoute[] {
   if (typeof router !== 'object' || router === null) return []
   if (!(router instanceof ProcedureContract)) {

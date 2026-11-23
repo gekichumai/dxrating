@@ -31,7 +31,7 @@ describe('credential hygiene', () => {
       '/api/v1/io/import/lxns/start',
       '/api/v1/io/import/lxns/complete',
       '/api/v1/io/import/lxns/oauth_callback',
-      // the whole LXNS family, as before the routes were derived: a new LXNS route is one without a mark
+      // LXNS routes added without a `credentials` mark
       '/api/v1/io/import/lxns',
       '/api/v1/io/import/lxns/personal',
       '/api/v1/saves/dsav_x/imports/lxns',
