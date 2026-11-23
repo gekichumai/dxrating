@@ -5,11 +5,12 @@ import { LocaleProvider, useSetLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import { LoginForm } from '../LoginForm'
 
-const { passkeySignIn, emailSignIn, socialSignIn, emailSignUp } = vi.hoisted(() => ({
+const { passkeySignIn, emailSignIn, socialSignIn, emailSignUp, addPasskey } = vi.hoisted(() => ({
   passkeySignIn: vi.fn(),
   emailSignIn: vi.fn(),
   socialSignIn: vi.fn(),
   emailSignUp: vi.fn(),
+  addPasskey: vi.fn(),
 }))
 
 vi.mock('@/lib/auth-client', () => ({
@@ -22,6 +23,9 @@ vi.mock('@/lib/auth-client', () => ({
     },
     signUp: {
       email: emailSignUp,
+    },
+    passkey: {
+      addPasskey,
     },
   },
 }))
@@ -39,10 +43,12 @@ vi.mock('web-haptics/react', () => ({
   }),
 }))
 
+// The committed .env sets a site key; the widget passes its check as soon as it mounts
 vi.mock('@marsidev/react-turnstile', async () => {
-  const { forwardRef } = await import('react')
+  const { forwardRef, useEffect } = await import('react')
   return {
-    Turnstile: forwardRef(function Turnstile() {
+    Turnstile: forwardRef(function Turnstile({ onSuccess }: { onSuccess: (token: string) => void }, _ref) {
+      useEffect(() => onSuccess('test-token'), [onSuccess])
       return <div data-testid="turnstile" />
     }),
   }
@@ -55,31 +61,82 @@ describe('LoginForm', () => {
     passkeySignIn.mockResolvedValue({ error: null })
   })
 
-  it('uses browser-native sign-in semantics and reveals the password on request', () => {
+  /** Enters an email address on the first step and moves on to the second */
+  const continueWithEmail = async (email = 'demo@example.com') => {
+    fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: email } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with email' }))
+    await screen.findByRole('button', { name: 'Back to all sign-in options' })
+  }
+
+  it('asks for the email address alone first, with passkey autofill on it', () => {
     render(<LoginForm />)
 
     const form = screen.getByRole('form', { name: 'Sign in' })
     const email = screen.getByLabelText(/^Email/)
-    const password = screen.getByLabelText(/^Password/)
-    const submit = screen.getByRole('button', { name: 'Continue' })
+    const submit = screen.getByRole('button', { name: 'Continue with email' })
 
     expect(form.tagName).toBe('FORM')
     expect(email.getAttribute('id')).toBe('auth-sign-in-email')
     expect(email.getAttribute('name')).toBe('email')
     expect(email.getAttribute('type')).toBe('email')
     expect(email.getAttribute('autocomplete')).toBe('username webauthn')
+    expect(email.getAttribute('autocapitalize')).toBe('none')
     expect(email.hasAttribute('required')).toBe(true)
+    expect(submit.getAttribute('type')).toBe('submit')
+    expect(screen.queryByLabelText(/^Password/)).toBeNull()
+    // A passkey is the way in a new visitor is offered first
+    expect(screen.getByRole('button', { name: 'Sign in with passkey' }).className).toContain('contained')
+  })
+
+  it('asks for the password on the second step, with the address kept for password managers', async () => {
+    render(<LoginForm />)
+    await continueWithEmail(' demo@example.com ')
+
+    const password = screen.getByLabelText(/^Password/)
     expect(password.getAttribute('id')).toBe('auth-sign-in-password')
     expect(password.getAttribute('name')).toBe('password')
     expect(password.getAttribute('type')).toBe('password')
-    expect(password.getAttribute('autocomplete')).toBe('current-password webauthn')
+    expect(password.getAttribute('autocomplete')).toBe('current-password')
     expect(password.hasAttribute('required')).toBe(true)
-    expect(submit.getAttribute('type')).toBe('submit')
+    // The address stays in the form, hidden, for password managers and passkey autofill
+    const username = document.querySelector<HTMLInputElement>('input[name="email"]')!
+    expect(username.getAttribute('autocomplete')).toBe('username webauthn')
+    expect(username.closest('[hidden]')).not.toBeNull()
+    expect(screen.getByText('demo@example.com')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Show Password' }))
-
     expect(password.getAttribute('type')).toBe('text')
     expect(screen.getByRole('button', { name: 'Hide Password' }).getAttribute('aria-pressed')).toBe('true')
+
+    emailSignIn.mockResolvedValue({ error: null })
+    fireEvent.change(password, { target: { value: 'demo-password' } })
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign in' }))
+    await waitFor(() =>
+      expect(emailSignIn).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'demo@example.com', password: 'demo-password' }),
+      ),
+    )
+  })
+
+  it('goes back to every sign-in option with the address kept', async () => {
+    render(<LoginForm />)
+    await continueWithEmail()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to all sign-in options' }))
+
+    const email = screen.getByLabelText(/^Email/) as HTMLInputElement
+    expect(email.closest('[hidden]')).toBeNull()
+    expect(email.value).toBe('demo@example.com')
+    expect(screen.queryByLabelText(/^Password/)).toBeNull()
+  })
+
+  it('keeps the first step when the address is invalid', async () => {
+    render(<LoginForm />)
+    fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: 'not-an-email' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with email' }))
+
+    await screen.findByText('Enter an email address, such as name@example.com')
+    expect(screen.queryByLabelText(/^Password/)).toBeNull()
   })
 
   it('shows a linked agreement notice without gating social login', async () => {
@@ -101,14 +158,87 @@ describe('LoginForm', () => {
 
     expect(screen.getAllByRole('form')).toHaveLength(1)
     expect(screen.getAllByLabelText(/^Email/)).toHaveLength(1)
-    expect(screen.getAllByLabelText(/^Password/)).toHaveLength(1)
-    expect(screen.getAllByTestId('turnstile')).toHaveLength(1)
     expect(screen.queryByRole('button', { name: 'Sign in with passkey' })).toBeNull()
     expect(screen.getByLabelText(/^Email/).getAttribute('id')).toBe('auth-sign-up-email')
     expect(screen.getByLabelText(/^Email/).getAttribute('autocomplete')).toBe('email')
-    expect(screen.getByLabelText(/^Password/).getAttribute('id')).toBe('auth-sign-up-password')
-    expect(screen.getByLabelText(/^Password/).getAttribute('autocomplete')).toBe('new-password')
-    expect(screen.getByRole('button', { name: 'Create account' }).getAttribute('type')).toBe('submit')
+    expect(screen.getByRole('button', { name: 'Continue with email' }).getAttribute('type')).toBe('submit')
+  })
+
+  it('creates a new account with a passkey, signed in, without a password', async () => {
+    vi.stubGlobal('PublicKeyCredential', function PublicKeyCredential() {})
+    addPasskey.mockResolvedValue({ data: {}, error: null })
+    const onSuccess = vi.fn()
+    render(<LoginForm onSuccess={onSuccess} />)
+    fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+    await continueWithEmail('New@example.com ')
+
+    expect(screen.queryByLabelText(/^Password/)).toBeNull()
+    expect(screen.getAllByTestId('turnstile')).toHaveLength(1)
+    fireEvent.click(await screen.findByRole('button', { name: 'Create a passkey' }))
+
+    await waitFor(() =>
+      expect(addPasskey).toHaveBeenCalledWith(
+        expect.objectContaining({ context: 'New@example.com', createSession: true }),
+      ),
+    )
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledOnce())
+    expect(toast.success).toHaveBeenCalledWith("Account created. You're signed in.")
+    expect(emailSignUp).not.toHaveBeenCalled()
+  })
+
+  it('says nothing when the visitor closes the passkey prompt', async () => {
+    vi.stubGlobal('PublicKeyCredential', function PublicKeyCredential() {})
+    addPasskey.mockResolvedValue({ data: null, error: { code: 'ERROR_CEREMONY_ABORTED', message: 'cancelled' } })
+    render(<LoginForm />)
+    fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+    await continueWithEmail()
+    fireEvent.click(await screen.findByRole('button', { name: 'Create a passkey' }))
+
+    await waitFor(() => expect(addPasskey).toHaveBeenCalled())
+    // Settled: the form is usable again
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Back to all sign-in options' }).hasAttribute('disabled')).toBe(false),
+    )
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('creates a new account with a password when the visitor prefers one, and signs them in', async () => {
+    vi.stubGlobal('PublicKeyCredential', function PublicKeyCredential() {})
+    emailSignUp.mockResolvedValue({ error: null })
+    const onSuccess = vi.fn()
+    render(<LoginForm onSuccess={onSuccess} />)
+    fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+    await continueWithEmail()
+    fireEvent.click(screen.getByRole('button', { name: 'Use a password instead' }))
+
+    const password = screen.getByLabelText(/^Password/)
+    expect(password.getAttribute('id')).toBe('auth-sign-up-password')
+    expect(password.getAttribute('autocomplete')).toBe('new-password')
+    expect(password.getAttribute('passwordrules')).toBe('minlength: 8;')
+    expect(document.querySelector('input[name="email"]')!.getAttribute('autocomplete')).toBe('email')
+    // The rule is shown before it's broken
+    expect(screen.getByText('At least 8 characters')).toBeTruthy()
+
+    fireEvent.change(password, { target: { value: 'demo-password' } })
+    fireEvent.click(await screen.findByRole('button', { name: 'Create account' }))
+
+    await waitFor(() =>
+      expect(emailSignUp).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'demo@example.com', password: 'demo-password', name: 'demo' }),
+      ),
+    )
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledOnce())
+    expect(addPasskey).not.toHaveBeenCalledWith(expect.objectContaining({ context: expect.anything() }))
+  })
+
+  it('asks for a password straight away in a browser without passkeys', async () => {
+    vi.stubGlobal('PublicKeyCredential', undefined)
+    render(<LoginForm />)
+    fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+    await continueWithEmail()
+
+    expect(screen.getByLabelText(/^Password/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Use a passkey instead' })).toBeNull()
   })
 
   it('starts conditional passkey autofill when the login form opens', async () => {
@@ -145,7 +275,7 @@ describe('LoginForm', () => {
     await waitFor(() => expect(passkeySignIn).toHaveBeenCalledWith({ autoFill: true }))
 
     fireEvent.click(screen.getByRole('button', { name: 'switch' }))
-    await screen.findByRole('button', { name: m.auth_form_continue({}, { locale: 'ja' }) })
+    await screen.findByRole('button', { name: m.auth_form_continueWithEmail({}, { locale: 'ja' }) })
     finish({ error: null })
 
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith(m.auth_login_toastSuccess({}, { locale: 'ja' })))
