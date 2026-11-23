@@ -1,0 +1,13 @@
+diff --git a/formal/session-ownership/SessionOwnership.cfg b/formal/session-ownership/SessionOwnership.cfg
+index 35cae459..d3665e48 100644
+--- a/formal/session-ownership/SessionOwnership.cfg
++++ b/formal/session-ownership/SessionOwnership.cfg
+@@ -5,7 +5,7 @@ CONSTANTS
+   MaxDeletes = 2
+   Bug_0d2a2e32 = FALSE
+   Bug_945ce071 = FALSE
+-  Bug_61f5edfe = FALSE
++  Bug_61f5edfe = TRUE
+   Bug_cc07485f = FALSE
+   Finding_ListSavesUnbound = FALSE
+   Finding_ListClearsAnySave = FALSE

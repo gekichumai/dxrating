@@ -47,7 +47,7 @@ const os = implement(appContract).$context<ApiContext>()
 /** Write requests one user may have in flight across the cloud save write routes (§7.1, §11.4) */
 export const CLOUD_SAVE_WRITE_CONCURRENCY = 2
 const SAVE_BUSY_RETRY_AFTER_SECONDS = 1
-const cloudSave = os.cloudSave
+const cloudSave = os.cloudSave.use(requireSession).use(requireFeature('cloud_save')).use(requireExpectedUser)
 
 /** Maps the cloud save failures to the contract's errors (design §5.1); other errors pass through */
 type CloudSaveFailure =
@@ -88,32 +88,18 @@ export function toCloudSaveApiError<E>(error: E): Exclude<E, CloudSaveFailure> |
 
 const apiErrors = <A, E, R>(effect: Effect.Effect<A, E, R>) => effect.pipe(Effect.mapError(toCloudSaveApiError))
 
-// Every route: session -> cloud_save flag (404 when off) -> per-user rate limit (§5.1, §11.4)
-const session = requireSession
-const feature = requireFeature('cloud_save')
 const limit = (name: keyof typeof cloudSaveRateLimits) => rateLimit(cloudSaveRateLimits[name])
 // Write routes also run at most CLOUD_SAVE_WRITE_CONCURRENCY at a time per user (a waiting writer holds a connection)
 const writes = writeConcurrency(CLOUD_SAVE_WRITE_CONCURRENCY)
-/** Writes must name the account they are for; reads are checked when they do (§10) */
-const bound = requireExpectedUser(true)
-const boundIfSent = requireExpectedUser(false)
 
 const savesHandler = {
-  list: cloudSave.saves.list
-    .use(session)
-    .use(feature)
-    .use(boundIfSent)
-    .use(limit('default'))
-    .handler(
-      handlerGen(function* ({ context }) {
-        const database = yield* Database
-        return { saves: yield* listSaves(database, context.user.id) }
-      }),
-    ),
+  list: cloudSave.saves.list.use(limit('default')).handler(
+    handlerGen(function* ({ context }) {
+      const database = yield* Database
+      return { saves: yield* listSaves(database, context.user.id) }
+    }),
+  ),
   create: cloudSave.saves.create
-    .use(session)
-    .use(feature)
-    .use(bound)
     .use(limit('createSave'))
     .use(writes)
     .handler(
@@ -123,9 +109,6 @@ const savesHandler = {
       }),
     ),
   update: cloudSave.saves.update
-    .use(session)
-    .use(feature)
-    .use(bound)
     .use(limit('default'))
     .use(writes)
     .handler(
@@ -137,9 +120,6 @@ const savesHandler = {
       }),
     ),
   delete: cloudSave.saves.delete
-    .use(session)
-    .use(feature)
-    .use(bound)
     .use(limit('default'))
     .use(writes)
     .handler(
@@ -151,21 +131,13 @@ const savesHandler = {
 }
 
 const recordsHandler = {
-  changes: cloudSave.records.changes
-    .use(session)
-    .use(feature)
-    .use(boundIfSent)
-    .use(limit('changes'))
-    .handler(
-      handlerGen(function* ({ context, input }) {
-        const database = yield* Database
-        return yield* apiErrors(pullChanges(database, context.user.id, input.id, input.since, input.limit, input.mode))
-      }),
-    ),
+  changes: cloudSave.records.changes.use(limit('changes')).handler(
+    handlerGen(function* ({ context, input }) {
+      const database = yield* Database
+      return yield* apiErrors(pullChanges(database, context.user.id, input.id, input.since, input.limit, input.mode))
+    }),
+  ),
   mutate: cloudSave.records.mutate
-    .use(session)
-    .use(feature)
-    .use(bound)
     .use(limit('mutations'))
     .use(rateLimit(cloudSaveRateLimits.mutationItems, (input: { mutations: unknown[] }) => input.mutations.length))
     .use(writes)
@@ -200,21 +172,13 @@ const recordsHandler = {
         return result
       }),
     ),
-  events: cloudSave.records.events
-    .use(session)
-    .use(feature)
-    .use(boundIfSent)
-    .use(limit('default'))
-    .handler(
-      handlerGen(function* ({ context, input }) {
-        const database = yield* Database
-        return yield* apiErrors(listRecordEvents(database, context.user.id, input.id, input.sheetId))
-      }),
-    ),
+  events: cloudSave.records.events.use(limit('default')).handler(
+    handlerGen(function* ({ context, input }) {
+      const database = yield* Database
+      return yield* apiErrors(listRecordEvents(database, context.user.id, input.id, input.sheetId))
+    }),
+  ),
   replace: cloudSave.records.replace
-    .use(session)
-    .use(feature)
-    .use(bound)
     .use(limit('replace'))
     .use(writes)
     .handler(
@@ -280,9 +244,6 @@ const serverImport = <R>(
 
 const importsHandler = {
   client: cloudSave.imports.client
-    .use(session)
-    .use(feature)
-    .use(bound)
     .use(limit('clientImports'))
     .use(writes)
     .handler(
@@ -323,10 +284,7 @@ const importsHandler = {
       }),
     ),
   lxns: cloudSave.imports.lxns
-    .use(session)
-    .use(feature)
     .use(serverImports)
-    .use(bound)
     .use(limit('serverImports'))
     .use(serverImportSlot)
     .handler(
@@ -343,10 +301,7 @@ const importsHandler = {
       }),
     ),
   divingFish: cloudSave.imports.divingFish
-    .use(session)
-    .use(feature)
     .use(serverImports)
-    .use(bound)
     .use(limit('serverImports'))
     .use(serverImportSlot)
     .handler(
@@ -355,36 +310,23 @@ const importsHandler = {
         return yield* serverImport(context, input, 'diving-fish', fetchDivingFishImport(query))
       }),
     ),
-  get: cloudSave.imports.get
-    .use(session)
-    .use(feature)
-    .use(boundIfSent)
-    .use(limit('default'))
-    .handler(
-      handlerGen(function* ({ context, input }) {
-        const database = yield* Database
-        return yield* apiErrors(getImportJob(database, context.user.id, input.jobId))
-      }),
-    ),
-  list: cloudSave.imports.list
-    .use(session)
-    .use(feature)
-    .use(boundIfSent)
-    .use(limit('default'))
-    .handler(
-      handlerGen(function* ({ context, input }) {
-        const database = yield* Database
-        yield* apiErrors(findSave(database, context.user.id, input.id))
-        return yield* listImportJobs(database, context.user.id, input.id, input.limit)
-      }),
-    ),
+  get: cloudSave.imports.get.use(limit('default')).handler(
+    handlerGen(function* ({ context, input }) {
+      const database = yield* Database
+      return yield* apiErrors(getImportJob(database, context.user.id, input.jobId))
+    }),
+  ),
+  list: cloudSave.imports.list.use(limit('default')).handler(
+    handlerGen(function* ({ context, input }) {
+      const database = yield* Database
+      yield* apiErrors(findSave(database, context.user.id, input.id))
+      return yield* listImportJobs(database, context.user.id, input.id, input.limit)
+    }),
+  ),
 }
 
 const snapshotsHandler = {
   create: cloudSave.snapshots.create
-    .use(session)
-    .use(feature)
-    .use(bound)
     .use(limit('default'))
     .use(writes)
     .handler(
@@ -394,41 +336,32 @@ const snapshotsHandler = {
         return yield* apiErrors(createSnapshot(database, context.user.id, id, snapshot))
       }),
     ),
-  list: cloudSave.snapshots.list
-    .use(session)
-    .use(feature)
-    .use(boundIfSent)
-    .use(limit('default'))
-    .handler(
-      handlerGen(function* ({ context, input }) {
-        const database = yield* Database
-        return yield* apiErrors(listSnapshots(database, context.user.id, input.id, input.limit))
-      }),
-    ),
+  list: cloudSave.snapshots.list.use(limit('default')).handler(
+    handlerGen(function* ({ context, input }) {
+      const database = yield* Database
+      return yield* apiErrors(listSnapshots(database, context.user.id, input.id, input.limit))
+    }),
+  ),
 }
 
 /**
  * `GET /me/export` is served as a stream by a direct Hono route in `app.ts` (registered ahead of the oRPC handler);
  * this procedure builds the same document in memory for in-process callers.
  */
-const exportHandler = cloudSave.export
-  .use(session)
-  .use(feature)
-  .use(limit('export'))
-  .handler(
-    handlerGen(function* ({ context }) {
-      const database = yield* Database
-      const exportedAt = new Date(yield* Clock.currentTimeMillis)
-      const parts = yield* Effect.promise(async () => {
-        const chunks: string[] = []
-        for await (const chunk of exportChunks(Effect.runPromise, database, context.user.id, exportedAt)) {
-          chunks.push(chunk)
-        }
-        return chunks
-      })
-      return { headers: exportHeaders(exportedAt), body: new Blob(parts, { type: 'application/json' }) }
-    }),
-  )
+const exportHandler = cloudSave.export.use(limit('export')).handler(
+  handlerGen(function* ({ context }) {
+    const database = yield* Database
+    const exportedAt = new Date(yield* Clock.currentTimeMillis)
+    const parts = yield* Effect.promise(async () => {
+      const chunks: string[] = []
+      for await (const chunk of exportChunks(Effect.runPromise, database, context.user.id, exportedAt)) {
+        chunks.push(chunk)
+      }
+      return chunks
+    })
+    return { headers: exportHeaders(exportedAt), body: new Blob(parts, { type: 'application/json' }) }
+  }),
+)
 
 export const cloudSaveHandler = {
   saves: savesHandler,

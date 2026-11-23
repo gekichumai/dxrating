@@ -1,0 +1,8 @@
+{
+  "mistake": "A repository the user switched away from answers 404 late, and its onStopped clears the stored selection that now names another save.",
+  "history": ["#438 cc07485f (review 4496994413: a reload opened the local save instead of the save just chosen)"],
+  "guard": "formal/session-ownership model, invariant SelectionClearedOnlyWhenGone",
+  "check": "formal/tlc.sh formal/session-ownership/SessionOwnership.tla",
+  "expect": "Invariant SelectionClearedOnlyWhenGone is violated",
+  "needs": ["tlc"]
+}

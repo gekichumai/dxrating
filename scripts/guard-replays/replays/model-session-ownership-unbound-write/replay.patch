@@ -1,0 +1,15 @@
+diff --git a/apps/backend/src/cloud-save-router.ts b/apps/backend/src/cloud-save-router.ts
+index a2a72742..758b1036 100644
+--- a/apps/backend/src/cloud-save-router.ts
++++ b/apps/backend/src/cloud-save-router.ts
+@@ -99,7 +99,9 @@ const savesHandler = {
+       return { saves: yield* listSaves(database, context.user.id) }
+     }),
+   ),
+-  create: cloudSave.saves.create
++  create: os.cloudSave.saves.create
++    .use(requireSession)
++    .use(requireFeature('cloud_save'))
+     .use(limit('createSave'))
+     .use(writes)
+     .handler(
