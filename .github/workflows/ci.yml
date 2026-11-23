@@ -20,7 +20,7 @@ permissions:
 jobs:
   gate:
     name: Gate
-    runs-on: boat
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout
