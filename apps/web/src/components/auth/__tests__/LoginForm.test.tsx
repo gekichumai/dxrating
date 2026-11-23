@@ -39,6 +39,9 @@ vi.mock('@/lib/auth-client', () => ({
   },
 }))
 
+const { cancelCeremony } = vi.hoisted(() => ({ cancelCeremony: vi.fn() }))
+vi.mock('@simplewebauthn/browser', () => ({ WebAuthnAbortService: { cancelCeremony } }))
+
 vi.mock('react-hot-toast', () => ({
   default: {
     error: vi.fn(),
@@ -444,6 +447,19 @@ describe('LoginForm', () => {
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith(m.auth_login_toastSuccess({}, { locale: 'ja' })))
     // Switching the language must not start another autofill request
     expect(passkeySignIn).toHaveBeenCalledOnce()
+  })
+
+  it('cancels the pending autofill request when the form switches to sign-up', async () => {
+    vi.stubGlobal('PublicKeyCredential', { isConditionalMediationAvailable: vi.fn().mockResolvedValue(true) })
+    passkeySignIn.mockReturnValue(new Promise(() => {}))
+
+    render(<LoginForm />)
+    await waitFor(() => expect(passkeySignIn).toHaveBeenCalledWith({ autoFill: true }))
+    expect(cancelCeremony).not.toHaveBeenCalled()
+
+    // Left pending, the request surfaced as a "Use a saved passkey" dialog when the sign-up form was submitted
+    fireEvent.click(screen.getByRole('button', { name: "Don't have an account? Create one" }))
+    expect(cancelCeremony).toHaveBeenCalledOnce()
   })
 
   it('keeps explicit passkey sign-in as a fallback', async () => {

@@ -1,4 +1,5 @@
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
+import { WebAuthnAbortService } from '@simplewebauthn/browser'
 import { useResolvedTheme } from '@/utils/useResolvedTheme'
 import { Alert, Button, Chip, CircularProgress, Divider, TextField, useMediaQuery } from '@mui/material'
 import clsx from 'clsx'
@@ -731,6 +732,11 @@ function ConditionalPasskey({ onSuccess }: { onSuccess?: () => void }) {
     void signInWithConditionalPasskey().catch(() => {})
     return () => {
       active = false
+      // Ignoring the result isn't enough: the request itself stays pending in the browser. Switching to sign-up left it
+      // there, and on the next form submission Chrome (or a password manager) raised it as the full "Use a saved
+      // passkey" dialog, on top of the sign-up's own result. Every ceremony goes through simplewebauthn, so this
+      // cancels the autofill request, or nothing when none is pending.
+      WebAuthnAbortService.cancelCeremony()
     }
   })
 
