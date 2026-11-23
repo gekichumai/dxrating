@@ -1,0 +1,9 @@
+{
+  "mistake": "The sign-in form's passkey autofill request was only ignored, not cancelled, when the form switched to sign-up, so it stayed pending in the browser and surfaced as a full \"Use a saved passkey\" dialog when the sign-up form was submitted.",
+  "history": [
+    "Owner report after meta#81/meta#80 shipped: a sign-up with an existing address showed the passkey dialog over the error"
+  ],
+  "guard": "apps/web/src/components/auth/__tests__/LoginForm.test.tsx checks the autofill request is cancelled when the form switches to sign-up",
+  "check": "pnpm --filter @gekichumai/dxrating-web exec vitest run src/components/auth/__tests__/LoginForm.test.tsx",
+  "expect": "cancels the pending autofill request when the form switches to sign-up"
+}
