@@ -411,7 +411,7 @@
   "auth_form_continueWithEmail": "使用電子郵件繼續",
   "auth_form_back": "返回選擇登錄方式",
   "auth_signUp_passkey_create": "建立通行金鑰",
-  "auth_signUp_passkey_description": "使用指紋、臉孔或螢幕鎖定登錄。無需記住密碼，也不會洩漏密碼。",
+  "auth_signUp_passkey_description": "使用指紋、臉孔或螢幕鎖定即可，無需密碼。",
   "auth_signUp_passkey_usePassword": "改用密碼",
   "auth_signUp_passkey_usePasskey": "改用通行金鑰",
   "auth_signUp_passkey_error": "無法建立通行金鑰。請重試，或改用密碼。",

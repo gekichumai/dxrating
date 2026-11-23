@@ -411,7 +411,7 @@
   "auth_form_continueWithEmail": "Lanjutkan dengan email",
   "auth_form_back": "Kembali ke semua cara masuk",
   "auth_signUp_passkey_create": "Buat passkey",
-  "auth_signUp_passkey_description": "Masuk dengan sidik jari, wajah, atau kunci layar. Tidak ada kata sandi yang perlu diingat atau bisa bocor.",
+  "auth_signUp_passkey_description": "Pakai sidik jari, wajah, atau kunci layar. Tanpa kata sandi.",
   "auth_signUp_passkey_usePassword": "Pakai kata sandi saja",
   "auth_signUp_passkey_usePasskey": "Pakai passkey saja",
   "auth_signUp_passkey_error": "Gagal membuat passkey. Coba lagi, atau pakai kata sandi.",

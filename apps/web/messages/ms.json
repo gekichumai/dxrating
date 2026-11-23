@@ -411,7 +411,7 @@
   "auth_form_continueWithEmail": "Teruskan dengan e-mel",
   "auth_form_back": "Kembali ke semua cara log masuk",
   "auth_signUp_passkey_create": "Cipta kunci laluan",
-  "auth_signUp_passkey_description": "Log masuk dengan cap jari, wajah atau kunci skrin. Tiada kata laluan untuk diingati atau dibocorkan.",
+  "auth_signUp_passkey_description": "Guna cap jari, wajah atau kunci skrin. Tiada kata laluan diperlukan.",
   "auth_signUp_passkey_usePassword": "Guna kata laluan sebaliknya",
   "auth_signUp_passkey_usePasskey": "Guna kunci laluan sebaliknya",
   "auth_signUp_passkey_error": "Tidak dapat mencipta kunci laluan. Cuba lagi, atau guna kata laluan.",
