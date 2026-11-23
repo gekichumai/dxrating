@@ -1,0 +1,10 @@
+{
+  "mistake": "fetchFeatures sends GET /me/features with whatever session cookie the browser has by then and caches the answer under the account that asked.",
+  "history": [
+    "#438 61f5edfe (review 4503961980: account B's flags were cached as account A's for the browser session)"
+  ],
+  "guard": "formal/session-ownership model, invariant FeaturesHonest",
+  "check": "formal/tlc.sh formal/session-ownership/SessionOwnership.tla",
+  "expect": "Invariant FeaturesHonest is violated",
+  "needs": ["tlc"]
+}

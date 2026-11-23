@@ -1,0 +1,13 @@
+diff --git a/formal/session-ownership/SessionOwnership.cfg b/formal/session-ownership/SessionOwnership.cfg
+index bb3b59ba..b89bf565 100644
+--- a/formal/session-ownership/SessionOwnership.cfg
++++ b/formal/session-ownership/SessionOwnership.cfg
+@@ -7,7 +7,7 @@ CONSTANTS
+   Bug_945ce071 = FALSE
+   Bug_61f5edfe = FALSE
+   Bug_cc07485f = FALSE
+-  Bug_ListSavesUnbound = FALSE
++  Bug_ListSavesUnbound = TRUE
+   Bug_ListClearsAnySave = FALSE
+   Finding_FeaturesSwitchBack = FALSE
+ INVARIANTS

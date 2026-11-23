@@ -74,8 +74,8 @@ export interface ActiveSaveDependencies {
   useSessionUserId(): string | null | undefined
   /** `GET /me/features`; `null` for a 404 */
   fetchFeatures: FetchUserFeatures
-  /** `GET /saves` */
-  listSaves(): Promise<readonly SaveDTO[]>
+  /** `GET /saves`, refused with 409 when the session is no longer `userId` */
+  listSaves(userId: string): Promise<readonly SaveDTO[]>
   openCloudRepository(options: OpenCloudRepositoryOptions): Promise<CloudScoreRepository>
   /** How long the decision may wait on the network before it stops holding work back; {@link DECISION_TIMEOUT_MS} */
   decisionTimeoutMs?: number
@@ -126,9 +126,9 @@ export const defaultActiveSaveDependencies: ActiveSaveDependencies = {
     await ensureSessionUser(userId)
     return features
   },
-  async listSaves() {
-    const client = await loadPrivateApi()
-    return (await client.cloudSave.saves.list()).saves as SaveDTO[]
+  async listSaves(userId) {
+    const { privateApiClientFor } = await import('../../lib/privateApi')
+    return (await privateApiClientFor(userId).cloudSave.saves.list()).saves as SaveDTO[]
   },
   async openCloudRepository(options) {
     const [{ CloudScoreRepository }, { streamNetImport }, { privateApiClientFor }, Sentry] = await Promise.all([
@@ -293,11 +293,16 @@ export function useActiveSaveDecision(): ActiveSave {
       const current = cloudRef.current
       if (current && current.userId === userId && current.saveId === saveId) return
 
-      const saves = await dependencies.listSaves()
+      const saves = await dependencies.listSaves(userId)
       if (cancelled) return
       if (!saves.some((save) => save.id === saveId)) {
-        writeActiveSaveId(storage, userId, null)
-        toast(m.ratingCalculator_cloudSave_saveMissing({}, { locale: localeRef.current }), { id: 'cloud-save-missing' })
+        // The selection may name another save by now, chosen after this decision started
+        if (readActiveSaveId(storage, userId) === saveId) {
+          writeActiveSaveId(storage, userId, null)
+          toast(m.ratingCalculator_cloudSave_saveMissing({}, { locale: localeRef.current }), {
+            id: 'cloud-save-missing',
+          })
+        }
         return fallBackToLocal()
       }
 
@@ -388,7 +393,7 @@ export function useActiveSaveDecision(): ActiveSave {
     await exposedRepository?.flush()
   }, [exposedRepository])
 
-  const listSaves = useCallback(() => dependencies.listSaves(), [dependencies])
+  const listSaves = useCallback(async () => (userId ? dependencies.listSaves(userId) : []), [dependencies, userId])
 
   const refreshFeatures = useCallback(() => {
     clearUserFeaturesCache()
