@@ -2,7 +2,6 @@ import { Effect, Data } from 'effect'
 import { coverPath, coverUrl, DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import type { SheetDifficulty } from '@gekichumai/maimai-domain'
 import { ImageResponse } from '@takumi-rs/image-response'
-import type { Handler } from 'hono'
 import { createHash } from 'node:crypto'
 import type { ReactElement } from 'react'
 import sharp from 'sharp'
@@ -204,35 +203,6 @@ function resolveDifficultyDisplay(type: TypeEnum, difficulty: SheetDifficulty): 
 
 function isUtageType(type: TypeEnum) {
   return type === TypeEnum.UTAGE || type === TypeEnum.UTAGE2P
-}
-
-export function createChartOgImageHandler(lookupSong: ChartOgSongLookup, renderImage?: RenderChartOgImage): Handler {
-  return (c) =>
-    Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const songId = c.req.param('songId')
-          const type = c.req.param('type')
-          const difficulty = c.req.param('difficulty')
-          if (!songId || !type || !difficulty) return c.text('Chart not found', 404)
-
-          const output = yield* renderChartOgImageOutputEffect(
-            { songId, type, difficulty, locale: c.req.query('locale') },
-            lookupSong,
-            renderImage,
-          )
-          if (!output) return c.text('Chart not found', 404)
-
-          return new Response(output.body, {
-            headers: {
-              ...output.headers,
-              'Content-Length': String(output.body.size),
-            },
-          })
-        }),
-      ),
-      { signal: c.req.raw.signal },
-    )
 }
 
 export const renderChartOgImageOutputEffect = <E, R>(

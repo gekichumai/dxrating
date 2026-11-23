@@ -17,6 +17,7 @@ import type { Context } from 'hono'
 import { match } from 'ts-pattern'
 import { z } from 'zod'
 import { reportFailure, Sentry } from '../../../lib/functions/sentry'
+import { runApp } from '../../../runtime'
 import { fetchAsset, fetchImageAsset, getAssetSourceKey } from './assetFetcher'
 import { calculateDXScoreStars } from './calculateDXScore'
 import { demo } from './demo'
@@ -311,29 +312,27 @@ const getRenderService = () => {
     service = {
       source,
       render: createRenderService(({ body, catalog: document }: OneshotJob, options) =>
-        Effect.runPromise(
-          Effect.scoped(
-            Effect.gen(function* () {
-              const start = performance.now()
-              const catalog = getSongCatalog(document, body.version, body.region)
-              const data = body.calculatedEntries
-                ? prepareCalculatedEntries(body.calculatedEntries, catalog)
-                : calculateEntries(body.entries ?? [], catalog, body.region)
-              const calc = performance.now() - start
-              const result = yield* Effect.tryPromise({
-                try: () =>
-                  draw(
-                    { data, version: body.version, region: body.region, playerCollection: body.playerCollection },
-                    options,
-                  ),
-                catch: (cause) =>
-                  cause instanceof RenderQueueFullError
-                    ? new OneshotQueueFullError({ cause })
-                    : new OneshotRenderError({ operation: 'draw oneshot image', cause }),
-              })
-              return { ...result, timings: { calc, ...result.timings } }
-            }),
-          ),
+        runApp(
+          Effect.gen(function* () {
+            const start = performance.now()
+            const catalog = getSongCatalog(document, body.version, body.region)
+            const data = body.calculatedEntries
+              ? prepareCalculatedEntries(body.calculatedEntries, catalog)
+              : calculateEntries(body.entries ?? [], catalog, body.region)
+            const calc = performance.now() - start
+            const result = yield* Effect.tryPromise({
+              try: () =>
+                draw(
+                  { data, version: body.version, region: body.region, playerCollection: body.playerCollection },
+                  options,
+                ),
+              catch: (cause) =>
+                cause instanceof RenderQueueFullError
+                  ? new OneshotQueueFullError({ cause })
+                  : new OneshotRenderError({ operation: 'draw oneshot image', cause }),
+            })
+            return { ...result, timings: { calc, ...result.timings } }
+          }),
         ),
       ),
     }
@@ -448,6 +447,6 @@ export const createOneshotHandler =
       }),
     )
     return Sentry.startSpan({ name: 'renderOneshot', op: 'function' }, () =>
-      Effect.runPromise(Effect.scoped(program), { signal: c.req.raw.signal }),
+      runApp(program, { signal: c.req.raw.signal }),
     )
   }

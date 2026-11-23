@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import sharp from 'sharp'
 import { reportFailure } from '../../../lib/functions/sentry'
+import { runApp } from '../../../runtime'
 
 export class RendererAssetError extends Data.TaggedError('RendererAssetError')<{
   readonly operation: string
@@ -72,7 +73,5 @@ export const fetchImageAssetEffect = (relativePath: string) =>
   )
 
 // The shared renderer package accepts Promise loaders at its integration boundary.
-export const fetchAsset = (relativePath: string): Promise<Buffer> =>
-  Effect.runPromise(Effect.scoped(fetchAssetEffect(relativePath)))
-export const fetchImageAsset = (relativePath: string): Promise<Buffer> =>
-  Effect.runPromise(Effect.scoped(fetchImageAssetEffect(relativePath)))
+export const fetchAsset = (relativePath: string): Promise<Buffer> => runApp(fetchAssetEffect(relativePath))
+export const fetchImageAsset = (relativePath: string): Promise<Buffer> => runApp(fetchImageAssetEffect(relativePath))

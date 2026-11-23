@@ -56,6 +56,7 @@ export const emailVerificationProtocol = ({ verifier, database, audiences }: Ema
     token: string,
     nonce: string,
   ): Promise<EmailVerificationProtocolOutcome> =>
+    // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
     Effect.runPromise(
       Effect.gen(function* () {
         const origin = ctx.headers?.get('origin') ?? ''

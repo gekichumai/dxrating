@@ -186,6 +186,54 @@
             "message": "Use reportFailure(error) from lib/functions/sentry: it alone decides which failures reach Sentry (client aborts, expected errors) and tags wrapped database and NET failures."
           },
           {
+            "property": "runPromise",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseExit",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseExitWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runFork",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runForkWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runCallback",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runCallbackWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSync",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncExit",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncExitWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
             "property": "ratingEligibility",
             "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
           },
@@ -220,6 +268,24 @@
                 "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
                 "importNames": ["viewerFromSession"],
                 "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              },
+              {
+                "regex": "^effect/Effect$",
+                "importNames": [
+                  "runPromise",
+                  "runPromiseExit",
+                  "runPromiseWith",
+                  "runPromiseExitWith",
+                  "runFork",
+                  "runForkWith",
+                  "runCallback",
+                  "runCallbackWith",
+                  "runSync",
+                  "runSyncExit",
+                  "runSyncWith",
+                  "runSyncExitWith"
+                ],
+                "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
               }
             ]
           }
@@ -231,6 +297,54 @@
       "rules": {
         "no-restricted-properties": [
           "error",
+          {
+            "property": "runPromise",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseExit",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runPromiseExitWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runFork",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runForkWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runCallback",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runCallbackWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSync",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncExit",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
+          {
+            "property": "runSyncExitWith",
+            "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
+          },
           {
             "property": "ratingEligibility",
             "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
@@ -260,6 +374,24 @@
                 "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
                 "importNames": ["viewerFromSession"],
                 "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              },
+              {
+                "regex": "^effect/Effect$",
+                "importNames": [
+                  "runPromise",
+                  "runPromiseExit",
+                  "runPromiseWith",
+                  "runPromiseExitWith",
+                  "runFork",
+                  "runForkWith",
+                  "runCallback",
+                  "runCallbackWith",
+                  "runSync",
+                  "runSyncExit",
+                  "runSyncWith",
+                  "runSyncExitWith"
+                ],
+                "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
               }
             ]
           }
@@ -295,6 +427,24 @@
                 "regex": "(^|/)proofs/viewer-is(\\.ts)?$",
                 "importNames": ["viewerFromSession"],
                 "message": "Only app.ts turns the request's session into a SessionViewer (gdp-ts)."
+              },
+              {
+                "regex": "^effect/Effect$",
+                "importNames": [
+                  "runPromise",
+                  "runPromiseExit",
+                  "runPromiseWith",
+                  "runPromiseExitWith",
+                  "runFork",
+                  "runForkWith",
+                  "runCallback",
+                  "runCallbackWith",
+                  "runSync",
+                  "runSyncExit",
+                  "runSyncWith",
+                  "runSyncExitWith"
+                ],
+                "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
               }
             ]
           }
@@ -321,6 +471,24 @@
               {
                 "regex": "(^|/)lxns(/index)?(\\.ts)?$",
                 "message": "Use services/lxns/viewer: its functions demand a ViewerIs proof (gdp-ts)."
+              },
+              {
+                "regex": "^effect/Effect$",
+                "importNames": [
+                  "runPromise",
+                  "runPromiseExit",
+                  "runPromiseWith",
+                  "runPromiseExitWith",
+                  "runFork",
+                  "runForkWith",
+                  "runCallback",
+                  "runCallbackWith",
+                  "runSync",
+                  "runSyncExit",
+                  "runSyncWith",
+                  "runSyncExitWith"
+                ],
+                "message": "Run Effects through runApp (src/runtime.ts): the request runner joins its work on shutdown."
               }
             ]
           }
@@ -359,6 +527,58 @@
                 "message": "admin-api may import only @gekichumai/backend/db-schema, /edge-cache and /http-client (gekichumai/meta#50 R2.2)."
               }
             ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "apps/backend/src/request-runner.ts",
+        "apps/backend/src/net-login-probe.ts",
+        "apps/backend/src/test/**"
+      ],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "captureException",
+            "message": "Use reportFailure(error) from lib/functions/sentry: it alone decides which failures reach Sentry (client aborts, expected errors) and tags wrapped database and NET failures."
+          },
+          {
+            "property": "captureEvent",
+            "message": "Use reportFailure(error) from lib/functions/sentry: it alone decides which failures reach Sentry (client aborts, expected errors) and tags wrapped database and NET failures."
+          },
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/backend/src/**/*.test.ts", "apps/backend/src/**/*.test.tsx"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "ratingEligibility",
+            "message": "Read a stored play's best 50 hint with best50HintOf from @gekichumai/maimai-domain: it also reads a Diving-Fish source."
+          },
+          {
+            "property": "multiverInternalLevelValue",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) from @gekichumai/maimai-domain, or read it from getSongCatalog(document, version, region): one rule for every version and server."
+          },
+          {
+            "property": "serverOverrides",
+            "message": "Resolve a sheet's level with sheetLevelOn(sheet, { version, region }) and its version with sheetVersionOn(sheet, region) from @gekichumai/maimai-domain: one rule for every version and server."
           }
         ]
       }

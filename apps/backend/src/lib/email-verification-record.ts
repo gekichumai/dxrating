@@ -160,6 +160,7 @@ export const emailVerificationHooks = (database: typeof Database.Service) => ({
     after: async (user: (UserWrite & { readonly id: string }) | null, context: GenericEndpointContext | null) => {
       if (!user || !needsVerificationRecord(user)) return
       // The address is verified either way; a failed record must not fail the sign-in that verified it
+      // oxlint-disable-next-line no-restricted-properties -- Better Auth awaits this inside Authentication.handle, which runApp joins uninterruptibly
       await Effect.runPromise(
         recordEmailVerification(database, user.id, verificationMethodForPath(context?.path)).pipe(
           Effect.catch((error) => Effect.logWarning('Could not record the email verification', error)),
