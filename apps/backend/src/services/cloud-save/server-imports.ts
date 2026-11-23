@@ -11,6 +11,7 @@ import * as Sentry from '@sentry/node'
 import { Cause, Clock, Data, Duration, Effect, Exit } from 'effect'
 import { log } from 'evlog'
 import type { Database } from '../../db/index'
+import { reportFailure } from '../../lib/functions/sentry'
 import { CloudSaveBadRequest, CloudSaveBusy, CloudSaveNotFound } from './errors'
 import { importCatalog } from './import-catalog'
 import {
@@ -268,7 +269,7 @@ export const runServerImport = <R>(
       const error = Cause.squash(exit.cause)
       const code = failureCodeOf(error)
       if (code === 'merge_failed' || code === 'internal_error') {
-        yield* Effect.sync(() => Sentry.captureException(error, { tags: { 'import.source': job.source } }))
+        yield* Effect.sync(() => reportFailure(error, { tags: { 'import.source': job.source } }))
       }
       outcome = yield* fail(code)
     }

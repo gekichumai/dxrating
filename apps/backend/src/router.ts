@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/node'
 import { ORPCError, implement } from '@orpc/server'
 import { appContract } from './contract'
 import { Database } from './db/index'
+import { reportFailure } from './lib/functions/sentry'
 import { Clock, Data, Duration, Effect, Schema, Semaphore } from 'effect'
 import { HttpBody, HttpClientResponse } from 'effect/http'
 import type { RequestHeadersHandlerPluginContext, ResponseHeadersHandlerPluginContext } from '@orpc/server/plugins'
@@ -489,7 +490,7 @@ const queryTrending = Effect.fn('Analytics.queryTrending')(function* (projectId:
     }),
   })
   if (response.status < 200 || response.status >= 300) {
-    yield* Effect.sync(() => Sentry.captureException(new Error(`PostHog query failed: ${response.status}`)))
+    yield* Effect.sync(() => reportFailure(new Error(`PostHog query failed: ${response.status}`)))
     return undefined
   }
   return yield* HttpClientResponse.schemaBodyJson(TrendingResponseSchema)(response)

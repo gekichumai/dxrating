@@ -15,7 +15,7 @@ import {
 import type { Context } from 'hono'
 import { match } from 'ts-pattern'
 import { z } from 'zod'
-import { type Scope, Sentry } from '../../../lib/functions/sentry'
+import { reportFailure, Sentry } from '../../../lib/functions/sentry'
 import { fetchAsset, fetchImageAsset, getAssetSourceKey } from './assetFetcher'
 import { calculateDXScoreStars } from './calculateDXScore'
 import { demo } from './demo'
@@ -433,10 +433,12 @@ export const createOneshotHandler =
           })
         }
         return Effect.sync(() =>
-          Sentry.withScope((scope: Scope) => {
-            scope.setContext('function', { name: 'renderOneshot' })
-            scope.setContext('parameters', { demo: !!queryDemo, format, width: queryWidth })
-            Sentry.captureException(error)
+          reportFailure(error, {
+            signal: c.req.raw.signal,
+            contexts: {
+              function: { name: 'renderOneshot' },
+              parameters: { demo: !!queryDemo, format, width: queryWidth },
+            },
           }),
         ).pipe(Effect.andThen(Effect.fail(error)))
       }),

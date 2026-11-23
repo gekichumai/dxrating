@@ -47,6 +47,17 @@
       "rules": {
         "gdp-ts/no-define-proof": "error",
         "gdp-ts/no-proof-assertion": "error",
+        "no-restricted-properties": [
+          "error",
+          {
+            "property": "captureException",
+            "message": "Use reportFailure(error) from lib/functions/sentry: it alone decides which failures reach Sentry (client aborts, expected errors) and tags wrapped database and NET failures."
+          },
+          {
+            "property": "captureEvent",
+            "message": "Use reportFailure(error) from lib/functions/sentry: it alone decides which failures reach Sentry (client aborts, expected errors) and tags wrapped database and NET failures."
+          }
+        ],
         "no-restricted-imports": [
           "error",
           {
@@ -67,6 +78,12 @@
             ]
           }
         ]
+      }
+    },
+    {
+      "files": ["apps/backend/src/lib/functions/sentry.ts", "apps/backend/src/**/*.test.ts"],
+      "rules": {
+        "no-restricted-properties": "off"
       }
     },
     {
