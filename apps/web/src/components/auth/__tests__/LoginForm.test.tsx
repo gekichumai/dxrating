@@ -55,13 +55,17 @@ vi.mock('web-haptics/react', () => ({
   }),
 }))
 
-// The committed .env sets a site key; the widget passes its check as soon as it mounts
+// The committed .env sets a site key; the widget passes its check as soon as it mounts, and says so once it has
 vi.mock('@marsidev/react-turnstile', async () => {
-  const { forwardRef, useEffect } = await import('react')
+  const { forwardRef, useEffect, useState } = await import('react')
   return {
     Turnstile: forwardRef(function Turnstile({ onSuccess }: { onSuccess: (token: string) => void }, _ref) {
-      useEffect(() => onSuccess('test-token'), [onSuccess])
-      return <div data-testid="turnstile" />
+      const [passed, setPassed] = useState(false)
+      useEffect(() => {
+        onSuccess('test-token')
+        setPassed(true)
+      }, [onSuccess])
+      return <div data-testid="turnstile" data-passed={passed} />
     }),
   }
 })
@@ -82,6 +86,8 @@ describe('LoginForm', () => {
     fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: email } })
     fireEvent.click(screen.getByRole('button', { name: 'Continue with email' }))
     await screen.findByRole('button', { name: /Back to all sign-in options/ })
+    // Until the check passes, a request only says to wait for it
+    await waitFor(() => expect(screen.getByTestId('turnstile').dataset.passed).toBe('true'))
   }
 
   it('asks for the email address alone first, with passkey autofill on it', () => {
