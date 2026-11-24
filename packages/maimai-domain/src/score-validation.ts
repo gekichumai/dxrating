@@ -130,6 +130,24 @@ export function ambiguousInternalIds(catalog: Pick<SongCatalog, 'sheets'>): Read
 }
 
 /**
+ * Providers whose scores come from the CN servers, where many charts have other note counts than dxdata's (in the
+ * 2025-06 CN dump, 198 of the 4,880 charts with at least 50 records had more than 0.2% of their records above 3 ×
+ * dxdata's note count). Their records skip the DX rules (R3, R4, R7); R1, R2, R5, R6 and R8 still apply (owner,
+ * meta#82).
+ */
+export const CN_SCORE_PROVIDERS: readonly string[] = ['lxns', 'diving-fish']
+
+/** Whether dxdata's note counts may be trusted for a provider's records: not for the CN providers */
+export function catalogNoteCountsApply(provider: string | null | undefined): boolean {
+  return provider == null || !CN_SCORE_PROVIDERS.includes(provider)
+}
+
+/** `chart` without its maximum DX score for a CN provider ({@link CN_SCORE_PROVIDERS}) */
+export function forProvider(chart: ScoreValidationChart, provider: string | null | undefined): ScoreValidationChart {
+  return catalogNoteCountsApply(provider) ? chart : { ...chart, maxDxScore: null }
+}
+
+/**
  * The validation context of a catalog sheet. The maximum DX score is 3 × dxdata's `noteCounts.total`, unless the
  * sheet is UTAGE, has no total, or has an ambiguous internal ID ({@link ambiguousInternalIds}). A source that shows
  * the chart's own maximum (maimai NET's `achieved / total`) passes it as `sourceMaxDxScore`, which wins: it is the

@@ -5,6 +5,7 @@ import {
   type ImportRejectionDTO,
 } from '@gekichumai/api-contract'
 import {
+  forProvider,
   isPublicSheetId,
   scoreValidationChartOf,
   validateScore,
@@ -23,10 +24,12 @@ import {
  * - Client uploads (`client-imports`, `replace`) are checked here against the published catalog
  *   ({@link validateUploadedRecord}): the client's own check is never trusted.
  *
- * TODO(meta#82): whole-import / whole-account taint is an open owner decision. Today one impossible record rejects
- * that record only; the rest of the import is applied and nothing marks the account. The owner's analysis drops
- * every record of a tainted account, so a later change may mark the job (or the account) tainted from its
- * `rejections`, and may need to refuse or quarantine the rest of the import. Decide before changing anything here.
+ * Online, one impossible record rejects that record only: the rest of the import is applied and nothing marks the
+ * account. Account taint (dropping every record of an account with an impossible one) is for offline analysis only
+ * (owner decision, meta#82).
+ *
+ * CN providers (LXNS, Diving-Fish) skip the DX rules R3, R4 and R7 (`forProvider`): their note counts often differ
+ * from dxdata's. A client upload claiming one of them (`claimedSource`) is treated the same.
  */
 
 /** No catalog: only the rules that need no chart data run (saves hold no UTAGE, so the 101% cap applies) */
@@ -39,7 +42,7 @@ const UNKNOWN_CHART: ScoreValidationChart = { isUtage: false, maxDxScore: null }
  */
 export function validateUploadedRecord(
   catalog: SongCatalog | null,
-  item: Pick<ImportRecordInput, 'sheetId' | 'achievement' | 'comboFlag' | 'syncFlag' | 'dxScore'>,
+  item: Pick<ImportRecordInput, 'sheetId' | 'achievement' | 'comboFlag' | 'syncFlag' | 'dxScore' | 'claimedSource'>,
 ): ScoreValidationRule[] {
   if (typeof item.achievement !== 'number' || !Number.isFinite(item.achievement)) return []
   const sheet = catalog && typeof item.sheetId === 'string' ? catalog.getById(item.sheetId) : null
@@ -50,7 +53,12 @@ export function validateUploadedRecord(
       syncFlag: item.syncFlag,
       dxScore: typeof item.dxScore === 'number' ? item.dxScore : null,
     },
-    catalog && sheet ? scoreValidationChartOf(catalog, sheet) : UNKNOWN_CHART,
+    catalog && sheet
+      ? forProvider(
+          scoreValidationChartOf(catalog, sheet),
+          typeof item.claimedSource === 'string' ? item.claimedSource : null,
+        )
+      : UNKNOWN_CHART,
   )
 }
 

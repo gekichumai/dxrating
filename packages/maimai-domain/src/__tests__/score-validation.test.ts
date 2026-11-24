@@ -8,6 +8,8 @@ import {
 } from '../import-normalizers'
 import {
   ambiguousInternalIds,
+  catalogNoteCountsApply,
+  forProvider,
   scoreValidationChartOf,
   validateScore,
   type ScoreValidationChart,
@@ -226,7 +228,8 @@ describe('import normalizers reject impossible rows', () => {
     ])
     expect(result.entries).toEqual([])
     expect(result.warnings.map(({ code, rules, sheetId }) => ({ code, rules, sheetId }))).toEqual([
-      { code: 'impossible-score', rules: ['R4', 'R5'], sheetId: SONG_A_DX_MASTER },
+      // R4 is a DX rule: LXNS is a CN provider, so only R5 applies
+      { code: 'impossible-score', rules: ['R5'], sheetId: SONG_A_DX_MASTER },
       { code: 'impossible-score', rules: ['R6'], sheetId: SONG_B_DX_MASTER },
     ])
   })
@@ -305,5 +308,75 @@ describe('import normalizers reject impossible rows', () => {
     ])
     expect(divingFish.warnings).toEqual([])
     expect(divingFish.entries).toHaveLength(1)
+  })
+})
+
+describe('CN providers (LXNS, Diving-Fish) skip the DX rules (owner, meta#82)', () => {
+  it('trusts dxdata note counts for every provider but the CN ones', () => {
+    expect(catalogNoteCountsApply('lxns')).toBe(false)
+    expect(catalogNoteCountsApply('diving-fish')).toBe(false)
+    for (const provider of ['maimai-net', 'aqua-dx', 'mu-net', 'aqua-sqlite', null, undefined]) {
+      expect(catalogNoteCountsApply(provider)).toBe(true)
+    }
+    expect(forProvider(CHART, 'lxns')).toEqual(UNKNOWN_NOTES)
+    expect(forProvider(CHART, 'aqua-dx')).toEqual(CHART)
+  })
+
+  const divingFishRow = (overrides: Partial<Parameters<typeof normalizeDivingFishRows>[1][number]>) => ({
+    achievements: 100.5,
+    fc: null,
+    fs: null,
+    level_index: 3,
+    title: 'Song A',
+    type: 'DX',
+    song_id: 10001,
+    ...overrides,
+  })
+
+  it('does not apply R3, R4 or R7 to LXNS or Diving-Fish rows', () => {
+    // 500 notes in dxdata (1500): above it, the maximum without AP+, and an AP below 2 per note
+    const rows = [
+      { achievements: 99, dxScore: 1600 },
+      { achievements: 100.8, fc: 'fcp', dxScore: 1500 },
+      { achievements: 100.7, fc: 'ap', dxScore: 900 },
+    ]
+    for (const row of rows) {
+      const divingFish = normalizeDivingFishRows(catalog, [divingFishRow(row)])
+      expect(divingFish.warnings).toEqual([])
+      expect(divingFish.entries).toHaveLength(1)
+      const lxns = normalizeLxnsScores(catalog, [
+        {
+          id: 1,
+          songName: 'Song A',
+          level: '13',
+          levelIndex: 3,
+          achievements: row.achievements,
+          fc: row.fc ?? null,
+          fs: null,
+          type: 'dx',
+          dxScore: row.dxScore,
+        },
+      ])
+      expect(lxns.warnings).toEqual([])
+    }
+    // Another provider is still checked against dxdata: a NET row that shows no maximum of its own
+    const net = normalizeMaimaiNetRecords(catalog, [
+      {
+        sheet: { songId: 'Song A', type: 'dx', difficulty: 'master' },
+        achievement: { rate: 990000, dxScore: { achieved: 1600, total: 0 }, flags: [] },
+      },
+    ])
+    expect(net.warnings).toMatchObject([{ rules: ['R3'] }])
+  })
+
+  it('still applies R1, R2, R5 and R6 to them', () => {
+    const result = normalizeDivingFishRows(catalog, [
+      divingFishRow({ achievements: 101.2 }),
+      divingFishRow({ fs: 'fdx' }),
+      divingFishRow({ achievements: 100.9, fc: 'app', dxScore: 1500 }),
+      divingFishRow({ achievements: 100.2, fc: 'ap' }),
+    ])
+    expect(result.entries).toEqual([])
+    expect(result.warnings.map((warning) => warning.rules)).toEqual([['R1'], ['R2'], ['R5'], ['R6']])
   })
 })

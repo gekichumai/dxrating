@@ -308,8 +308,10 @@ const LxnsTokenResponseSchema = z.object({
   scope: z.string(),
 })
 
-const FCTypeSchema = z.preprocess((v) => (v === '' ? null : v), z.enum(['app', 'ap', 'fcp', 'fc']).nullable())
-const FSTypeSchema = z.preprocess((v) => (v === '' ? null : v), z.enum(['fsdp', 'fsd', 'fsp', 'fs', 'sync']).nullable())
+// Lamps stay free strings: a value LXNS adds later (or a bad one) is rejected for its row alone by the import
+// validator (meta#82 R2, `impossible-score`), never by failing the whole response
+const FCTypeSchema = z.preprocess((v) => (v === '' ? null : v), z.string().nullable())
+const FSTypeSchema = z.preprocess((v) => (v === '' ? null : v), z.string().nullable())
 
 const LxnsScoreSchema = z.object({
   id: z.number(),

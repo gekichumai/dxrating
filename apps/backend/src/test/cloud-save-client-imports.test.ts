@@ -400,6 +400,30 @@ describe('client imports', () => {
       })
     })
 
+    it('skips the DX rules for records claiming a CN provider, and keeps the others', async () => {
+      const user = await newUser()
+      const response = await upload(user.cookie, user.saveId, {
+        source: 'legacy-local',
+        idempotencyKey: `impossible-cn-${randomUUID()}`,
+        chunkIndex: 0,
+        chunkCount: 1,
+        records: [
+          // above dxdata's maximum (1116): a CN chart may have more notes
+          chartRecord(kimino, 1000000, { dxScore: 1200, claimedSource: 'lxns' }),
+          chartRecord(CHARTS.kiminoDxExpert.sheetId, 1009000, { comboFlag: 'app', claimedSource: 'diving-fish' }),
+          chartRecord(CHARTS.ourFightingStdBasic.sheetId, 1000000, { dxScore: 700, claimedSource: 'maimai-net-jp' }),
+        ],
+      })
+      expect(response.body.job).toMatchObject({
+        status: 'succeeded',
+        counts: { fetched: 3, inserted: 1, rejected: 2 },
+        rejections: [
+          { sheetId: CHARTS.kiminoDxExpert.sheetId, rules: ['R5'] },
+          { sheetId: CHARTS.ourFightingStdBasic.sheetId, rules: ['R3'] },
+        ],
+      })
+    })
+
     it('skips the DX rules on a sheet the catalog does not know', async () => {
       const user = await newUser()
       const response = await upload(user.cookie, user.saveId, {

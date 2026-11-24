@@ -140,8 +140,9 @@ before the method was recorded (see below).
 - Impossible scores (meta#82, `validation.ts`): every import path rejects a record that breaks a hard rule of
   `@gekichumai/maimai-domain`'s `validateScore` and lists it with its rules in the job's `rejections` (kept in the
   `counts` column, at most 100); it is never clamped. Server imports check in the shared normalizers; client uploads
-  (`client-imports`, `replace`) are checked again here against the import catalog. Whole-account taint is an open owner
-  decision (TODO in `validation.ts`).
+  (`client-imports`, `replace`) are checked again here against the import catalog. Online, a bad record is rejected
+  alone; account taint is for offline analysis only. CN providers (LXNS, Diving-Fish, or a claimed one) skip the DX
+  rules R3/R4/R7, as their note counts often differ from dxdata's.
 - Account binding (§10): every write (saves, mutations, replace, client and server imports, the NET import, the beta
   opt-in) must name its account in `X-DXRating-Expected-User` (`CLOUD_SAVE_EXPECTED_USER_HEADER`), or it is answered
   400; a session that is another account is answered 409 `{ reason: 'ACCOUNT_MISMATCH' }` before anything is written.

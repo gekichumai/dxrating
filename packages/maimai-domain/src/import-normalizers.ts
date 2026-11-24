@@ -2,7 +2,7 @@ import { DifficultyEnum, TypeEnum } from '@gekichumai/dxdata'
 import { match } from 'ts-pattern'
 import { toAchievementInt } from './achievement.ts'
 import { mintRatingEntry } from './rating-entries.ts'
-import { scoreValidationChartOf, validateScore, type ScoreValidationRule } from './score-validation.ts'
+import { forProvider, scoreValidationChartOf, validateScore, type ScoreValidationRule } from './score-validation.ts'
 import type { SongCatalog } from './song-catalog'
 import type {
   Best50Bucket,
@@ -529,7 +529,8 @@ function checked(
       dxScore: entry.dxScore,
       playCount: raw.playCount,
     },
-    scoreValidationChartOf(catalog, sheet, raw.sourceMaxDxScore),
+    // CN providers skip the DX rules: their charts' note counts often differ from dxdata's
+    forProvider(scoreValidationChartOf(catalog, sheet, raw.sourceMaxDxScore), provider),
   )
   if (rules.length === 0) return { entry }
   return impossible(provider, row, sheet.id, rules, `${sheet.id} at ${String(entry.achievementRate)}%`)

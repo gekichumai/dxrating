@@ -695,17 +695,20 @@ describe('LXNS server import', () => {
     )
   })
 
-  it('rejects impossible LXNS scores (meta#82) with their rules, and imports the rest', async () => {
+  it('rejects impossible LXNS scores (meta#82) row by row, without the DX rules (a CN provider)', async () => {
     const user = await newUser()
     await seedToken(user.userId, new Date(Date.now() + 3_600_000))
     const impossible = [
       lxnsScore(CHARTS.kiminoDxMaster, 100.5),
       // an AP below 100.5%
       lxnsScore(CHARTS.kiminoDxExpert, 100.2, { fc: 'ap' }),
-      // AP+ below 101% (an unknown lamp never gets here: the LXNS client refuses the whole response)
+      // AP+ below 101%
       lxnsScore(CHARTS.kiminoStdMaster, 100.9, { fc: 'app' }),
-      // the maximum DX score (3 × 203 notes) without AP+
+      // the maximum DX score in dxdata (3 × 203 notes) without AP+: R4 for another provider, but CN note counts often
+      // differ from dxdata's, so LXNS skips R3, R4 and R7 and the record is imported
       lxnsScore(CHARTS.ourFightingStdBasic, 100.8, { fc: 'fcp', dx_score: 609 }),
+      // a lamp LXNS does not have: this row alone is rejected (R2), not the whole response
+      lxnsScore(CHARTS.kiminoDxMaster, 99, { fs: 'fdx' }),
     ]
     upstream.http = async (url) => {
       if (url.pathname === '/api/v0/user/maimai/player') return lxnsEnvelope({ name: 'SYNTH', friend_code: 123456789 })
@@ -718,14 +721,16 @@ describe('LXNS server import', () => {
     })
     expect(response.body.job).toMatchObject({
       status: 'succeeded',
-      counts: { fetched: 4, inserted: 1, rejected: 3 },
+      counts: { fetched: 5, inserted: 2, rejected: 3 },
       rejections: [
         { sheetId: CHARTS.kiminoDxExpert.sheetId, rules: ['R6'] },
         { sheetId: CHARTS.kiminoStdMaster.sheetId, rules: ['R5'] },
-        { sheetId: CHARTS.ourFightingStdBasic.sheetId, rules: ['R4'] },
+        { sheetId: CHARTS.kiminoDxMaster.sheetId, rules: ['R2'] },
       ],
     })
-    expect((await records(user.saveId)).map((r) => r.sheet_id)).toEqual([CHARTS.kiminoDxMaster.sheetId])
+    expect((await records(user.saveId)).map((r) => r.sheet_id).sort()).toEqual(
+      [CHARTS.kiminoDxMaster.sheetId, CHARTS.ourFightingStdBasic.sheetId].sort(),
+    )
   })
 
   it('takes the player and the scores from one connection when the user reconnects meanwhile', async () => {
