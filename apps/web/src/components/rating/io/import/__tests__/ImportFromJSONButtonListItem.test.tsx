@@ -188,7 +188,7 @@ describe('ImportFromJSONButtonListItem', () => {
       await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Imported 2 records'))
       expect(toast).toHaveBeenCalledWith("1 record didn't match a chart and wasn't imported.")
       expect(toast).toHaveBeenCalledWith(
-        "1 record has a value that can't be saved, such as a DX score out of range, and wasn't imported.",
+        "1 record has a value that can't be saved, such as a DX Score out of range, and wasn't imported.",
       )
     })
 

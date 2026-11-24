@@ -60,7 +60,7 @@ describe('RecentPage', () => {
 
     const page = document.querySelector('[itemscope][itemtype="https://schema.org/CollectionPage"]')
     expect(page).toBeTruthy()
-    expect(page?.querySelector('[itemprop="name"]')?.textContent).toBe('New charts')
+    expect(page?.querySelector('[itemprop="name"]')?.textContent).toBe('Latest charts')
 
     const list = page?.querySelector('[itemprop="mainEntity"][itemscope][itemtype="https://schema.org/ItemList"]')
     expect(list?.querySelector('meta[itemprop="numberOfItems"]')?.getAttribute('content')).toBe('1')
