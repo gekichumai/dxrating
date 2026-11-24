@@ -1,22 +1,11 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
+import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import pg from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.hoisted(() => {
   process.env.CLOUD_SAVE_MODE = 'allowlist'
   process.env.SERVER_IMPORTS = 'off'
-})
-
-// The published catalog is not in the test database: uploads are validated against the bundled snapshot (meta#82)
-vi.mock('../services/cloud-save/import-catalog', async () => {
-  const { Effect } = await import('effect')
-  const { getSongCatalog } = await import('@gekichumai/maimai-domain')
-  const { catalogSnapshot } = await import('@gekichumai/dxdata/snapshot')
-  const { VersionEnum } = await import('@gekichumai/dxdata')
-  return {
-    importCatalog: Effect.sync(() => getSongCatalog(catalogSnapshot, VersionEnum.MAGiCAL)),
-    ImportCatalogUnavailable: class ImportCatalogUnavailable extends Error {},
-  }
 })
 
 import { canonicalSha256, startImportJob } from '../services/cloud-save/jobs'
@@ -58,12 +47,43 @@ const stored = async (saveId: string) =>
     )
   ).rows
 
+/**
+ * Publishes the bundled catalog snapshot as the production catalog, so uploads are validated against real charts
+ * (meta#82) through the real catalog loader
+ */
+const publishSnapshotCatalog = async () => {
+  const body = JSON.stringify(catalogSnapshot)
+  await pool.query('DROP SCHEMA IF EXISTS dxdata CASCADE')
+  await pool.query(`
+    CREATE SCHEMA dxdata;
+    CREATE TABLE dxdata.catalog_build_runs (id BIGINT PRIMARY KEY, status TEXT NOT NULL, api_schema_version INTEGER NOT NULL);
+    CREATE TABLE dxdata.catalog_publications (channel TEXT PRIMARY KEY, catalog_run_id BIGINT NOT NULL);
+    CREATE TABLE dxdata.catalog_snapshots (
+      catalog_run_id BIGINT PRIMARY KEY,
+      api_schema_version INTEGER NOT NULL,
+      body_sha256 TEXT NOT NULL,
+      byte_length BIGINT NOT NULL,
+      content_type TEXT NOT NULL,
+      body_text TEXT NOT NULL
+    );
+  `)
+  await pool.query(`INSERT INTO dxdata.catalog_build_runs (id, status, api_schema_version) VALUES (1, 'published', 1)`)
+  await pool.query(`INSERT INTO dxdata.catalog_publications (channel, catalog_run_id) VALUES ('production-v1', 1)`)
+  await pool.query(
+    `INSERT INTO dxdata.catalog_snapshots (catalog_run_id, api_schema_version, body_sha256, byte_length, content_type, body_text)
+     VALUES (1, 1, $1, $2, 'application/json', $3)`,
+    [createHash('sha256').update(body).digest('hex'), Buffer.byteLength(body), body],
+  )
+}
+
 beforeAll(async () => {
-  await setupTestServer()
   pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+  await setupTestServer()
+  await publishSnapshotCatalog()
 })
 
 afterAll(async () => {
+  await pool.query('DROP SCHEMA IF EXISTS dxdata CASCADE')
   await pool.end()
   await teardownTestServer()
 })
