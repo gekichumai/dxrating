@@ -14,7 +14,7 @@ A web application for [maimai DX](https://maimai.sega.jp/) (music arcade game) p
 
 ## Usage
 
-[![TestFlight](https://img.shields.io/badge/Join%20TestFlight%20Beta-147EFB?logo=xcode&logoColor=FFFFFF&label=iOS)](https://testflight.apple.com/join/psw4PxSx)
+[![App Store](https://img.shields.io/badge/Download%20on%20the%20App%20Store-0D96F6?logo=appstore&logoColor=FFFFFF&label=iOS)](https://apps.apple.com/app/id6797069834)
 
 [![Cloudflare Pages](https://img.shields.io/badge/Visit%20Production%20Site-F38020?logo=cloudflare-pages&logoColor=FFFFFF&label=Web)](https://dxrating.net)
 

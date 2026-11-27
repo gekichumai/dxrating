@@ -29,7 +29,7 @@ describe('HomeHub', () => {
 
   it('unfolds and folds the new charts with the heading button', () => {
     render(<HomeHub recentSongs={recentSongs} />)
-    const toggle = screen.getByRole('button', { name: 'New charts' })
+    const toggle = screen.getByRole('button', { name: 'Latest charts' })
     const content = document.getElementById(toggle.getAttribute('aria-controls')!)!
 
     fireEvent.click(toggle)
