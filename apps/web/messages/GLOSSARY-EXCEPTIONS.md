@@ -1,7 +1,7 @@
 # Web catalog alignment: remaining glossary exceptions
 
-Scope: apps/web/messages/*.json in /Users/n3xta/Documents/Code/dxrating-i18n (uncommitted).
-glossary_check.py reports 67 hits after alignment (against the current glossary). The checker's flatten step skips plural variants, so a separate check that includes them was also run. Every remaining hit is listed below with its reason. Format: concept | term | keys | reason.
+Scope: apps/web/messages/*.json.
+glossary_check.py (gekichumai/dxrating-ios `scripts/l10n/`) reports 67 hits after alignment (against the current glossary). The checker's flatten step skips plural variants, so a separate check that includes them was also run. Every remaining hit is listed below with its reason. Format: concept | term | keys | reason.
 
 ## Cross-locale
 - song_seo_title | {level} missing in ja, ko, zh-Hans, zh-Hant | song_seo_title | Left unchanged on purpose. apps/web/src/utils/seo.ts renders it as the chart page <title>; #406 chose CJK titles that show only the internal level (譜面定数14.7), and apps/web/src/i18n/__tests__/messages.test.ts records this in DROPPED_ON_PURPOSE. To add it anyway, use e.g. ja "{title} {sheetLabel} Lv.{level} 譜面定数{constant} | …", and drop the DROPPED_ON_PURPOSE entry.
@@ -17,6 +17,7 @@ glossary_check.py reports 67 hits after alignment (against the current glossary)
 - rating.total | レート | plates_breadcrumb, plates_index_title, plates_index_seoTitle, plates_index_seoDescription, plates_index_intro, plates_condition_cnMerged, plates_remasterVariant_description, plates_otherPlates, home_stats_nearestPlate, home_features_plates_title, home_features_plates_description | Substring of プレート (game.plate).
 - rating.total | レート | developers_terms_limits | レート制限 = API rate limit.
 - rating.total | レーティング | root_seo_keywords | Meta keyword list; レーティング計算 is a real search phrase.
+- rating.chart | Rating | ratingCalculator_table_headers_rating | Heads the B50 table's per-chart column, but the Aqua SQLite import also uses it to label an account's total (highest_rating), so it stays Rating until the two get separate keys. Every other per-chart value says 単曲レート.
 
 ## ko
 - rating.total | 레이트 | plates_index_title, home_features_plates_description | Substring of 플레이트.
@@ -45,7 +46,7 @@ The rest are justified:
 - developer jargon (Changelog, Server URL, API docs)
 Counts left: fil 224, my 146, id 129, ms 108, vi 106, th 71.
 
-## Tests updated (not run, no node_modules)
+## Tests updated
 These now expect "Latest charts": HomeHub.test.tsx:32, AppTabs.test.tsx:118 and RecentPage.test.tsx:63. ImportFromJSONButtonListItem.test.tsx:191 now expects "DX Score". The remaining matches for old en text in src are comments and test names only.
 
 ## Glossary objections
