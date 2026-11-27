@@ -293,33 +293,53 @@ describe('import normalizers reject impossible rows', () => {
       normalizeMaimaiNetRecords(catalog, [netRow('Song A', { achieved: 1100, total: 1800 })]).warnings,
     ).toMatchObject([{ rules: ['R7'] }])
 
-    // Diving-Fish has no maximum of its own: on the ambiguous ID nothing about the DX score is checked
-    const divingFish = normalizeDivingFishRows(catalog, [
-      {
-        achievements: 100.7,
-        fc: 'ap',
-        fs: null,
-        level_index: 3,
-        title: 'Song B',
-        type: 'DX',
-        song_id: 360,
-        dxScore: 5000,
-      },
-    ])
-    expect(divingFish.warnings).toEqual([])
-    expect(divingFish.entries).toHaveLength(1)
+    // A NET row that shows no maximum of its own is checked against dxdata, except on the ambiguous ID, where nothing
+    // about the DX score is checked (maimai NET gets the DX rules, so only the ambiguity skips them here)
+    const noMaximum = (title: string) => netRow(title, { achieved: 5000, total: 0 })
+    expect(normalizeMaimaiNetRecords(catalog, [noMaximum('Song A')]).warnings).toMatchObject([{ rules: ['R3'] }])
+    const ambiguous = normalizeMaimaiNetRecords(catalog, [noMaximum('Song B')])
+    expect(ambiguous.warnings).toEqual([])
+    expect(ambiguous.entries).toHaveLength(1)
   })
 })
 
-describe('CN providers (LXNS, Diving-Fish) skip the DX rules (owner, meta#82)', () => {
-  it('trusts dxdata note counts for every provider but the CN ones', () => {
-    expect(catalogNoteCountsApply('lxns')).toBe(false)
-    expect(catalogNoteCountsApply('diving-fish')).toBe(false)
-    for (const provider of ['maimai-net', 'aqua-dx', 'mu-net', 'aqua-sqlite', null, undefined]) {
+describe("the DX rules run only for providers whose charts are dxdata's (owner, meta#82)", () => {
+  it('trusts dxdata note counts for maimai NET and the private servers only', () => {
+    for (const provider of ['maimai-net', 'maimai-net-jp', 'maimai-net-intl', 'aqua-dx', 'mu-net', 'aqua-sqlite']) {
       expect(catalogNoteCountsApply(provider)).toBe(true)
     }
+    // CN providers, and records of unknown origin: they may be CN scores
+    for (const provider of [
+      'lxns',
+      'diving-fish',
+      'legacy-local',
+      'dxrating-json',
+      'manual',
+      'other',
+      null,
+      undefined,
+    ]) {
+      expect(catalogNoteCountsApply(provider)).toBe(false)
+    }
     expect(forProvider(CHART, 'lxns')).toEqual(UNKNOWN_NOTES)
+    expect(forProvider(CHART, null)).toEqual(UNKNOWN_NOTES)
     expect(forProvider(CHART, 'aqua-dx')).toEqual(CHART)
+    expect(forProvider(CHART, 'maimai-net-jp')).toEqual(CHART)
+  })
+
+  it('keeps R1, R2, R5 and R6 for a record of unknown origin, and drops only R3, R4 and R7', () => {
+    const cases = [
+      { input: { achievement: 1000000, dxScore: 1600 }, known: ['R3'], unknown: [] },
+      { input: { achievement: 1009000, comboFlag: 'app', dxScore: 1500 }, known: ['R4', 'R5'], unknown: ['R5'] },
+      { input: { achievement: 1004000, comboFlag: 'ap', dxScore: 900 }, known: ['R6', 'R7'], unknown: ['R6'] },
+      { input: { achievement: 1012000 }, known: ['R1'], unknown: ['R1'] },
+      { input: { achievement: 1000000, syncFlag: 'fdx' }, known: ['R2'], unknown: ['R2'] },
+    ]
+    for (const { input, known, unknown } of cases) {
+      expect(validateScore(input, forProvider(CHART, 'aqua-sqlite'))).toEqual(known)
+      expect(validateScore(input, forProvider(CHART, null))).toEqual(unknown)
+      expect(validateScore(input, forProvider(CHART, 'diving-fish'))).toEqual(unknown)
+    }
   })
 
   const divingFishRow = (overrides: Partial<Parameters<typeof normalizeDivingFishRows>[1][number]>) => ({
