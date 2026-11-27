@@ -429,12 +429,18 @@ describe('cloud save merge module (shared vectors, applied to the database)', ()
       { sheetId: sheetId(1), achievement: 1000000, comboFlag: null, syncFlag: null, dxScore: 100 },
     ]
     const replaced = await runDatabase((database) =>
-      replaceRecords(database, USER, 'dsav_replace', {
-        ifRevision: 0,
-        idempotencyKey: 'replace-duplicates',
-        source: 'dxrating-json',
-        records,
-      }),
+      replaceRecords(
+        database,
+        USER,
+        'dsav_replace',
+        {
+          ifRevision: 0,
+          idempotencyKey: 'replace-duplicates',
+          source: 'dxrating-json',
+          records,
+        },
+        null,
+      ),
     )
     expect(replaced.job.status).toBe('succeeded')
     const next = await importRecords(USER, 'dsav_replace', 'dxrating-json', records, {

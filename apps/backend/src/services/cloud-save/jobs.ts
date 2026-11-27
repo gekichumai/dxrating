@@ -1,5 +1,11 @@
 import { createHash } from 'node:crypto'
-import { CANONICAL_MAX_DEPTH, canonicalJson, type ImportCountsDTO, type ImportJobDTO } from '@gekichumai/api-contract'
+import {
+  CANONICAL_MAX_DEPTH,
+  canonicalJson,
+  type ImportCountsDTO,
+  type ImportJobDTO,
+  type ImportRejectionDTO,
+} from '@gekichumai/api-contract'
 import {
   fetchedByForSource,
   type ImportSource,
@@ -11,6 +17,7 @@ import { Effect } from 'effect'
 import type { Database } from '../../db/index'
 import { CloudSaveNotFound, ImportInProgress } from './errors'
 import { newImportJobId } from './saves'
+import { storedRejections } from './validation'
 
 type DatabaseService = typeof Database.Service
 
@@ -96,6 +103,7 @@ export function toImportJobDTO(row: ImportJobRow): ImportJobDTO {
     rawPayloadSha256: row.raw_payload_sha256,
     counts: countsOf(row.counts),
     errorCode: row.error_code,
+    rejections: storedRejections(row.counts),
   }
 }
 
@@ -214,6 +222,8 @@ export const finishImportJob = (
     counts: Partial<ImportCountsDTO>
     errorCode?: string | null
     saveRevision?: number | null
+    /** The impossible records the job rejected (meta#82), kept next to the counts */
+    rejections?: readonly ImportRejectionDTO[]
   },
 ) =>
   Effect.map(
@@ -224,9 +234,11 @@ export const finishImportJob = (
       [
         jobId,
         outcome.status,
-        JSON.stringify(
-          outcome.saveRevision == null ? outcome.counts : { ...outcome.counts, saveRevision: outcome.saveRevision },
-        ),
+        JSON.stringify({
+          ...outcome.counts,
+          ...(outcome.saveRevision == null ? {} : { saveRevision: outcome.saveRevision }),
+          ...(outcome.rejections?.length ? { rejections: outcome.rejections } : {}),
+        }),
         outcome.errorCode ?? null,
       ],
     ),

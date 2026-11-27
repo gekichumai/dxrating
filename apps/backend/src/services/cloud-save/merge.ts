@@ -1,4 +1,4 @@
-import type { ImportCountsDTO } from '@gekichumai/api-contract'
+import type { ImportCountsDTO, ImportRejectionDTO } from '@gekichumai/api-contract'
 import {
   decideImportMerge,
   isPublicSheetId,
@@ -156,6 +156,8 @@ export const completeImportJob = (
     jobId: string
     records: readonly MergeRecord[]
     extraCounts?: Partial<ImportCountsDTO>
+    /** Impossible records the caller rejected before merging (meta#82); their count is in `extraCounts.rejected` */
+    rejections?: readonly ImportRejectionDTO[]
   },
 ) =>
   saveTransaction(database, () =>
@@ -199,6 +201,7 @@ export const completeImportJob = (
         counts,
         // Without it, the next identical job runs the merge (see shouldShortCircuit)
         saveRevision: reusable ? save.revision : null,
+        rejections: input.rejections,
       })
       return { job: toImportJobDTO(finished!), revision: save.revision }
     }),

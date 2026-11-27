@@ -88,6 +88,7 @@ import {
   CHARTS,
   createFakeNet,
   divingFishChart,
+  fixtureDxScore,
   lxnsEnvelope,
   lxnsScore,
   netRecord,
@@ -355,6 +356,39 @@ describe('maimai NET server import', () => {
     const replay = await postNetImport(user.cookie, user.saveId, body)
     expect(replay.events).toEqual([{ event: 'done', data: first.events.at(-1)!.data }])
     expect(net.calls.length).toBe(calls)
+  })
+
+  it('rejects impossible scores (meta#82) against the chart maximum maimai NET shows, and imports the rest', async () => {
+    const user = await newUser()
+    const net = createFakeNet({
+      id: SEGA_ID,
+      password: PASSWORD,
+      friendCode: FRIEND_CODE,
+      records: [
+        // the catalog says 372 notes (1116), NET says 1,500: NET's own maximum decides, so 1,300 is possible
+        { ...netRecord(CHARTS.kiminoDxMaster, '100.6000%', ['ap']), dxScore: '1,300 / 1,500' },
+        // above the maximum
+        { ...netRecord(CHARTS.kiminoDxExpert, '99.0000%'), dxScore: '1,600 / 1,500' },
+        // AP+ below 101%
+        netRecord(CHARTS.kiminoStdMaster, '100.9000%', ['applus']),
+      ],
+    })
+    upstream.net = net.fetch
+
+    const response = await postNetImport(user.cookie, user.saveId, netBody())
+    const done = response.events.at(-1)!
+    expect(done.event).toBe('done')
+    expect(done.data.job).toMatchObject({
+      status: 'succeeded',
+      counts: { fetched: 3, inserted: 1, rejected: 2 },
+      rejections: [
+        { sheetId: CHARTS.kiminoDxExpert.sheetId, rules: ['R3'] },
+        { sheetId: CHARTS.kiminoStdMaster.sheetId, rules: ['R5'] },
+      ],
+    })
+    expect((await records(user.saveId)).map((r) => [r.sheet_id, r.dx_score])).toEqual([
+      [CHARTS.kiminoDxMaster.sheetId, 1300],
+    ])
   })
 
   it('short-circuits an automatic import of an unchanged payload', async () => {
@@ -661,6 +695,44 @@ describe('LXNS server import', () => {
     )
   })
 
+  it('rejects impossible LXNS scores (meta#82) row by row, without the DX rules (a CN provider)', async () => {
+    const user = await newUser()
+    await seedToken(user.userId, new Date(Date.now() + 3_600_000))
+    const impossible = [
+      lxnsScore(CHARTS.kiminoDxMaster, 100.5),
+      // an AP below 100.5%
+      lxnsScore(CHARTS.kiminoDxExpert, 100.2, { fc: 'ap' }),
+      // AP+ below 101%
+      lxnsScore(CHARTS.kiminoStdMaster, 100.9, { fc: 'app' }),
+      // the maximum DX score in dxdata (3 × 203 notes) without AP+: R4 for another provider, but CN note counts often
+      // differ from dxdata's, so LXNS skips R3, R4 and R7 and the record is imported
+      lxnsScore(CHARTS.ourFightingStdBasic, 100.8, { fc: 'fcp', dx_score: 609 }),
+      // a lamp LXNS does not have: this row alone is rejected (R2), not the whole response
+      lxnsScore(CHARTS.kiminoDxMaster, 99, { fs: 'fdx' }),
+    ]
+    upstream.http = async (url) => {
+      if (url.pathname === '/api/v0/user/maimai/player') return lxnsEnvelope({ name: 'SYNTH', friend_code: 123456789 })
+      if (url.pathname === '/api/v0/user/maimai/player/scores') return lxnsEnvelope(impossible)
+      return undefined
+    }
+    const response = await api(user.cookie, 'POST', `/saves/${user.saveId}/imports/lxns`, {
+      idempotencyKey: key(),
+      trigger: 'user',
+    })
+    expect(response.body.job).toMatchObject({
+      status: 'succeeded',
+      counts: { fetched: 5, inserted: 2, rejected: 3 },
+      rejections: [
+        { sheetId: CHARTS.kiminoDxExpert.sheetId, rules: ['R6'] },
+        { sheetId: CHARTS.kiminoStdMaster.sheetId, rules: ['R5'] },
+        { sheetId: CHARTS.kiminoDxMaster.sheetId, rules: ['R2'] },
+      ],
+    })
+    expect((await records(user.saveId)).map((r) => r.sheet_id).sort()).toEqual(
+      [CHARTS.kiminoDxMaster.sheetId, CHARTS.ourFightingStdBasic.sheetId].sort(),
+    )
+  })
+
   it('takes the player and the scores from one connection when the user reconnects meanwhile', async () => {
     const user = await newUser()
     await seedToken(user.userId, new Date(Date.now() + 3_600_000))
@@ -886,7 +958,9 @@ describe('Diving-Fish server import', () => {
     charts = { dx: [{ ...divingFishChart(CHARTS.kiminoDxMaster, 100.6), fc: 'ap' }], sd: [] }
     const exact = await run()
     expect(exact.body.job).toMatchObject({ status: 'succeeded', counts: { inserted: 1 } })
-    expect((await records(user.saveId)).map((r) => [r.achievement, r.dx_score])).toEqual([[1006000, 1500]])
+    expect((await records(user.saveId)).map((r) => [r.achievement, r.dx_score])).toEqual([
+      [1006000, fixtureDxScore(CHARTS.kiminoDxMaster)],
+    ])
   })
 
   it('queries by QQ and fails the job for an unknown player', async () => {

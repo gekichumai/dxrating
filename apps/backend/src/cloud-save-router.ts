@@ -31,6 +31,7 @@ import {
 } from './services/cloud-save/saves'
 import { cloudSaveRateLimits } from './services/rate-limit'
 import { applyClientImportChunk } from './services/cloud-save/client-imports'
+import { importCatalog } from './services/cloud-save/import-catalog'
 import {
   beginServerImport,
   failInterruptedImport,
@@ -49,6 +50,12 @@ const os = implement(appContract).$context<ApiContext>()
 export const CLOUD_SAVE_WRITE_CONCURRENCY = 2
 const SAVE_BUSY_RETRY_AFTER_SECONDS = 1
 const cloudSave = os.cloudSave.use(requireSession).use(requireFeature('cloud_save')).use(requireExpectedUser)
+
+/**
+ * The catalog client uploads are validated against (meta#82). Without one (none published yet) the upload is still
+ * applied, checked by the rules that need no chart data only, as it was before the catalog existed.
+ */
+const uploadCatalog = importCatalog.pipe(Effect.orElseSucceed(() => null))
 
 /** Maps the cloud save failures to the contract's errors (design §5.1); other errors pass through */
 type CloudSaveFailure =
@@ -185,13 +192,20 @@ const recordsHandler = {
     .handler(
       handlerGen(function* ({ context, input }) {
         const database = yield* Database
+        const catalog = yield* uploadCatalog
         return yield* apiErrors(
-          replaceRecords(database, context.user.id, input.id, {
-            ifRevision: input.ifRevision,
-            idempotencyKey: input.idempotencyKey,
-            source: input.source,
-            records: input.records,
-          }),
+          replaceRecords(
+            database,
+            context.user.id,
+            input.id,
+            {
+              ifRevision: input.ifRevision,
+              idempotencyKey: input.idempotencyKey,
+              source: input.source,
+              records: input.records,
+            },
+            catalog,
+          ),
         )
       }),
     ),
@@ -252,8 +266,9 @@ const importsHandler = {
         const database = yield* Database
         const startedAt = yield* Clock.currentTimeMillis
         const { id, ...chunk } = input
+        const catalog = yield* uploadCatalog
         const { result, replayed, hashMismatch } = yield* apiErrors(
-          applyClientImportChunk(database, context.user.id, id, chunk),
+          applyClientImportChunk(database, context.user.id, id, chunk, catalog),
         ).pipe(
           Effect.withSpan('import.job', {
             attributes: { 'import.source': input.source, 'import.fetched_by': 'client' },

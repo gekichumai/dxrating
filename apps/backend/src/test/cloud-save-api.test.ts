@@ -1038,7 +1038,7 @@ describe('cloud save API (design §5)', () => {
         source: 'dxrating-json',
         records: [
           { sheetId: sheetId(1), achievement: 990000, comboFlag: null, syncFlag: null, claimedSource: 'lxns' },
-          { sheetId: sheetId(4), achievement: 1000000, comboFlag: 'ap', syncFlag: null },
+          { sheetId: sheetId(4), achievement: 1006000, comboFlag: 'ap', syncFlag: null },
           { sheetId: sheetId(3), achievement: 2000000, comboFlag: null, syncFlag: null },
         ],
       }
@@ -1057,6 +1057,8 @@ describe('cloud save API (design §5)', () => {
         trigger: 'user',
         status: 'succeeded',
         counts: { fetched: 3, inserted: 1, improved: 1, rejected: 1 },
+        // 200% on a rating chart is impossible: listed with its rule (meta#82)
+        rejections: [{ sheetId: sheetId(3), rules: ['R1'] }],
       })
       // sheet 1 overwritten (even though worse), 4 inserted, 2 deleted, 3 rejected and left alone
       expect(replaced.body.revision).toBe(6)

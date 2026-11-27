@@ -1,4 +1,4 @@
-import type { ImportCountsDTO, ImportJobDTO } from '@gekichumai/api-contract'
+import type { ImportCountsDTO, ImportJobDTO, ImportRejectionDTO } from '@gekichumai/api-contract'
 import {
   withAchievementInt,
   type ImportWarning,
@@ -25,6 +25,7 @@ import {
 } from './jobs'
 import { completeImportJob, type MergeRecord } from './merge'
 import { findSave, saveTransaction } from './saves'
+import { appendRejections, rejectionsByRule, rejectionsOfWarnings } from './validation'
 
 type DatabaseService = typeof Database.Service
 
@@ -122,24 +123,29 @@ export const beginServerImport = (
 
 /**
  * The import counts of normalizer warnings: unknown charts (and UTAGE, which no save stores), rows the provider
- * masked for the player's privacy, and invalid values
+ * masked for the player's privacy, and invalid values or impossible scores (meta#82), both `rejected`
  */
 export function warningCounts(warnings: readonly ImportWarning[]) {
   let skippedUnknownSheet = 0
   let skippedMasked = 0
   let rejected = 0
   for (const warning of warnings) {
-    if (warning.code === 'invalid-achievement') rejected += 1
+    if (warning.code === 'invalid-achievement' || warning.code === 'impossible-score') rejected += 1
     else if (warning.code === 'masked-score') skippedMasked += 1
     else skippedUnknownSheet += 1
   }
   return { skippedUnknownSheet, skippedMasked, rejected }
 }
 
-/** The merge records of a normalized import */
-export function toMergeRecords(result: RatingImportResult): { records: MergeRecord[]; warnings: ImportWarning[] } {
+/** The merge records of a normalized import; `rejections` lists its impossible rows (meta#82), never merged */
+export function toMergeRecords(result: RatingImportResult): {
+  records: MergeRecord[]
+  warnings: ImportWarning[]
+  rejections: ImportRejectionDTO[]
+} {
   const withInts = withAchievementInt(result)
   return {
+    rejections: rejectionsOfWarnings(withInts.warnings),
     records: withInts.entries.map((entry) => ({
       sheetId: entry.sheetId,
       achievement: entry.achievementInt,
@@ -212,7 +218,7 @@ export const runServerImport = <R>(
     const catalog = yield* importCatalog.pipe(
       Effect.mapError((cause) => new ServerImportFailure({ code: 'catalog_unavailable', cause })),
     )
-    const { records, warnings } = toMergeRecords(fetched.normalize(catalog))
+    const { records, warnings, rejections } = toMergeRecords(fetched.normalize(catalog))
     const skipped = warningCounts(warnings)
     if (skipped.skippedUnknownSheet > 0) {
       yield* Effect.sync(() =>
@@ -220,6 +226,14 @@ export const runServerImport = <R>(
           attributes: { source: job.source },
         }),
       )
+    }
+    if (rejections.length > 0) {
+      // Per rule, so a rule that starts firing on real data (a dxdata note count gone wrong) shows up (meta#82)
+      yield* Effect.sync(() => {
+        for (const [rule, count] of Object.entries(rejectionsByRule(rejections))) {
+          Sentry.metrics.count('import.rejected_impossible', count, { attributes: { source: job.source, rule } })
+        }
+      })
     }
     const recorded = yield* recordJobFetch(database, job.id, {
       fetchedAt,
@@ -241,6 +255,7 @@ export const runServerImport = <R>(
       jobId: job.id,
       records,
       extraCounts,
+      rejections: appendRejections([], rejections),
     })
   })
 

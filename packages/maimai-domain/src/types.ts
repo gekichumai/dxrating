@@ -1,4 +1,5 @@
 import type { DifficultyEnum, Sheet, Song, TypeEnum } from '@gekichumai/dxdata'
+import type { ScoreValidationRule } from './score-validation'
 
 export type Region = 'jp' | 'intl' | 'cn' | '_generic'
 
@@ -99,8 +100,22 @@ export type RatingEntry = RatingEntryFields & { readonly [useToRatingEntries]: t
 
 export interface ImportWarning {
   provider: ImportProvider
-  /** `masked-score`: the provider hid the row's real values (a privacy setting of the player) */
-  code: 'sheet-not-found' | 'invalid-difficulty' | 'invalid-type' | 'invalid-achievement' | 'masked-score'
+  /**
+   * `masked-score`: the provider hid the row's real values (a privacy setting of the player).
+   * `impossible-score`: the row breaks a hard consistency rule (`rules`, see `score-validation.ts`); it is rejected,
+   * never clamped.
+   */
+  code:
+    | 'sheet-not-found'
+    | 'invalid-difficulty'
+    | 'invalid-type'
+    | 'invalid-achievement'
+    | 'masked-score'
+    | 'impossible-score'
   message: string
   row: unknown
+  /** The chart the row resolved to, when it did (`impossible-score`) */
+  sheetId?: string
+  /** The broken rules of an `impossible-score` row, in rule order */
+  rules?: ScoreValidationRule[]
 }

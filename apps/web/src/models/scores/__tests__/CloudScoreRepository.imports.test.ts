@@ -222,6 +222,7 @@ class FakeImportsServer {
       finishedAt: null,
       rawPayloadSha256: null,
       counts: counts(),
+      rejections: [],
       errorCode: null,
     }
     this.jobs.set(job.id, job)

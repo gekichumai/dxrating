@@ -46,6 +46,7 @@ const job: ImportJobDTO = {
   fetchedAt: null,
   finishedAt: null,
   rawPayloadSha256: null,
+  rejections: [],
   counts: {
     fetched: 10,
     inserted: 2,

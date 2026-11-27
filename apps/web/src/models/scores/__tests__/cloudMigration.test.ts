@@ -218,6 +218,7 @@ class FakeMigrationServer {
       finishedAt: null,
       rawPayloadSha256: null,
       counts: counts(0),
+      rejections: [],
       errorCode: null,
     }
     this.jobs.set(job.id, job)
