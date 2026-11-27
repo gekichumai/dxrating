@@ -64,6 +64,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { DxScoreProgressText } from '../components/scores/DxScoreProgressText'
 import { SheetListItem, SheetListItemContent } from '../components/sheet/SheetListItem'
 import { useScoreEntries, useScoreRepository } from '../models/scores/useScoreRepository'
+import { type ActiveSave, hasActiveSaveSelection, useActiveSave } from '../models/scores/ActiveSaveContext'
 import { achievementRateBand, captureAnalyticsEvent } from '../lib/analytics'
 import { type FlattenedSheet, useSheets } from '../songs'
 import type { Rating } from '../utils/rating'
@@ -73,6 +74,7 @@ import { switchFocusRing } from '../components/rating/focusRing'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
 import type { LocalizedString } from '@/paraglide/runtime'
+import { browserStorage } from '@/utils/persisted'
 
 export interface Entry {
   sheet: FlattenedSheet
@@ -105,6 +107,13 @@ const DEFAULT_SORTING: SortingState = [
 const isDefaultSorting = (sorting: SortingState) =>
   sorting.length === DEFAULT_SORTING.length &&
   sorting.every((sort, index) => sort.id === DEFAULT_SORTING[index]?.id && sort.desc === DEFAULT_SORTING[index]?.desc)
+
+/**
+ * Whether the local save is the visitor's save for this load: no cloud save is active, and none can still open (the
+ * decision is made, or no cloud save is chosen in this browser)
+ */
+const isLocalSaveFinal = ({ kind, decided }: Pick<ActiveSave, 'kind' | 'decided'>) =>
+  kind === 'local' && (decided || !hasActiveSaveSelection(browserStorage('local')))
 
 const RatingCalculatorRowActions: FC<{
   entry: PlayEntry
@@ -173,6 +182,7 @@ export const RatingCalculator = () => {
   const ratingView = useRatingView()
   const navigate = useNavigate()
   const locale = useLocale()
+  const activeSave = useActiveSave()
 
   const { allEntries } = useRatingEntries()
 
@@ -197,17 +207,25 @@ export const RatingCalculator = () => {
     [entries, repository, sheets],
   )
 
-  if (!sheets) return null
+  const isEmpty = entries.length === 0 && allEntries.length === 0
+
+  // Before the complete catalog has loaded, only the empty state renders: its onboarding needs no chart data, and it is
+  // the largest text of a first visit, so waiting for the catalog's download held LCP back by seconds. Records need the
+  // catalog for their statistics and rows, so a visitor with records still waits; the local save is read
+  // synchronously, so they never see the onboarding first. An empty local save that a cloud save chosen in this
+  // browser may still replace waits for the catalog too, as before
+  if (!sheets && (!isEmpty || !isLocalSaveFinal(activeSave))) return null
 
   // No saved record at all: one onboarding panel and the add form, without the zero-filled statistics or the export,
   // delete and view controls, which need records. Everything comes back with the first record.
-  if (entries.length === 0 && allEntries.length === 0) {
+  if (isEmpty) {
     return (
       // No bottom padding of its own: the explainer below is the page's last content and carries pb-global
       <div className="rating-calculator rating-calculator--empty page-gutter py-4">
         <RatingOnboarding />
         <ImportUndoBanner />
         <div id={RATING_ADD_ENTRY_ID} className="glass rating-records w-full">
+          {/* Rendered while the catalog loads too (its chart field disabled), so its height never changes (CLS) */}
           <RatingCalculatorAddEntryForm onSubmit={onSubmit} />
         </div>
       </div>

@@ -53,7 +53,6 @@ const ListboxComponent = (({
 export const RatingCalculatorAddEntryForm: FC<{
   onSubmit: (entry: PlayEntry) => void
 }> = memo(({ onSubmit }) => {
-  const { data: sheets } = useSheets()
   const [selectedSheet, setSelectedSheet] = useState<FlattenedSheet | null>(null)
   const [achievementRate, setAchievementRate] = useState<string>('')
   const [achievementRateError, setAchievementRateError] = useState<string | null>(null)
@@ -116,8 +115,6 @@ export const RatingCalculatorAddEntryForm: FC<{
     Number.isFinite(Number(achievementRate)) &&
     Number(achievementRate) >= 0 &&
     Number(achievementRate) <= 101
-
-  if (!sheets) return null
 
   return (
     <form
@@ -238,6 +235,8 @@ export const RatingCalculatorAddEntryForm: FC<{
   )
 })
 
+const NO_SHEETS: FlattenedSheet[] = []
+
 export const RatingCalculatorAddEntryFormAutoComplete: FC<{
   value: FlattenedSheet | null
   onChange: (sheet: FlattenedSheet | null) => void
@@ -264,13 +263,15 @@ export const RatingCalculatorAddEntryFormAutoComplete: FC<{
     ),
     [],
   )
-  if (!sheets) return null
 
   return (
     <Autocomplete
       size="small"
       fullWidth
-      options={sheets}
+      // The field is in place before the complete catalog has loaded (the empty /rating paints without it), so the
+      // form keeps its height; there is nothing to pick from until then
+      disabled={!sheets}
+      options={sheets ?? NO_SHEETS}
       getOptionLabel={(sheet) => formatSheetToString(sheet)}
       renderInput={(params) => (
         <TextField {...params} label={m.ratingCalculator_addEntry_chart({}, { locale })} variant="outlined" />
