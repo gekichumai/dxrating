@@ -1,25 +1,21 @@
 diff --git a/apps/web/src/components/song/SongSheetContent.tsx b/apps/web/src/components/song/SongSheetContent.tsx
-index 4fe2b153..48a3753b 100644
+index 660bf4ff..9760dc8c 100644
 --- a/apps/web/src/components/song/SongSheetContent.tsx
 +++ b/apps/web/src/components/song/SongSheetContent.tsx
-@@ -326,10 +326,16 @@ const UtageKindBadge: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
- export const SongSheetSummary: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+@@ -311,8 +311,14 @@ const UtageKindBadge: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
+ // Its own component, so the clock that keeps "N days ago" current re-renders only this line
+ const SheetReleaseDate: FC<{ releaseDate: string }> = ({ releaseDate }) => {
    const locale = useLocale()
-   const renderedAt = useRenderedAt()
--  const releaseDateParts = useMemo(
--    () => (sheet.releaseDate ? formatSheetReleaseDateParts(sheet.releaseDate, locale, renderedAt) : null),
--    [sheet.releaseDate, locale, renderedAt],
--  )
-+  const releaseDate = new Date(sheet.releaseDateTimestamp)
-+  const releaseDateParts = sheet.releaseDate
-+    ? {
-+        absoluteDate: releaseDate.toLocaleString(locale, { dateStyle: 'medium' }),
-+        relativeDate: new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(
-+          Math.floor((releaseDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
-+          'day',
-+        ),
-+      }
-+    : null
+-  const now = useMinuteNow()
+-  const parts = useMemo(() => formatSheetReleaseDateParts(releaseDate, locale, now), [releaseDate, locale, now])
++  const date = new Date(releaseDate)
++  const parts = {
++    absoluteDate: date.toLocaleString(locale, { dateStyle: 'medium' }),
++    relativeDate: new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(
++      Math.floor((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
++      'day',
++    ),
++  }
  
-   return (
-     <div className="flex flex-col gap-2">
+   return <p className="m-0 text-sm text-fg-2">{m.sheet_releaseDate(parts, { locale })}</p>
+ }
