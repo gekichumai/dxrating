@@ -70,7 +70,7 @@ export const replaceRecords = (
       const rejections: ImportRejectionDTO[] = []
       let rejected = 0
       for (const item of input.records) {
-        const rules = validateUploadedRecord(catalog, item)
+        const rules = validateUploadedRecord(catalog, item, input.source)
         if (rules.length > 0) {
           rejected += 1
           rejections.push(uploadRejection(item.sheetId, rules))

@@ -253,10 +253,11 @@ export const ToplistsPage: FC = () => {
  * Desktop columns: position, jacket, title, chart, achievement, rank, lamps, (DX score), rating. The header and every
  * row share one template so the columns line up; the DX score column only appears when some row has one.
  */
+// The rating column is 4rem so ja's 単曲レート header fits on one line
 const DESKTOP_GRID =
-  'lg:grid lg:items-center lg:gap-x-4 lg:grid-cols-[2rem_2.5rem_minmax(0,1fr)_10.5rem_6.5rem_3.5rem_6.5rem_3.5rem]'
+  'lg:grid lg:items-center lg:gap-x-4 lg:grid-cols-[2rem_2.5rem_minmax(0,1fr)_10.5rem_6.5rem_3.5rem_6.5rem_4rem]'
 const DESKTOP_GRID_WITH_DX =
-  'lg:grid lg:items-center lg:gap-x-4 lg:grid-cols-[2rem_2.5rem_minmax(0,1fr)_10.5rem_6.5rem_3.5rem_6.5rem_8rem_3.5rem]'
+  'lg:grid lg:items-center lg:gap-x-4 lg:grid-cols-[2rem_2.5rem_minmax(0,1fr)_10.5rem_6.5rem_3.5rem_6.5rem_8rem_4rem]'
 
 const ToplistColumnHeader: FC<{ showDxScore: boolean }> = ({ showDxScore }) => {
   const locale = useLocale()

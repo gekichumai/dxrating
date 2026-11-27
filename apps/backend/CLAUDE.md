@@ -141,8 +141,10 @@ before the method was recorded (see below).
   `@gekichumai/maimai-domain`'s `validateScore` and lists it with its rules in the job's `rejections` (kept in the
   `counts` column, at most 100, with `rejectionsTotal` counting them all); it is never clamped. Server imports check in the shared normalizers; client uploads
   (`client-imports`, `replace`) are checked again here against the import catalog. Online, a bad record is rejected
-  alone; account taint is for offline analysis only. CN providers (LXNS, Diving-Fish, or a claimed one) skip the DX
-  rules R3/R4/R7, as their note counts often differ from dxdata's.
+  alone; account taint is for offline analysis only. The DX rules R3/R4/R7 run only for providers whose charts have
+  dxdata's note counts (`DXDATA_NOTE_COUNT_PROVIDERS`: maimai NET, AquaDX, MuNET, Aqua SQLite). CN providers (LXNS,
+  Diving-Fish) and uploaded records of unknown origin (no claim on a `legacy-local` or `dxrating-json` upload) skip
+  them.
 - Account binding (§10): every write (saves, mutations, replace, client and server imports, the NET import, the beta
   opt-in) must name its account in `X-DXRating-Expected-User` (`CLOUD_SAVE_EXPECTED_USER_HEADER`), or it is answered
   400; a session that is another account is answered 409 `{ reason: 'ACCOUNT_MISMATCH' }` before anything is written.

@@ -477,6 +477,37 @@ describe('client imports', () => {
       })
     })
 
+    it('skips the DX rules for records of unknown origin, and keeps the others', async () => {
+      const user = await newUser()
+      const response = await upload(user.cookie, user.saveId, {
+        // a local migration: a chart collapsed from entries of different providers claims none
+        source: 'legacy-local',
+        idempotencyKey: `impossible-unclaimed-${randomUUID()}`,
+        chunkIndex: 0,
+        chunkCount: 1,
+        records: [
+          // above dxdata's maximum (1116), with no claim or one the server does not know: possible on a CN chart
+          chartRecord(kimino, 1000000, { dxScore: 1200 }),
+          chartRecord(CHARTS.kiminoStdMaster.sheetId, 1000000, { dxScore: 99999, claimedSource: 'manual' }),
+          // the other rules still apply
+          chartRecord(CHARTS.kiminoDxExpert.sheetId, 1009000, { comboFlag: 'app' }),
+          // claiming maimai NET: checked against dxdata
+          chartRecord(CHARTS.ourFightingStdBasic.sheetId, 1000000, { dxScore: 700, claimedSource: 'maimai-net' }),
+        ],
+      })
+      expect(response.body.job).toMatchObject({
+        status: 'succeeded',
+        counts: { fetched: 4, inserted: 2, rejected: 2 },
+        rejections: [
+          { sheetId: CHARTS.kiminoDxExpert.sheetId, rules: ['R5'] },
+          { sheetId: CHARTS.ourFightingStdBasic.sheetId, rules: ['R3'] },
+        ],
+      })
+      expect((await stored(user.saveId)).map((row) => row.sheet_id).sort()).toEqual(
+        [kimino, CHARTS.kiminoStdMaster.sheetId].sort(),
+      )
+    })
+
     it('skips the DX rules on a sheet the catalog does not know', async () => {
       const user = await newUser()
       const response = await upload(user.cookie, user.saveId, {

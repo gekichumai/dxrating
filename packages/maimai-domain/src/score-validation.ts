@@ -130,19 +130,30 @@ export function ambiguousInternalIds(catalog: Pick<SongCatalog, 'sheets'>): Read
 }
 
 /**
- * Providers whose scores come from the CN servers, where many charts have other note counts than dxdata's (in the
- * 2025-06 CN dump, 198 of the 4,880 charts with at least 50 records had more than 0.2% of their records above 3 ×
- * dxdata's note count). Their records skip the DX rules (R3, R4, R7); R1, R2, R5, R6 and R8 still apply (owner,
- * meta#82).
+ * Providers whose charts have dxdata's note counts: maimai NET (JP and international, by provider and by import
+ * source name) and the private servers that run that game data (AquaDX, MuNET, Aqua SQLite). Only their records get
+ * the DX rules (R3, R4, R7) against dxdata; every other record skips them, and R1, R2, R5, R6 and R8 still apply:
+ * - the CN providers (LXNS, Diving-Fish): many CN charts have other note counts than dxdata's (in the 2025-06 CN dump,
+ *   198 of the 4,880 charts with at least 50 records had more than 0.2% of their records above 3 × dxdata's note
+ *   count; owner, meta#82);
+ * - a record that names no provider, or one this list does not know (a manual entry, a local or DXRating JSON entry
+ *   without a provider, a chart collapsed from entries of different providers): it may be a CN score as well.
  */
-export const CN_SCORE_PROVIDERS: readonly string[] = ['lxns', 'diving-fish']
+export const DXDATA_NOTE_COUNT_PROVIDERS: readonly string[] = [
+  'maimai-net',
+  'maimai-net-jp',
+  'maimai-net-intl',
+  'aqua-dx',
+  'mu-net',
+  'aqua-sqlite',
+]
 
-/** Whether dxdata's note counts may be trusted for a provider's records: not for the CN providers */
+/** Whether dxdata's note counts may be trusted for a provider's records: only for {@link DXDATA_NOTE_COUNT_PROVIDERS} */
 export function catalogNoteCountsApply(provider: string | null | undefined): boolean {
-  return provider == null || !CN_SCORE_PROVIDERS.includes(provider)
+  return provider != null && DXDATA_NOTE_COUNT_PROVIDERS.includes(provider)
 }
 
-/** `chart` without its maximum DX score for a CN provider ({@link CN_SCORE_PROVIDERS}) */
+/** `chart` without its maximum DX score unless the provider's charts are dxdata's ({@link catalogNoteCountsApply}) */
 export function forProvider(chart: ScoreValidationChart, provider: string | null | undefined): ScoreValidationChart {
   return catalogNoteCountsApply(provider) ? chart : { ...chart, maxDxScore: null }
 }

@@ -9,6 +9,7 @@ import {
   isPublicSheetId,
   scoreValidationChartOf,
   validateScore,
+  type ClientImportSource,
   type ImportWarning,
   type ScoreValidationChart,
   type ScoreValidationRule,
@@ -28,8 +29,11 @@ import {
  * account. Account taint (dropping every record of an account with an impossible one) is for offline analysis only
  * (owner decision, meta#82).
  *
- * CN providers (LXNS, Diving-Fish) skip the DX rules R3, R4 and R7 (`forProvider`): their note counts often differ
- * from dxdata's. A client upload claiming one of them (`claimedSource`) is treated the same.
+ * The DX rules R3, R4 and R7 run only for records from a provider whose charts have dxdata's note counts
+ * (`DXDATA_NOTE_COUNT_PROVIDERS`: maimai NET, AquaDX, MuNET, Aqua SQLite; `forProvider`). The CN providers (LXNS,
+ * Diving-Fish) skip them, as their note counts often differ from dxdata's, and so does an uploaded record whose origin
+ * is unknown: it may be a CN score too. An uploaded record's provider is the one it claims (`claimedSource`), else
+ * the upload's source.
  */
 
 /** No catalog: only the rules that need no chart data run (saves hold no UTAGE, so the 101% cap applies) */
@@ -38,11 +42,14 @@ const UNKNOWN_CHART: ScoreValidationChart = { isUtage: false, maxDxScore: null }
 /**
  * The rules an uploaded record breaks, checked against the catalog's chart for its sheet ID. Takes the item as sent,
  * so a value the import schema refuses (an achievement above 101%, an unknown combo flag) still gets its rule; a
- * record without a numeric achievement breaks no rule here (it is just malformed).
+ * record without a numeric achievement breaks no rule here (it is just malformed). `source` is the upload's: it is
+ * the record's provider when the record claims none (an AquaDX file; a `legacy-local` or `dxrating-json` record
+ * without a claim is of unknown origin, so it skips the DX rules).
  */
 export function validateUploadedRecord(
   catalog: SongCatalog | null,
   item: Pick<ImportRecordInput, 'sheetId' | 'achievement' | 'comboFlag' | 'syncFlag' | 'dxScore' | 'claimedSource'>,
+  source: ClientImportSource,
 ): ScoreValidationRule[] {
   if (typeof item.achievement !== 'number' || !Number.isFinite(item.achievement)) return []
   const sheet = catalog && typeof item.sheetId === 'string' ? catalog.getById(item.sheetId) : null
@@ -56,7 +63,7 @@ export function validateUploadedRecord(
     catalog && sheet
       ? forProvider(
           scoreValidationChartOf(catalog, sheet),
-          typeof item.claimedSource === 'string' ? item.claimedSource : null,
+          typeof item.claimedSource === 'string' ? item.claimedSource : source,
         )
       : UNKNOWN_CHART,
   )
