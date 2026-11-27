@@ -191,7 +191,12 @@ const DEMO_JOBS: ImportJobDTO[] = [
     sourceAccountKind: null,
     sourceAccountId: null,
     startedAt: '2026-10-25T18:00:00.000Z',
-    counts: counts({ fetched: 640, inserted: 620, skippedUnknownSheet: 20 }),
+    counts: counts({ fetched: 642, inserted: 620, skippedUnknownSheet: 20, rejected: 2 }),
+    // Two impossible scores in the file (meta#82): rejected with their rules, never stored
+    rejections: [
+      { sheetId: 'dsht_e5nsvt8k2a', rules: ['R5'] },
+      { sheetId: 'dsht_36ncrs5g4j', rules: ['R3'] },
+    ],
   }),
   job({
     // A Diving-Fish player who hides part of their scores: those rows are counted apart, not as rejected

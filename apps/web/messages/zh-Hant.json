@@ -1761,5 +1761,34 @@
   "ratingCalculator_cloudSave_exportImport_pickTitle": "選擇要匯入的存檔",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "這個檔案中有多個存檔。",
   "ratingCalculator_cloudSave_exportImport_claimedOnly": "已作為「未驗證」匯入：紀錄來源僅依檔案中的宣稱顯示。",
-  "share_image_footerCaption": "掃碼在 DXRating 開啟"
+  "share_image_footerCaption": "掃碼在 DXRating 開啟",
+  "ratingCalculator_io_import_impossibleScores": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "已排除 {countNumber} 筆不可能由真實遊玩得到的成績。",
+        "countPlural=*": "已排除 {countNumber} 筆不可能由真實遊玩得到的成績。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "已排除 {countNumber} 筆不可能的成績",
+        "countPlural=*": "已排除 {countNumber} 筆不可能的成績"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections_unknownChart": "未知譜面",
+  "ratingCalculator_io_import_impossibleRule_r1": "達成率超過 101%",
+  "ratingCalculator_io_import_impossibleRule_r2": "未知的連擊、同步或難度值",
+  "ratingCalculator_io_import_impossibleRule_r3": "DX 分數超過譜面上限",
+  "ratingCalculator_io_import_impossibleRule_r4": "DX 分數滿分卻不是 AP+ 與 101%",
+  "ratingCalculator_io_import_impossibleRule_r5": "AP+ 但達成率低於 101%",
+  "ratingCalculator_io_import_impossibleRule_r6": "AP 但達成率低於 100.5%",
+  "ratingCalculator_io_import_impossibleRule_r7": "AP 但 DX 分數低於物量的 2 倍",
+  "ratingCalculator_io_import_impossibleRule_r8": "遊玩次數為 0 卻有成績"
 }

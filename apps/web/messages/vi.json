@@ -1743,5 +1743,34 @@
   "ratingCalculator_cloudSave_exportImport_pickTitle": "Chọn bản lưu để nhập",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "Tệp này có nhiều hơn một bản lưu.",
   "ratingCalculator_cloudSave_exportImport_claimedOnly": "Được nhập là “chưa xác minh”: nguồn gốc của các bản ghi được hiển thị theo khai báo của tệp.",
-  "share_image_footerCaption": "Quét để mở trên DXRating"
+  "share_image_footerCaption": "Quét để mở trên DXRating",
+  "ratingCalculator_io_import_impossibleScores": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Đã bỏ qua {countNumber} điểm vì không thể đến từ một lượt chơi thật.",
+        "countPlural=*": "Đã bỏ qua {countNumber} điểm vì không thể đến từ một lượt chơi thật."
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Đã bỏ qua {countNumber} điểm không thể có",
+        "countPlural=*": "Đã bỏ qua {countNumber} điểm không thể có"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections_unknownChart": "Chart không xác định",
+  "ratingCalculator_io_import_impossibleRule_r1": "Achievement trên 101%",
+  "ratingCalculator_io_import_impossibleRule_r2": "Giá trị combo, sync hoặc độ khó không xác định",
+  "ratingCalculator_io_import_impossibleRule_r3": "Điểm DX vượt quá mức tối đa của chart",
+  "ratingCalculator_io_import_impossibleRule_r4": "Điểm DX tối đa nhưng không có AP+ và 101%",
+  "ratingCalculator_io_import_impossibleRule_r5": "AP+ dưới 101%",
+  "ratingCalculator_io_import_impossibleRule_r6": "AP dưới 100.5%",
+  "ratingCalculator_io_import_impossibleRule_r7": "AP với điểm DX dưới 2 mỗi note",
+  "ratingCalculator_io_import_impossibleRule_r8": "Có điểm nhưng chưa từng chơi"
 }

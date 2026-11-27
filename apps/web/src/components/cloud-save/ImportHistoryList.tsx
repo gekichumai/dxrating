@@ -1,4 +1,5 @@
-import type { ImportCountsDTO, ImportJobDTO } from '@gekichumai/api-contract'
+import type { ImportCountsDTO, ImportJobDTO, ImportRejectionDTO } from '@gekichumai/api-contract'
+import type { SongCatalogDocument } from '@gekichumai/dxdata'
 import { CircularProgress } from '@mui/material'
 import { type FC, useEffect, useMemo, useState } from 'react'
 import { useCloudSaveUi } from '@/models/scores/CloudSaveUiContext'
@@ -8,7 +9,10 @@ import { sourceName } from './provenanceLabel'
 import { m } from '@/paraglide/messages'
 import { useLocale } from '@/i18n/LocaleProvider'
 import type { PlainMessage } from '@/i18n/message'
-import { IMPORT_COUNT_MESSAGES } from '@/components/rating/io/import/cloudImport'
+import { IMPORT_COUNT_MESSAGES, IMPOSSIBLE_RULE_MESSAGES } from '@/components/rating/io/import/cloudImport'
+import { useCatalogDocument } from '@/catalog/CatalogContext'
+import { DIFFICULTIES } from '@/models/difficulties'
+import type { Locale } from '@/paraglide/runtime'
 
 /** The counts shown for a job, in this order; zeros are left out */
 const COUNT_KEYS = [
@@ -113,9 +117,59 @@ export const ImportHistoryList: FC = () => {
               <span className={job.status === 'failed' ? 'text-xs text-danger' : 'text-xs text-fg-2'}>{status}</span>
             )}
             {counts.length > 0 && <span className="text-xs text-fg-2 tabular-nums">{counts.join(' · ')}</span>}
+            {/* A backend from before meta#82 sends no list */}
+            {(job.rejections?.length ?? 0) > 0 && <JobRejections rejections={job.rejections} locale={locale} />}
           </li>
         )
       })}
     </ul>
+  )
+}
+
+const chartNamesCache = new WeakMap<SongCatalogDocument, Map<string, string>>()
+
+/** "Title · DX MASTER" by public sheet ID, built once per catalog document */
+function chartNamesOf(document: SongCatalogDocument): Map<string, string> {
+  let names = chartNamesCache.get(document)
+  if (!names) {
+    names = new Map()
+    for (const song of document.songs) {
+      for (const sheet of song.sheets) {
+        const difficulty = DIFFICULTIES[sheet.difficulty]?.title ?? sheet.difficulty
+        names.set(sheet.id, `${song.title} · ${sheet.type.toUpperCase()} ${difficulty}`)
+      }
+    }
+    chartNamesCache.set(document, names)
+  }
+  return names
+}
+
+/**
+ * The impossible scores a job rejected (meta#82), folded: which chart and which rule each one broke. They were not
+ * stored, so this is the only place the user learns which of their records were left out and why.
+ */
+const JobRejections: FC<{ rejections: readonly ImportRejectionDTO[]; locale: Locale }> = ({ rejections, locale }) => {
+  const document = useCatalogDocument()
+  const names = useMemo(() => chartNamesOf(document), [document])
+  return (
+    <details className="text-xs text-fg-2">
+      <summary className="cursor-pointer">
+        {m.ratingCalculator_cloudSave_history_rejections({ count: rejections.length }, { locale })}
+      </summary>
+      {/* Lines, not a nested list: the history's list items are its jobs */}
+      <div className="mt-1 flex flex-col gap-0.5">
+        {rejections.map((rejection, index) => (
+          <span key={`${rejection.sheetId ?? 'unknown'}-${index}`}>
+            <span className="text-fg-1">
+              {rejection.sheetId
+                ? (names.get(rejection.sheetId) ?? rejection.sheetId)
+                : m.ratingCalculator_cloudSave_history_rejections_unknownChart({}, { locale })}
+            </span>
+            {': '}
+            {rejection.rules.map((rule) => IMPOSSIBLE_RULE_MESSAGES[rule]({}, { locale })).join(', ')}
+          </span>
+        ))}
+      </div>
+    </details>
   )
 }

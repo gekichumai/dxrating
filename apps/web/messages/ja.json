@@ -1761,5 +1761,34 @@
   "ratingCalculator_cloudSave_exportImport_pickTitle": "インポートするセーブを選択",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "このファイルには複数のセーブがあります。",
   "ratingCalculator_cloudSave_exportImport_claimedOnly": "「未検証」としてインポートしました。記録の出どころはファイルの申告として表示されます。",
-  "share_image_footerCaption": "スキャンして DXRating で開く"
+  "share_image_footerCaption": "スキャンして DXRating で開く",
+  "ratingCalculator_io_import_impossibleScores": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "実際のプレイではありえないスコア {countNumber} 件を除外しました。",
+        "countPlural=*": "実際のプレイではありえないスコア {countNumber} 件を除外しました。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "除外したありえないスコア {countNumber} 件",
+        "countPlural=*": "除外したありえないスコア {countNumber} 件"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections_unknownChart": "不明な譜面",
+  "ratingCalculator_io_import_impossibleRule_r1": "達成率が 101% を超えている",
+  "ratingCalculator_io_import_impossibleRule_r2": "不明なコンボ・シンク・難易度の値",
+  "ratingCalculator_io_import_impossibleRule_r3": "DX スコアが譜面の最大値を超えている",
+  "ratingCalculator_io_import_impossibleRule_r4": "DX スコアが最大値なのに AP+・101% ではない",
+  "ratingCalculator_io_import_impossibleRule_r5": "AP+ なのに 101% 未満",
+  "ratingCalculator_io_import_impossibleRule_r6": "AP なのに 100.5% 未満",
+  "ratingCalculator_io_import_impossibleRule_r7": "AP なのに DX スコアがノーツ数の 2 倍未満",
+  "ratingCalculator_io_import_impossibleRule_r8": "プレイ回数 0 なのにスコアがある"
 }

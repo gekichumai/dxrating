@@ -1761,5 +1761,34 @@
   "ratingCalculator_cloudSave_exportImport_pickTitle": "选择要导入的存档",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "这个文件中有多个存档。",
   "ratingCalculator_cloudSave_exportImport_claimedOnly": "已作为“未验证”导入：记录来源仅按文件中的声明显示。",
-  "share_image_footerCaption": "扫码在 DXRating 打开"
+  "share_image_footerCaption": "扫码在 DXRating 打开",
+  "ratingCalculator_io_import_impossibleScores": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "已排除 {countNumber} 条不可能由真实游玩得到的成绩。",
+        "countPlural=*": "已排除 {countNumber} 条不可能由真实游玩得到的成绩。"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "已排除 {countNumber} 条不可能的成绩",
+        "countPlural=*": "已排除 {countNumber} 条不可能的成绩"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections_unknownChart": "未知谱面",
+  "ratingCalculator_io_import_impossibleRule_r1": "达成率超过 101%",
+  "ratingCalculator_io_import_impossibleRule_r2": "未知的连击、同步或难度值",
+  "ratingCalculator_io_import_impossibleRule_r3": "DX 分数超过谱面上限",
+  "ratingCalculator_io_import_impossibleRule_r4": "DX 分数满分却不是 AP+ 和 101%",
+  "ratingCalculator_io_import_impossibleRule_r5": "AP+ 但达成率低于 101%",
+  "ratingCalculator_io_import_impossibleRule_r6": "AP 但达成率低于 100.5%",
+  "ratingCalculator_io_import_impossibleRule_r7": "AP 但 DX 分数低于物量的 2 倍",
+  "ratingCalculator_io_import_impossibleRule_r8": "游玩次数为 0 却有成绩"
 }

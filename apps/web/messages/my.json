@@ -1743,5 +1743,34 @@
   "ratingCalculator_cloudSave_exportImport_pickTitle": "တင်သွင်းရန် save ရွေးပါ",
   "ratingCalculator_cloudSave_exportImport_pickDescription": "ဤဖိုင်တွင် save တစ်ခုထက်ပို၍ ပါသည်။",
   "ratingCalculator_cloudSave_exportImport_claimedOnly": "“အတည်မပြုရသေး” အဖြစ် တင်သွင်းထားသည်: မှတ်တမ်းများ၏ ရင်းမြစ်ကို ဖိုင်က ဆိုထားသည့်အတိုင်း ပြထားသည်။",
-  "share_image_footerCaption": "DXRating တွင် ဖွင့်ရန် စကင်ဖတ်ပါ"
+  "share_image_footerCaption": "DXRating တွင် ဖွင့်ရန် စကင်ဖတ်ပါ",
+  "ratingCalculator_io_import_impossibleScores": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "တကယ့်ကစားမှုမှ မဖြစ်နိုင်သော ရမှတ် {countNumber} ခုကို ချန်လှပ်ထားပါသည်။",
+        "countPlural=*": "တကယ့်ကစားမှုမှ မဖြစ်နိုင်သော ရမှတ် {countNumber} ခုကို ချန်လှပ်ထားပါသည်။"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "ချန်လှပ်ထားသော မဖြစ်နိုင်သည့် ရမှတ် {countNumber} ခု",
+        "countPlural=*": "ချန်လှပ်ထားသော မဖြစ်နိုင်သည့် ရမှတ် {countNumber} ခု"
+      }
+    }
+  ],
+  "ratingCalculator_cloudSave_history_rejections_unknownChart": "မသိသော chart",
+  "ratingCalculator_io_import_impossibleRule_r1": "Achievement 101% ထက် ကျော်နေသည်",
+  "ratingCalculator_io_import_impossibleRule_r2": "မသိသော combo၊ sync သို့မဟုတ် difficulty တန်ဖိုး",
+  "ratingCalculator_io_import_impossibleRule_r3": "DX score သည် chart ၏ အများဆုံးထက် ကျော်နေသည်",
+  "ratingCalculator_io_import_impossibleRule_r4": "AP+ နှင့် 101% မရှိဘဲ အများဆုံး DX score",
+  "ratingCalculator_io_import_impossibleRule_r5": "AP+ ဖြစ်သော်လည်း 101% အောက်",
+  "ratingCalculator_io_import_impossibleRule_r6": "AP ဖြစ်သော်လည်း 100.5% အောက်",
+  "ratingCalculator_io_import_impossibleRule_r7": "AP ဖြစ်သော်လည်း DX score သည် note တစ်ခုလျှင် 2 အောက်",
+  "ratingCalculator_io_import_impossibleRule_r8": "မကစားဖူးဘဲ ရမှတ်ရှိသည်"
 }

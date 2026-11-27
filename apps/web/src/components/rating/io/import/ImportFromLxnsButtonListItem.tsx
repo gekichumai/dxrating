@@ -24,7 +24,14 @@ import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { reviewAndApplyImport } from '@/models/scores/importReview'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
-import { importFallbackEntries, importPath, runServerImportToEnd, summarizeImportJob } from './cloudImport'
+import {
+  importFallbackEntries,
+  importPath,
+  impossibleScoreCount,
+  impossibleScoresNotice,
+  runServerImportToEnd,
+  summarizeImportJob,
+} from './cloudImport'
 import { importFailureMessage } from '@/components/cloud-save/importFailureMessage'
 import { ServerImportFailedError } from '@/models/scores/cloudImports'
 import { useLocale } from '@/i18n/LocaleProvider'
@@ -85,6 +92,9 @@ const LxnsImportDialogContent: FC<{
             { locale },
           ),
         )
+        // Impossible scores the server rejected (meta#82)
+        const rejected = impossibleScoresNotice(job.rejections?.length ?? 0, locale)
+        if (rejected) toast(rejected)
         onClose()
         return
       }
@@ -117,6 +127,9 @@ const LxnsImportDialogContent: FC<{
       analytics.succeeded(entries.length, importResult.warnings.length)
       haptics.trigger('success')
       toast.success(m.ratingCalculator_io_import_lxns_success({ count: entries.length }, { locale }))
+      // Impossible scores (meta#82) never reach the save: said apart
+      const impossible = impossibleScoresNotice(impossibleScoreCount(importResult.warnings), locale)
+      if (impossible) toast(impossible)
 
       Sentry.metrics.distribution('lxns_import.duration', performance.now() - importStart, {
         unit: 'millisecond',

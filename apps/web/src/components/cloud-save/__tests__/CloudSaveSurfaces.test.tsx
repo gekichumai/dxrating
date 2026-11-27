@@ -302,6 +302,19 @@ describe('ImportHistoryList', () => {
     expect(items[4]?.textContent).not.toMatch(/try again/i)
   })
 
+  it('lists the impossible scores a job rejected, with the rule each one broke (meta#82)', async () => {
+    const { ui } = demo()
+    render(<ImportHistoryList />, { wrapper: withCloud(ui) })
+    const items = await screen.findAllByRole('listitem')
+    const file = items.find((item) => item.getAttribute('data-job-status') && item.textContent?.includes('AquaDX'))!
+    expect(file.textContent).toContain('2 rejected')
+    expect(within(file).getByText('2 impossible scores left out')).toBeTruthy()
+    expect(file.textContent).toContain('AP+ below 101%')
+    expect(file.textContent).toContain("DX score above the chart's maximum")
+    // Jobs without rejections show no list
+    expect(items[0]?.querySelector('details')).toBeNull()
+  })
+
   it('names uploads of this browser as such, and counts one chart in the singular', async () => {
     const { repository, ui } = demo()
     const jobs = await repository.listImportJobs()

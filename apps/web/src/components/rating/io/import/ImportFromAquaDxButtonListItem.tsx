@@ -9,7 +9,13 @@ import { useWebHaptics } from 'web-haptics/react'
 import { useScoreRepository } from '@/models/scores/useScoreRepository'
 import { importResultToPlayEntries } from './importResultToPlayEntries'
 import { createRatingImportTracker } from '@/lib/analytics'
-import { announceImportLeftOut, cloudImportErrorMessage, importFileEntries } from './cloudImport'
+import {
+  announceImportLeftOut,
+  cloudImportErrorMessage,
+  importFileEntries,
+  impossibleScoreCount,
+  impossibleScoresNotice,
+} from './cloudImport'
 import { m } from '@/paraglide/messages'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { reportRejection } from '@/lib/rejections'
@@ -20,6 +26,7 @@ type AquaDxExportMusicDetail = {
   achievement: number
   comboStatus?: number | null
   syncStatus?: number | null
+  playCount?: number | null
 }
 
 export const ImportFromAquaDxButtonListItem: FC<{
@@ -64,6 +71,8 @@ export const ImportFromAquaDxButtonListItem: FC<{
                     achievement: musicDetail.achievement,
                     comboStatus: musicDetail.comboStatus,
                     syncStatus: musicDetail.syncStatus,
+                    // a score with 0 plays is impossible (meta#82 R8)
+                    playCount: musicDetail.playCount,
                   }))
                 : []
               const importResult = normalizeAquaDxRows(await loadCatalog(), rows, musicIdMap, await loadLegacySongIds())
@@ -84,6 +93,9 @@ export const ImportFromAquaDxButtonListItem: FC<{
               // A cloud save counts what the server took, not what was sent
               toast.success(m.ratingCalculator_io_import_aquaDx_success({ count: result.count }, { locale }))
               announceImportLeftOut(result, locale, (message) => toast(message))
+              // Impossible scores (meta#82) never reach the save: said apart from rows that failed
+              const impossible = impossibleScoresNotice(impossibleScoreCount(importResult.warnings), locale)
+              if (impossible) toast(impossible)
             } catch (error) {
               analytics.failed('invalid_file')
               console.error(error)
