@@ -1,8 +1,6 @@
 import { HeadContent, Outlet, Scripts, createRootRoute, useRouter } from '@tanstack/react-router'
 import { CircularProgress } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import posthog from 'posthog-js'
-import { PostHogProvider } from 'posthog-js/react'
 import clsx from 'clsx'
 import { type CSSProperties, Suspense, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
@@ -41,6 +39,7 @@ import { useRevealFocusInScrollFade } from '@/utils/useRevealFocusInScrollFade'
 import { ZOD_JITLESS_INLINE_SCRIPT } from '@/setup/zod-jitless'
 import { THEME_INLINE_SCRIPT } from '@/setup/theme-script'
 import { originTrialMeta } from '@/setup/origin-trials'
+import { scheduleAnalytics } from '@/setup/init-client'
 import { splitLocalePath } from '@/setup/locale'
 import { RENDERED_AT_META_NAME, RenderEnvironmentProvider, resolveRenderedAt } from '@/utils/renderEnvironment'
 // All app CSS is global and ships as one stylesheet: the base styles first, then utilities, then page styles whose
@@ -227,6 +226,8 @@ function RootComponent() {
   // After hydration: subscribing starts the session fetch, and the first client render must still see the session
   // pending, as the server rendered it
   useEffect(() => resetQueriesOnAccountChange(queryClient, authClient.$store.atoms.session), [])
+  // PostHog loads after hydration, so its chunk and init stay off the first load
+  useEffect(() => scheduleAnalytics(), [])
 
   return (
     <RenderEnvironmentProvider renderedAt={renderedAt}>
@@ -237,21 +238,19 @@ function RootComponent() {
               <QueryClientProvider client={queryClient}>
                 <VersionCustomizedThemeProvider>
                   <RatingCalculatorContextProvider>
-                    <PostHogProvider client={posthog}>
-                      <NetImportSettingsProvider>
-                        <LocaleUrlSync />
-                        <SideEffector />
-                        <CustomizedToaster />
-                        <NetImportProgress />
-                        <ImportReviewHost />
-                        <OAuthErrorHandler />
-                        <NoticeStack>
-                          <AnnouncementBanners />
-                          <RegionVersionUpdatePrompt />
-                        </NoticeStack>
-                        <AppLayout />
-                      </NetImportSettingsProvider>
-                    </PostHogProvider>
+                    <NetImportSettingsProvider>
+                      <LocaleUrlSync />
+                      <SideEffector />
+                      <CustomizedToaster />
+                      <NetImportProgress />
+                      <ImportReviewHost />
+                      <OAuthErrorHandler />
+                      <NoticeStack>
+                        <AnnouncementBanners />
+                        <RegionVersionUpdatePrompt />
+                      </NoticeStack>
+                      <AppLayout />
+                    </NetImportSettingsProvider>
                   </RatingCalculatorContextProvider>
                 </VersionCustomizedThemeProvider>
               </QueryClientProvider>

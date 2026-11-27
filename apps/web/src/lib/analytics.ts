@@ -1,5 +1,54 @@
-import posthog, { type BeforeSendFn, type Properties } from 'posthog-js'
+import type { BeforeSendFn, PostHog, Properties } from 'posthog-js'
 import type { DXVersion, Region } from '@/models/context/AppContext'
+
+/**
+ * The app's handle on PostHog. Nothing here imports the SDK at runtime: it loads after hydration
+ * (src/setup/init-client.ts), so its chunk and its init stay off the first load. Calls made before it is ready wait in
+ * a short queue and run in order right after its initial `$pageview`, the order they had when PostHog loaded before
+ * hydration; if it never loads (blocked, offline), they are dropped.
+ */
+export type AnalyticsClient = Pick<PostHog, 'capture' | 'get_property' | 'identify' | 'register' | 'reset'>
+
+type Call = (client: AnalyticsClient) => void
+
+const MAX_QUEUED_CALLS = 200
+
+let client: AnalyticsClient | undefined
+let queue: Call[] | undefined = []
+
+const run = (call: Call) => {
+  if (client) {
+    call(client)
+  } else if (queue && queue.length < MAX_QUEUED_CALLS) {
+    queue.push(call)
+  }
+}
+
+/** Runs the queued calls on the loaded client, and every later call straight on it */
+export const attachAnalyticsClient = (loaded: AnalyticsClient) => {
+  client = loaded
+  const pending = queue ?? []
+  queue = undefined
+  for (const call of pending) {
+    try {
+      call(loaded)
+    } catch {
+      // Analytics must never break the app
+    }
+  }
+}
+
+/** PostHog won't load (blocked or offline): stop queueing */
+export const discardAnalyticsQueue = () => {
+  if (!client) queue = undefined
+}
+
+/** Test-only: back to the initial, not-yet-loaded state */
+export const resetAnalyticsForTests = () => {
+  client = undefined
+  queue = []
+  deviceContext = undefined
+}
 
 export type RatingImportSource = 'maimai_net' | 'diving_fish' | 'lxns' | 'json' | 'aqua_dx' | 'mu_net' | 'aqua_sqlite'
 
@@ -238,7 +287,7 @@ export const captureAnalyticsEvent = <Event extends AnalyticsEventName>(
   event: Event,
   properties: AnalyticsEventProperties[Event],
 ) => {
-  posthog.capture(event, properties as Properties)
+  run((posthog) => posthog.capture(event, properties as Properties))
 }
 
 export const createRatingImportTracker = (
@@ -311,9 +360,9 @@ type BaseAnalyticsContext = {
 
 /**
  * Registered from `posthog.init`'s `loaded` callback, before the initial
- * `$pageview`, so every event carries platform, region and version.
+ * `$pageview` and the queued calls, so every event carries platform, region and version.
  */
-export const registerBaseAnalyticsContext = (properties: BaseAnalyticsContext) => {
+export const registerBaseAnalyticsContext = (posthog: AnalyticsClient, properties: BaseAnalyticsContext) => {
   deviceContext = { platform: properties.platform, deployment: properties.deployment }
   posthog.register(properties)
 }
@@ -323,7 +372,7 @@ export const registerBaseAnalyticsContext = (properties: BaseAnalyticsContext) =
 // identity reset; region/version are re-registered by `SideEffector`.
 let deviceContext: Pick<BaseAnalyticsContext, 'platform' | 'deployment'> | undefined
 
-const resetAnalyticsIdentity = () => {
+const resetAnalyticsIdentity = (posthog: AnalyticsClient) => {
   posthog.reset()
   if (deviceContext) posthog.register(deviceContext)
 }
@@ -336,21 +385,25 @@ export const registerAnalyticsContext = (properties: {
   calculated_rating: number
   rating_entry_count: number
 }) => {
-  posthog.register(properties)
+  run((posthog) => posthog.register(properties))
 }
 
 export const identifyAnalyticsUser = (userId: string) => {
-  const currentUserId = posthog.get_property('$user_id')
-  if (currentUserId === userId) return
+  run((posthog) => {
+    const currentUserId = posthog.get_property('$user_id')
+    if (currentUserId === userId) return
 
-  if (currentUserId) resetAnalyticsIdentity()
-  posthog.identify(userId)
+    if (currentUserId) resetAnalyticsIdentity(posthog)
+    posthog.identify(userId)
+  })
 }
 
 export const resetAnalyticsUser = () => {
-  if (posthog.get_property('$user_id')) {
-    resetAnalyticsIdentity()
-  }
+  run((posthog) => {
+    if (posthog.get_property('$user_id')) {
+      resetAnalyticsIdentity(posthog)
+    }
+  })
 }
 
 export const achievementRateBand = (achievementRate: number): string => {

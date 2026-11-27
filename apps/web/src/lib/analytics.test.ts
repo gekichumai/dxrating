@@ -1,31 +1,36 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-const posthog = vi.hoisted(() => ({
-  capture: vi.fn(),
-  get_property: vi.fn(),
-  identify: vi.fn(),
-  register: vi.fn(),
-  reset: vi.fn(),
-}))
-
-vi.mock('posthog-js', () => ({ default: posthog }))
-
 import {
   achievementRateBand,
+  attachAnalyticsClient,
   captureAnalyticsEvent,
   createRatingImportTracker,
   detectAnalyticsDeployment,
   detectAnalyticsPlatform,
+  discardAnalyticsQueue,
   identifyAnalyticsUser,
+  registerAnalyticsContext,
   registerBaseAnalyticsContext,
+  resetAnalyticsForTests,
   resetAnalyticsUser,
   sanitizeAnalyticsEvent,
   sanitizeAnalyticsUrl,
 } from './analytics'
 
+const fakePostHog = () => ({
+  capture: vi.fn(),
+  get_property: vi.fn(),
+  identify: vi.fn(),
+  register: vi.fn(),
+  reset: vi.fn(),
+})
+
+const posthog = fakePostHog()
+
 describe('analytics', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetAnalyticsForTests()
+    attachAnalyticsClient(posthog)
   })
 
   it('captures typed events with their properties', () => {
@@ -110,7 +115,7 @@ describe('analytics', () => {
   })
 
   it('registers platform, deployment, region and version as super properties', () => {
-    registerBaseAnalyticsContext({
+    registerBaseAnalyticsContext(posthog, {
       platform: 'web',
       deployment: 'production',
       game_version: 'circle-plus',
@@ -144,7 +149,7 @@ describe('analytics', () => {
   })
 
   it('restores platform and deployment after an identity reset', () => {
-    registerBaseAnalyticsContext({
+    registerBaseAnalyticsContext(posthog, {
       platform: 'web',
       deployment: 'production',
       game_version: 'magical',
@@ -163,5 +168,68 @@ describe('analytics', () => {
     resetAnalyticsUser()
     expect(posthog.reset).toHaveBeenCalledOnce()
     expect(posthog.register).toHaveBeenCalledWith({ platform: 'web', deployment: 'production' })
+  })
+})
+
+describe('analytics before PostHog loads', () => {
+  beforeEach(() => {
+    resetAnalyticsForTests()
+  })
+
+  it('keeps calls made before PostHog loads and runs them in order once it does', () => {
+    captureAnalyticsEvent('song_hub_viewed', { song_id: 'song', has_records: false })
+    identifyAnalyticsUser('user-1')
+    registerAnalyticsContext({
+      app_surface: 'web',
+      game_version: 'circle-plus',
+      region: 'jp',
+      language: 'ja',
+      calculated_rating: 0,
+      rating_entry_count: 0,
+    })
+
+    const client = fakePostHog()
+    attachAnalyticsClient(client)
+
+    expect(client.capture).toHaveBeenCalledWith('song_hub_viewed', { song_id: 'song', has_records: false })
+    expect(client.identify).toHaveBeenCalledWith('user-1')
+    expect(client.register).toHaveBeenCalledWith(expect.objectContaining({ region: 'jp', language: 'ja' }))
+    expect(client.capture.mock.invocationCallOrder[0]).toBeLessThan(client.identify.mock.invocationCallOrder[0])
+    expect(client.identify.mock.invocationCallOrder[0]).toBeLessThan(client.register.mock.invocationCallOrder[0])
+  })
+
+  it('reads the identity when the call runs, not when it was made', () => {
+    identifyAnalyticsUser('user-1')
+
+    const client = fakePostHog()
+    client.get_property.mockReturnValue('user-1')
+    attachAnalyticsClient(client)
+
+    expect(client.identify).not.toHaveBeenCalled()
+    expect(client.reset).not.toHaveBeenCalled()
+  })
+
+  it('keeps a failing queued call from stopping the rest', () => {
+    captureAnalyticsEvent('about_dialog_opened', {})
+    captureAnalyticsEvent('tab_switched', { tab: 'rating', source: 'top_navigation' })
+
+    const client = fakePostHog()
+    client.capture.mockImplementationOnce(() => {
+      throw new Error('SDK error')
+    })
+    attachAnalyticsClient(client)
+
+    expect(client.capture).toHaveBeenLastCalledWith('tab_switched', { tab: 'rating', source: 'top_navigation' })
+  })
+
+  it('drops queued calls when PostHog cannot load', () => {
+    captureAnalyticsEvent('about_dialog_opened', {})
+    discardAnalyticsQueue()
+    captureAnalyticsEvent('about_dialog_opened', {})
+
+    const client = fakePostHog()
+    attachAnalyticsClient(client)
+
+    expect(client.capture).not.toHaveBeenCalled()
   })
 })
