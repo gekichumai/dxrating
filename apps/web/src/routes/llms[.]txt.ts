@@ -15,6 +15,7 @@ DXRating is a maimai DX rating calculator and chart database. It provides canoni
 ## Canonical Resources
 
 - Site: https://dxrating.net/
+- iOS app (App Store): https://apps.apple.com/app/id6797069834
 - Developer and agent entry point: https://dxrating.net/developers
 - Recent chart discovery: https://dxrating.net/charts/recent
 - Trending chart discovery: https://dxrating.net/charts/trending
