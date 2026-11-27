@@ -48,6 +48,11 @@ export function readActiveSaveId(storage: Storage | null, userId: string): strin
   return readActiveSaveMap(storage)[userId] ?? null
 }
 
+/** Whether any user has chosen a cloud save in this browser; readable before the session has loaded */
+export function hasActiveSaveSelection(storage: Storage | null): boolean {
+  return Object.keys(readActiveSaveMap(storage)).length > 0
+}
+
 export function writeActiveSaveId(storage: Storage | null, userId: string, saveId: string | null) {
   const map = readActiveSaveMap(storage)
   if (saveId) map[userId] = saveId
