@@ -1765,6 +1765,16 @@
     }
   ],
   "ratingCalculator_cloudSave_history_rejections_unknownChart": "Chart không xác định",
+  "ratingCalculator_cloudSave_history_rejections_truncated": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Chỉ liệt kê {countNumber} điểm đầu tiên",
+        "countPlural=*": "Chỉ liệt kê {countNumber} điểm đầu tiên"
+      }
+    }
+  ],
   "ratingCalculator_io_import_impossibleRule_r1": "Achievement trên 101%",
   "ratingCalculator_io_import_impossibleRule_r2": "Giá trị combo, sync hoặc độ khó không xác định",
   "ratingCalculator_io_import_impossibleRule_r3": "Điểm DX vượt quá mức tối đa của chart",

@@ -25,7 +25,7 @@ import {
 } from './jobs'
 import { completeImportJob, type MergeRecord } from './merge'
 import { findSave, saveTransaction } from './saves'
-import { appendRejections, rejectionsByRule, rejectionsOfWarnings } from './validation'
+import { rejectionsByRule, rejectionsOfWarnings } from './validation'
 
 type DatabaseService = typeof Database.Service
 
@@ -255,7 +255,7 @@ export const runServerImport = <R>(
       jobId: job.id,
       records,
       extraCounts,
-      rejections: appendRejections([], rejections),
+      rejections,
     })
   })
 

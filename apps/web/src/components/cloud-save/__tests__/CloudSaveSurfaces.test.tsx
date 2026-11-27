@@ -306,13 +306,52 @@ describe('ImportHistoryList', () => {
     const { ui } = demo()
     render(<ImportHistoryList />, { wrapper: withCloud(ui) })
     const items = await screen.findAllByRole('listitem')
-    const file = items.find((item) => item.getAttribute('data-job-status') && item.textContent?.includes('AquaDX'))!
-    expect(file.textContent).toContain('2 rejected')
-    expect(within(file).getByText('2 impossible scores left out')).toBeTruthy()
-    expect(file.textContent).toContain('AP+ below 101%')
-    expect(file.textContent).toContain("DX score above the chart's maximum")
+    const net = items[0]!
+    expect(net.textContent).toContain('2 rejected')
+    expect(within(net).getByText('2 impossible scores left out')).toBeTruthy()
+    expect(net.textContent).toContain('AP+ below 101%')
+    expect(net.textContent).toContain("DX score above the chart's maximum")
+    // The whole list is there: no "first N" line
+    expect(net.textContent).not.toContain('Only the first')
     // Jobs without rejections show no list
-    expect(items[0]?.querySelector('details')).toBeNull()
+    const file = items.find((item) => item.textContent?.includes('AquaDX'))!
+    expect(file.querySelector('details')).toBeNull()
+  })
+
+  it('counts every impossible score past the 100 the backend lists, and says only those are listed', async () => {
+    const { repository, ui } = demo()
+    const [first] = await repository.listImportJobs()
+    const listed = Array.from({ length: 100 }, () => ({ sheetId: 'dsht_e5nsvt8k2a', rules: ['R5' as const] }))
+    vi.spyOn(repository, 'listImportJobs').mockResolvedValue([
+      { ...first!, counts: { ...first!.counts, rejected: 400 }, rejections: listed, rejectionsTotal: 400 },
+    ])
+    render(<ImportHistoryList />, { wrapper: withCloud(ui) })
+    const [item] = await screen.findAllByRole('listitem')
+    expect(within(item!).getByText('400 impossible scores left out')).toBeTruthy()
+    expect(item!.textContent).toContain('Only the first 100 are listed')
+  })
+
+  it('counts the list of a backend that sends no total', async () => {
+    const { repository, ui } = demo()
+    const [first] = await repository.listImportJobs()
+    const { rejectionsTotal: _, ...withoutTotal } = first!
+    vi.spyOn(repository, 'listImportJobs').mockResolvedValue([withoutTotal])
+    render(<ImportHistoryList />, { wrapper: withCloud(ui) })
+    const [item] = await screen.findAllByRole('listitem')
+    expect(within(item!).getByText('2 impossible scores left out')).toBeTruthy()
+    expect(item!.textContent).not.toContain('Only the first')
+  })
+
+  it('shows the ID of a rule this build does not know instead of failing (a newer backend)', async () => {
+    const { repository, ui } = demo()
+    const [first] = await repository.listImportJobs()
+    vi.spyOn(repository, 'listImportJobs').mockResolvedValue([
+      // What a backend with a rule added after this build sends; the client does not validate responses
+      { ...first!, rejections: [{ sheetId: 'dsht_e5nsvt8k2a', rules: ['R9', 'R5'] as never }], rejectionsTotal: 1 },
+    ])
+    render(<ImportHistoryList />, { wrapper: withCloud(ui) })
+    const [item] = await screen.findAllByRole('listitem')
+    expect(item!.textContent).toContain('R9, AP+ below 101%')
   })
 
   it('names uploads of this browser as such, and counts one chart in the singular', async () => {

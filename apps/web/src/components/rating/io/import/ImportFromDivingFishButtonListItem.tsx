@@ -34,6 +34,7 @@ import {
   runServerImportToEnd,
   impossibleScoreCount,
   impossibleScoresNotice,
+  jobImpossibleScoreCount,
   maskedRowsNotice,
   summarizeImportJob,
 } from './cloudImport'
@@ -312,7 +313,7 @@ export const ImportDivingFishDialogContent: FC<{
                     // Rows the player hid on Diving-Fish: said apart, as nothing here can import them
                     maskedRowsNotice(job, locale),
                     // Impossible scores the server rejected (meta#82)
-                    impossibleScoresNotice(job.rejections?.length ?? 0, locale),
+                    impossibleScoresNotice(jobImpossibleScoreCount(job), locale),
                   ]
                     .filter(Boolean)
                     .join(' '),

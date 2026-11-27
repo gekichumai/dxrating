@@ -32,6 +32,7 @@ import {
   importPath,
   impossibleScoreCount,
   impossibleScoresNotice,
+  jobImpossibleScoreCount,
   runServerImportToEnd,
   summarizeImportJob,
 } from './cloudImport'
@@ -198,7 +199,7 @@ export const importFromNETRecords = async (
               summary: summarizeImportJob(job, getLocale()),
             })}
           </span>
-          <ImpossibleScoresLine count={job.rejections?.length ?? 0} />
+          <ImpossibleScoresLine count={jobImpossibleScoreCount(job)} />
         </div>,
       )
       netImportLastSuccess.set(Date.now())

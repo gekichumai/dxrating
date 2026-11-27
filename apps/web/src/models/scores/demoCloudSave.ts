@@ -176,7 +176,14 @@ const job = (overrides: Partial<ImportJobDTO>): ImportJobDTO => ({
 const DEMO_JOBS: ImportJobDTO[] = [
   job({
     trigger: 'auto',
-    counts: counts({ fetched: 1287, inserted: 3, improved: 5, unchanged: 1278, keptUserEdit: 1 }),
+    counts: counts({ fetched: 1289, inserted: 3, improved: 5, unchanged: 1278, keptUserEdit: 1, rejected: 2 }),
+    // Two impossible scores maimai NET sent (meta#82): rejected with their rules, never stored. A file import has
+    // none here: its impossible rows are dropped in the browser before the upload
+    rejections: [
+      { sheetId: 'dsht_e5nsvt8k2a', rules: ['R5'] },
+      { sheetId: 'dsht_36ncrs5g4j', rules: ['R3'] },
+    ],
+    rejectionsTotal: 2,
   }),
   job({
     id: 'dimp_demo_lxns',
@@ -191,12 +198,7 @@ const DEMO_JOBS: ImportJobDTO[] = [
     sourceAccountKind: null,
     sourceAccountId: null,
     startedAt: '2026-10-25T18:00:00.000Z',
-    counts: counts({ fetched: 642, inserted: 620, skippedUnknownSheet: 20, rejected: 2 }),
-    // Two impossible scores in the file (meta#82): rejected with their rules, never stored
-    rejections: [
-      { sheetId: 'dsht_e5nsvt8k2a', rules: ['R5'] },
-      { sheetId: 'dsht_36ncrs5g4j', rules: ['R3'] },
-    ],
+    counts: counts({ fetched: 640, inserted: 620, skippedUnknownSheet: 20 }),
   }),
   job({
     // A Diving-Fish player who hides part of their scores: those rows are counted apart, not as rejected

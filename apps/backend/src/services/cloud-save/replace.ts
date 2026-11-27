@@ -21,7 +21,7 @@ import { CLOUD_SAVE_MAX_RECORDS_PER_SAVE } from './limits'
 import { canonicalSha256, EMPTY_COUNTS, finishImportJob, startImportJob, toImportJobDTO, toMergeJob } from './jobs'
 import { RecordWriter, type RecordState } from './records'
 import { lockSave, saveTransaction } from './saves'
-import { appendRejections, uploadRejection, validateUploadedRecord } from './validation'
+import { uploadRejection, validateUploadedRecord } from './validation'
 
 type DatabaseService = typeof Database.Service
 
@@ -167,7 +167,7 @@ export const replaceRecords = (
       const finished = yield* finishImportJob(database, started.job.id, {
         status: 'succeeded',
         counts,
-        rejections: appendRejections([], rejections),
+        rejections,
       })
       return { job: toImportJobDTO(finished!), revision: save.revision } satisfies ImportResultDTO
     }),

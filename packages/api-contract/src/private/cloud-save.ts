@@ -242,6 +242,12 @@ export const ImportJobDTOSchema = z.object({
    * wrong type) breaks no rule and is counted only. Defaults to none, so a backend without the list reads as before.
    */
   rejections: z.array(ImportRejectionDTOSchema).max(CLOUD_SAVE_MAX_LISTED_REJECTIONS).default([]),
+  /**
+   * How many impossible records the job rejected in all: `rejections` lists only the first
+   * {@link CLOUD_SAVE_MAX_LISTED_REJECTIONS}, and `counts.rejected` also counts the malformed ones. Missing from a
+   * backend that predates it: read `rejections.length` then.
+   */
+  rejectionsTotal: CountSchema.optional(),
 })
 export type ImportJobDTO = z.output<typeof ImportJobDTOSchema>
 

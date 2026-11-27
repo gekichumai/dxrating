@@ -20,7 +20,7 @@ import {
 } from './jobs'
 import { applyImportRecords, hasDeletionSince, shouldShortCircuit, type MergeRecord } from './merge'
 import { lockSave, saveTransaction } from './saves'
-import { appendRejections, storedRejections, uploadRejection, validateUploadedRecord } from './validation'
+import { rejectionFields, uploadRejection, validateUploadedRecord } from './validation'
 
 type DatabaseService = typeof Database.Service
 
@@ -78,8 +78,9 @@ export interface ClientImportChunkResult {
  * - Records failing {@link ImportRecordSchema} (a bad sheet ID, an out-of-range value, a `demo` claim) count as
  *   `rejected`; the claimed provider of each record is stored as `claimed_source`.
  * - Records that break a hard score rule (meta#82, checked against `catalog`'s chart for the sheet ID) are rejected
- *   too, never clamped, and listed with their rules in the job's `rejections` (over all chunks). Without a catalog,
- *   only the rules that need no chart data run.
+ *   too, never clamped, and listed with their rules in the job's `rejections`, with `rejectionsTotal` counting them
+ *   past the list's cap (both over all chunks; a replayed chunk adds nothing). Without a catalog, only the rules that
+ *   need no chart data run.
  */
 export const applyClientImportChunk = (
   database: DatabaseService,
@@ -190,7 +191,7 @@ export const applyClientImportChunk = (
             ...counts,
             chunks: { count: chunks.count, received, ...(timeBound ? { timeBound } : {}) },
             ...(complete && !timeBound ? { saveRevision: save.revision } : {}),
-            rejections: appendRejections(storedRejections(job.counts), rejections),
+            ...rejectionFields(job.counts, rejections),
           }),
           complete,
           finalSha,

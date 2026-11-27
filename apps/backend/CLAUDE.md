@@ -139,7 +139,7 @@ before the method was recorded (see below).
   job. `client-imports.ts`: 5000 records per chunk, each chunk its own transaction, resumable by idempotency key.
 - Impossible scores (meta#82, `validation.ts`): every import path rejects a record that breaks a hard rule of
   `@gekichumai/maimai-domain`'s `validateScore` and lists it with its rules in the job's `rejections` (kept in the
-  `counts` column, at most 100); it is never clamped. Server imports check in the shared normalizers; client uploads
+  `counts` column, at most 100, with `rejectionsTotal` counting them all); it is never clamped. Server imports check in the shared normalizers; client uploads
   (`client-imports`, `replace`) are checked again here against the import catalog. Online, a bad record is rejected
   alone; account taint is for offline analysis only. The DX rules R3/R4/R7 run only for providers whose charts have
   dxdata's note counts (`DXDATA_NOTE_COUNT_PROVIDERS`: maimai NET, AquaDX, MuNET, Aqua SQLite). CN providers (LXNS,

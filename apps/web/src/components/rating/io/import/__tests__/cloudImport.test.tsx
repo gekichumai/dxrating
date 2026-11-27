@@ -21,6 +21,8 @@ import {
   importFallbackEntries,
   importFileEntries,
   importPath,
+  impossibleScoresNotice,
+  jobImpossibleScoreCount,
   maskedRowsNotice,
 } from '../cloudImport'
 import { importFromNETRecords } from '../importFromNETRecords'
@@ -105,6 +107,22 @@ describe('maskedRowsNotice', () => {
   it('says nothing when no row was hidden, or when the backend does not count them yet', () => {
     expect(maskedRowsNotice(withMasked(0), 'en')).toBeNull()
     expect(maskedRowsNotice(withMasked(undefined), 'en')).toBeNull()
+  })
+})
+
+describe('jobImpossibleScoreCount', () => {
+  const listed = (count: number) =>
+    Array.from({ length: count }, () => ({ sheetId: 'dsht_e5nsvt8k2a', rules: ['R5' as const] }))
+
+  it('counts past the 100 rejections the backend lists (meta#82)', () => {
+    const count = jobImpossibleScoreCount({ rejections: listed(100), rejectionsTotal: 400 })
+    expect(count).toBe(400)
+    expect(impossibleScoresNotice(count, 'en')).toContain('400')
+  })
+
+  it('counts the list of a backend that sends no total', () => {
+    expect(jobImpossibleScoreCount({ rejections: listed(2) })).toBe(2)
+    expect(jobImpossibleScoreCount({ rejections: [] })).toBe(0)
   })
 })
 

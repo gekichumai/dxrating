@@ -1765,6 +1765,16 @@
     }
   ],
   "ratingCalculator_cloudSave_history_rejections_unknownChart": "မသိသော chart",
+  "ratingCalculator_cloudSave_history_rejections_truncated": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "ပထမ {countNumber} ခုကိုသာ ပြထားသည်",
+        "countPlural=*": "ပထမ {countNumber} ခုကိုသာ ပြထားသည်"
+      }
+    }
+  ],
   "ratingCalculator_io_import_impossibleRule_r1": "Achievement 101% ထက် ကျော်နေသည်",
   "ratingCalculator_io_import_impossibleRule_r2": "မသိသော combo၊ sync သို့မဟုတ် difficulty တန်ဖိုး",
   "ratingCalculator_io_import_impossibleRule_r3": "DX score သည် chart ၏ အများဆုံးထက် ကျော်နေသည်",

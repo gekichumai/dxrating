@@ -88,19 +88,13 @@ export function rejectionsOfWarnings(warnings: readonly ImportWarning[]): Import
   )
 }
 
-/** `existing` then `added`, at most {@link CLOUD_SAVE_MAX_LISTED_REJECTIONS} */
-export function appendRejections(
-  existing: readonly ImportRejectionDTO[],
-  added: readonly ImportRejectionDTO[],
-): ImportRejectionDTO[] {
-  return [...existing, ...added].slice(0, CLOUD_SAVE_MAX_LISTED_REJECTIONS)
-}
+type StoredCounts = Partial<ImportCountsDTO> | Record<string, unknown> | null | undefined
 
 /**
  * The rejections a job row keeps in its `counts` column, next to the counts (internal like `chunks`, read back into
- * the job DTO by `toImportJobDTO`)
+ * the job DTO by `toImportJobDTO`): the first {@link CLOUD_SAVE_MAX_LISTED_REJECTIONS}
  */
-export function storedRejections(counts: Partial<ImportCountsDTO> | Record<string, unknown> | null | undefined) {
+export function storedRejections(counts: StoredCounts): ImportRejectionDTO[] {
   const stored = (counts as { rejections?: unknown } | null | undefined)?.rejections
   if (!Array.isArray(stored)) return []
   return stored
@@ -109,6 +103,33 @@ export function storedRejections(counts: Partial<ImportCountsDTO> | Record<strin
         typeof entry === 'object' && entry !== null && Array.isArray((entry as ImportRejectionDTO).rules),
     )
     .slice(0, CLOUD_SAVE_MAX_LISTED_REJECTIONS)
+}
+
+/**
+ * How many impossible records the job rejected in all, kept as `rejectionsTotal` next to its listed `rejections`,
+ * which stop at {@link CLOUD_SAVE_MAX_LISTED_REJECTIONS}. A job stored before the total was kept counts its list.
+ */
+export function storedRejectionsTotal(counts: StoredCounts): number {
+  const listed = storedRejections(counts).length
+  const stored = (counts as { rejectionsTotal?: unknown } | null | undefined)?.rejectionsTotal
+  return typeof stored === 'number' && Number.isSafeInteger(stored) && stored >= listed ? stored : listed
+}
+
+/**
+ * The rejection fields of a job row's `counts` column once `added` joins what `existing` (the column as an earlier
+ * chunk left it, or nothing) already holds: the first {@link CLOUD_SAVE_MAX_LISTED_REJECTIONS} rejections and the
+ * total. None when the job rejected nothing.
+ */
+export function rejectionFields(
+  existing: StoredCounts,
+  added: readonly ImportRejectionDTO[],
+): { rejections?: ImportRejectionDTO[]; rejectionsTotal?: number } {
+  const total = storedRejectionsTotal(existing) + added.length
+  if (total === 0) return {}
+  return {
+    rejections: [...storedRejections(existing), ...added].slice(0, CLOUD_SAVE_MAX_LISTED_REJECTIONS),
+    rejectionsTotal: total,
+  }
 }
 
 /** Rejections by rule, for the per-job log line and metrics */

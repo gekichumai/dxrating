@@ -167,6 +167,24 @@ export const IMPOSSIBLE_RULE_MESSAGES = {
   R8: m.ratingCalculator_io_import_impossibleRule_r8,
 } satisfies Record<ScoreValidationRule, PlainMessage>
 
+/**
+ * A rule's description, or its ID when this build doesn't know it (a newer backend added a rule): an unknown rule
+ * must not take the whole import history down
+ */
+export function impossibleRuleLabel(rule: string, locale: Locale): string {
+  const message: PlainMessage | undefined = (IMPOSSIBLE_RULE_MESSAGES as Partial<Record<string, PlainMessage>>)[rule]
+  return message ? message({}, { locale }) : rule
+}
+
+/**
+ * How many impossible scores a server job rejected (meta#82). `rejections` lists only the first 100, so a backend
+ * that sends `rejectionsTotal` is believed; one from before it is not, and its list is all there is.
+ */
+export function jobImpossibleScoreCount(job: Pick<ImportJobDTO, 'rejections' | 'rejectionsTotal'>): number {
+  const listed = job.rejections?.length ?? 0
+  return Math.max(job.rejectionsTotal ?? 0, listed)
+}
+
 /** The rows of a normalized import that were impossible scores (meta#82): left out, never clamped */
 export function impossibleScoreCount(warnings: readonly ImportWarning[]): number {
   return warnings.filter((warning) => warning.code === 'impossible-score').length
@@ -174,7 +192,7 @@ export function impossibleScoreCount(warnings: readonly ImportWarning[]): number
 
 /**
  * What to tell the user about the impossible scores an import left out (meta#82): the rows a local import's
- * normalizer dropped, or a server job's `rejections`. `null` when there were none
+ * normalizer dropped, or a server job's ({@link jobImpossibleScoreCount}). `null` when there were none
  */
 export function impossibleScoresNotice(count: number, locale: Locale): string | null {
   return count > 0 ? m.ratingCalculator_io_import_impossibleScores({ count }, { locale }) : null

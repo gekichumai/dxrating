@@ -1783,6 +1783,16 @@
     }
   ],
   "ratingCalculator_cloudSave_history_rejections_unknownChart": "未知譜面",
+  "ratingCalculator_cloudSave_history_rejections_truncated": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "僅列出前 {countNumber} 筆",
+        "countPlural=*": "僅列出前 {countNumber} 筆"
+      }
+    }
+  ],
   "ratingCalculator_io_import_impossibleRule_r1": "達成率超過 101%",
   "ratingCalculator_io_import_impossibleRule_r2": "未知的連擊、同步或難度值",
   "ratingCalculator_io_import_impossibleRule_r3": "DX 分數超過譜面上限",
