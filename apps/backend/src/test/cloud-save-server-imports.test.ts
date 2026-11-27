@@ -385,6 +385,7 @@ describe('maimai NET server import', () => {
         { sheetId: CHARTS.kiminoDxExpert.sheetId, rules: ['R3'] },
         { sheetId: CHARTS.kiminoStdMaster.sheetId, rules: ['R5'] },
       ],
+      rejectionsTotal: 2,
     })
     expect((await records(user.saveId)).map((r) => [r.sheet_id, r.dx_score])).toEqual([
       [CHARTS.kiminoDxMaster.sheetId, 1300],
@@ -727,6 +728,7 @@ describe('LXNS server import', () => {
         { sheetId: CHARTS.kiminoStdMaster.sheetId, rules: ['R5'] },
         { sheetId: CHARTS.kiminoDxMaster.sheetId, rules: ['R2'] },
       ],
+      rejectionsTotal: 3,
     })
     expect((await records(user.saveId)).map((r) => r.sheet_id).sort()).toEqual(
       [CHARTS.kiminoDxMaster.sheetId, CHARTS.ourFightingStdBasic.sheetId].sort(),

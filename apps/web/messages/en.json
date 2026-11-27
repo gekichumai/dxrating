@@ -1783,6 +1783,16 @@
     }
   ],
   "ratingCalculator_cloudSave_history_rejections_unknownChart": "Unknown chart",
+  "ratingCalculator_cloudSave_history_rejections_truncated": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Only the first {countNumber} is listed",
+        "countPlural=*": "Only the first {countNumber} are listed"
+      }
+    }
+  ],
   "ratingCalculator_io_import_impossibleRule_r1": "Achievement above 101%",
   "ratingCalculator_io_import_impossibleRule_r2": "Unknown combo, sync or difficulty value",
   "ratingCalculator_io_import_impossibleRule_r3": "DX score above the chart's maximum",

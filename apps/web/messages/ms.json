@@ -1765,6 +1765,16 @@
     }
   ],
   "ratingCalculator_cloudSave_history_rejections_unknownChart": "Carta tidak diketahui",
+  "ratingCalculator_cloudSave_history_rejections_truncated": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Hanya {countNumber} yang pertama disenaraikan",
+        "countPlural=*": "Hanya {countNumber} yang pertama disenaraikan"
+      }
+    }
+  ],
   "ratingCalculator_io_import_impossibleRule_r1": "Pencapaian melebihi 101%",
   "ratingCalculator_io_import_impossibleRule_r2": "Nilai kombo, sync atau kesukaran tidak diketahui",
   "ratingCalculator_io_import_impossibleRule_r3": "Skor DX melebihi maksimum carta",

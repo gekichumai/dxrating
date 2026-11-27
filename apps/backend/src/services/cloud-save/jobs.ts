@@ -17,7 +17,7 @@ import { Effect } from 'effect'
 import type { Database } from '../../db/index'
 import { CloudSaveNotFound, ImportInProgress } from './errors'
 import { newImportJobId } from './saves'
-import { storedRejections } from './validation'
+import { rejectionFields, storedRejections, storedRejectionsTotal } from './validation'
 
 type DatabaseService = typeof Database.Service
 
@@ -104,6 +104,7 @@ export function toImportJobDTO(row: ImportJobRow): ImportJobDTO {
     counts: countsOf(row.counts),
     errorCode: row.error_code,
     rejections: storedRejections(row.counts),
+    rejectionsTotal: storedRejectionsTotal(row.counts),
   }
 }
 
@@ -222,7 +223,9 @@ export const finishImportJob = (
     counts: Partial<ImportCountsDTO>
     errorCode?: string | null
     saveRevision?: number | null
-    /** The impossible records the job rejected (meta#82), kept next to the counts */
+    /**
+     * Every impossible record the job rejected (meta#82): the first ones are kept next to the counts, with the total
+     */
     rejections?: readonly ImportRejectionDTO[]
   },
 ) =>
@@ -237,7 +240,7 @@ export const finishImportJob = (
         JSON.stringify({
           ...outcome.counts,
           ...(outcome.saveRevision == null ? {} : { saveRevision: outcome.saveRevision }),
-          ...(outcome.rejections?.length ? { rejections: outcome.rejections } : {}),
+          ...rejectionFields(null, outcome.rejections ?? []),
         }),
         outcome.errorCode ?? null,
       ],

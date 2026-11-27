@@ -396,11 +396,43 @@ describe('client imports', () => {
           { sheetId: sheetId(9), rules: ['R1'] },
           { sheetId: sheetId(10), rules: ['R2'] },
         ],
+        rejectionsTotal: 5,
       })
       expect((await stored(user.saveId)).map((row) => row.sheet_id)).toEqual([kimino])
       // the job keeps them: reading it later lists the same rejections
       const job = await api(user.cookie, 'GET', `/imports/${response.body.job.id}`)
       expect(job.body.rejections).toEqual(response.body.job.rejections)
+      expect(job.body.rejectionsTotal).toBe(5)
+    })
+
+    it('counts every rejection over all chunks past the 100 it lists, and a replayed chunk adds none', async () => {
+      const user = await newUser()
+      const idempotencyKey = `impossible-cap-${randomUUID()}`
+      // above 101% on a rating chart: R1, whatever the sheet
+      const impossible = (from: number, count: number) =>
+        Array.from({ length: count }, (_, index) => chartRecord(sheetId(from + index), 1020000))
+      const chunk = (chunkIndex: number, records: unknown[]) =>
+        upload(user.cookie, user.saveId, { idempotencyKey, chunkIndex, chunkCount: 2, records })
+      const first = await chunk(0, [...impossible(1000, 80), record(1)])
+      expect(first.body.job).toMatchObject({ status: 'running', rejectionsTotal: 80 })
+      expect(first.body.job.rejections).toHaveLength(80)
+      const second = await chunk(1, [...impossible(2000, 70), record(2)])
+      expect(second.body.job).toMatchObject({
+        status: 'succeeded',
+        counts: { fetched: 152, inserted: 2, rejected: 150 },
+        rejectionsTotal: 150,
+      })
+      // the first 100: all of the first chunk's, then the second's in order
+      const listed = second.body.job.rejections as { sheetId: string }[]
+      expect(listed).toHaveLength(100)
+      expect(listed[79]!.sheetId).toBe(sheetId(1079))
+      expect(listed[80]!.sheetId).toBe(sheetId(2000))
+      expect(listed[99]!.sheetId).toBe(sheetId(2019))
+      const replayed = await chunk(1, [...impossible(2000, 70), record(2)])
+      expect(replayed.body.job).toMatchObject({ rejectionsTotal: 150, counts: { rejected: 150 } })
+      const job = await api(user.cookie, 'GET', `/imports/${second.body.job.id}`)
+      expect(job.body).toMatchObject({ rejectionsTotal: 150 })
+      expect(job.body.rejections).toHaveLength(100)
     })
 
     it('lists the rejections of every chunk on the job', async () => {
@@ -417,6 +449,7 @@ describe('client imports', () => {
           { sheetId: kimino, rules: ['R6'] },
           { sheetId: kimino, rules: ['R4'] },
         ],
+        rejectionsTotal: 2,
       })
     })
 
@@ -452,7 +485,11 @@ describe('client imports', () => {
         chunkCount: 1,
         records: [record(1, 1007000, { comboFlag: 'ap', dxScore: 1 })],
       })
-      expect(response.body.job).toMatchObject({ counts: { inserted: 1, rejected: 0 }, rejections: [] })
+      expect(response.body.job).toMatchObject({
+        counts: { inserted: 1, rejected: 0 },
+        rejections: [],
+        rejectionsTotal: 0,
+      })
     })
   })
 })

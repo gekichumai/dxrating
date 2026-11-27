@@ -1059,6 +1059,7 @@ describe('cloud save API (design §5)', () => {
         counts: { fetched: 3, inserted: 1, improved: 1, rejected: 1 },
         // 200% on a rating chart is impossible: listed with its rule (meta#82)
         rejections: [{ sheetId: sheetId(3), rules: ['R1'] }],
+        rejectionsTotal: 1,
       })
       // sheet 1 overwritten (even though worse), 4 inserted, 2 deleted, 3 rejected and left alone
       expect(replaced.body.revision).toBe(6)
@@ -1079,6 +1080,33 @@ describe('cloud save API (design §5)', () => {
       const replay = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, body)
       expect(replay.status).toBe(200)
       expect(replay.body).toEqual(replaced.body)
+    })
+
+    it('lists the first 100 impossible records and counts them all (meta#82)', async () => {
+      const user = await session(pool, 'replace-many-impossible@example.com')
+      const save = await newSave(user.cookie)
+      const replaced = await api(user.cookie, 'POST', `/saves/${save.id}/replace`, {
+        ifRevision: 0,
+        idempotencyKey: 'replace-many-impossible-1',
+        source: 'dxrating-json',
+        records: [
+          // above 101% on a rating chart: R1
+          ...Array.from({ length: 150 }, (_, index) => ({
+            sheetId: sheetId(100 + index),
+            achievement: 1020000,
+            comboFlag: null,
+            syncFlag: null,
+          })),
+          { sheetId: sheetId(1), achievement: 1000000, comboFlag: null, syncFlag: null },
+        ],
+      })
+      expect(replaced.status).toBe(200)
+      expect(replaced.body.job).toMatchObject({
+        counts: { fetched: 151, inserted: 1, rejected: 150 },
+        rejectionsTotal: 150,
+      })
+      expect(replaced.body.job.rejections).toHaveLength(100)
+      expect(replaced.body.job.rejections[99]).toEqual({ sheetId: sheetId(199), rules: ['R1'] })
     })
 
     it('counts a deeply nested record as rejected, never a stack overflow (raw body through the route)', async () => {

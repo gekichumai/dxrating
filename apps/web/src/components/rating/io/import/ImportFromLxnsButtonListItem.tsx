@@ -29,6 +29,7 @@ import {
   importPath,
   impossibleScoreCount,
   impossibleScoresNotice,
+  jobImpossibleScoreCount,
   runServerImportToEnd,
   summarizeImportJob,
 } from './cloudImport'
@@ -93,7 +94,7 @@ const LxnsImportDialogContent: FC<{
           ),
         )
         // Impossible scores the server rejected (meta#82)
-        const rejected = impossibleScoresNotice(job.rejections?.length ?? 0, locale)
+        const rejected = impossibleScoresNotice(jobImpossibleScoreCount(job), locale)
         if (rejected) toast(rejected)
         onClose()
         return
