@@ -53,6 +53,7 @@ import '@/pages/rating-table.css'
 import '@/pages/legal.css'
 import type { PlainMessage } from '@/i18n/message'
 import { m } from '@/paraglide/messages'
+import { IOS_APP_STORE_ID } from '@/utils/iosApp'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: import.meta.env.SSR ? 0 : undefined } } })
 
@@ -90,6 +91,8 @@ export const Route = createRootRoute({
         ...buildRootSeoMeta(locale, { includeTitle: includeRootTitle }),
         ...(isNotFound ? buildNotFoundSeoMeta(locale) : []),
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        // Safari's Smart App Banner for the iOS app; Safari hides it inside the app's own web views
+        { name: 'apple-itunes-app', content: `app-id=${IOS_APP_STORE_ID}` },
         ...originTrialMeta(),
         {
           name: 'msapplication-config',

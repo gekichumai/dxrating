@@ -3,6 +3,7 @@ import { useCatalogDocument } from '@/catalog/CatalogContext'
 import { IconButton } from '@mui/material'
 import clsx from 'clsx'
 import { type FC, type PropsWithChildren, type ReactNode, useState } from 'react'
+import MdiApple from '~icons/mdi/apple'
 import MdiGithub from '~icons/mdi/github'
 import MdiApi from '~icons/mdi/api'
 import MdiInformation from '~icons/mdi/information'
@@ -15,6 +16,7 @@ import { ResponsiveDialog } from '../ResponsiveDialog'
 import { captureAnalyticsEvent } from '@/lib/analytics'
 import { useLocale } from '@/i18n/LocaleProvider'
 import { m } from '@/paraglide/messages'
+import { IOS_APP_STORE_URL } from '@/utils/iosApp'
 
 const ExternalLink: FC<PropsWithChildren<{ href: string; className?: string }>> = ({ href, children, className }) => (
   <a
@@ -76,6 +78,10 @@ export const About = () => {
           // dialog uses its width instead of running long. Below md it stays one column in the original order.
           <div className="flex flex-col gap-6 text-sm md:grid md:grid-cols-[minmax(0,1fr)_19rem] md:gap-8 md:items-start">
             <ul className="m-0 p-0 list-none flex flex-col gap-3 md:gap-2">
+              <AboutLink href={IOS_APP_STORE_URL} startAdornment={<MdiApple />} label={m.about_iosApp({}, { locale })}>
+                App Store
+              </AboutLink>
+
               <AboutLink
                 href="https://dxrating.net/developers"
                 startAdornment={<MdiApi />}
