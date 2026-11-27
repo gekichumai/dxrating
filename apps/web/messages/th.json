@@ -6,10 +6,10 @@
   "root_pages_search_seoTitle": "ชาร์ตและเพลง",
   "root_pages_search_seoDescription": "ดูชาร์ต maimai DX ทั้งหมดตามชื่อเพลง ศิลปิน หรือระดับความยาก ดูเลเวลภายใน จำนวนโน้ต และรายละเอียดชาร์ต",
   "root_pages_search_introduction": "DXRating คือฐานข้อมูลชาร์ตและเครื่องคำนวณเรตติ้งของ maimai DX ค้นหาทุกเพลงได้จากชื่อเพลง ศิลปิน ผู้ทำชาร์ต หรือชื่อเรียกอื่น เปรียบเทียบเลเวลภายใน (ค่าคงที่ชาร์ต) จำนวนโน้ต และเวอร์ชัน แล้วนำเข้าสกอร์เพื่อติดตามเรตติ้ง Best 50 ของคุณ",
-  "root_pages_recent_title": "ชาร์ตใหม่",
-  "root_pages_recent_seoTitle": "ชาร์ตใหม่",
+  "root_pages_recent_title": "ชาร์ตล่าสุด",
+  "root_pages_recent_seoTitle": "ชาร์ตล่าสุด",
   "root_pages_recent_seoDescription": "ดูหน้าชาร์ต maimai DX ที่อัปเดตล่าสุดบน DXRating ไม่รวมชาร์ต BASIC และ ADVANCED",
-  "root_pages_recent_iconLabel": "ชาร์ตใหม่",
+  "root_pages_recent_iconLabel": "ชาร์ตล่าสุด",
   "root_pages_trending_title": "ชาร์ตยอดนิยม",
   "root_pages_trending_seoTitle": "ชาร์ตยอดนิยม",
   "root_pages_trending_seoDescription": "ดูหน้าชาร์ต maimai DX ที่กำลังได้รับความสนใจมากที่สุดบน DXRating ตอนนี้",
@@ -61,14 +61,14 @@
   "sheet_sort_remove": "ลบเงื่อนไขการเรียงที่ {index}",
   "sheet_filterCurrentVersion": "กรอง B15 ปัจจุบัน: แสดงเฉพาะชาร์ต {version}",
   "sheet_searchSummary": "{found} / {total} ชาร์ต ({elapsed}ms)",
-  "sheet_chartDiscovery_recent_title": "ชาร์ตใหม่",
+  "sheet_chartDiscovery_recent_title": "ชาร์ตล่าสุด",
   "sheet_chartDiscovery_recent_description": [
     {
       "declarations": ["input count", "local countPlural = count: plural"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=one": "ชาร์ตใหม่ {count} ชาร์ต ไม่แสดงชาร์ต BASIC และ ADVANCED",
-        "countPlural=*": "ชาร์ตใหม่ {count} ชาร์ต เรียงจากใหม่สุด ไม่แสดงชาร์ต BASIC และ ADVANCED"
+        "countPlural=one": "ชาร์ตที่เพิ่มล่าสุด {count} ชาร์ต ไม่แสดงชาร์ต BASIC และ ADVANCED",
+        "countPlural=*": "ชาร์ตที่เพิ่มล่าสุด {count} ชาร์ต เรียงจากใหม่สุด ไม่แสดงชาร์ต BASIC และ ADVANCED"
       }
     }
   ],
@@ -1136,7 +1136,7 @@
   "plates_share_order": "ใกล้สำเร็จที่สุดก่อน",
   "plates_share_unplayed": "ยังไม่ได้เล่น",
   "plates_share_more": "+ อีก {count} เพลง",
-  "plates_share_allDone": "เคลียร์ครบทุกชาร์ตแล้ว!",
+  "plates_share_allDone": "เคลียร์ครบทุกชาร์ตแล้ว",
   "toplists_title": "สถิติสูงสุด",
   "toplists_description": "การเล่นที่ดีที่สุดของคุณ จัดกลุ่มตาม AP, FC และ FDX พร้อมการเรียงและตัวกรองเลเวล",
   "toplists_demo": "กำลังแสดงสกอร์ตัวอย่าง ไม่ใช่บันทึกของคุณ",
@@ -1247,8 +1247,8 @@
   "recommend_stats_total": "เรตติ้ง",
   "recommend_stats_b15Floor": "ค่าต่ำสุดของใหม่ (B15)",
   "recommend_stats_b35Floor": "ค่าต่ำสุดของเก่า (B35)",
-  "recommend_new": "ชาร์ตใหม่ (B15)",
-  "recommend_old": "ชาร์ตเก่า (B35)",
+  "recommend_new": "B15 ชาร์ตใหม่",
+  "recommend_old": "B35 ชาร์ตเก่า",
   "recommend_none": "ตอนนี้ยังไม่มีอะไรให้เพิ่มตรงนี้",
   "recommend_unplayed": "ยังไม่ได้เล่น",
   "recommend_gain": "เรตติ้ง +{gain}",
@@ -1304,7 +1304,7 @@
   "home_stats_rating": "เรตติ้ง",
   "home_stats_b50Floor": "ค่าต่ำสุด B50",
   "home_stats_nearestPlate": "เพลทที่ใกล้ที่สุด",
-  "home_recent_title": "ชาร์ตใหม่",
+  "home_recent_title": "ชาร์ตล่าสุด",
   "home_recent_seeAll": "ดูทั้งหมด",
   "home_features_title": "สำรวจ",
   "home_features_rating_title": "B50 ของฉัน",
@@ -1312,7 +1312,7 @@
   "home_features_plates_title": "เพลท",
   "home_features_plates_description": "ความคืบหน้าเพลทเวอร์ชัน",
   "home_features_constants_title": "เลเวลภายใน",
-  "home_features_constants_description": "ตารางค่าคงที่ชาร์ต",
+  "home_features_constants_description": "ตารางเลเวลภายใน",
   "home_features_level_progress_title": "ความคืบหน้าตามเลเวล",
   "home_features_level_progress_description": "สถานะการเคลียร์ในแต่ละเลเวล",
   "home_features_toplists_title": "สถิติสูงสุด",
@@ -1325,7 +1325,7 @@
   "home_features_rating_tools_description": "ค้นหาเรตติ้งและสกอร์",
   "home_features_random_title": "สุ่มชาร์ต",
   "home_features_random_description": "สุ่มชาร์ตมาเล่น",
-  "home_features_recent_title": "ชาร์ตใหม่",
+  "home_features_recent_title": "ชาร์ตล่าสุด",
   "home_features_recent_description": "ที่เพิ่มล่าสุดตามวันที่",
   "home_features_trending_title": "ยอดนิยม",
   "home_features_trending_description": "ชาร์ตที่คนกำลังดู",
@@ -1542,7 +1542,7 @@
       "declarations": ["input count", "local countPlural = count: plural", "local countNumber = count: number"],
       "selectors": ["countPlural"],
       "match": {
-        "countPlural=*": "{countNumber} เรคคอร์ดมีค่าที่บันทึกไม่ได้ เช่น DX score อยู่นอกช่วง จึงไม่ถูกนำเข้า"
+        "countPlural=*": "{countNumber} เรคคอร์ดมีค่าที่บันทึกไม่ได้ เช่น DX Score อยู่นอกช่วง จึงไม่ถูกนำเข้า"
       }
     }
   ],
