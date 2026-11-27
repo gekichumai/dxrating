@@ -57,8 +57,8 @@ function useMinuteClock(enabled: boolean) {
 
 /**
  * Global announcements (gekichumai/meta#49). They render only after hydration: the HTML of a page is the same for
- * every visitor and cached at the edge for up to 30 minutes (setup/html-cache.ts), which must not pin an announcement
- * past its end. Each one is a floating card in the bottom notice stack, so nothing in the page moves when it appears.
+ * every visitor and cached at the edge for days (setup/html-cache.ts), which must not pin an announcement past its
+ * end. Each one is a floating card in the bottom notice stack, so nothing in the page moves when it appears.
  * The iOS app shows its own, so they stay out of its web views.
  */
 export function AnnouncementBanners() {

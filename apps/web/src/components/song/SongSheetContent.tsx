@@ -27,7 +27,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { FlattenedSheet } from '../../songs'
 import { formatSheetReleaseDateParts } from '../../utils/dateFormatting'
-import { useRenderedAt } from '../../utils/renderEnvironment'
+import { useMinuteNow } from '../../utils/useTime'
 import { MaterialSurface } from '../global/MaterialSurface'
 import { AchievementRatingTable } from '../sheet/AchievementRatingTable'
 import { SheetTags } from '../sheet/tags/SheetTags'
@@ -308,15 +308,17 @@ const UtageKindBadge: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
   )
 }
 
+// Its own component, so the clock that keeps "N days ago" current re-renders only this line
+const SheetReleaseDate: FC<{ releaseDate: string }> = ({ releaseDate }) => {
+  const locale = useLocale()
+  const now = useMinuteNow()
+  const parts = useMemo(() => formatSheetReleaseDateParts(releaseDate, locale, now), [releaseDate, locale, now])
+
+  return <p className="m-0 text-sm text-fg-2">{m.sheet_releaseDate(parts, { locale })}</p>
+}
+
 /** The chart at a glance: difficulty and internal level, release date and tags (sits under the chart tabs) */
 export const SongSheetSummary: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
-  const locale = useLocale()
-  const renderedAt = useRenderedAt()
-  const releaseDateParts = useMemo(
-    () => (sheet.releaseDate ? formatSheetReleaseDateParts(sheet.releaseDate, locale, renderedAt) : null),
-    [sheet.releaseDate, locale, renderedAt],
-  )
-
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2 flex-wrap">
@@ -342,7 +344,7 @@ export const SongSheetSummary: FC<{ sheet: FlattenedSheet }> = ({ sheet }) => {
         </p>
       )}
 
-      {releaseDateParts && <p className="m-0 text-sm text-fg-2">{m.sheet_releaseDate(releaseDateParts, { locale })}</p>}
+      {sheet.releaseDate ? <SheetReleaseDate releaseDate={sheet.releaseDate} /> : null}
 
       <div className="flex flex-wrap gap-1">
         <SheetTags sheet={sheet} />

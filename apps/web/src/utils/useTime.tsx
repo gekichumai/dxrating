@@ -3,7 +3,12 @@ import { memo, useEffect, useMemo, useState } from 'react'
 import { useRenderedAt } from './renderEnvironment'
 import { useLocale } from '@/i18n/LocaleProvider'
 
-function useMinuteNow() {
+/**
+ * The current time for relative-time text: the render time first, so the server render and hydration agree, then the
+ * browser clock, refreshed each minute. The server HTML can be a cached copy rendered hours or days earlier
+ * (setup/html-cache.ts), so text that stayed on the render time would stay that far behind.
+ */
+export function useMinuteNow() {
   const renderedAt = useRenderedAt()
   const [now, setNow] = useState(renderedAt)
 

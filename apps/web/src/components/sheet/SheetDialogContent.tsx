@@ -32,7 +32,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useAppContextDXDataVersion } from '../../models/context/useAppContext'
 import type { FlattenedSheet } from '../../songs'
 import { formatSheetReleaseDateParts } from '../../utils/dateFormatting'
-import { useRenderedAt } from '../../utils/renderEnvironment'
+import { useMinuteNow } from '../../utils/useTime'
 import { AchievementRatingTable } from './AchievementRatingTable'
 import { SheetDialogContentHeader } from './SheetDialogContentHeader'
 import { SheetTitle } from './SheetListItem'
@@ -104,12 +104,12 @@ const CommentCreatedAt: FC<{ createdAt: string }> = ({ createdAt }) => {
 
 const ReleaseDateText: FC<{ releaseDate: string }> = ({ releaseDate }) => {
   const locale = useLocale()
-  const renderedAt = useRenderedAt()
+  const now = useMinuteNow()
   const releaseDateText = useMemo(() => {
-    const parts = formatSheetReleaseDateParts(releaseDate, locale, renderedAt)
+    const parts = formatSheetReleaseDateParts(releaseDate, locale, now)
 
     return m.sheet_releaseDate(parts, { locale })
-  }, [releaseDate, locale, renderedAt])
+  }, [releaseDate, locale, now])
 
   return releaseDateText
 }

@@ -5,13 +5,7 @@ import { renderRouterToStream } from '@tanstack/react-router/ssr/server'
 import { createElement } from 'react'
 import { createServerEntry, type ServerEntry } from '@tanstack/react-start/server-entry'
 import { applyAgentDiscoveryHeaders } from './setup/agent-discovery'
-import {
-  HTML_CACHE_STATUS_HEADER,
-  fromStoredHtmlResponse,
-  getHtmlCacheKey,
-  isCacheableHtmlResponse,
-  toStoredHtmlResponse,
-} from './setup/html-cache'
+import { getHtmlCacheKey, serveWithHtmlCache } from './setup/html-cache'
 import { appendVaryHeader, detectServerLocale } from './setup/locale'
 import { localeRedirect } from './setup/locale-redirect'
 import { trailingSlashRedirect } from './setup/trailing-slash'
@@ -62,19 +56,7 @@ async function handleWithHtmlCache(request: Request, env: unknown, ctx: WorkerEx
   if (!cacheKey || !ctx) return render()
 
   const cache = (caches as unknown as { default: Cache }).default
-  const cached = await cache.match(cacheKey)
-  if (cached) return await fromStoredHtmlResponse(cached)
-
-  const response = await render()
-  if (!isCacheableHtmlResponse(response)) return response
-
-  const [visitorBody, storedBody] = response.body ? response.body.tee() : [null, null]
-  const stored = toStoredHtmlResponse(new Response(storedBody, response))
-  ctx.waitUntil(cache.put(cacheKey, stored).catch(() => undefined))
-
-  const visitorResponse = new Response(visitorBody, response)
-  visitorResponse.headers.set(HTML_CACHE_STATUS_HEADER, 'MISS')
-  return visitorResponse
+  return serveWithHtmlCache(cache, cacheKey, render, (promise) => ctx.waitUntil(promise))
 }
 
 const requestHandler: ServerEntry = SentryStart.wrapFetchWithSentry({

@@ -8,10 +8,19 @@ import { createCspNonce } from './security-headers'
  * send a visitor to their language's URL run before this cache (setup/locale-redirect.ts). Auth and every other user preference are applied on the client, so the HTML of the pages
  * below is the same for every visitor with the same locale. The key also includes the build commit: hashed
  * assets from an older deploy are gone after a release, so cached HTML must never outlive its build.
+ *
+ * The one input that is not in the key is the render time (the `dxrating-rendered-at` meta), which only seeds relative
+ * times for the first paint; they catch up after hydration. So a page is kept for about as long as a build lives, and a
+ * copy older than HTML_CACHE_FRESH_SECONDS is served as is while it is rendered again in the background.
  */
 
-export const HTML_CACHE_TTL_SECONDS = 30 * 60
+/** How long a data center keeps a page. Deploys come every few days and change the key, so this outlasts a build. */
+export const HTML_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60
+/** Past this age a hit also starts a background render, so busy pages show relative times no older than this. */
+export const HTML_CACHE_FRESH_SECONDS = 30 * 60
 export const HTML_CACHE_STATUS_HEADER = 'X-DXRating-Cache'
+// When the copy was stored (ms since epoch), for the freshness check; never sent to visitors
+const HTML_CACHE_STORED_AT_HEADER = 'X-DXRating-Stored-At'
 
 const HTML_CACHE_KEY_PREFIX = '/__html-cache'
 
@@ -62,11 +71,18 @@ export function isCacheableHtmlResponse(response: Response): boolean {
   )
 }
 
-/** The copy stored at the edge: same body and headers, plus an explicit edge TTL. */
-export function toStoredHtmlResponse(response: Response): Response {
+/** The copy stored at the edge: same body and headers, plus an explicit edge TTL and the time it was stored. */
+export function toStoredHtmlResponse(response: Response, storedAt = Date.now()): Response {
   const stored = new Response(response.body, response)
   stored.headers.set('Cache-Control', `public, s-maxage=${HTML_CACHE_TTL_SECONDS}`)
+  stored.headers.set(HTML_CACHE_STORED_AT_HEADER, String(storedAt))
   return stored
+}
+
+/** A copy without a stored-at time (or a garbled one) counts as stale, so it gets rendered again. */
+export function isStaleHtmlResponse(stored: Response, now = Date.now()): boolean {
+  const storedAt = Number(stored.headers.get(HTML_CACHE_STORED_AT_HEADER))
+  return !(storedAt > 0) || now - storedAt >= HTML_CACHE_FRESH_SECONDS * 1000
 }
 
 const CSP_HEADERS = ['Content-Security-Policy', 'Content-Security-Policy-Report-Only']
@@ -81,6 +97,7 @@ export async function fromStoredHtmlResponse(stored: Response, nextNonce = creat
   const headers = new Headers(stored.headers)
   headers.delete('Cache-Control')
   headers.delete('Age')
+  headers.delete(HTML_CACHE_STORED_AT_HEADER)
   headers.set('Server-Timing', 'cache;desc="hit"')
   headers.set(HTML_CACHE_STATUS_HEADER, 'HIT')
 
@@ -95,4 +112,53 @@ export async function fromStoredHtmlResponse(stored: Response, nextNonce = creat
   }
 
   return new Response(body, { status: stored.status, statusText: stored.statusText, headers })
+}
+
+type HtmlCache = Pick<Cache, 'match' | 'put'>
+
+// Keys this isolate is rendering again: a burst of stale hits on one page renders it once
+const refreshingKeys = new Set<string>()
+
+const afterResponse = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+/**
+ * Serves a cacheable page from the data center's cache: a miss renders it, serves it and stores a copy; a hit serves
+ * the copy. A copy past HTML_CACHE_FRESH_SECONDS is served too (the visitor never waits for a render), and replaced by a
+ * render that starts once the response is on its way: SSR is synchronous CPU work that would otherwise run first.
+ */
+export async function serveWithHtmlCache(
+  cache: HtmlCache,
+  cacheKey: string,
+  render: () => Response | Promise<Response>,
+  waitUntil: (promise: Promise<unknown>) => void,
+): Promise<Response> {
+  const cached = await cache.match(cacheKey)
+  if (cached) {
+    const hit = await fromStoredHtmlResponse(cached)
+    if (isStaleHtmlResponse(cached) && !refreshingKeys.has(cacheKey)) {
+      refreshingKeys.add(cacheKey)
+      waitUntil(
+        afterResponse()
+          .then(render)
+          // A failed render keeps the stale copy; the next stale hit tries again
+          .then((response) =>
+            isCacheableHtmlResponse(response) ? cache.put(cacheKey, toStoredHtmlResponse(response)) : undefined,
+          )
+          .catch(() => undefined)
+          .finally(() => refreshingKeys.delete(cacheKey)),
+      )
+    }
+    return hit
+  }
+
+  const response = await render()
+  if (!isCacheableHtmlResponse(response)) return response
+
+  const [visitorBody, storedBody] = response.body ? response.body.tee() : [null, null]
+  const stored = toStoredHtmlResponse(new Response(storedBody, response))
+  waitUntil(cache.put(cacheKey, stored).catch(() => undefined))
+
+  const visitorResponse = new Response(visitorBody, response)
+  visitorResponse.headers.set(HTML_CACHE_STATUS_HEADER, 'MISS')
+  return visitorResponse
 }
