@@ -18,9 +18,10 @@ import { type CloudSaveActions, CloudSaveActionsContext } from '../cloudSaveActi
 import { CloudScoreRepository } from '../CloudScoreRepository'
 import { clearUserFeaturesCache } from '../userFeatures'
 import { FakeCloudSaveServer } from './fakeCloudSaveServer'
+import { attachAnalyticsClient } from '@/lib/analytics'
 
-const posthog = vi.hoisted(() => ({ capture: vi.fn() }))
-vi.mock('posthog-js', () => ({ default: posthog }))
+const posthog = { capture: vi.fn(), get_property: vi.fn(), identify: vi.fn(), register: vi.fn(), reset: vi.fn() }
+attachAnalyticsClient(posthog)
 vi.mock('react-hot-toast', () => ({
   default: Object.assign(vi.fn(), {
     success: vi.fn(),

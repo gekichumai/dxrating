@@ -25,9 +25,10 @@ import { catalogSnapshot } from '@gekichumai/dxdata/snapshot'
 import { VersionEnum } from '@gekichumai/dxdata'
 import { getSongCatalog } from '@gekichumai/maimai-domain'
 import { m } from '@/paraglide/messages'
+import { attachAnalyticsClient } from '@/lib/analytics'
 
-const posthog = vi.hoisted(() => ({ capture: vi.fn() }))
-vi.mock('posthog-js', () => ({ default: posthog }))
+const posthog = { capture: vi.fn(), get_property: vi.fn(), identify: vi.fn(), register: vi.fn(), reset: vi.fn() }
+attachAnalyticsClient(posthog)
 
 const { toast } = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
